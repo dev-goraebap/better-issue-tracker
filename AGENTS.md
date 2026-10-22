@@ -12,8 +12,8 @@ AI 네이티브 경량 ALM(Application Lifecycle Management). 제품 가칭은 b
 로컬 에이전트에게 맥락을 전달할 때마다 사람이 "맥락 배달부"가 된다. 이걸 없앤다.
 
 ## 현재 상태
-- 단계: **T-003 워크스페이스·멤버십·초대 구현 및 자동 검증 완료** — 서버 46개·클라이언트 9개 검사, Docker V1→V2 및 동일 볼륨 재생성 검증. 화면 수동 확인 범위는 `docs/tasks/T-003-workspace-membership-invitations.md`에 구분했다. 변경은 아직 커밋하지 않았다.
-- 다음: **T-004 프로젝트·보드·작업항목 지시서 작성과 정책 검토**. 후속 작업은 사용자 지시를 받아 진행한다. 자동 진행 루프는 확정하지 않았다.
+- 단계: **T-003 워크스페이스·멤버십·초대 구현 및 자동 검증 완료** — 서버 46개·클라이언트 9개 검사, Docker V1→V2 및 동일 볼륨 재생성 검증. 화면 수동 확인 범위는 `docs/tasks/T-003-workspace-membership-invitations.md`에 구분했다. T-003 및 누적 UI 수정은 `eeb31ce`로 커밋했다.
+- 다음: **T-004 프로젝트·보드·작업항목 구현**. 지시서는 `docs/tasks/T-004-project-board-work-items.md`. 사용자가 남은 MVP의 지시서 작성·권장안 채택·구현·검증·커밋 진행을 위임했다(D-047).
 - 결정된 것: `docs/decisions.md`
 - 아직 안 정해진 것: `docs/open-questions.md`
 
