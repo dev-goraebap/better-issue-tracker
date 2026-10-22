@@ -1,0 +1,22 @@
+**/.env
+**/.env.*
+!**/.env.example
+**/.gradle/
+**/build/
+**/node_modules/
+**/dist/
+**/coverage/
+*.log
+.idea/
+.vscode/
+.tmp/
+.local/
+*.tsbuildinfo
+
+# Project skills live in .agents/skills; .claude/skills is their copy for Claude Code (scripts/sync-skills.mjs).
+.claude/*
+!.claude/settings.json
+skills-lock.json
+
+# Local SQLite database and uploaded files (server/data/bit.db, its WAL files, local object storage).
+server/data/
