@@ -16,6 +16,14 @@ body { font-family: 'Pretendard Variable', Pretendard, system-ui, sans-serif; }
   word-break: keep-all;
 }
 .bit-nav-icon { inline-size: var(--spacing-5); block-size: var(--spacing-5); flex-shrink: 0; }
+/* Floating surfaces remain distinct from the page in both color modes. */
+.astryx-popover,
+.astryx-dropdown-menu,
+.astryx-selector-popup,
+.astryx-dialog,
+.astryx-bottom-sheet {
+  border: var(--border-width) solid var(--color-border);
+}
 @media (max-width: 63.999rem) {
   .astryx-text-input, .astryx-selector, [data-action-row] {
     --size-element-md: var(--size-element-touch);

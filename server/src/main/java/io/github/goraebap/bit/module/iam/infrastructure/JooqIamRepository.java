@@ -224,6 +224,43 @@ class JooqIamRepository implements IamRepository {
                 .execute();
     }
 
+    @Override
+    public List<Identity> findAllById(List<UUID> ids) {
+        return dslContext
+                .selectFrom(IAM_USER)
+                .where(IAM_USER.IAM_USER_ID.in(ids))
+                .and(IAM_USER.DELETED_AT.isNull())
+                .fetch(this::identity);
+    }
+
+    @Override
+    public UUID activeWorkspace(UUID sessionId) {
+        return dslContext
+                .select(IAM_SESSION.ACTIVE_WORKSPACE_ID)
+                .from(IAM_SESSION)
+                .where(IAM_SESSION.IAM_SESSION_ID.eq(sessionId))
+                .fetchOne(IAM_SESSION.ACTIVE_WORKSPACE_ID);
+    }
+
+    @Override
+    public void selectWorkspace(UUID sessionId, UUID workspaceId) {
+        dslContext
+                .update(IAM_SESSION)
+                .set(IAM_SESSION.ACTIVE_WORKSPACE_ID, workspaceId)
+                .where(IAM_SESSION.IAM_SESSION_ID.eq(sessionId))
+                .execute();
+    }
+
+    @Override
+    public void clearWorkspace(UUID workspaceId, UUID userId) {
+        dslContext
+                .update(IAM_SESSION)
+                .setNull(IAM_SESSION.ACTIVE_WORKSPACE_ID)
+                .where(IAM_SESSION.ACTIVE_WORKSPACE_ID.eq(workspaceId))
+                .and(userId == null ? DSL.noCondition() : IAM_SESSION.IAM_USER_ID.eq(userId))
+                .execute();
+    }
+
     private Identity identity(Record r) {
         return new Identity(
                 r.get(IAM_USER.IAM_USER_ID),

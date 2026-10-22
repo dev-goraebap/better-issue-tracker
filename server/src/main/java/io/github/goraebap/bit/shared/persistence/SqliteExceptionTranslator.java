@@ -20,6 +20,11 @@ public final class SqliteExceptionTranslator implements SQLExceptionTranslator {
 
     @Override
     public DataAccessException translate(String task, String sql, SQLException ex) {
+        // JDBC batches wrap SQLite's precise result code in BatchUpdateException.
+        if (!(ex instanceof SQLiteException) && ex.getCause() instanceof SQLException cause && cause != ex) {
+            DataAccessException translated = translate(task, sql, cause);
+            if (translated != null) return translated;
+        }
         if (ex instanceof SQLiteException sqlite) {
             SQLiteErrorCode code = sqlite.getResultCode();
             String message = task + "; " + (sql == null ? "" : "SQL [" + sql + "]; ") + ex.getMessage();

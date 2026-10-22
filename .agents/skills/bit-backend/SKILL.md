@@ -30,7 +30,6 @@ SandboxHr 규칙과 BIT 문서만으로 정해지지 않은 것이다. 정하면
 - `BIT-42`, `D-007` 같은 참조를 ID로 바꾸는 책임: MCP 어댑터인지 각 모듈 Facade(`findByRef` 류)인지
 - 다형 대상 존재 검사의 의존 방향: link가 각 모듈 Facade를 부를지, link가 `*Spi`를 선언하고 각 모듈이 구현할지(맥락 묶음 때문에 workitem → link 참조가 생겨 순환이 생길 수 있다)
 - `activity`·`comment`를 소유할 모듈(link 모듈에 함께 둘지, 각각 둘지)
-- `agent_name`이 Service까지 오는 경로(`CurrentUser`에 담을지)
 - 트랜잭션 밖 작업을 띄우는 방식(커밋 후 이벤트, 스케줄러가 `pending` 행을 집기, 별도 실행기)과 실패 재시도
 - `record_session`(세션 + 결정 n개 + 링크)을 한 트랜잭션으로 묶는 다중 애그리거트 예외로 인정할지
 - 외부 기능 설정값이 형식부터 잘못된 경우: SandboxHr처럼 기동을 멈출지, D-030대로 그 기능만 끌지

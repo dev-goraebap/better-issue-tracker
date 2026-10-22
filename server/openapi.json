@@ -9,6 +9,36 @@
     "description" : "Generated server url"
   } ],
   "paths" : {
+    "/api/v1/workspaces/{id}/owner" : {
+      "put" : {
+        "tags" : [ "workspace-controller" ],
+        "operationId" : "transfer",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/Transfer"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "204" : {
+            "description" : "Ownership transferred"
+          }
+        }
+      }
+    },
     "/api/v1/me/password" : {
       "put" : {
         "tags" : [ "auth-controller" ],
@@ -26,6 +56,152 @@
         "responses" : {
           "204" : {
             "description" : "Password changed and session rotated"
+          }
+        }
+      }
+    },
+    "/api/v1/auth/sessions/current/workspace" : {
+      "put" : {
+        "tags" : [ "workspace-controller" ],
+        "operationId" : "select",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/Selection"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "204" : {
+            "description" : "Active workspace selected"
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces" : {
+      "post" : {
+        "tags" : [ "workspace-controller" ],
+        "operationId" : "create",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/Create"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "description" : "Workspace and owner created"
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{id}/invitations" : {
+      "get" : {
+        "tags" : [ "workspace-controller" ],
+        "operationId" : "invitations",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "name" : "status",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          }
+        }, {
+          "name" : "cursor",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "size",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 50
+          }
+        }, {
+          "name" : "sort",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : "createdAt"
+          }
+        }, {
+          "name" : "direction",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : "DESC"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Invites"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post" : {
+        "tags" : [ "workspace-controller" ],
+        "operationId" : "invite",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/Invite"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "description" : "Invitation token shown once",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CreatedInvitation"
+                }
+              }
+            }
           }
         }
       }
@@ -103,6 +279,79 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/api/v1/invitation-registrations" : {
+      "post" : {
+        "tags" : [ "workspace-controller" ],
+        "operationId" : "register",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/Registration"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "description" : "Invited account and membership created"
+          }
+        }
+      }
+    },
+    "/api/v1/invitation-previews" : {
+      "post" : {
+        "tags" : [ "workspace-controller" ],
+        "operationId" : "preview",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/Token"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Preview"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/invitation-acceptances" : {
+      "post" : {
+        "tags" : [ "workspace-controller" ],
+        "operationId" : "accept",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/Token"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "description" : "Invitation accepted"
+          },
+          "204" : {
+            "description" : "Already accepted by this member"
           }
         }
       }
@@ -211,6 +460,263 @@
         }
       }
     },
+    "/api/v1/workspaces/{id}" : {
+      "get" : {
+        "tags" : [ "workspace-controller" ],
+        "operationId" : "get",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Space"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete" : {
+        "tags" : [ "workspace-controller" ],
+        "operationId" : "delete",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "Workspace deleted"
+          }
+        }
+      },
+      "patch" : {
+        "tags" : [ "workspace-controller" ],
+        "operationId" : "rename",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/Rename"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "204" : {
+            "description" : "Workspace updated"
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{id}/members/{memberId}" : {
+      "delete" : {
+        "tags" : [ "workspace-controller" ],
+        "operationId" : "remove",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "name" : "memberId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "Member removed"
+          }
+        }
+      },
+      "patch" : {
+        "tags" : [ "workspace-controller" ],
+        "operationId" : "role",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "name" : "memberId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ChangeRole"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "204" : {
+            "description" : "Member role changed"
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{id}/members" : {
+      "get" : {
+        "tags" : [ "workspace-controller" ],
+        "operationId" : "members",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "name" : "cursor",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "size",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 50
+          }
+        }, {
+          "name" : "sort",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : "joinedAt"
+          }
+        }, {
+          "name" : "direction",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : "ASC"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Members"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{id}/invitations/{invitationId}" : {
+      "get" : {
+        "tags" : [ "workspace-controller" ],
+        "operationId" : "invitation",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "name" : "invitationId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/WorkspaceInvitation"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete" : {
+        "tags" : [ "workspace-controller" ],
+        "operationId" : "revoke",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "name" : "invitationId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "Invitation revoked"
+          }
+        }
+      }
+    },
     "/api/v1/me" : {
       "get" : {
         "tags" : [ "auth-controller" ],
@@ -222,6 +728,57 @@
               "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/Me"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/me/workspaces" : {
+      "get" : {
+        "tags" : [ "workspace-controller" ],
+        "operationId" : "list",
+        "parameters" : [ {
+          "name" : "cursor",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "size",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 50
+          }
+        }, {
+          "name" : "sort",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : "createdAt"
+          }
+        }, {
+          "name" : "direction",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : "DESC"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Spaces"
                 }
               }
             }
@@ -312,10 +869,30 @@
         }
       }
     },
+    "/api/v1/workspaces/{id}/members/me" : {
+      "delete" : {
+        "tags" : [ "workspace-controller" ],
+        "operationId" : "leave",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "Left workspace"
+          }
+        }
+      }
+    },
     "/api/v1/me/api-keys/{keyId}" : {
       "delete" : {
         "tags" : [ "auth-controller" ],
-        "operationId" : "revoke",
+        "operationId" : "revoke_1",
         "parameters" : [ {
           "name" : "keyId",
           "in" : "path",
@@ -335,6 +912,21 @@
   },
   "components" : {
     "schemas" : {
+      "Transfer" : {
+        "type" : "object",
+        "properties" : {
+          "userId" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "currentPassword" : {
+            "type" : "string",
+            "maxLength" : 128,
+            "minLength" : 1
+          }
+        },
+        "required" : [ "currentPassword", "userId" ]
+      },
       "Password" : {
         "type" : "object",
         "properties" : {
@@ -350,6 +942,65 @@
           }
         },
         "required" : [ "currentPassword", "newPassword" ]
+      },
+      "Selection" : {
+        "type" : "object",
+        "properties" : {
+          "workspaceId" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        },
+        "required" : [ "workspaceId" ]
+      },
+      "Create" : {
+        "type" : "object",
+        "properties" : {
+          "name" : {
+            "type" : "string",
+            "maxLength" : 64,
+            "minLength" : 0
+          },
+          "slug" : {
+            "type" : "string",
+            "maxLength" : 64,
+            "minLength" : 0
+          }
+        },
+        "required" : [ "name", "slug" ]
+      },
+      "Invite" : {
+        "type" : "object",
+        "properties" : {
+          "email" : {
+            "type" : "string",
+            "format" : "email",
+            "maxLength" : 256,
+            "minLength" : 0
+          },
+          "role" : {
+            "type" : "string",
+            "enum" : [ "owner", "admin", "member", "viewer" ]
+          }
+        },
+        "required" : [ "email", "role" ]
+      },
+      "CreatedInvitation" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "token" : {
+            "type" : "string"
+          },
+          "expiresAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        },
+        "required" : [ "expiresAt", "id", "token" ]
       },
       "CreateKey" : {
         "type" : "object",
@@ -395,6 +1046,62 @@
           }
         },
         "required" : [ "id", "key", "prefix" ]
+      },
+      "Registration" : {
+        "type" : "object",
+        "properties" : {
+          "token" : {
+            "type" : "string",
+            "maxLength" : 128,
+            "minLength" : 0
+          },
+          "name" : {
+            "type" : "string",
+            "maxLength" : 64,
+            "minLength" : 0
+          },
+          "password" : {
+            "type" : "string",
+            "maxLength" : 128,
+            "minLength" : 1
+          }
+        },
+        "required" : [ "name", "password", "token" ]
+      },
+      "Token" : {
+        "type" : "object",
+        "properties" : {
+          "token" : {
+            "type" : "string",
+            "maxLength" : 128,
+            "minLength" : 0
+          }
+        },
+        "required" : [ "token" ]
+      },
+      "Preview" : {
+        "type" : "object",
+        "properties" : {
+          "workspaceId" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "workspaceName" : {
+            "type" : "string"
+          },
+          "email" : {
+            "type" : "string"
+          },
+          "role" : {
+            "type" : "string",
+            "enum" : [ "owner", "admin", "member", "viewer" ]
+          },
+          "expiresAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        },
+        "required" : [ "email", "expiresAt", "role", "workspaceId", "workspaceName" ]
       },
       "Login" : {
         "type" : "object",
@@ -454,6 +1161,153 @@
         },
         "required" : [ "temporaryPassword" ]
       },
+      "Rename" : {
+        "type" : "object",
+        "properties" : {
+          "name" : {
+            "type" : "string"
+          }
+        }
+      },
+      "ChangeRole" : {
+        "type" : "object",
+        "properties" : {
+          "role" : {
+            "type" : "string",
+            "enum" : [ "owner", "admin", "member", "viewer" ]
+          }
+        },
+        "required" : [ "role" ]
+      },
+      "Space" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "slug" : {
+            "type" : "string"
+          },
+          "myRole" : {
+            "type" : "string",
+            "enum" : [ "owner", "admin", "member", "viewer" ]
+          },
+          "createdAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        },
+        "required" : [ "createdAt", "id", "myRole", "name", "slug" ]
+      },
+      "Member" : {
+        "type" : "object",
+        "properties" : {
+          "memberId" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "userId" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "email" : {
+            "type" : "string"
+          },
+          "role" : {
+            "type" : "string",
+            "enum" : [ "owner", "admin", "member", "viewer" ]
+          },
+          "joinedAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        },
+        "required" : [ "email", "joinedAt", "memberId", "name", "role", "userId" ]
+      },
+      "Members" : {
+        "type" : "object",
+        "properties" : {
+          "items" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Member"
+            }
+          },
+          "nextCursor" : {
+            "type" : [ "string", "null" ]
+          }
+        },
+        "required" : [ "items" ]
+      },
+      "Invites" : {
+        "type" : "object",
+        "properties" : {
+          "items" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/WorkspaceInvitation"
+            }
+          },
+          "nextCursor" : {
+            "type" : [ "string", "null" ]
+          }
+        },
+        "required" : [ "items" ]
+      },
+      "WorkspaceInvitation" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "email" : {
+            "type" : "string"
+          },
+          "role" : {
+            "type" : "string",
+            "enum" : [ "owner", "admin", "member", "viewer" ]
+          },
+          "status" : {
+            "type" : "string"
+          },
+          "expiresAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "invitedBy" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "inviterName" : {
+            "type" : "string"
+          },
+          "createdAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "acceptedBy" : {
+            "type" : [ "string", "null" ],
+            "format" : "uuid"
+          },
+          "acceptedAt" : {
+            "type" : [ "string", "null" ],
+            "format" : "date-time"
+          },
+          "revokedAt" : {
+            "type" : [ "string", "null" ],
+            "format" : "date-time"
+          }
+        },
+        "required" : [ "createdAt", "email", "expiresAt", "id", "invitedBy", "inviterName", "role", "status" ]
+      },
       "Me" : {
         "type" : "object",
         "properties" : {
@@ -482,6 +1336,21 @@
           }
         },
         "required" : [ "authenticationMethod", "email", "id", "instanceAdmin", "mustChangePassword", "name" ]
+      },
+      "Spaces" : {
+        "type" : "object",
+        "properties" : {
+          "items" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Space"
+            }
+          },
+          "nextCursor" : {
+            "type" : [ "string", "null" ]
+          }
+        },
+        "required" : [ "items" ]
       },
       "Key" : {
         "type" : "object",
@@ -579,6 +1448,10 @@
           },
           "mustChangePassword" : {
             "type" : "boolean"
+          },
+          "activeWorkspaceId" : {
+            "type" : [ "string", "null" ],
+            "format" : "uuid"
           }
         },
         "required" : [ "absoluteExpiresAt", "expiresAt", "mustChangePassword", "user" ]

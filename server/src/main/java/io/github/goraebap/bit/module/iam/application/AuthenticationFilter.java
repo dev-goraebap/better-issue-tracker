@@ -87,8 +87,9 @@ final class AuthenticationFilter extends OncePerRequestFilter {
                 context.setAuthentication(UsernamePasswordAuthenticationToken.authenticated(user, null, authorities));
                 SecurityContextHolder.setContext(context);
                 String path = request.getRequestURI();
-                if (user.method() == CurrentUser.Method.API_KEY && !path.equals("/api/v1/me") && !publicInfo(request))
+                if (user.method() == CurrentUser.Method.API_KEY && !businessBearer(request) && !publicInfo(request))
                     throw AuthErrorCode.AUTH_FORBIDDEN.raise();
+                if (path.equals("/api/v1/invitation-registrations")) throw AuthErrorCode.AUTH_FORBIDDEN.raise();
                 boolean recovery = path.equals("/api/v1/me")
                         || path.equals("/api/v1/auth/csrf")
                         || path.equals("/api/v1/me/password")
@@ -106,14 +107,28 @@ final class AuthenticationFilter extends OncePerRequestFilter {
             }
             if (!safe(request) && !bearer(request)) verifyOrigin(request);
             if (request.getMethod().equals("POST")
-                    && Set.of("/api/v1/auth/bootstrap", "/api/v1/auth/sessions").contains(request.getRequestURI()))
-                attemptLimiter.check(request.getRemoteAddr());
+                    && Set.of(
+                                    "/api/v1/auth/bootstrap",
+                                    "/api/v1/auth/sessions",
+                                    "/api/v1/invitation-previews",
+                                    "/api/v1/invitation-registrations")
+                            .contains(request.getRequestURI())) attemptLimiter.check(request.getRemoteAddr());
             chain.doFilter(request, response);
         } catch (BusinessException failure) {
             ProblemResponse.write(response, failure.errorCode());
         } finally {
             SecurityContextHolder.clearContext();
         }
+    }
+
+    private static boolean businessBearer(HttpServletRequest request) {
+        String path = request.getRequestURI();
+        String method = request.getMethod();
+        if (Set.of("GET", "HEAD").contains(method))
+            return path.equals("/api/v1/me")
+                    || path.equals("/api/v1/me/workspaces")
+                    || path.matches("/api/v1/workspaces/[^/]+(?:/members)?");
+        return method.equals("PATCH") && path.matches("/api/v1/workspaces/[^/]+");
     }
 
     private void verifyOrigin(HttpServletRequest request) {

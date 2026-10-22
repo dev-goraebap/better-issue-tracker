@@ -1,0 +1,7 @@
+ .option { flex: 1; min-inline-size: 14rem; padding: var(--spacing-3); border: var(--border-width) solid var(--color-border); border-radius: var(--radius-container); }
+.option[data-selected] { outline: var(--border-width) solid var(--color-accent); }
+.preview { position: relative; block-size: 8rem; background: var(--color-background-body); border: var(--border-width) solid var(--color-border); border-radius: var(--radius-element); overflow: hidden; margin-block-end: var(--spacing-3); }
+.nav { position: absolute; inset: var(--spacing-3) auto var(--spacing-3) var(--spacing-3); inline-size: 22%; background: var(--color-background-muted); border-radius: var(--radius-element); }
+.content { position: absolute; inset: var(--spacing-2) var(--spacing-2) var(--spacing-5) 30%; background: var(--color-background-surface); border: var(--border-width) solid var(--color-border); border-radius: var(--radius-container); }
+.status { position: absolute; inset: auto var(--spacing-2) var(--spacing-2) auto; inline-size: 15%; block-size: var(--spacing-1); background: var(--color-text-secondary); opacity: 0.4; }
+.preview[data-layout="split"] .content { inset: 0 0 var(--spacing-5) 30%; border-radius: 0; border-block-start: 0; border-inline-end: 0; }

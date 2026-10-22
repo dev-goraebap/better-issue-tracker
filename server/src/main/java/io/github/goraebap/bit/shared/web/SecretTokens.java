@@ -1,4 +1,4 @@
-package io.github.goraebap.bit.module.iam.application;
+package io.github.goraebap.bit.shared.web;
 
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
@@ -11,22 +11,22 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Component
-final class TokenCodec {
+public final class SecretTokens {
     private static final SecureRandom RANDOM = new SecureRandom();
     private final String secret;
 
-    TokenCodec(@Value("${app.auth.secret}") String secret) {
+    public SecretTokens(@Value("${app.auth.secret}") String secret) {
         if (secret.length() < 32) throw new IllegalStateException("AUTH_SECRET must contain at least 32 characters");
         this.secret = secret;
     }
 
-    String random() {
+    public String random() {
         byte[] bytes = new byte[32];
         RANDOM.nextBytes(bytes);
         return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
     }
 
-    String hash(String purpose, String value) {
+    public String hash(String purpose, String value) {
         try {
             Mac mac = Mac.getInstance("HmacSHA256");
             mac.init(new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
@@ -38,7 +38,7 @@ final class TokenCodec {
         }
     }
 
-    static boolean equal(String left, String right) {
+    public static boolean equal(String left, String right) {
         return left != null
                 && right != null
                 && MessageDigest.isEqual(left.getBytes(StandardCharsets.UTF_8), right.getBytes(StandardCharsets.UTF_8));

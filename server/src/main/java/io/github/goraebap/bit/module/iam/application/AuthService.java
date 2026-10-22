@@ -4,6 +4,7 @@ import io.github.goraebap.bit.module.iam.IamFacade;
 import io.github.goraebap.bit.module.iam.domain.AgentKey;
 import io.github.goraebap.bit.shared.error.CommonErrorCode;
 import io.github.goraebap.bit.shared.web.CurrentUser;
+import io.github.goraebap.bit.shared.web.SecretTokens;
 import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.time.Instant;
@@ -21,12 +22,12 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class AuthService implements IamFacade {
     private final IamService iamService;
-    private final TokenCodec tokenCodec;
+    private final SecretTokens tokenCodec;
     private final PasswordEncoder passwordEncoder;
     private final Clock clock;
     private final String dummyHash;
 
-    AuthService(IamService iamService, TokenCodec tokenCodec, PasswordEncoder passwordEncoder, Clock clock) {
+    AuthService(IamService iamService, SecretTokens tokenCodec, PasswordEncoder passwordEncoder, Clock clock) {
         this.iamService = iamService;
         this.tokenCodec = tokenCodec;
         this.passwordEncoder = passwordEncoder;
@@ -77,7 +78,7 @@ public class AuthService implements IamFacade {
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public IssuedSession changePassword(CurrentUser actor, IamRequests.Password request) {
         validatePassword(request.newPassword());
-        String expectedHash = reauthenticate(actor, request.currentPassword());
+        String expectedHash = reauthenticateHash(actor, request.currentPassword());
         String token = tokenCodec.random();
         var session = iamService.changePassword(
                 actor, expectedHash, passwordEncoder.encode(request.newPassword()), tokenCodec.hash("session", token));
@@ -91,7 +92,7 @@ public class AuthService implements IamFacade {
     public IamViews.CreatedKey createKey(CurrentUser actor, IamRequests.CreateKey request) {
         int days = request.expiresInDays() == null ? 30 : request.expiresInDays();
         if (!Set.of(0, 1, 7, 30, 90).contains(days)) throw CommonErrorCode.COMMON_INVALID_REQUEST.raise();
-        String expectedHash = reauthenticate(actor, request.currentPassword());
+        String expectedHash = reauthenticateHash(actor, request.currentPassword());
         String raw = "bit_" + tokenCodec.random();
         Instant now = clock.instant();
         Instant expires = days == 0 ? null : now.plusSeconds(days * 86400L);
@@ -117,7 +118,7 @@ public class AuthService implements IamFacade {
             CurrentUser actor, UUID target, IamRequests.Reauthenticate request) {
         if (!actor.instanceAdmin() || actor.method() != CurrentUser.Method.SESSION)
             throw AuthErrorCode.AUTH_FORBIDDEN.raise();
-        String expectedHash = reauthenticate(actor, request.currentPassword());
+        String expectedHash = reauthenticateHash(actor, request.currentPassword());
         String raw = tokenCodec.random();
         iamService.temporaryPassword(actor, target, expectedHash, passwordEncoder.encode(raw));
         return new IamViews.TemporaryPassword(raw);
@@ -166,7 +167,70 @@ public class AuthService implements IamFacade {
                 next);
     }
 
-    private String reauthenticate(CurrentUser actor, String raw) {
+    @Override
+    @Transactional(readOnly = true)
+    public IamFacade.User actor(CurrentUser actor, boolean sessionOnly) {
+        return iamService.actor(actor, sessionOnly);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<IamFacade.User> user(UUID id) {
+        return iamService.user(id);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<IamFacade.User> userByEmail(String email) {
+        return iamService.userByEmail(email);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<IamFacade.User> users(List<UUID> ids) {
+        return iamService.users(ids);
+    }
+
+    @Override
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    public IamFacade.PreparedIdentity prepareIdentity(String email, String name, String password) {
+        validatePassword(password);
+        return new IamFacade.PreparedIdentity(
+                UUID.randomUUID(), normalize(email), name.strip(), passwordEncoder.encode(password));
+    }
+
+    @Override
+    @Transactional
+    public IamFacade.User registerIdentity(IamFacade.PreparedIdentity identity) {
+        return iamService.registerIdentity(identity);
+    }
+
+    @Override
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    public IamFacade.Reauthentication reauthenticate(CurrentUser actor, String password) {
+        return new IamFacade.Reauthentication(
+                actor.userId(), actor.credentialId(), reauthenticateHash(actor, password));
+    }
+
+    @Override
+    @Transactional
+    public void assertReauthentication(CurrentUser actor, IamFacade.Reauthentication proof) {
+        iamService.assertReauthentication(actor, proof);
+    }
+
+    @Override
+    @Transactional
+    public void selectWorkspace(CurrentUser actor, UUID workspaceId) {
+        iamService.selectWorkspace(actor, workspaceId);
+    }
+
+    @Override
+    @Transactional
+    public void clearWorkspace(UUID workspaceId, UUID userId) {
+        iamService.clearWorkspace(workspaceId, userId);
+    }
+
+    private String reauthenticateHash(CurrentUser actor, String raw) {
         var password = iamService.password(actor);
         boolean matches = matches(raw, password.hash());
         if (!iamService.reauthenticate(actor, password.hash(), matches))

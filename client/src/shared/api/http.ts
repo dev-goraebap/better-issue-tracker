@@ -47,7 +47,7 @@ async function getCsrf(): Promise<Csrf> {
   return pending;
 }
 /** Replay only an explicit CSRF rejection, never a network failure. */
-export async function command<T = void>(method: string, path: string, body?: unknown): Promise<T> {
+export async function command<T = void>(method: string, path: string, body?: unknown, onLocation?: (path: string) => void): Promise<T> {
   if (!path.startsWith('/api/v1/')) throw new Error('Invalid API path');
   for (let attempt = 0; attempt < 2; attempt++) {
     const token = await getCsrf();
@@ -70,6 +70,7 @@ export async function command<T = void>(method: string, path: string, body?: unk
     if (location) {
       const url = new URL(location, window.location.origin);
       if (url.origin !== window.location.origin || !url.pathname.startsWith('/api/v1/')) throw new Error('Invalid API Location');
+      onLocation?.(url.pathname);
     }
     const text = response.status === 204 ? '' : await response.text();
     return (text ? JSON.parse(text) : undefined) as T;
@@ -87,6 +88,17 @@ export function authError(error: unknown): string {
     AUTH_CSRF_INVALID: '보안 확인에 실패했습니다. 화면을 새로고침해 주세요.',
     AUTH_UNAUTHENTICATED: '세션이 만료됐습니다. 다시 로그인해 주세요.',
     COMMON_INVALID_REQUEST: '입력값을 확인해 주세요.',
+    COMMON_CONFLICT: '이미 사용 중인 값이거나 현재 상태에서는 처리할 수 없습니다.',
+    WORKSPACE_SLUG_CONFLICT: '이미 사용한 고정 주소입니다. 다른 slug를 입력하세요.',
+    WORKSPACE_MEMBER_EXISTS: '이미 참여 중인 멤버입니다.',
+    WORKSPACE_INVITATION_ALREADY_PENDING: '아직 유효한 초대가 있습니다. 기존 초대를 폐기하거나 만료 후 다시 만드세요.',
+    WORKSPACE_OWNER_REQUIRED: '소유권을 다른 멤버에게 이전한 뒤 진행해 주세요.',
+    WORKSPACE_INVALID_OWNER: '다른 활성 멤버를 새 owner로 선택해 주세요.',
+    WORKSPACE_INVITATION_ALREADY_ACCEPTED: '이미 수락한 초대입니다.',
+    WORKSPACE_NOT_FOUND: '워크스페이스를 찾을 수 없거나 참여 권한이 없습니다.',
+    WORKSPACE_INVITATION_UNAVAILABLE: '사용할 수 없는 초대입니다. 관리자에게 새 초대를 요청하세요.',
+    WORKSPACE_INVITATION_LOGIN_REQUIRED: '이미 계정이 있습니다. 기존 계정으로 로그인해 주세요.',
+    WORKSPACE_INVITATION_ACCOUNT_MISMATCH: '초대받은 이메일의 계정으로 로그인해 주세요.',
   };
   return messages[error.code] ?? error.message;
 }

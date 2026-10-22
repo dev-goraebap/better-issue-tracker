@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
-import { Button, Dialog, DialogHeader, HStack, Selector, Text, TextInput, VStack } from '@astryxdesign/core';
+import { Button, HStack, Selector, Text, TextInput, VStack } from '@astryxdesign/core';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useSearch } from '@tanstack/react-router';
 import { authError, createKey, keyQueryOptions, revokeKey } from '@/shared/api';
-import { FormMessage, PageFrame, SectionHeader } from '@/shared/ui';
+import { CompactDialog, FormMessage, PageFrame, SectionHeader } from '@/shared/ui';
 import styles from './keys.module.css';
 export function ApiKeysPage() {
   const { cursor } = useSearch({ from: '/workspace/settings/api-keys' });
@@ -57,10 +57,8 @@ export function ApiKeysPage() {
       {cursor && <Link to="/settings/api-keys" search={{}}>처음으로</Link>}
       {result.data?.nextCursor && <Link to="/settings/api-keys" search={{ cursor: result.data.nextCursor }}>다음 페이지</Link>}
     </HStack></nav>
-    <Dialog isOpen={!!revoking} onOpenChange={open => { if (!open && !busy) setRevoking(undefined); }} padding={6}>
-      <DialogHeader title="API 키를 폐기할까요?" /><VStack gap={4}><Text>이 키를 사용하는 에이전트는 더 이상 연결할 수 없습니다.</Text><HStack gap={3} data-action-row>
-        <Button label="취소" onClick={() => setRevoking(undefined)} isDisabled={busy} /><Button label="폐기" variant="primary" onClick={() => { void revoke(); }} isLoading={busy} />
-      </HStack></VStack>
-    </Dialog>
+    <CompactDialog isOpen={!!revoking} onClose={() => setRevoking(undefined)} isBusy={busy} title="API 키를 폐기할까요?" footer={<><Button label="취소" variant="ghost" onClick={() => setRevoking(undefined)} isDisabled={busy} /><Button label="폐기" variant="primary" onClick={() => { void revoke(); }} isLoading={busy} /></>}>
+      <Text>이 키를 사용하는 에이전트는 더 이상 연결할 수 없습니다.</Text>
+    </CompactDialog>
   </VStack></PageFrame>;
 }

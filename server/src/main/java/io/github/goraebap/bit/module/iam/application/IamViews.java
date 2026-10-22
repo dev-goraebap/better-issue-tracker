@@ -23,7 +23,16 @@ public final class IamViews {
             @Schema(types = {"string", "null"}) String agentName) {}
 
     @Schema(requiredProperties = {"user", "expiresAt", "absoluteExpiresAt", "mustChangePassword"})
-    public record Session(Me user, Instant expiresAt, Instant absoluteExpiresAt, boolean mustChangePassword) {}
+    public record Session(
+            Me user,
+            Instant expiresAt,
+            Instant absoluteExpiresAt,
+            boolean mustChangePassword,
+
+            @Schema(
+                    types = {"string", "null"},
+                    format = "uuid")
+            UUID activeWorkspaceId) {}
 
     @Schema(requiredProperties = {"id", "name", "prefix", "createdAt"})
     public record Key(

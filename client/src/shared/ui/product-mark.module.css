@@ -1,0 +1,1 @@
+ .mark { display: inline-block; inline-size: var(--spacing-6); block-size: var(--spacing-6); flex-shrink: 0; background: var(--color-text-primary); mask: url('./brand/bit-symbol.svg') center / contain no-repeat; }

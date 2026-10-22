@@ -77,6 +77,42 @@ class AuthSecurityConfig {
                         .authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/v1/admin/users/*/temporary-passwords")
                         .hasAuthority("INSTANCE_ADMIN")
+                        .requestMatchers(
+                                HttpMethod.POST, "/api/v1/invitation-previews", "/api/v1/invitation-registrations")
+                        .permitAll()
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/v1/me/workspaces",
+                                "/api/v1/workspaces/*",
+                                "/api/v1/workspaces/*/members",
+                                "/api/v1/workspaces/*/invitations",
+                                "/api/v1/workspaces/*/invitations/*")
+                        .authenticated()
+                        .requestMatchers(
+                                HttpMethod.HEAD,
+                                "/api/v1/me/workspaces",
+                                "/api/v1/workspaces/*",
+                                "/api/v1/workspaces/*/members",
+                                "/api/v1/workspaces/*/invitations",
+                                "/api/v1/workspaces/*/invitations/*")
+                        .authenticated()
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/api/v1/workspaces",
+                                "/api/v1/workspaces/*/invitations",
+                                "/api/v1/invitation-acceptances")
+                        .authenticated()
+                        .requestMatchers(HttpMethod.PATCH, "/api/v1/workspaces/*", "/api/v1/workspaces/*/members/*")
+                        .authenticated()
+                        .requestMatchers(
+                                HttpMethod.DELETE,
+                                "/api/v1/workspaces/*",
+                                "/api/v1/workspaces/*/members/*",
+                                "/api/v1/workspaces/*/invitations/*")
+                        .authenticated()
+                        .requestMatchers(
+                                HttpMethod.PUT, "/api/v1/workspaces/*/owner", "/api/v1/auth/sessions/current/workspace")
+                        .authenticated()
                         .requestMatchers("/api", "/api/**")
                         .denyAll()
                         .requestMatchers(HttpMethod.GET, "/**")

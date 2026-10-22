@@ -1,6 +1,7 @@
 package io.github.goraebap.bit.module.iam.application;
 
 import io.github.goraebap.bit.shared.web.CurrentUser;
+import io.github.goraebap.bit.shared.web.SecretTokens;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.time.Duration;
@@ -15,7 +16,7 @@ import org.springframework.stereotype.Component;
 final class SignedCsrfTokens implements CsrfTokenRepository {
     static final String PRINCIPAL = CurrentUser.class.getName();
     static final String HEADER = "X-CSRF-Token";
-    private final TokenCodec tokenCodec;
+    private final SecretTokens tokenCodec;
     private final AuthCookies authCookies;
 
     @Override
@@ -39,7 +40,8 @@ final class SignedCsrfTokens implements CsrfTokenRepository {
         String raw = AuthCookies.read(request, "bit_csrf");
         if (raw == null || !raw.matches("[A-Za-z0-9_-]{43}\\.[A-Za-z0-9_-]{43}")) return null;
         String nonce = raw.substring(0, 43);
-        if (!TokenCodec.equal(raw.substring(44), tokenCodec.hash("csrf", binding(request) + "|" + nonce))) return null;
+        if (!SecretTokens.equal(raw.substring(44), tokenCodec.hash("csrf", binding(request) + "|" + nonce)))
+            return null;
         return new DefaultCsrfToken(HEADER, "_csrf", raw);
     }
 

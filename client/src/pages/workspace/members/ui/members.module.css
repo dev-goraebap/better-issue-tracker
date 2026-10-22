@@ -1,0 +1,4 @@
+ .list { list-style: none; padding: 0; margin: 0; }
+.row { padding-block: var(--spacing-4); border-bottom: var(--border-width) solid var(--color-border); overflow-wrap: anywhere; }
+.secret { padding: var(--spacing-4); background: var(--color-background-muted); border-radius: var(--radius-container); }
+.code { overflow-wrap: anywhere; font-family: var(--font-family-code); font-size: var(--text-supporting-size); }

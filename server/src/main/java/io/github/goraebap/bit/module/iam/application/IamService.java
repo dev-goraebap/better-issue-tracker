@@ -1,11 +1,13 @@
 package io.github.goraebap.bit.module.iam.application;
 
+import io.github.goraebap.bit.module.iam.IamFacade;
 import io.github.goraebap.bit.module.iam.domain.AgentKey;
 import io.github.goraebap.bit.module.iam.domain.IamRepository;
 import io.github.goraebap.bit.module.iam.domain.Identity;
 import io.github.goraebap.bit.module.iam.domain.LoginSession;
 import io.github.goraebap.bit.module.iam.domain.PasswordCredential;
 import io.github.goraebap.bit.shared.web.CurrentUser;
+import io.github.goraebap.bit.shared.web.SecretTokens;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.List;
@@ -69,7 +71,7 @@ public class IamService {
             var session = iamRepository.findSessionByHash(hash);
             if (session.isEmpty()
                     || session.get().expired(now)
-                    || !TokenCodec.equal(hash, session.get().hash())) return Optional.empty();
+                    || !SecretTokens.equal(hash, session.get().hash())) return Optional.empty();
             var user = iamRepository.findUser(session.get().userId());
             if (user.isEmpty()) return Optional.empty();
             var password = iamRepository.findPassword(user.get().id()).orElseThrow();
@@ -86,7 +88,7 @@ public class IamService {
         var key = iamRepository.findKeyByHash(hash);
         if (key.isEmpty()
                 || !key.get().usable(now)
-                || !TokenCodec.equal(hash, key.get().hash())) return Optional.empty();
+                || !SecretTokens.equal(hash, key.get().hash())) return Optional.empty();
         var user = iamRepository.findUser(key.get().userId());
         if (user.isEmpty()
                 || iamRepository.findPassword(user.get().id()).orElseThrow().mustChange()) return Optional.empty();
@@ -122,7 +124,12 @@ public class IamService {
         var session =
                 iamRepository.findSession(actor.credentialId()).orElseThrow(AuthErrorCode.AUTH_UNAUTHENTICATED::raise);
         var user = me(actor);
-        return new IamViews.Session(user, session.expiresAt(), session.absoluteExpiresAt(), user.mustChangePassword());
+        return new IamViews.Session(
+                user,
+                session.expiresAt(),
+                session.absoluteExpiresAt(),
+                user.mustChangePassword(),
+                iamRepository.activeWorkspace(actor.credentialId()));
     }
 
     @Transactional
@@ -177,9 +184,63 @@ public class IamService {
         if (key.revokedAt() == null) iamRepository.revokeKey(id, clock.instant());
     }
 
+    @Transactional(readOnly = true)
+    public IamFacade.User actor(CurrentUser actor, boolean sessionOnly) {
+        Identity identity = requireActor(actor, sessionOnly);
+        if (iamRepository.findPassword(identity.id()).orElseThrow().mustChange())
+            throw AuthErrorCode.AUTH_FORBIDDEN.raise();
+        return summary(identity);
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<IamFacade.User> user(UUID id) {
+        return iamRepository.findUser(id).map(this::summary);
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<IamFacade.User> userByEmail(String email) {
+        return iamRepository.findByEmail(email).map(this::summary);
+    }
+
+    @Transactional(readOnly = true)
+    public List<IamFacade.User> users(List<UUID> ids) {
+        return iamRepository.findAllById(ids).stream().map(this::summary).toList();
+    }
+
+    @Transactional
+    public IamFacade.User registerIdentity(IamFacade.PreparedIdentity prepared) {
+        if (iamRepository.findByEmail(prepared.email()).isPresent())
+            throw io.github.goraebap.bit.shared.error.CommonErrorCode.COMMON_CONFLICT.raise();
+        var identity = new Identity(prepared.id(), prepared.email(), prepared.name(), false);
+        iamRepository.createUser(identity, prepared.passwordHash(), clock.instant());
+        return summary(identity);
+    }
+
+    @Transactional
+    public void assertReauthentication(CurrentUser actor, IamFacade.Reauthentication proof) {
+        if (!actor.userId().equals(proof.userId()) || !actor.credentialId().equals(proof.credentialId()))
+            throw AuthErrorCode.AUTH_INVALID_CREDENTIALS.raise();
+        requirePasswordSnapshot(actor, proof.passwordHash());
+    }
+
+    @Transactional
+    public void selectWorkspace(CurrentUser actor, UUID workspaceId) {
+        actor(actor, true);
+        iamRepository.selectWorkspace(actor.credentialId(), workspaceId);
+    }
+
+    @Transactional
+    public void clearWorkspace(UUID workspaceId, UUID userId) {
+        iamRepository.clearWorkspace(workspaceId, userId);
+    }
+
+    private IamFacade.User summary(Identity identity) {
+        return new IamFacade.User(identity.id(), identity.email(), identity.name());
+    }
+
     private boolean verify(PasswordCredential password, String expectedHash, boolean matches) {
         Instant now = clock.instant();
-        if (!TokenCodec.equal(password.hash(), expectedHash) || password.locked(now)) return false;
+        if (!SecretTokens.equal(password.hash(), expectedHash) || password.locked(now)) return false;
         iamRepository.savePassword(matches ? password.verified() : password.failed(now), now);
         return matches;
     }
@@ -187,7 +248,7 @@ public class IamService {
     private Identity requirePasswordSnapshot(CurrentUser actor, String expectedHash) {
         Identity user = requireActor(actor, true);
         var password = iamRepository.findPassword(user.id()).orElseThrow();
-        if (!TokenCodec.equal(password.hash(), expectedHash) || password.locked(clock.instant()))
+        if (!SecretTokens.equal(password.hash(), expectedHash) || password.locked(clock.instant()))
             throw AuthErrorCode.AUTH_INVALID_CREDENTIALS.raise();
         return user;
     }

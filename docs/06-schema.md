@@ -1,7 +1,7 @@
 # 06. DB 스키마 (1차)
 
 `02-domain-model.md`의 개념을 실제 테이블로 옮긴 것이다. 규칙은 `conventions.md` 5절(SandboxHr DB 규칙)을 따른다.
-이 문서가 `V1__schema.sql`을 쓸 때의 기준이다. 표기한 타입은 SandboxHr 스키마와 같은 타입 이름이다.
+전체 도메인의 계획 스키마다. 실제 구현은 V1(인증 5개), V2(워크스페이스·멤버·초대 3개)까지이며 나머지는 후속 작업이다. 이미 적용한 마이그레이션은 바꾸지 않는다. 표기한 타입은 SandboxHr 스키마와 같은 타입 이름이다.
 
 > 2026-10-22 작성. 이 문서를 쓰면서 정한 것은 맨 아래 "이 문서에서 정한 것"과 D-020, D-021에 있다.
 
@@ -74,6 +74,15 @@ erDiagram
 
 - 역할 4개는 고정값이다. Kaneo의 워크스페이스별 사용자 정의 역할(`workspace_role`)과 멤버별 프로젝트 접근 제한은 1차에 넣지 않는다.
 - 라벨은 워크스페이스에 한 벌만 두고 작업항목과는 연결표로 잇는다. Kaneo처럼 작업마다 사본 행을 만들지 않는다 (D-009).
+
+### T-003 실제 V2 계약 (D-040~D-043)
+
+- `workspace`: 이름 trim 후 1~64자, slug trim·소문자·ASCII 영문/숫자/하이픈 2~64자. slug는 전체 행에서 고유하며 생성 후 고정·삭제 후에도 예약한다. `updated_by_agent varchar(64)?`를 추가한다.
+- `workspace_member`: `(workspace_id, iam_user_id)` 고유, 역할 CHECK, owner에 대한 workspace 부분 고유 인덱스. 생성·역할 변경·이전·제거의 트랜잭션 끝에서 owner가 정확히 한 명인지 검사한다. 조회 인덱스는 사용자→공간, 공간→가입 시각/멤버 ID다.
+- `workspace_invitation`: `token_hash varchar(128)`, `accepted_by/at`, `revoked_by/at`를 포함한다. 역할 admin/member/viewer와 네 상태를 CHECK로 제한하고 accepted/revoked는 해당 기록을 요구한다. token_hash 전체 고유, `(workspace_id,email)`은 status=pending 부분 고유다. 목록 인덱스는 공간/생성 시각/ID, 권한 변화 정리는 공간/초대자다.
+- 만료는 expires_at 경계에서 바로 판정하며 목록도 유효 상태를 반환한다. 재초대 쓰기에서 만료 pending을 expired로 정리한다. 원문 토큰은 저장하지 않는다.
+- IAM 테이블은 다시 만들지 않는다. `iam_session.active_workspace_id, iam_user_id` 인덱스만 추가한다. 선택 포인터는 FK나 접근권의 근거가 아니며 제거·탈퇴·삭제 시 정리한다.
+- V2 외래키는 IAM 사용자·workspace에 걸고, 목록은 SQL에서 필터·권한·size+1을 적용한다. 실제 정의는 `server/src/main/resources/db/migration/V2__workspace_membership_invitations.sql`이 기준이다.
 
 ## 3. project
 

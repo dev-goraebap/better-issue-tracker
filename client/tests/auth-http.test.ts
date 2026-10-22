@@ -53,3 +53,15 @@ test('foreign Location never causes a follow-up request', async () => {
   try { await assert.rejects(command('POST', '/api/v1/test'), /Invalid API Location/); assert.equal(writes, 1); }
   finally { globalThis.fetch = original; Reflect.deleteProperty(globalThis, 'window'); resetCsrf(); }
 });
+
+
+test('empty 201 returns the validated resource Location once without replay', async () => {
+  const original = globalThis.fetch; resetCsrf(); let writes = 0; let location = '';
+  Object.defineProperty(globalThis, 'window', { value: { location: { origin: 'http://localhost' } }, configurable: true });
+  globalThis.fetch = async path => {
+    if (path === '/api/v1/auth/csrf') return token('token');
+    writes++; return new Response(null, { status: 201, headers: { Location: '/api/v1/workspaces/fixture-id' } });
+  };
+  try { await command('POST', '/api/v1/workspaces', {}, value => { location = value; }); assert.equal(location, '/api/v1/workspaces/fixture-id'); assert.equal(writes, 1); }
+  finally { globalThis.fetch = original; Reflect.deleteProperty(globalThis, 'window'); resetCsrf(); }
+});

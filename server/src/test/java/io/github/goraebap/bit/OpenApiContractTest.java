@@ -36,11 +36,14 @@ class OpenApiContractTest {
     @MockitoBean
     private io.github.goraebap.bit.module.iam.domain.IamRepository iamRepository;
 
+    @MockitoBean
+    private io.github.goraebap.bit.module.workspace.domain.WorkspaceRepository workspaceRepository;
+
     @Autowired
     private MockMvc mockMvc;
 
     @Test
-    void exportsOnlyTheBootstrapContract() throws Exception {
+    void exportsTheCurrentApiContract() throws Exception {
         String body = mockMvc.perform(get("/api/openapi"))
                 .andExpect(status().isOk())
                 .andReturn()
@@ -51,6 +54,15 @@ class OpenApiContractTest {
         assertThat(contract.path("paths").has("/api/v1/auth/sessions")).isTrue();
         assertThat(contract.path("paths").has("/api/v1/health")).isTrue();
         assertThat(contract.path("paths").has("/api/v1/capabilities")).isTrue();
+        assertThat(contract.at("/components/schemas/WorkspaceInvitation/properties/id")
+                        .isMissingNode())
+                .isFalse();
+        assertThat(contract.at("/components/schemas/WorkspaceInvitation/properties/status")
+                        .isMissingNode())
+                .isFalse();
+        assertThat(contract.at("/components/schemas/Invites/properties/items/items/$ref")
+                        .asText())
+                .endsWith("/WorkspaceInvitation");
         Path output = Path.of("openapi.json");
         if (Boolean.getBoolean("exportOpenApi")) {
             Files.writeString(output, mapper.writerWithDefaultPrettyPrinter().writeValueAsString(contract) + "\n");

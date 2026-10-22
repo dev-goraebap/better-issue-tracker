@@ -1,23 +1,19 @@
-import { createElement } from 'react';
-import Home01Icon from '@hugeicons/core-free-icons/Home01Icon';
-import InboxIcon from '@hugeicons/core-free-icons/InboxIcon';
-import CheckListIcon from '@hugeicons/core-free-icons/CheckListIcon';
-import UserMultipleIcon from '@hugeicons/core-free-icons/UserMultipleIcon';
-import Folder02Icon from '@hugeicons/core-free-icons/Folder02Icon';
-import MoreHorizontalIcon from '@hugeicons/core-free-icons/MoreHorizontalIcon';
+import { ArrowLeftRight, Ellipsis, Folder, House, Inbox, ListTodo, PanelLeft, Settings, Users, X } from 'lucide-react';
 
-type IconData = readonly (readonly [string, Readonly<Record<string, string | number>>])[];
-const icons: Record<'home' | 'inbox' | 'tasks' | 'members' | 'documents' | 'more', IconData> = {
-  home: Home01Icon,
-  inbox: InboxIcon,
-  tasks: CheckListIcon,
-  members: UserMultipleIcon,
-  documents: Folder02Icon,
-  more: MoreHorizontalIcon,
+const icons = {
+  home: House,
+  inbox: Inbox,
+  tasks: ListTodo,
+  members: Users,
+  documents: Folder,
+  more: Ellipsis,
+  sidebar: PanelLeft,
+  close: X,
+  settings: Settings,
+  switcher: ArrowLeftRight,
 };
 
 export function NavIcon({ name }: { name: keyof typeof icons }) {
-  return <svg className="bit-nav-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
-    {icons[name].map(([tag, attributes], index) => createElement(tag, { ...attributes, key: index }))}
-  </svg>;
+  const Icon = icons[name];
+  return <Icon className="bit-nav-icon" size={20} strokeWidth={1.75} aria-hidden="true" focusable="false" />;
 }

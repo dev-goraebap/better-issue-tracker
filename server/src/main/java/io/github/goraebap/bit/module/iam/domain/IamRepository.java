@@ -6,6 +6,14 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface IamRepository {
+    List<Identity> findAllById(List<UUID> ids);
+
+    UUID activeWorkspace(UUID sessionId);
+
+    void selectWorkspace(UUID sessionId, UUID workspaceId);
+
+    void clearWorkspace(UUID workspaceId, UUID userId);
+
     boolean hasUsers();
 
     Optional<Identity> findUser(UUID id);
