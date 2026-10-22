@@ -104,6 +104,7 @@ dev.sh             로컬 실행
 - **이미지**: 루트 `Dockerfile`이 화면 빌드(Node 24) → 서버 jar(JDK 21) → 실행 이미지(JRE 21) 순서로 만든다. 비루트 사용자로 돌고, HEALTHCHECK는 `/api/v1/health`다(DB를 읽으므로 기동과 연결을 함께 알린다).
 - **화면 서빙**: 서버가 이미지 안 화면 파일을 서빙한다. `/api/`가 아니고 파일도 아닌 주소는 `index.html`, 마지막 조각에 확장자가 있는 주소는 404. `/assets/`는 1년 불변 캐시, 나머지 `no-cache`. 로그인 확인은 `/api/`에만 건다. 응답 압축은 앱 서버가 한다(프록시가 아니다).
 - **데이터**: 볼륨 하나(`/var/lib/bit`)에 SQLite DB(`bit.db`)와 로컬 파일 저장소를 둔다. 백업 대상은 이 볼륨이다.
+- **첫 실행 비밀값(D-035)**: `AUTH_SECRET`·`GIT_ENCRYPTION_KEY`가 비어 있으면 `GeneratedSecrets`가 DB 옆 `secrets.properties`에 독립된 키를 생성·유지한다. 환경 변수 값이 우선한다. 이 파일도 DB와 함께 백업한다.
 - **실행과 CI**: 로컬은 `sh dev.sh`(Docker 없음). 컨테이너 실행은 compose. CI는 GitHub Actions가 서버 `./gradlew check`, 화면 `npm run check`를 검사하고, 태그에서 이미지를 만든다. 배포 자동화는 나중이다 (D-026). 절차는 [배포](references/deploy.md).
 - **환경 변수 및 보안**: 자격 증명은 환경 변수로 주입한다. 선택 기능 설정이 비면 그 기능만 끈다(D-030). 비밀값(인증 비밀키·스토리지 키·SMTP 비밀번호·Git 토큰)은 관리자 화면에서 보이거나 바꾸지 않는다. 화면에는 값 없이 연결 상태(설정됨·없음)만 보인다. 저장소별 Git 토큰은 암호화해 DB에 둔다 (D-028).
 - **데이터베이스 운영**: 배포된 Flyway 마이그레이션은 수정하지 않고 새 마이그레이션으로 교정한다. DB와 파일 저장소 백업을 병행한다. SQLite 파일(WAL 포함)이 백업 대상이다. SQLite 설정(WAL, `synchronous=NORMAL`, `busy_timeout=5000`)은 Litestream 요구와 맞으며 서버는 체크포인트를 직접 하지 않는다. 연속 복제는 Litestream(선택)으로 한다.
@@ -150,7 +151,6 @@ dev.sh             로컬 실행
 - MCP 어댑터의 패키지 위치(모듈인지 `shared`인지)와 실시간 변경(SSE)을 맡는 곳.
 - 업무 기준 시간대(SandboxHr는 `Asia/Seoul` 고정, 이미지 `TZ` 포함). 개인 셀프호스팅이라 설정으로 둘지.
 - 일부만 채운 선택 기능 설정(예: SMTP 주소만 있고 비밀번호 없음)을 기동 실패로 볼지, 기능 꺼짐으로 볼지.
-- 운영 비밀값(`AUTH_SECRET` 등)을 첫 기동 때 자동 생성해 볼륨에 둘지.
 - 시스템 현황·로그 DB(SandboxHr `logs.db`)를 둘지.
 
 ## 완료 기준

@@ -1,0 +1,17 @@
+name: bit-dev
+services:
+  app:
+    image: bit:dev
+    build:
+      context: ../..
+    ports:
+      - "${BIT_BIND_ADDRESS:-127.0.0.1}:${BIT_PORT:-8080}:8080"
+    volumes:
+      - bit-data:/var/lib/bit
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+volumes:
+  bit-data:

@@ -12,7 +12,7 @@ AI 네이티브 경량 ALM(Application Lifecycle Management). 제품 가칭은 b
 로컬 에이전트에게 맥락을 전달할 때마다 사람이 "맥락 배달부"가 된다. 이걸 없앤다.
 
 ## 현재 상태
-- 단계: **기획 완료 / 저장소 초기화 중** — 다음은 `docs/tasks/T-001-bootstrap.md`(Codex)
+- 단계: **T-001 골격 구현·검증 완료** — 서버·클라이언트 검사, 로컬 실행, Docker 이미지 빌드와 컨테이너 HEALTHCHECK 통과 (`docs/tasks/T-001-bootstrap.md`).
 - 결정된 것: `docs/decisions.md`
 - 아직 안 정해진 것: `docs/open-questions.md`
 

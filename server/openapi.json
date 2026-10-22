@@ -1,0 +1,85 @@
+{
+  "openapi" : "3.1.0",
+  "info" : {
+    "title" : "BIT API",
+    "version" : "v1"
+  },
+  "servers" : [ {
+    "url" : "http://localhost",
+    "description" : "Generated server url"
+  } ],
+  "paths" : {
+    "/api/v1/health" : {
+      "get" : {
+        "tags" : [ "system-controller" ],
+        "summary" : "Check the server and its database",
+        "operationId" : "health",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Health"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/capabilities" : {
+      "get" : {
+        "tags" : [ "system-controller" ],
+        "summary" : "Read available optional capabilities",
+        "operationId" : "capabilities",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Capabilities"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components" : {
+    "schemas" : {
+      "Health" : {
+        "type" : "object",
+        "properties" : {
+          "status" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "status" ]
+      },
+      "Capabilities" : {
+        "type" : "object",
+        "properties" : {
+          "mail" : {
+            "type" : "boolean"
+          },
+          "gitIntegration" : {
+            "type" : "boolean"
+          },
+          "objectStorage" : {
+            "type" : "boolean"
+          },
+          "documentConversion" : {
+            "type" : "boolean"
+          },
+          "pdf" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "documentConversion", "gitIntegration", "mail", "objectStorage", "pdf" ]
+      }
+    }
+  }
+}

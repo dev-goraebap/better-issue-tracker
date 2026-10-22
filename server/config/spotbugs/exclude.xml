@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FindBugsFilter>
+  <!-- Generated jOOQ sources are outside application quality rules. -->
+  <Match><Package name="~io.github.goraebap.bit.jooq.*"/></Match>
+  <!-- Constructor injection intentionally keeps references to Spring collaborators. -->
+  <Match><Bug pattern="EI_EXPOSE_REP2"/></Match>
+</FindBugsFilter>

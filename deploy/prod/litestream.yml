@@ -1,0 +1,4 @@
+dbs:
+  - path: /var/lib/bit/bit.db
+    replicas:
+      - url: ${LITESTREAM_REPLICA_URL}

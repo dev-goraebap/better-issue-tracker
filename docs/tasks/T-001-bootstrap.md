@@ -74,3 +74,39 @@
 - 설계에 영향을 준 판단(예: 라이브러리 선택)은 `docs/decisions.md`에 결정으로 추가한다 (AGENTS.md 작업 규칙).
 - 스킬과 실제가 달랐던 곳은 `skill-repair` 절차로 해당 `bit-*` 스킬을 고친다.
 - 커밋은 사용자가 요청할 때만 한다.
+
+## 진행 기록 — 2026-10-22
+
+골격 구현과 로컬·컨테이너 검증을 모두 마쳤다.
+
+- [x] `server/gradlew.bat check`: Spotless·Checkstyle·SpotBugs·ArchUnit·계약·SQLite 통합 테스트 통과 (14개 테스트). 스킬 동기화 후 재검사도 통과.
+- [x] `client/`: `npm ci` 후 `npm run check` 통과 (컴포넌트·FSD·HTTP 테스트 3개·TypeScript·Vite 빌드).
+- [x] `sh dev.sh`: Java 21 서버와 Vite 동시 기동. health 200, capabilities 계약 일치, Vite `/api` 프록시 200.
+- [x] 390px 모바일과 1440px 데스크톱에서 메뉴 확인. 모바일 더보기에서 문서함 이동, 뒤로가기 시 시트만 닫힘 확인.
+- [x] `bootJar` 빌드 후 별도 SQLite 파일로 패키징한 JAR 실행. `/`, `/documents`, 두 공개 API가 200이며 실제 빌드 자산은 `public, max-age=31536000, immutable` 캐시로 서빙됨.
+- [x] `server/openapi.json`과 `client/src/shared/api/schema.d.ts` 생성·동기화.
+- [x] dev·prod compose의 `config --quiet` 통과. 실행 스크립트에 Git 실행 권한과 LF 정책 적용.
+- [x] 작성한 서버·화면·배포·CI 코드에서 원본 제품 이름 잔존 0건 확인.
+- [x] `docker build --progress=plain -t bit:dev .` 성공 및 실행 컨테이너 HEALTHCHECK `healthy` 확인.
+
+첫 시도는 Docker Desktop의 `dockerInference` 소켓 기동 오류로 막혔다. 사용자가 Docker Desktop을 정상 기동한 뒤 Docker Engine 29.2.1에서 다시 실행해 성공했다.
+검증은 기존 개발 서버와 분리한 `bit-t001-verify` compose 프로젝트, `127.0.0.1:18081` 포트, 새 전용 데이터 볼륨을 사용했다.
+
+- 이미지: `bit:dev`, ID `sha256:b4cfb2595713e256d6bf8f6b930f610f2d482fa4a1433b88105d5b3acbc2e130`.
+- `compose up --wait` 성공. 이미지에 정의한 HEALTHCHECK가 종료 코드 0, 상태 `healthy`.
+- 컨테이너의 `/`, `/documents`, health·capabilities API 모두 200. capabilities는 지정한 다섯 키와 값 일치.
+- 실제 JS 자산은 200 및 `public, max-age=31536000, immutable`. 없는 JS 파일은 404, 비공개 API는 401 `AUTH_UNAUTHENTICATED`.
+- 실행 UID 10001, `/var/lib/bit/bit.db` 생성, `secrets.properties` 권한 600 확인.
+- 검증 후 전용 컨테이너·네트워크·볼륨은 정리하고 `bit:dev` 이미지는 유지했다.
+
+재현 명령(아래 포트는 기본 8080이며 기존 개발 서버와 함께 띄우려면 `BIT_PORT`로 별도 포트를 지정한다):
+
+```sh
+docker build -t bit:dev .
+docker compose -f deploy/dev/compose.yaml up -d
+docker compose -f deploy/dev/compose.yaml ps
+curl http://localhost:8080/api/v1/health
+curl http://localhost:8080/api/v1/capabilities
+```
+
+결정 기록: D-034(모바일 워크스페이스 메뉴), D-035(첫 실행 비밀값). 구현·계약 생성물·검증 기록을 T-001 커밋에 함께 포함한다.

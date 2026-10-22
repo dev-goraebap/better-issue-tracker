@@ -1,0 +1,15 @@
+# Whitelist build inputs; exclude data, secrets and local outputs.
+*
+!client/
+!server/
+client/**/node_modules
+client/**/dist
+client/**/*.tsbuildinfo
+client/**/.env*
+server/build/
+server/.gradle/
+server/data/
+server/.env
+server/.env.*
+server/bin/
+server/out/
