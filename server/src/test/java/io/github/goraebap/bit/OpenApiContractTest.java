@@ -24,6 +24,7 @@ import tools.jackson.databind.json.JsonMapper;
 @SpringBootTest(
         properties = {
             "app.secrets.generate=false",
+            "app.auth.secret=authentication-test-secret-at-least-32-characters",
             "spring.autoconfigure.exclude=org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration,org.springframework.boot.jooq.autoconfigure.JooqAutoConfiguration,org.springframework.boot.flyway.autoconfigure.FlywayAutoConfiguration,org.springframework.boot.security.autoconfigure.UserDetailsServiceAutoConfiguration"
         })
 @AutoConfigureMockMvc
@@ -31,6 +32,9 @@ import tools.jackson.databind.json.JsonMapper;
 class OpenApiContractTest {
     @MockitoBean
     private DataSource dataSource;
+
+    @MockitoBean
+    private io.github.goraebap.bit.module.iam.domain.IamRepository iamRepository;
 
     @Autowired
     private MockMvc mockMvc;
@@ -44,7 +48,7 @@ class OpenApiContractTest {
                 .getContentAsString();
         var mapper = JsonMapper.builder().build();
         var contract = mapper.readTree(body);
-        assertThat(contract.path("paths").properties()).hasSize(2);
+        assertThat(contract.path("paths").has("/api/v1/auth/sessions")).isTrue();
         assertThat(contract.path("paths").has("/api/v1/health")).isTrue();
         assertThat(contract.path("paths").has("/api/v1/capabilities")).isTrue();
         Path output = Path.of("openapi.json");

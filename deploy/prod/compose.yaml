@@ -6,6 +6,9 @@ services:
       - "${BIT_BIND_ADDRESS:-127.0.0.1}:${BIT_PORT:-8080}:8080"
     volumes:
       - bit-data:/var/lib/bit
+    environment:
+      AUTH_COOKIE_SECURE: "${AUTH_COOKIE_SECURE:-true}"
+      AUTH_ALLOWED_ORIGINS: "${AUTH_ALLOWED_ORIGINS:?Set the public application origin, e.g. https://bit.example.com}"
     logging:
       driver: json-file
       options:

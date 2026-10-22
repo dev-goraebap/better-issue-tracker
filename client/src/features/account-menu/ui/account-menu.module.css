@@ -1,0 +1,2 @@
+.link { display: flex; align-items: center; min-block-size: var(--spacing-8); }
+@media (width < 64rem) { .link { min-block-size: var(--size-element-touch); } }

@@ -4,6 +4,7 @@ import { Link, useNavigate } from '@tanstack/react-router';
 import { MOBILE_TAB_PATHS, PRODUCT_NAME, WORKSPACE_NAVIGATION } from '@/shared/config';
 import { NavIcon } from '@/shared/ui';
 import { afterOverlayClose } from '@/shared/lib/back-close';
+import { AccountMenu } from '@/features/account-menu';
 import styles from './app-shell.module.css';
 
 export function MobileNavigation({ pathname }: { pathname: string }) {
@@ -40,6 +41,10 @@ export function MobileNavigation({ pathname }: { pathname: string }) {
         </nav>
         <Text type="label">프로젝트</Text>
         <Text type="supporting">아직 프로젝트가 없습니다.</Text>
+        <AccountMenu onNavigate={path => {
+          setMoreOpen(false);
+          afterOverlayClose(() => { void navigate({ to: path }); });
+        }} />
       </VStack>
     </BottomSheet>
   </>;

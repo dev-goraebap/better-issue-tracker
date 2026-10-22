@@ -16,3 +16,13 @@ body { font-family: 'Pretendard Variable', Pretendard, system-ui, sans-serif; }
   word-break: keep-all;
 }
 .bit-nav-icon { inline-size: var(--spacing-5); block-size: var(--spacing-5); flex-shrink: 0; }
+@media (max-width: 63.999rem) {
+  .astryx-text-input, .astryx-selector, [data-action-row] {
+    --size-element-md: var(--size-element-touch);
+    --size-element-sm: var(--size-element-touch);
+    --size-element-lg: var(--size-element-touch);
+    --text-body-size: 1rem;
+    --text-label-size: 1rem;
+  }
+  [data-action-row] button { min-block-size: var(--size-element-touch); }
+}

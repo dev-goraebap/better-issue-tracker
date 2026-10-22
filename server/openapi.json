@@ -9,6 +9,226 @@
     "description" : "Generated server url"
   } ],
   "paths" : {
+    "/api/v1/me/password" : {
+      "put" : {
+        "tags" : [ "auth-controller" ],
+        "operationId" : "password",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/Password"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "204" : {
+            "description" : "Password changed and session rotated"
+          }
+        }
+      }
+    },
+    "/api/v1/me/api-keys" : {
+      "get" : {
+        "tags" : [ "auth-controller" ],
+        "operationId" : "keys",
+        "parameters" : [ {
+          "name" : "cursor",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "size",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 50
+          }
+        }, {
+          "name" : "sort",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : "createdAt"
+          }
+        }, {
+          "name" : "direction",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : "DESC"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Keys"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post" : {
+        "tags" : [ "auth-controller" ],
+        "operationId" : "key",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CreateKey"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "description" : "Key shown once",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CreatedKey"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/sessions" : {
+      "post" : {
+        "tags" : [ "auth-controller" ],
+        "operationId" : "login",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/Login"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "description" : "Session created"
+          }
+        }
+      },
+      "delete" : {
+        "tags" : [ "auth-controller" ],
+        "operationId" : "logoutAll",
+        "responses" : {
+          "204" : {
+            "description" : "All sessions ended"
+          }
+        }
+      }
+    },
+    "/api/v1/auth/bootstrap" : {
+      "get" : {
+        "tags" : [ "auth-controller" ],
+        "operationId" : "bootstrap",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/BootstrapStatus"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post" : {
+        "tags" : [ "auth-controller" ],
+        "operationId" : "bootstrap_1",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/Bootstrap"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "description" : "First administrator created"
+          }
+        }
+      }
+    },
+    "/api/v1/admin/users/{userId}/temporary-passwords" : {
+      "post" : {
+        "tags" : [ "auth-controller" ],
+        "operationId" : "temporaryPassword",
+        "parameters" : [ {
+          "name" : "userId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/Reauthenticate"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TemporaryPassword"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/me" : {
+      "get" : {
+        "tags" : [ "auth-controller" ],
+        "operationId" : "me",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Me"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/health" : {
       "get" : {
         "tags" : [ "system-controller" ],
@@ -46,10 +266,273 @@
           }
         }
       }
+    },
+    "/api/v1/auth/sessions/current" : {
+      "get" : {
+        "tags" : [ "auth-controller" ],
+        "operationId" : "currentSession",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Session"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete" : {
+        "tags" : [ "auth-controller" ],
+        "operationId" : "logout",
+        "responses" : {
+          "204" : {
+            "description" : "Session ended"
+          }
+        }
+      }
+    },
+    "/api/v1/auth/csrf" : {
+      "get" : {
+        "tags" : [ "auth-controller" ],
+        "operationId" : "csrf",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Csrf"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/me/api-keys/{keyId}" : {
+      "delete" : {
+        "tags" : [ "auth-controller" ],
+        "operationId" : "revoke",
+        "parameters" : [ {
+          "name" : "keyId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "Key revoked"
+          }
+        }
+      }
     }
   },
   "components" : {
     "schemas" : {
+      "Password" : {
+        "type" : "object",
+        "properties" : {
+          "currentPassword" : {
+            "type" : "string",
+            "maxLength" : 128,
+            "minLength" : 1
+          },
+          "newPassword" : {
+            "type" : "string",
+            "maxLength" : 128,
+            "minLength" : 1
+          }
+        },
+        "required" : [ "currentPassword", "newPassword" ]
+      },
+      "CreateKey" : {
+        "type" : "object",
+        "properties" : {
+          "name" : {
+            "type" : "string",
+            "maxLength" : 64,
+            "minLength" : 0
+          },
+          "agentName" : {
+            "type" : "string",
+            "maxLength" : 64,
+            "minLength" : 0
+          },
+          "expiresInDays" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "currentPassword" : {
+            "type" : "string",
+            "maxLength" : 128,
+            "minLength" : 1
+          }
+        },
+        "required" : [ "currentPassword", "name" ]
+      },
+      "CreatedKey" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "key" : {
+            "type" : "string"
+          },
+          "prefix" : {
+            "type" : "string"
+          },
+          "expiresAt" : {
+            "type" : [ "string", "null" ],
+            "format" : "date-time"
+          }
+        },
+        "required" : [ "id", "key", "prefix" ]
+      },
+      "Login" : {
+        "type" : "object",
+        "properties" : {
+          "email" : {
+            "type" : "string",
+            "maxLength" : 256,
+            "minLength" : 0
+          },
+          "password" : {
+            "type" : "string",
+            "maxLength" : 128,
+            "minLength" : 1
+          }
+        },
+        "required" : [ "email", "password" ]
+      },
+      "Bootstrap" : {
+        "type" : "object",
+        "properties" : {
+          "name" : {
+            "type" : "string",
+            "maxLength" : 64,
+            "minLength" : 0
+          },
+          "email" : {
+            "type" : "string",
+            "format" : "email",
+            "maxLength" : 256,
+            "minLength" : 0
+          },
+          "password" : {
+            "type" : "string",
+            "maxLength" : 128,
+            "minLength" : 1
+          }
+        },
+        "required" : [ "email", "name", "password" ]
+      },
+      "Reauthenticate" : {
+        "type" : "object",
+        "properties" : {
+          "currentPassword" : {
+            "type" : "string",
+            "maxLength" : 128,
+            "minLength" : 1
+          }
+        },
+        "required" : [ "currentPassword" ]
+      },
+      "TemporaryPassword" : {
+        "type" : "object",
+        "properties" : {
+          "temporaryPassword" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "temporaryPassword" ]
+      },
+      "Me" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "email" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "instanceAdmin" : {
+            "type" : "boolean"
+          },
+          "mustChangePassword" : {
+            "type" : "boolean"
+          },
+          "authenticationMethod" : {
+            "type" : "string",
+            "enum" : [ "SESSION", "API_KEY" ]
+          },
+          "agentName" : {
+            "type" : [ "string", "null" ]
+          }
+        },
+        "required" : [ "authenticationMethod", "email", "id", "instanceAdmin", "mustChangePassword", "name" ]
+      },
+      "Key" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "agentName" : {
+            "type" : [ "string", "null" ]
+          },
+          "prefix" : {
+            "type" : "string"
+          },
+          "createdAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "lastUsedAt" : {
+            "type" : [ "string", "null" ],
+            "format" : "date-time"
+          },
+          "expiresAt" : {
+            "type" : [ "string", "null" ],
+            "format" : "date-time"
+          },
+          "revokedAt" : {
+            "type" : [ "string", "null" ],
+            "format" : "date-time"
+          }
+        },
+        "required" : [ "createdAt", "id", "name", "prefix" ]
+      },
+      "Keys" : {
+        "type" : "object",
+        "properties" : {
+          "items" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Key"
+            }
+          },
+          "nextCursor" : {
+            "type" : [ "string", "null" ]
+          }
+        },
+        "required" : [ "items" ]
+      },
       "Health" : {
         "type" : "object",
         "properties" : {
@@ -79,6 +562,47 @@
           }
         },
         "required" : [ "documentConversion", "gitIntegration", "mail", "objectStorage", "pdf" ]
+      },
+      "Session" : {
+        "type" : "object",
+        "properties" : {
+          "user" : {
+            "$ref" : "#/components/schemas/Me"
+          },
+          "expiresAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "absoluteExpiresAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "mustChangePassword" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "absoluteExpiresAt", "expiresAt", "mustChangePassword", "user" ]
+      },
+      "Csrf" : {
+        "type" : "object",
+        "properties" : {
+          "token" : {
+            "type" : "string"
+          },
+          "headerName" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "headerName", "token" ]
+      },
+      "BootstrapStatus" : {
+        "type" : "object",
+        "properties" : {
+          "canBootstrap" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "canBootstrap" ]
       }
     }
   }

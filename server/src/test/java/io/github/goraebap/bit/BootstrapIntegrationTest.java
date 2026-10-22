@@ -32,7 +32,11 @@ import org.springframework.test.web.servlet.MockMvc;
 @Tag("integration")
 @SpringBootTest(
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
-        properties = {"app.secrets.generate=false", "app.screens=classpath:/screens/"})
+        properties = {
+            "app.secrets.generate=false",
+            "app.screens=classpath:/screens/",
+            "app.auth.secret=authentication-test-secret-at-least-32-characters"
+        })
 @AutoConfigureMockMvc
 class BootstrapIntegrationTest {
     @Autowired

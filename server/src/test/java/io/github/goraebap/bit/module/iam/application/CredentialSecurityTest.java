@@ -1,0 +1,58 @@
+package io.github.goraebap.bit.module.iam.application;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+import io.github.goraebap.bit.shared.web.CurrentUser;
+import jakarta.servlet.http.Cookie;
+import java.time.Clock;
+import java.time.Duration;
+import java.util.UUID;
+import org.junit.jupiter.api.Test;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.mock.web.MockHttpServletResponse;
+
+class CredentialSecurityTest {
+    @Test
+    void productionCookiesAreSecureAndDeletionUsesTheSameScope() {
+        var cookies = new AuthCookies(true, Clock.systemUTC());
+        var response = new MockHttpServletResponse();
+        cookies.set(response, "bit_session", "test-token", Duration.ofDays(7));
+        assertThat(response.getHeader("Set-Cookie"))
+                .contains("Secure", "HttpOnly", "SameSite=Lax", "Path=/", "Max-Age=604800");
+        var deleted = new MockHttpServletResponse();
+        cookies.clearSession(deleted);
+        assertThat(deleted.getHeader("Set-Cookie"))
+                .contains("Secure", "HttpOnly", "SameSite=Lax", "Path=/", "Max-Age=0");
+    }
+
+    @Test
+    void csrfCannotBeReusedAcrossSessionsOrForged() {
+        var codec = new TokenCodec("test-only-secret-at-least-32-characters");
+        var tokens = new SignedCsrfTokens(codec, new AuthCookies(false, Clock.systemUTC()));
+        var first = new MockHttpServletRequest();
+        first.setAttribute(
+                SignedCsrfTokens.PRINCIPAL,
+                new CurrentUser(UUID.randomUUID(), false, CurrentUser.Method.SESSION, UUID.randomUUID(), null, false));
+        String raw = tokens.generateToken(first).getToken();
+        first.setCookies(new Cookie("bit_csrf", raw));
+        assertThat(tokens.loadToken(first)).isNotNull();
+        var other = new MockHttpServletRequest();
+        other.setCookies(new Cookie("bit_csrf", raw));
+        assertThat(tokens.loadToken(other)).isNull();
+        first.setCookies(new Cookie("bit_csrf", raw.substring(0, 44) + codec.random()));
+        assertThat(tokens.loadToken(first)).isNull();
+        first.setCookies(new Cookie("bit_csrf", raw), new Cookie("bit_csrf", raw));
+        assertThat(tokens.loadToken(first)).isNull();
+    }
+
+    @Test
+    void tokenPurposesAreSeparatedAndShortSecretsFailAtStartup() {
+        var codec = new TokenCodec("test-only-secret-at-least-32-characters");
+        String raw = codec.random();
+        assertThat(codec.hash("session", raw)).isNotEqualTo(codec.hash("api-key", raw));
+        assertThatThrownBy(() -> new TokenCodec("short")).isInstanceOf(IllegalStateException.class);
+        assertThat(new IamRequests.Login("test@example.test", "test-sensitive-value").toString())
+                .doesNotContain("test-sensitive-value");
+    }
+}

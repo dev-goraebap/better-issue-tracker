@@ -12,7 +12,8 @@ AI 네이티브 경량 ALM(Application Lifecycle Management). 제품 가칭은 b
 로컬 에이전트에게 맥락을 전달할 때마다 사람이 "맥락 배달부"가 된다. 이걸 없앤다.
 
 ## 현재 상태
-- 단계: **T-001 골격 구현·검증 완료** — 서버·클라이언트 검사, 로컬 실행, Docker 이미지 빌드와 컨테이너 HEALTHCHECK 통과 (`docs/tasks/T-001-bootstrap.md`).
+- 단계: **T-002 인증 구현·자동 검증 완료** — 최초 관리자, 세션, 비밀번호, API 키와 화면. 서버 29개·클라이언트 7개 테스트, Docker HEALTHCHECK·같은 볼륨 재생성 검증 통과 (`docs/tasks/T-002-authentication.md`).
+- 다음: **T-003 워크스페이스·멤버십·초대 지시서 작성**. 가입·역할·API 키 정책은 D-036~D-039로 확정했다. 업무 권한 구현·세션/Bearer 일치 검증은 후속 작업이다.
 - 결정된 것: `docs/decisions.md`
 - 아직 안 정해진 것: `docs/open-questions.md`
 
