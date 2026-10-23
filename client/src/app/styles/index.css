@@ -6,6 +6,10 @@
 
 :root {
   --size-element-touch: 3rem;
+  --bit-field-font-size: 1rem;
+  --bit-field-line-height: 1.5rem;
+  --bit-field-padding: var(--spacing-3);
+  --bit-field-height: calc(var(--bit-field-line-height) + var(--bit-field-padding) * 2 + var(--border-width) * 2);
 }
 html { font-size: 100%; }
 body { font-family: 'Pretendard Variable', Pretendard, system-ui, sans-serif; }
@@ -24,13 +28,33 @@ body { font-family: 'Pretendard Variable', Pretendard, system-ui, sans-serif; }
 .astryx-bottom-sheet {
   border: var(--border-width) solid var(--color-border);
 }
+/* Match the native email field across forms and control sizes. Keep labels compact. */
+:is(.astryx-text-input, .astryx-selector, .astryx-typeahead, .astryx-number-input, .astryx-date-input, .astryx-date-range-input, .astryx-time-input, .astryx-input-group) {
+  --size-element-sm: var(--bit-field-height);
+  --size-element-md: var(--bit-field-height);
+  --size-element-lg: var(--bit-field-height);
+  --text-body-size: var(--bit-field-font-size);
+  min-block-size: var(--bit-field-height);
+  padding-inline: var(--bit-field-padding);
+}
+:is(.astryx-selector, .astryx-typeahead) {
+  padding-block: var(--bit-field-padding);
+  line-height: var(--bit-field-line-height);
+}
+:is(.astryx-text-input, .astryx-number-input, .astryx-date-input, .astryx-date-range-input, .astryx-time-input, .astryx-input-group) input,
+.astryx-selector,
+.astryx-typeahead,
+.astryx-text-area textarea {
+  font-size: var(--bit-field-font-size);
+  line-height: var(--bit-field-line-height);
+}
+.astryx-text-area textarea { padding: var(--bit-field-padding); }
+.bit-date-field-trigger { min-block-size: var(--bit-field-height); font-size: var(--bit-field-font-size); }
 @media (max-width: 63.999rem) {
-  .astryx-text-input, .astryx-selector, [data-action-row] {
+  [data-action-row] {
     --size-element-md: var(--size-element-touch);
     --size-element-sm: var(--size-element-touch);
     --size-element-lg: var(--size-element-touch);
-    --text-body-size: 1rem;
-    --text-label-size: 1rem;
   }
   [data-action-row] button { min-block-size: var(--size-element-touch); }
 }
