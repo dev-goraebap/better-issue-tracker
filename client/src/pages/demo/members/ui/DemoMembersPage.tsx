@@ -7,14 +7,14 @@ import { DefaultAvatar, ItemList, ItemMeta, ItemRow, ListToolbar, NavIcon, PageF
 import { dateText, demoStyles, INVITATIONS, PEOPLE, personOf, ROLE_LABELS, type Invitation, type MembersSearch, type Person, type Role } from '@/entities/demo-sample';
 
 type Tab = 'members' | 'invitations';
-const TABS: PageTab<Tab>[] = [{ value: 'members', label: '멤버', icon: 'members' }, { value: 'invitations', label: '초대', icon: 'mail' }];
+const TABS: PageTab<Tab>[] = [{ value: 'members', label: '구성원', icon: 'members' }, { value: 'invitations', label: '초대', icon: 'mail' }];
 const ROLE_OPTIONS = (Object.keys(ROLE_LABELS) as Role[]).map(role => ({ value: role, label: ROLE_LABELS[role] }));
 
 /**
- * PATTERN · 탭마다 다른 표, /demo/w/$workspaceId/members (as the real /members?view=invitations). Copy this page when one
+ * PATTERN · 탭마다 다른 표 (구성원), /demo/w/$workspaceId/members (as the real /members?view=invitations). Copy this page when one
  * menu holds a few lists of different shapes.
  *
- * - The tab is the URL's view (멤버 left out); each tab has its own columns and its own action (초대 탭: 멤버 초대).
+ * - The tab is the URL's view (구성원 left out); each tab has its own columns and its own action (초대 탭: 구성원 초대).
  * - A row's control (역할 선택, 행 메뉴) sits in its cell; pressing it never opens the row.
  * - A phone shows the same rows as cards with the picture as the lead.
  */
@@ -51,17 +51,17 @@ export function DemoMembersPage() {
       { label: '초대 취소', icon: <NavIcon name="delete" />, onClick: () => undefined },
     ]} /> },
   ], []);
-  return <PageFrame title="Members" icon="members" chrome="header"
+  return <PageFrame title="구성원" icon="members" chrome="header"
     tabs={<PageTabs value={tab} items={TABS} panelId={panelId} onChange={next => go({ view: next === 'members' ? undefined : 'invitations' })} />}>
-    <ListToolbar search={tab === 'members' ? { label: '멤버 검색', placeholder: '이름이나 이메일로 찾기', value: search.q, onChange: q => go({ q }, true) } : undefined}
-      label="초대 조건" action={tab === 'invitations' ? { label: '멤버 초대', icon: 'plus', onClick: () => undefined, isCreate: true } : undefined} />
+    <ListToolbar search={tab === 'members' ? { label: '구성원 검색', placeholder: '이름이나 이메일로 찾기', value: search.q, onChange: q => go({ q }, true) } : undefined}
+      label="초대 조건" action={tab === 'invitations' ? { label: '구성원 초대', icon: 'plus', onClick: () => undefined, isCreate: true } : undefined} />
     <div role="tabpanel" id={panelId}>
       {tab === 'members' && (members.length === 0
-        ? <PageState kind="search" title={`'${search.q}'에 맞는 멤버가 없습니다`} description="다른 이름이나 이메일로 찾아보세요." />
+        ? <PageState kind="search" title={`'${search.q}'에 맞는 구성원이 없습니다`} description="다른 이름이나 이메일로 찾아보세요." />
         : isMobile
-          ? <ItemList label="멤버">{members.map(person => <ItemRow key={person.id} lead={<DefaultAvatar seed={person.id} name={person.name} size={32} />} title={person.name}
+          ? <ItemList label="구성원">{members.map(person => <ItemRow key={person.id} lead={<DefaultAvatar seed={person.id} name={person.name} size={32} />} title={person.name}
             meta={<><ItemMeta>{person.email}</ItemMeta><ItemMeta>{ROLE_LABELS[roles[person.id]]}</ItemMeta></>} />)}</ItemList>
-          : <SheetTable label="멤버" columns={memberColumns} rows={members} rowKey={row => row.id} minWidth="40rem" />)}
+          : <SheetTable label="구성원" columns={memberColumns} rows={members} rowKey={row => row.id} minWidth="40rem" />)}
       {tab === 'invitations' && (isMobile
         ? <ItemList label="초대">{INVITATIONS.map(invite => <ItemRow key={invite.id} title={invite.email}
           meta={<><ItemMeta>{ROLE_LABELS[invite.role]}</ItemMeta><ItemMeta><StatusToken label={invite.status === 'pending' ? '대기' : '만료'} color={invite.status === 'pending' ? 'blue' : 'gray'} /></ItemMeta><ItemMeta>{dateText(invite.expiresAt)}</ItemMeta></>} />)}</ItemList>

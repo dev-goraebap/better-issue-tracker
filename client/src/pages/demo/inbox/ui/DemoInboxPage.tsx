@@ -4,8 +4,7 @@ import { useMediaQuery } from '@astryxdesign/core/hooks';
 import { Link, useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import { MOBILE_QUERY } from '@/shared/config';
 import { BackLink, DefaultAvatar, ITEM_ROW_LINK, ItemList, ItemMeta, ItemRow, ListToolbar, PageFrame, PageState, type ListFilter, type ListFilterValues } from '@/shared/ui';
-import { agoText, NOTICES, personOf, type InboxSearch } from '@/entities/demo-sample';
-import { markAllRead, markRead, useReadNotices } from '../model/read-notices';
+import { agoText, type InboxSearch, markAllRead, markRead, NOTICES, personOf, useReadNotices } from '@/entities/demo-sample';
 import { NoticeDetail } from './NoticeDetail';
 import { NoticeList } from './NoticeList';
 import styles from './inbox.module.css';
@@ -13,7 +12,8 @@ import styles from './inbox.module.css';
 const KIND_LABELS = { mention: '언급', assigned: '배정', decision: '결정', review: '검토 요청' } as const;
 
 /**
- * PATTERN · 목록과 내용 (Inbox), /demo/w/$workspaceId/inbox and /inbox/$noticeId. Copy this page for a stream of short
+ * PATTERN · 목록과 내용 (알림), /demo/w/$workspaceId/inbox and /inbox/$noticeId, opened from the bell at the menu's head
+ * rather than a menu entry (D-059). Copy this page for a stream of short
  * items each opened on the spot.
  *
  * - A desktop splits the card as Kaneo does: a narrow list at the left (NoticeList, its own scroll) and the open item at
@@ -47,11 +47,11 @@ export function DemoInboxPage() {
     : <PageState title="새 알림이 없습니다" description="언급되거나 작업이 배정되면 여기에 모입니다." />;
 
   // A phone opens one notice as a page of its own, with its own way back to the list.
-  if (isMobile && noticeId) return <PageFrame title={open?.title ?? '알림'} wrapsTitle back={<BackLink to="/demo/w/$workspaceId/inbox" params={{ workspaceId }} search={search} label="Inbox" />}>
+  if (isMobile && noticeId) return <PageFrame title={open?.title ?? '알림'} wrapsTitle back={<BackLink to="/demo/w/$workspaceId/inbox" params={{ workspaceId }} search={search} label="알림" />}>
     {open ? <NoticeDetail workspaceId={workspaceId} notice={open} isTitleShown={false} /> : <PageState kind="not-found" title="알림을 찾을 수 없습니다" description="지워졌거나 오래되어 정리되었습니다." />}
   </PageFrame>;
 
-  return <PageFrame title="Inbox" icon="inbox" chrome="header">
+  return <PageFrame title="알림" icon="bell" chrome="header">
     <ListToolbar label="알림 조건" filters={filters} onFiltersChange={(values: ListFilterValues) => go(values as Partial<InboxSearch>)}
       action={unread > 0 ? { label: '모두 읽음', icon: 'done', onClick: markAllRead } : undefined} />
     {isMobile

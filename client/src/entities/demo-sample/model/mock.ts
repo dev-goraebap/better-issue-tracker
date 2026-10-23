@@ -144,6 +144,19 @@ export const INVITATIONS: Invitation[] = [
   { id: 'i2', email: 'design@partner.example', role: 'viewer', invitedById: 'u2', expiresAt: day(2), status: 'expired' },
 ];
 
+export type ApiKey = { id: string; name: string; prefix: string; createdAt: string; lastUsedAt?: string; agent?: string };
+export const API_KEYS: ApiKey[] = [
+  { id: 'k1', name: 'Claude Code (노트북)', prefix: 'bit_8f3a', createdAt: day(12), lastUsedAt: day(0, 11), agent: 'Claude' },
+  { id: 'k2', name: 'Codex CI', prefix: 'bit_c21e', createdAt: day(30), lastUsedAt: day(2, 9), agent: 'Codex' },
+  { id: 'k3', name: '옛 스크립트', prefix: 'bit_04d9', createdAt: day(90) },
+];
+export type LoginSession = { id: string; device: string; place: string; lastSeenAt: string; isCurrent?: boolean };
+export const LOGIN_SESSIONS: LoginSession[] = [
+  { id: 'l1', device: 'Chrome · Windows', place: '서울', lastSeenAt: day(0, 12), isCurrent: true },
+  { id: 'l2', device: 'Safari · iPhone', place: '서울', lastSeenAt: day(1, 21) },
+  { id: 'l3', device: 'Firefox · macOS', place: '부산', lastSeenAt: day(9, 15) },
+];
+
 /** A date as the lists show it: 10월 23일, with the year only when it is not this one. */
 export function dateText(iso: string) {
   const date = new Date(iso);

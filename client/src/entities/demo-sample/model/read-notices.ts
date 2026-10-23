@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from 'react';
-import { NOTICES } from '@/entities/demo-sample';
+import { NOTICES } from './mock';
 
 /**
  * Which notices the member has read, kept in memory for the demo's visit so the list and the detail (two addresses)

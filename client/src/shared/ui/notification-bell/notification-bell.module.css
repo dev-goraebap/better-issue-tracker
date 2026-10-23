@@ -1,0 +1,27 @@
+.bell { position: relative; display: inline-grid; place-items: center; flex-shrink: 0; inline-size: 2.25rem; block-size: 2.25rem;
+  border-radius: var(--radius-element); color: var(--color-text-secondary); isolation: isolate; }
+.bell:hover { background: var(--color-background-muted); color: var(--color-text-primary); }
+.bell:focus-visible { outline: var(--focus-outline-width) var(--focus-outline-style) var(--focus-outline-color); outline-offset: 2px; }
+.badge { position: absolute; z-index: 2; top: 0.125rem; right: 0.125rem; min-inline-size: 1rem; block-size: 1rem; padding-inline: 0.25rem;
+  border-radius: var(--radius-full); background: var(--color-error, #e5484d); color: var(--color-on-accent, #fff);
+  font-size: 0.625rem; font-weight: 600; line-height: 1rem; text-align: center; font-variant-numeric: tabular-nums; }
+
+/*
+ * Unread notices light the bell itself, not its box: its strokes are painted with a turning gradient (NotificationBell
+ * defines it; the palette's tones are muted, so it carries a warm amber and coral of its own beside the accent), a
+ * glow of the same colours breathes along its outline (drop shadows follow the drawn shape), and every few seconds it
+ * gives a small swing. Motion stops for those who ask for less; the colours stay, still.
+ */
+.defs { position: absolute; inline-size: 0; block-size: 0; overflow: hidden; }
+.bell[data-unread] { --bell-glow-cool: var(--color-accent); --bell-glow-warm: #ffb547; --bell-glow-hot: #ff6b4a; color: var(--color-text-primary); }
+.bell[data-unread] svg:not(.defs) { transform-origin: 50% 12%; overflow: visible;
+  animation: bell-swing 5.2s ease-in-out infinite, bell-breathe 2.6s ease-in-out infinite; }
+.bell[data-unread] svg:not(.defs) * { stroke: var(--bell-stroke, currentColor); stroke-width: 1.9; }
+@keyframes bell-breathe {
+  0%, 100% { filter: drop-shadow(0 0 1px color-mix(in srgb, var(--bell-glow-hot) 55%, transparent)); }
+  50% { filter: drop-shadow(0 0 4px color-mix(in srgb, var(--bell-glow-warm) 85%, transparent)) drop-shadow(0 0 8px color-mix(in srgb, var(--bell-glow-hot) 45%, transparent)); }
+}
+@keyframes bell-swing { 0%, 86%, 100% { rotate: 0deg; } 88% { rotate: 14deg; } 90% { rotate: -12deg; } 92% { rotate: 8deg; } 94% { rotate: -5deg; } 96% { rotate: 2deg; } }
+@media (prefers-reduced-motion: reduce) {
+  .bell[data-unread] svg:not(.defs) { animation: none; filter: drop-shadow(0 0 3px color-mix(in srgb, var(--bell-glow-warm) 70%, transparent)); }
+}

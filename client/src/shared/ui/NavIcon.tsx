@@ -1,8 +1,8 @@
 import {
   ArrowDownWideNarrow, ArrowLeft, ArrowLeftRight, ArrowRight, ArrowUpNarrowWide, ArrowUpDown, Bell, BookOpen, CalendarDays, Check, CheckCheck,
-  ChevronDown, ChevronRight, CircleCheck, CircleDot, Clock, Copy, Ellipsis, File, FileText, Filter, Flag, Folder, GitBranch, Hash, House,
+  ChevronDown, ChevronLeft, ChevronRight, CircleCheck, CircleDot, Clock, Copy, Ellipsis, File, FileText, Filter, Flag, Folder, GitBranch, Hash, House,
   Inbox, KanbanSquare, LayoutGrid, LayoutList, Link, ListFilter, ListTodo, Lock, Mail, MessageSquare, Milestone, PanelLeft, Paperclip,
-  Pencil, Plus, RefreshCw, Rows3, Scale, Search, Settings, Shield, SlidersHorizontal, Sparkles, Table2, Tag, Trash2, User, Users, Workflow, X,
+  Pencil, Plus, RefreshCw, Repeat, Rows3, Scale, Search, Settings, Shield, SlidersHorizontal, Sparkles, Table2, Tag, Trash2, User, Users, Workflow, X,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -25,6 +25,7 @@ const icons: Record<string, LucideIcon> = {
   switcher: ArrowLeftRight,
   back: ArrowLeft,
   forward: ChevronRight,
+  previous: ChevronLeft,
   next: ArrowRight,
   check: Check,
   done: CheckCheck,
@@ -33,6 +34,7 @@ const icons: Record<string, LucideIcon> = {
   'list-filter': ListFilter,
   plus: Plus,
   retry: RefreshCw,
+  repeat: Repeat,
   search: Search,
   sort: ArrowUpDown,
   'sort-asc': ArrowUpNarrowWide,

@@ -1,8 +1,7 @@
 import { Button, Text, VStack } from '@astryxdesign/core';
 import { useNavigate } from '@tanstack/react-router';
 import { DefaultAvatar, NavIcon, SectionHeader } from '@/shared/ui';
-import { agoText, DECISIONS, itemOf, personOf, PersonCell, PriorityMark, SESSIONS, StatusBadge, type Notice } from '@/entities/demo-sample';
-import { markUnread } from '../model/read-notices';
+import { agoText, DECISIONS, itemOf, markUnread, type Notice, PersonCell, personOf, PriorityMark, SESSIONS, StatusBadge } from '@/entities/demo-sample';
 import styles from './inbox.module.css';
 
 const TYPE = { work_item: { icon: 'tasks', label: '작업' }, decision: { icon: 'decision', label: '결정' }, session: { icon: 'session', label: '세션·회의' } } as const;

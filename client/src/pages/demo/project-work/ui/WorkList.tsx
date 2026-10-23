@@ -8,7 +8,7 @@ import { filterWork, isNarrowed, PEOPLE, PRIORITY_LABELS, STATUS_LABELS, TABLE_S
 const SLICE = 10;
 
 /**
- * PATTERN · 표 목록. A list of work items whose rows are compared by several properties: My Tasks and a project's 목록 view.
+ * PATTERN · 표 목록. A project's 목록 view: work items whose rows are compared by several properties.
  *
  * - ListToolbar inside PageFrame chrome="header" puts the search, 필터 and the create action at the header row's end (or the
  *   tab row's end when the page has tabs); chosen filters show as chips under it. The page lays out none of it.
@@ -20,13 +20,11 @@ const SLICE = 10;
  *   Here the slices are local; a real page uses useInfiniteQuery and takes the total from the server.
  * - Empty and no-match are different states: no-match offers '조건 지우기'.
  */
-export function DemoWorkList({ workspaceId, items, search, onChange, onCreate, lead, isAssigneeFixed = false }: {
+export function WorkList({ workspaceId, items, search, onChange, onCreate, lead }: {
   workspaceId: string; items: readonly WorkItem[]; search: WorkSearch;
   onChange: (patch: Partial<TableSearch>, replace?: boolean) => void; onCreate?: () => void;
-  /** A desktop header's first tool, before the search (a project's view switch). */
+  /** A desktop header's first tool, before the search (a view switch). */
   lead?: ReactNode;
-  /** The list is one person's already (My Tasks), so it has no 담당자 filter. */
-  isAssigneeFixed?: boolean;
 }) {
   const isMobile = useMediaQuery(MOBILE_QUERY);
   const [shown, setShown] = useState(SLICE);
@@ -39,8 +37,8 @@ export function DemoWorkList({ workspaceId, items, search, onChange, onCreate, l
   const filters: ListFilter[] = [
     { key: 'status', label: '상태', icon: 'status', value: search.status, isMultiple: true, options: Object.entries(STATUS_LABELS).map(([value, label]) => ({ value, label })) },
     { key: 'priority', label: '우선순위', icon: 'priority', value: search.priority, options: Object.entries(PRIORITY_LABELS).map(([value, label]) => ({ value, label })) },
-    ...(isAssigneeFixed ? [] : [{ key: 'assignee', label: '담당자', icon: 'person', value: search.assignee, isMultiple: true, isSearchable: true,
-      options: PEOPLE.map(person => ({ value: person.id, label: person.name, icon: <DefaultAvatar seed={person.id} name={person.name} size={20} /> })) }]),
+    { key: 'assignee', label: '담당자', icon: 'person', value: search.assignee, isMultiple: true, isSearchable: true,
+      options: PEOPLE.map(person => ({ value: person.id, label: person.name, icon: <DefaultAvatar seed={person.id} name={person.name} size={20} /> })) },
   ];
   const visible = rows.slice(0, shown);
   const summary = <ListSummary shown={visible.length} total={rows.length} step={SLICE} hasMore={shown < rows.length} onMore={() => setShown(shown + SLICE)} />;

@@ -30,3 +30,5 @@ export { Marked, SearchTrigger } from './search-palette';
 export { PageTabs, type PageTab } from './page-tabs';
 export { SearchSelect, Select, SheetList, type SheetChoice, type SheetGroup } from './select';
 export { useFillRoom } from './use-fill-room';
+export { NotificationBell } from './notification-bell';
+export { SettingsCard, SettingsRow } from './settings-card';

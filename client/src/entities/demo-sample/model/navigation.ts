@@ -7,12 +7,19 @@ import { itemOf, projectOf, workspaceOf } from './mock';
  */
 export type DemoEntry = { path: string; label: string; icon: string; pattern: string };
 
-/** The workspace's menu, as the real sidebar's (D-034's phone tabs: the first three, then 더보기). */
+/**
+ * The notices: not a menu entry but the bell at the menu's head beside the workspace's name (a phone's header row),
+ * lit while any are unread (D-059).
+ */
+export const NOTICE_ENTRY: DemoEntry = { path: '/inbox', label: '알림', icon: 'bell', pattern: '데스크톱은 왼쪽 좁은 목록과 오른쪽 내용, 휴대폰은 목록에서 전체 화면 상세로' };
+
+/**
+ * The workspace's menu, as the real sidebar's; 워크스페이스 설정 sits at the menu's foot, under everything else. A phone's
+ * tabs are these, then 더보기.
+ */
 export const WORKSPACE_MENU: readonly DemoEntry[] = [
-  { path: '', label: '홈', icon: 'home', pattern: '섹션 머리, 요약 수치 줄, 최근 항목 행 목록을 모은 대시보드' },
-  { path: '/inbox', label: 'Inbox', icon: 'inbox', pattern: '데스크톱은 왼쪽 좁은 목록과 오른쪽 내용, 휴대폰은 목록에서 전체 화면 상세로' },
-  { path: '/my-tasks', label: 'My Tasks', icon: 'tasks', pattern: '머리 줄 도구(검색·필터·정렬)와 Plane식 표, 열 머리 정렬, 목록 끝 요약 줄' },
-  { path: '/members', label: 'Members', icon: 'members', pattern: '탭(멤버·초대)마다 다른 표, 행 끝의 역할 선택' },
+  { path: '', label: '홈', icon: 'home', pattern: '캘린더(월·주·업무 주)와 섹션 머리·요약 수치·최근 항목을 모은 홈' },
+  { path: '/members', label: '구성원', icon: 'members', pattern: '탭(구성원·초대)마다 다른 표, 행 끝의 역할 선택' },
   { path: '/documents', label: '문서함', icon: 'documents', pattern: '아직 준비 중인 기능의 빈 상태와 안내' },
 ];
 export const WORKSPACE_TABS = 3;
@@ -26,6 +33,18 @@ export const PROJECT_MENU: readonly DemoEntry[] = [
   { path: '/settings', label: '설정', icon: 'settings', pattern: '섹션 머리로 나눈 설정, 행 단위 항목과 위험 구역' },
 ];
 export const PROJECT_TABS = 3;
+
+/**
+ * The member's own settings, which the profile card's gear opens: the menu turns into these under 계정, headed by
+ * 돌아가기 (or Esc) back to where the member was. Addresses as the real /settings/… (account, outside any workspace).
+ */
+export const ACCOUNT_MENU: readonly DemoEntry[] = [
+  { path: '/demo/settings/profile', label: '프로필', icon: 'person', pattern: '설정 카드: 행마다 이름·설명과 오른쪽 조작, 위험 구역' },
+  { path: '/demo/settings/appearance', label: '디스플레이', icon: 'grid', pattern: '바로 적용되는 화면 모드·레이아웃 선택' },
+  { path: '/demo/settings/notifications', label: '알림', icon: 'bell', pattern: '받을 알림 종류별 스위치' },
+  { path: '/demo/settings/api-keys', label: 'API 키', icon: 'key', pattern: '키 목록 표와 발급 짧은 창, 한 번만 보이는 키' },
+  { path: '/demo/settings/security', label: '시큐리티', icon: 'lock', pattern: '비밀번호 변경과 로그인된 기기 목록' },
+];
 
 /** Pages that show a pattern rather than a menu of the app. */
 export const PATTERN_MENU: readonly DemoEntry[] = [
@@ -47,12 +66,15 @@ export type DemoPlace = {
   itemId?: string;
   noticeId?: string;
   isWorkspaces?: boolean; pattern?: string;
+  /** An account settings page's address, when the menu is the settings'. */
+  account?: string;
 };
 
 export function demoPlace(pathname: string): DemoPlace {
   const path = pathname.replace(/\/$/, '');
   if (path === '/demo/workspaces') return { isWorkspaces: true };
   if (path.startsWith('/demo/patterns/')) return { pattern: path };
+  if (path.startsWith('/demo/settings/')) return { account: path };
   const match = /^\/demo\/w\/([^/]+)(\/.*)?$/.exec(path);
   if (!match) return {};
   const [, workspaceId, rest = ''] = match;
@@ -72,7 +94,7 @@ export function placeNames(place: DemoPlace) {
   const project = projectOf(place.projectId);
   const section = place.projectId
     ? PROJECT_MENU.find(entry => entry.path === place.projectSection)
-    : WORKSPACE_MENU.find(entry => entry.path === place.workspaceSection) ?? (place.workspaceSection === '/projects' ? { label: '모든 프로젝트' } : place.workspaceSection === '/settings' ? { label: '워크스페이스 설정' } : undefined);
+    : [NOTICE_ENTRY, ...WORKSPACE_MENU].find(entry => entry.path === place.workspaceSection) ?? (place.workspaceSection === '/projects' ? { label: '모든 프로젝트' } : place.workspaceSection === '/settings' ? { label: '워크스페이스 설정' } : undefined);
   const item = place.itemId === 'new' ? '새 작업' : itemOf(place.itemId)?.key;
   return { workspace: workspace?.name, project: project?.name, section: section?.label, item };
 }

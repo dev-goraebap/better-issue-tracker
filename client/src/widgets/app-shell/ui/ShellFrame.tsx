@@ -15,8 +15,11 @@ import styles from './app-shell.module.css';
  * detail, a form) the whole screen. The workspace shell and the /demo shell both draw it, so the demo shows the real
  * frame.
  */
-export function ShellFrame({ pathname, sidebar, trail, mobileNav, folded, onFold, children }: {
-  pathname: string; sidebar: ReactNode; trail: ReactNode; mobileNav?: ReactNode; folded: boolean; onFold: (next: boolean) => void; children: ReactNode;
+export function ShellFrame({ pathname, sidebar, trail, mobileNav, mobileEnd, folded, onFold, children }: {
+  pathname: string; sidebar: ReactNode; trail: ReactNode; mobileNav?: ReactNode;
+  /** What a phone's header row ends with, after the page's tools (the notices' bell, which a desktop keeps in the menu's head). */
+  mobileEnd?: ReactNode;
+  folded: boolean; onFold: (next: boolean) => void; children: ReactNode;
 }) {
   const isMobile = useMediaQuery(MOBILE_QUERY);
   const { layout } = useAppearance();
@@ -51,6 +54,7 @@ export function ShellFrame({ pathname, sidebar, trail, mobileNav, folded, onFold
               <span className={styles.topbarEnd}>
                 <span ref={setTools} className={styles.chromeTools} />
                 {!isMobile && <span ref={setActions} className={styles.chromeActions} data-page-action />}
+                {isMobile && mobileEnd}
               </span>
             </HStack>}
             <div ref={setRows} className={styles.chromeRows} />

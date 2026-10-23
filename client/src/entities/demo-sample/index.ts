@@ -5,6 +5,7 @@ export * from './model/search';
 export * from './model/navigation';
 export { filterWork } from './model/work';
 export { addWorkspace, useWorkspaces } from './model/workspaces';
+export { markAllRead, markRead, markUnread, useReadNotices } from './model/read-notices';
 export { WorkspaceMark } from './ui/WorkspaceMark';
 export { PersonCell } from './ui/PersonCell';
 export { StatusBadge } from './ui/StatusBadge';

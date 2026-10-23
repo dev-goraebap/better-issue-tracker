@@ -25,7 +25,6 @@ import { AppearancePage } from '@/pages/settings/appearance';
 import { DemoWorkspacesPage } from '@/pages/demo/workspaces';
 import { DemoHomePage } from '@/pages/demo/home';
 import { DemoInboxPage } from '@/pages/demo/inbox';
-import { DemoMyTasksPage } from '@/pages/demo/my-tasks';
 import { DemoMembersPage } from '@/pages/demo/members';
 import { DemoDocumentsPage } from '@/pages/demo/documents';
 import { DemoProjectsPage } from '@/pages/demo/projects';
@@ -38,7 +37,13 @@ import { DemoArtifactsPage } from '@/pages/demo/artifacts';
 import { DemoSettingsPage } from '@/pages/demo/settings';
 import { DemoStatesPage } from '@/pages/demo/states';
 import { DemoDialogsPage } from '@/pages/demo/dialogs';
-import { DEFAULT_WORKSPACE, parseDecisionsSearch, parseInboxSearch, parseMembersSearch, parseProjectsSearch, parseStatesSearch, parseTableSearch, parseWorkSearch as parseDemoWorkSearch } from '@/entities/demo-sample';
+import { DemoProfilePage } from '@/pages/demo/account-profile';
+import { DemoAppearancePage } from '@/pages/demo/account-appearance';
+import { DemoNotificationsPage } from '@/pages/demo/account-notifications';
+import { DemoApiKeysPage } from '@/pages/demo/account-api-keys';
+import { DemoSecurityPage } from '@/pages/demo/account-security';
+import { DEFAULT_WORKSPACE, parseDecisionsSearch, parseInboxSearch, parseMembersSearch, parseProjectsSearch, parseStatesSearch, parseWorkSearch as parseDemoWorkSearch } from '@/entities/demo-sample';
+import { parseDemoCalendarSearch } from '@/widgets/demo-calendar';
 import { DemoLayout } from '../layout/DemoLayout';
 import { followHistory } from '@/shared/lib/history-trail';
 import { ownSearch } from '@/shared/lib/route-search';
@@ -126,9 +131,8 @@ const demoInboxRoutes = [
   createRoute({ getParentRoute: () => demoSpace, path: '/inbox/$noticeId', component: DemoInboxPage, validateSearch: ownSearch(parseInboxSearch) }),
 ];
 const demoSpaceRoutes = [
-  createRoute({ getParentRoute: () => demoSpace, path: '/', component: DemoHomePage }),
+  createRoute({ getParentRoute: () => demoSpace, path: '/', component: DemoHomePage, validateSearch: ownSearch(parseDemoCalendarSearch) }),
   ...demoInboxRoutes,
-  createRoute({ getParentRoute: () => demoSpace, path: '/my-tasks', component: DemoMyTasksPage, validateSearch: ownSearch(parseTableSearch) }),
   createRoute({ getParentRoute: () => demoSpace, path: '/members', component: DemoMembersPage, validateSearch: ownSearch(parseMembersSearch) }),
   createRoute({ getParentRoute: () => demoSpace, path: '/documents', component: DemoDocumentsPage }),
   createRoute({ getParentRoute: () => demoSpace, path: '/projects', component: DemoProjectsPage, validateSearch: ownSearch(parseProjectsSearch) }),
@@ -144,6 +148,12 @@ const demoSpaceRoutes = [
 const demoRoutes = [
   demoStart,
   createRoute({ getParentRoute: () => demo, path: '/workspaces', component: DemoWorkspacesPage }),
+  // The member's own settings (the profile card's gear), outside any workspace as the real /settings/….
+  createRoute({ getParentRoute: () => demo, path: '/settings/profile', component: DemoProfilePage }),
+  createRoute({ getParentRoute: () => demo, path: '/settings/appearance', component: DemoAppearancePage }),
+  createRoute({ getParentRoute: () => demo, path: '/settings/notifications', component: DemoNotificationsPage }),
+  createRoute({ getParentRoute: () => demo, path: '/settings/api-keys', component: DemoApiKeysPage }),
+  createRoute({ getParentRoute: () => demo, path: '/settings/security', component: DemoSecurityPage }),
   demoSpace.addChildren(demoSpaceRoutes),
   createRoute({ getParentRoute: () => demo, path: '/patterns/states', component: DemoStatesPage, validateSearch: ownSearch(parseStatesSearch) }),
   createRoute({ getParentRoute: () => demo, path: '/patterns/dialogs', component: DemoDialogsPage }),
