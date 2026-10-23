@@ -32,6 +32,15 @@ public class WorkspaceService implements WorkspaceFacade {
 
     @Override
     @Transactional(readOnly = true)
+    public boolean hasMember(CurrentUser actor, UUID workspaceId, UUID userId) {
+        access(actor, workspaceId, Action.READ);
+        return userId != null
+                && workspaceRepository.findMember(workspaceId, userId).isPresent()
+                && iamFacade.user(userId).isPresent();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public void requireAccess(CurrentUser actor, UUID workspaceId, Action action) {
         access(actor, workspaceId, action);
     }
@@ -55,7 +64,8 @@ public class WorkspaceService implements WorkspaceFacade {
         Membership own = workspaceRepository
                 .findMember(id, actor.userId())
                 .orElseThrow(WorkspaceErrorCode.WORKSPACE_NOT_FOUND::raise);
-        if (action == Action.OWNER && own.role() != WorkspaceRole.owner
+        if (action == Action.WRITE_WORK && own.role() == WorkspaceRole.viewer
+                || action == Action.OWNER && own.role() != WorkspaceRole.owner
                 || (action == Action.EDIT_SETTINGS || action == Action.MANAGE_MEMBERS)
                         && !own.role().editsSettings()) throw CommonErrorCode.AUTH_FORBIDDEN.raise();
         return own;

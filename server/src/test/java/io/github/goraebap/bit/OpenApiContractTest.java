@@ -39,6 +39,12 @@ class OpenApiContractTest {
     @MockitoBean
     private io.github.goraebap.bit.module.workspace.domain.WorkspaceRepository workspaceRepository;
 
+    @MockitoBean
+    private io.github.goraebap.bit.module.project.domain.ProjectRepository projectRepository;
+
+    @MockitoBean
+    private io.github.goraebap.bit.module.workitem.domain.WorkItemRepository workItemRepository;
+
     @Autowired
     private MockMvc mockMvc;
 
@@ -51,9 +57,37 @@ class OpenApiContractTest {
                 .getContentAsString();
         var mapper = JsonMapper.builder().build();
         var contract = mapper.readTree(body);
+        assertThat(contract.at("/components/schemas/WorkItem/properties/priority/enum")
+                        .get(4)
+                        .isNull())
+                .isTrue();
+        assertThat(contract.at("/components/schemas/UpdateWorkItem/properties/description/type")
+                        .toString())
+                .contains("null");
+        assertThat(contract.at("/components/schemas/WorkItem/properties/columnId/type")
+                        .toString())
+                .contains("null");
+        assertThat(contract.at("/components/schemas/CreateWorkItem/properties/title")
+                        .isMissingNode())
+                .isFalse();
+        assertThat(contract.at("/components/schemas/CreateWorkItem/properties/key")
+                        .isMissingNode())
+                .isTrue();
+        assertThat(contract.at("/components/schemas/MoveWorkItem/properties/targetColumnId")
+                        .isMissingNode())
+                .isFalse();
         assertThat(contract.path("paths").has("/api/v1/auth/sessions")).isTrue();
         assertThat(contract.path("paths").has("/api/v1/health")).isTrue();
         assertThat(contract.path("paths").has("/api/v1/capabilities")).isTrue();
+        assertThat(contract.at("/components/schemas/CreateProject/properties/key")
+                        .isMissingNode())
+                .isFalse();
+        assertThat(contract.at("/components/schemas/CreateProject/properties/slug")
+                        .isMissingNode())
+                .isTrue();
+        assertThat(contract.at("/components/schemas/UpdateProject/properties/expectedVersion")
+                        .isMissingNode())
+                .isFalse();
         assertThat(contract.at("/components/schemas/WorkspaceInvitation/properties/id")
                         .isMissingNode())
                 .isFalse();

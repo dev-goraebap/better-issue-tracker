@@ -68,6 +68,182 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workspaces/{workspaceId}/projects": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list"];
+        put?: never;
+        post: operations["create_1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/work-items": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_1"];
+        put?: never;
+        post: operations["create_2"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/work-items/{id}/unarchive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["unarchive"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/work-items/{id}/restore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["restore"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/work-items/{id}/move": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["move"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/work-items/{id}/archive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["archive"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/unarchive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["unarchive_1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/restore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["restore_1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/columns": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["columns"];
+        put?: never;
+        post: operations["addColumn"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/columns/reorder": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["reorder"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/archive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["archive_1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/workspaces/{id}/invitations": {
         parameters: {
             query?: never;
@@ -196,7 +372,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/workspaces/{id}": {
+    "/api/v1/workspaces/{workspaceId}/projects/{projectId}": {
         parameters: {
             query?: never;
             header?: never;
@@ -207,6 +383,54 @@ export interface paths {
         put?: never;
         post?: never;
         delete: operations["delete"];
+        options?: never;
+        head?: never;
+        patch: operations["revise"];
+        trace?: never;
+    };
+    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/work-items/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_1"];
+        put?: never;
+        post?: never;
+        delete: operations["delete_1"];
+        options?: never;
+        head?: never;
+        patch: operations["revise_1"];
+        trace?: never;
+    };
+    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/columns/{columnId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["column"];
+        put?: never;
+        post?: never;
+        delete: operations["deleteColumn"];
+        options?: never;
+        head?: never;
+        patch: operations["reviseColumn"];
+        trace?: never;
+    };
+    "/api/v1/workspaces/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_2"];
+        put?: never;
+        post?: never;
+        delete: operations["delete_2"];
         options?: never;
         head?: never;
         patch: operations["rename"];
@@ -226,6 +450,54 @@ export interface paths {
         options?: never;
         head?: never;
         patch: operations["role"];
+        trace?: never;
+    };
+    "/api/v1/workspaces/{workspaceId}/work-items/by-ref/{reference}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["byRef"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/work-items/counts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["counts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{workspaceId}/my-tasks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["mine"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/workspaces/{id}/members": {
@@ -283,7 +555,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list"];
+        get: operations["list_2"];
         put?: never;
         post?: never;
         delete?: never;
@@ -411,6 +683,57 @@ export interface components {
             name: string;
             slug: string;
         };
+        CreateProject: {
+            name: string;
+            key: string;
+            description?: string | null;
+        };
+        CreateWorkItem: {
+            title: string;
+            description?: string | null;
+            /** @enum {string|null} */
+            priority?: "low" | "medium" | "high" | "urgent" | null;
+            /** @enum {string|null} */
+            triggerType?: "request" | "finding" | "external" | "improvement" | "planned" | null;
+            /** Format: uuid */
+            assigneeId?: string | null;
+            /** Format: date */
+            startDate?: string | null;
+            /** Format: date */
+            dueDate?: string | null;
+            /** Format: uuid */
+            columnId?: string | null;
+        };
+        WorkItemVersion: {
+            /** Format: int64 */
+            expectedVersion: number;
+        };
+        MoveWorkItem: {
+            /** Format: int64 */
+            expectedVersion: number;
+            /** Format: uuid */
+            targetColumnId: string | null;
+            /** Format: uuid */
+            beforeItemId?: string | null;
+            /** Format: uuid */
+            afterItemId?: string | null;
+        };
+        ProjectVersion: {
+            /** Format: int64 */
+            expectedVersion: number;
+        };
+        CreateBoardColumn: {
+            /** Format: int64 */
+            expectedVersion: number;
+            name: string;
+            color?: string | null;
+            isFinal?: boolean;
+        };
+        ReorderBoardColumns: {
+            /** Format: int64 */
+            expectedVersion: number;
+            order: string[];
+        };
         Invite: {
             /** Format: email */
             email: string;
@@ -473,12 +796,135 @@ export interface components {
         TemporaryPassword: {
             temporaryPassword: string;
         };
+        UpdateProject: {
+            /** Format: int64 */
+            expectedVersion: number;
+            name?: string;
+            key?: string;
+            description?: string | null;
+        };
+        UpdateWorkItem: {
+            /** Format: int64 */
+            expectedVersion: number;
+            title?: string;
+            description?: string | null;
+            /** @enum {string|null} */
+            priority?: "low" | "medium" | "high" | "urgent" | null;
+            /** @enum {string|null} */
+            triggerType?: "request" | "finding" | "external" | "improvement" | "planned" | null;
+            /** Format: uuid */
+            assigneeId?: string | null;
+            /** Format: date */
+            startDate?: string | null;
+            /** Format: date */
+            dueDate?: string | null;
+        };
+        UpdateBoardColumn: {
+            /** Format: int64 */
+            expectedVersion: number;
+            name?: string;
+            color?: string | null;
+            isFinal?: boolean;
+        };
         Rename: {
             name?: string;
         };
         ChangeRole: {
             /** @enum {string} */
             role: "owner" | "admin" | "member" | "viewer";
+        };
+        WorkItem: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            workspaceId: string;
+            /** Format: uuid */
+            projectId: string;
+            /** Format: int64 */
+            number: number;
+            key: string;
+            title: string;
+            description: string | null;
+            /** Format: uuid */
+            columnId: string | null;
+            /** Format: double */
+            position: number;
+            /** @enum {string|null} */
+            priority: "low" | "medium" | "high" | "urgent" | null;
+            /** @enum {string|null} */
+            triggerType: "request" | "finding" | "external" | "improvement" | "planned" | null;
+            /** Format: uuid */
+            assigneeId: string | null;
+            assigneeName: string | null;
+            /** Format: date */
+            startDate: string | null;
+            /** Format: date */
+            dueDate: string | null;
+            /** Format: date-time */
+            closedAt: string | null;
+            /** Format: date-time */
+            archivedAt: string | null;
+            /** Format: date-time */
+            deletedAt: string | null;
+            /** Format: int64 */
+            version: number;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: uuid */
+            createdBy: string;
+            createdByAgent: string | null;
+            /** Format: date-time */
+            updatedAt: string;
+            /** Format: uuid */
+            updatedBy: string;
+            updatedByAgent: string | null;
+        };
+        Project: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            workspaceId: string;
+            name: string;
+            key: string;
+            description: string | null;
+            /** Format: date-time */
+            archivedAt: string | null;
+            /** Format: date-time */
+            deletedAt: string | null;
+            /** Format: int64 */
+            version: number;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: uuid */
+            createdBy: string;
+            createdByAgent: string | null;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        Projects: {
+            items: components["schemas"]["Project"][];
+            nextCursor: string | null;
+        };
+        WorkItems: {
+            items: components["schemas"]["WorkItem"][];
+            nextCursor: string | null;
+        };
+        WorkItemColumnCount: {
+            /** Format: uuid */
+            columnId: string | null;
+            /** Format: int64 */
+            count: number;
+        };
+        BoardColumn: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            color: string | null;
+            /** Format: int32 */
+            position: number;
+            isFinal: boolean;
+            /** Format: int64 */
+            version: number;
         };
         Space: {
             /** Format: uuid */
@@ -684,6 +1130,374 @@ export interface operations {
         responses: {
             /** @description Workspace and owner created */
             201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    list: {
+        parameters: {
+            query?: {
+                status?: string;
+                q?: string;
+                cursor?: string;
+                size?: number;
+                sort?: string;
+                direction?: string;
+            };
+            header?: never;
+            path: {
+                workspaceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Projects"];
+                };
+            };
+        };
+    };
+    create_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateProject"];
+            };
+        };
+        responses: {
+            /** @description 프로젝트 생성 */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    list_1: {
+        parameters: {
+            query?: {
+                assigneeId?: string | null;
+                column?: string;
+                priority?: string[];
+                triggerType?: string[];
+                q?: string;
+                archived?: boolean;
+                deleted?: boolean;
+                closed?: boolean;
+                from?: string;
+                to?: string;
+                size?: number;
+                cursor?: string;
+                sort?: string;
+                direction?: string;
+            };
+            header?: never;
+            path: {
+                workspaceId: string;
+                projectId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkItems"];
+                };
+            };
+        };
+    };
+    create_2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+                projectId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateWorkItem"];
+            };
+        };
+        responses: {
+            /** @description 작업항목 생성 */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    unarchive: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+                projectId: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WorkItemVersion"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    restore: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+                projectId: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WorkItemVersion"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    move: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+                projectId: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MoveWorkItem"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    archive: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+                projectId: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WorkItemVersion"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    unarchive_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+                projectId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProjectVersion"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    restore_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+                projectId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProjectVersion"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    columns: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+                projectId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BoardColumn"][];
+                };
+            };
+        };
+    };
+    addColumn: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+                projectId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateBoardColumn"];
+            };
+        };
+        responses: {
+            /** @description 보드 컬럼 생성 */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    reorder: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+                projectId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReorderBoardColumns"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    archive_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+                projectId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProjectVersion"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -982,6 +1796,226 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
+                workspaceId: string;
+                projectId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Project"];
+                };
+            };
+        };
+    };
+    delete: {
+        parameters: {
+            query: {
+                expectedVersion: number;
+            };
+            header?: never;
+            path: {
+                workspaceId: string;
+                projectId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    revise: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+                projectId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateProject"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+                projectId: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkItem"];
+                };
+            };
+        };
+    };
+    delete_1: {
+        parameters: {
+            query: {
+                expectedVersion: number;
+            };
+            header?: never;
+            path: {
+                workspaceId: string;
+                projectId: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    revise_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+                projectId: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateWorkItem"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    column: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+                projectId: string;
+                columnId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BoardColumn"];
+                };
+            };
+        };
+    };
+    deleteColumn: {
+        parameters: {
+            query: {
+                expectedVersion: number;
+                moveTo: string;
+            };
+            header?: never;
+            path: {
+                workspaceId: string;
+                projectId: string;
+                columnId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    reviseColumn: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+                projectId: string;
+                columnId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateBoardColumn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
                 id: string;
             };
             cookie?: never;
@@ -999,7 +2033,7 @@ export interface operations {
             };
         };
     };
-    delete: {
+    delete_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -1086,6 +2120,104 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    byRef: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+                reference: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkItem"];
+                };
+            };
+        };
+    };
+    counts: {
+        parameters: {
+            query?: {
+                assigneeId?: string | null;
+                column?: string;
+                priority?: string[];
+                triggerType?: string[];
+                q?: string;
+                archived?: boolean;
+                deleted?: boolean;
+                closed?: boolean;
+                from?: string;
+                to?: string;
+                size?: number;
+                cursor?: string;
+                sort?: string;
+                direction?: string;
+            };
+            header?: never;
+            path: {
+                workspaceId: string;
+                projectId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkItemColumnCount"][];
+                };
+            };
+        };
+    };
+    mine: {
+        parameters: {
+            query?: {
+                assigneeId?: string | null;
+                column?: string;
+                priority?: string[];
+                triggerType?: string[];
+                q?: string;
+                archived?: boolean;
+                deleted?: boolean;
+                closed?: boolean;
+                from?: string;
+                to?: string;
+                size?: number;
+                cursor?: string;
+                sort?: string;
+                direction?: string;
+            };
+            header?: never;
+            path: {
+                workspaceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkItems"];
+                };
             };
         };
     };
@@ -1180,7 +2312,7 @@ export interface operations {
             };
         };
     };
-    list: {
+    list_2: {
         parameters: {
             query?: {
                 cursor?: string;

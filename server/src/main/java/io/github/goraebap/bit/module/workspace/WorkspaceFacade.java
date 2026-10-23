@@ -6,12 +6,15 @@ import java.util.UUID;
 public interface WorkspaceFacade {
     enum Action {
         READ,
+        WRITE_WORK,
         EDIT_SETTINGS,
         MANAGE_MEMBERS,
         OWNER
     }
 
     void requireAccess(CurrentUser actor, UUID workspaceId, Action action);
+
+    boolean hasMember(CurrentUser actor, UUID workspaceId, UUID userId);
 
     void requireMemberManagement(CurrentUser actor, UUID workspaceId, UUID memberId);
 

@@ -88,9 +88,9 @@ erDiagram
 
 | 테이블 | 열 | 제약·인덱스 |
 |---|---|---|
-| `project` | `project_id`, `workspace_id`, `name varchar(64)`, `icon varchar(32)?`, `description text?`, `position integer`, `last_work_item_number integer`, `last_decision_number integer`, `last_session_number integer`, `archived_at?`, 감사 | `ix_project_workspace_id` |
+| `project` | `project_id`, `workspace_id`, `name varchar(64)`, `icon varchar(32)?`, `description text?`, `position integer`, `last_work_item_number bigint`, `last_decision_number bigint`, `last_session_number bigint`, `archived_at?`, `version bigint`, 감사 | `ix_project_workspace_id` |
 | `project_key` | `project_key_id`, `project_id`, `workspace_id`, `key varchar(10)`, `is_current boolean`, `created_at` | `ux_project_key_workspace_id_key` (모든 행), `ux_project_key_project_id_current` (is_current = 1), `ck_project_key_key` (대문자·숫자, 2~10자) |
-| `board_column` | `board_column_id`, `project_id`, `name varchar(32)`, `position integer`, `color varchar(7)?`, `is_final boolean`, 감사 | `ix_board_column_project_id_position` |
+| `board_column` | `board_column_id`, `project_id`, `name varchar(32)`, `position integer`, `color varchar(7)?`, `is_final boolean`, `version bigint`, 감사 | `ix_board_column_project_id_position` |
 
 - **프로젝트 키(D-011)**: 현재 키와 옛 키(별칭)를 한 테이블에 둔다. 워크스페이스 안에서 `key`가 모든 행에 걸쳐 고유하므로, 별칭으로 쓰인 키를 다른 프로젝트가 가져가는 것을 DB가 막는다. 키를 바꾸면 기존 행의 `is_current`를 0으로 내리고 새 행을 넣는다.
 - **번호**: 작업항목·결정·세션 번호는 프로젝트별로 1부터 증가한다. 새 번호는 `last_*_number`를 증가시켜 받는다(쓰기 잠금 안에서 처리, SQLite `BEGIN IMMEDIATE`).
@@ -100,7 +100,7 @@ erDiagram
 
 | 테이블 | 열 | 제약·인덱스 |
 |---|---|---|
-| `work_item` | `work_item_id`, `project_id`, `number integer`, `title varchar(200)`, `description text?`, `board_column_id uuid?`, `position real`, `priority varchar(8)?`, `trigger_type varchar(16)?`, `assignee_id uuid?`, `start_date date?`, `due_date date?`, `closed_at?`, `archived_at?`, 감사 | `ux_work_item_project_id_number`, `ix_work_item_board_column_id_position`, `ck_..._priority` (low, medium, high, urgent), `ck_..._trigger_type` (request, finding, external, improvement, planned) |
+| `work_item` | `work_item_id`, `project_id`, `number bigint`, `title varchar(200)`, `description text?`, `board_column_id uuid?`, `position real`, `priority varchar(8)?`, `trigger_type varchar(16)?`, `assignee_id uuid?`, `start_date date?`, `due_date date?`, `closed_at?`, `archived_at?`, `version bigint`, 감사 | `ux_work_item_project_id_number`, `ix_work_item_board_column_id_position`, `ck_..._priority` (low, medium, high, urgent), `ck_..._trigger_type` (request, finding, external, improvement, planned) |
 | `work_item_label` | `work_item_label_id`, `work_item_id`, `label_id`, `created_at` | `ux_work_item_label_work_item_id_label_id` |
 
 - **상태는 컬럼 하나로**: `board_column_id`가 NULL이면 백로그다. Kaneo처럼 상태 문자열과 컬럼 ID를 함께 두지 않는다 (D-009).
@@ -108,6 +108,14 @@ erDiagram
 - **작업항목 키**는 저장하지 않고 `project_key`(현재 키) + `number`로 만든다. 웹훅 파싱은 현재 키와 별칭을 모두 찾는다.
 - **작업항목끼리의 관계**(blocks, subtask 등)는 `link`에 둔다 (D-014).
 - 1차에 넣지 않는 Kaneo 기능: 시간 기록(`time_entry`), 사용자 정의 필드, 상태 자동 이동 규칙(`workflow_rule`).
+
+### T-004 실제 V3 계약 (구현 중)
+
+- V3에 project / project_key / board_column / work_item을 추가했다. V1/V2는 수정하지 않는다. 작업 번호는 bigint이며 프로젝트 카운터와 같은 쓰기 트랜잭션에서 발급한다.
+- 프로젝트·컬럼·작업에 version을 둔다. 새 감사 열에는 생성·수정·삭제의 사용자와 에이전트 이름을 함께 둔다. archived_at과 deleted_at은 별개다.
+- (project_id, workspace_id) 복합 키를 project_key가 참조해 다른 공간의 키 연결을 거부한다. (project_id, board_column_id) 복합 키를 work_item이 참조해 다른 프로젝트의 컬럼 연결을 거부한다.
+- project_key는 삭제 여부와 무관하게 공간 내 고유하며, 프로젝트당 현재 키는 부분 인덱스로 최대 하나다. 생성·키 전환 서비스가 현재 키의 존재를 보장한다.
+- work_item_label과 라벨 테이블은 라벨 구현 때 새 마이그레이션으로 추가한다. 프로젝트/작업 REST·화면·보드 이관 검증 전체가 끝난 상태는 아니다. 진행 결과는 T-004 지시서를 따른다.
 
 ## 5. decision / session
 

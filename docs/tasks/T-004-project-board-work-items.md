@@ -56,7 +56,7 @@
 
 모든 경로는 /api/v1/workspaces/{workspaceId} 아래다. 변경은 표준 Problem 응답·추적 ID, 생성은 201 Location, 삭제 204, 페이지는 기존 cursor 계약을 따른다.
 
-- GET/POST /projects — status(active/archived/deleted), q, cursor, limit. 삭제 필터는 관리자만.
+- GET/POST /projects — status(active/archived/deleted), q, cursor, size. 삭제 필터는 관리자만.
 - GET/PATCH/DELETE /projects/{projectId}; POST /projects/{projectId}/archive, /unarchive, /restore.
 - GET/POST /projects/{projectId}/columns; PATCH/DELETE /projects/{projectId}/columns/{columnId}. DELETE의 moveTo 지정(백로그는 명시적 값), POST /columns/reorder.
 - GET/POST /projects/{projectId}/work-items; GET/PATCH/DELETE /projects/{projectId}/work-items/{workItemId}.
@@ -98,3 +98,48 @@
 ## 마무리와 다음 단계
 
 실행 결과·수동 미확인 범위를 이 문서에 기록하고 AGENTS/스키마/API/결정 기록을 실제 구현과 맞춘다. 단위별 검증을 마치면 커밋한다. 이어서 T-005 결정·세션·범용 링크/활동·댓글, T-006 파일·문서함·변환, T-007 Git 저장소·Markdown/PDF·웹훅, T-008 MCP·맥락 묶음, T-009 검색·Inbox·운영/통합 검증 순서로 지시서를 구체화한다. 범위는 기존 MVP 문서 안에서 유지한다. 선택 외부 기능의 실제 연결은 설정이 있을 때만 검증하고 미설정을 성공으로 기록하지 않는다.
+
+## 구현 진행 기록 — 2026-10-23
+
+### 완료한 기반 작업
+
+- V3 프로젝트·키·보드 컬럼·작업 테이블과 복합 소속 FK, 키 영구 예약·현재 키 부분 인덱스. 생성/수정/삭제 감사와 에이전트 표시, version, bigint 번호 카운터.
+- Project / ProjectKey / BoardColumn / WorkItem 도메인. 완료 시각 멱등성·재개방, 잘못된 날짜/입력의 부분 변경 방지, 삭제 컬럼 복원 시 백로그 이동 규칙.
+- ProjectFacade, ProjectService, ProjectQueryService 및 jOOQ 저장소. 생성+키+컬럼 원자성, 키 변경/자기 별칭 복귀, 프로젝트 보관·삭제·복원, 현재 역할 검사·번호 발급·커서 페이징.
+- 프로젝트·컬럼 REST 경로와 MVC 바인딩 전 권한 필터. 세션/Bearer 공통 업무 인가와 명시적 Bearer 업무 경로 허용. 새 요청 스키마 이름을 CreateProject/UpdateProject 등으로 구분해 기존 Workspace Create와 충돌하지 않게 했다.
+- OpenAPI 내보내기와 클라이언트 생성 타입 갱신. 공용 감사 객체와 읽기 DTO는 불변 값으로 노출한다.
+
+### 실행한 검사
+
+| 검사 | 결과 |
+|---|---|
+| `gradlew.bat --max-workers=2 spotlessApply check` | 성공. 단위·계약·아키텍처 22개 + 실제 SQLite/HTTP 통합 37개. Spotless·Checkstyle·SpotBugs 통과 |
+| V2→V3 격리 SQLite 파일 업그레이드 | 기존 사용자/비밀번호 해시 보존. 삭제 프로젝트의 키 예약·현재 키 유일성·다른 프로젝트 컬럼 FK 거부, integrity_check=ok / foreign_key_check 오류 없음 |
+| 실제 프로젝트 서비스/저장소 | 생성 중 강제 컬럼 삽입 실패 전체 롤백, 8개 동시 번호 발급 중복 없음, 외부 트랜잭션 실패 시 번호 증가 롤백, 별칭·보관·삭제/복원·현재 역할 재검사 |
+| 실제 HTTP | 로그인→프로젝트 생성/조회/수정, stale version 409, API 키 프로젝트 생성·agent provenance, viewer의 세션/Bearer 설정 쓰기 403, 비멤버 404, 권한 검사 후에만 입력 바인딩. null 컬럼 순서 입력 400 |
+| 커서 | 다음 조각 중복 없음, 검색 조건이 다른 커서 거부, 기본 목록의 삭제 제외·명시적 삭제 목록 조회 |
+| `exportOpenApi` → `npm run api:generate --prefix client` | 요청/응답 스키마와 생성 타입 동기화. CreateProject.key가 존재하고 Workspace Create와 섞이지 않는 계약 검사 |
+| `npm run check --prefix client` | 컴포넌트/FSD·9개 테스트·타입·빌드 성공 |
+
+### 아직 남은 것
+
+T-004 완료 상태가 아니다. WorkItemRepository/Service/REST·필터/My Tasks·참조 해석, ColumnWorkItemSpi 실제 이관/완료 재분류 구현과 원자성 검증, 보드/목록/백로그/일정/상세 화면, 모바일/키보드/두 레이아웃 확인, Docker V2→V3·동일 볼륨 재생성 검증을 이어서 진행한다. 컬럼 변경 경로의 등록 자체를 이관 기능 완료로 계산하지 않는다. 기본 개발 DB를 초기화하거나 기존 배포 마이그레이션을 수정하지 않았다. T-004 변경은 구현 중이며 아직 커밋하지 않았다.
+
+## 작업항목 서버 구현·검증 — 2026-10-23
+
+- WorkItemRepository/Service/QueryService/Facade/REST와 MVC 바인딩 전 대상 인가를 연결했다. 생성·PATCH·이동·보관/해제·소프트 삭제/복원·현재/별칭 참조·My Tasks·필터·커서 페이지를 구현했다.
+- ColumnWorkItemSpi를 실제 구현했다. final 변경과 작업 완료 시각 재분류, 컬럼 삭제와 살아 있는 작업의 이관이 같은 쓰기 트랜잭션에서 롤백된다. 보관 상태를 보존하고, 삭제 작업은 원 컬럼을 보존했다가 복원 시 백로그로 돌린다(D-050).
+- `GET /projects/{projectId}/work-items/counts`는 목록과 같은 필터의 전체 일치 행을 컬럼별로 집계한다. 컬럼이 비면 집계 행은 생략하며 화면에서 0으로 표시한다. nullable columnId는 백로그다. 일반 목록의 정렬은 createdAt/position + ASC/DESC, My Tasks는 createdAt만 허용한다. from/to는 마감일 범위다.
+- 컬럼 PATCH도 필드 누락=유지·명시적 color null=비우기를 적용했다. 명시적 isFinal null은 거부한다. 생성/수정 요청의 nullable 값과 항상 반환되는 응답 필드를 OpenAPI에 표시하고, OpenAPI 3.1 nullable enum에는 실제 null도 enum에 포함해 기계 계약을 일치시켰다.
+
+| 검사 | 결과 |
+|---|---|
+| `gradlew.bat --max-workers=2 spotlessApply exportOpenApi check` | 성공. 단위·계약·아키텍처 22개 + 실제 SQLite/HTTP 통합 53개(총 75개). Spotless·Checkstyle·SpotBugs 통과 |
+| 새 작업 통합 16개 | 완료/재개방·반복 이동 시각 유지, 옛 키 해석, 실패한 생성의 번호 롤백, 8개 동시 생성·동시 수정 1건만 커밋, 다른 프로젝트 컬럼/이웃/항목 거부 |
+| 컬럼 트랜잭션 | final 변경/이관 중 강제 DB 실패 전체 롤백, 컬럼 삭제 대 이동 경합 후 삭제 컬럼에 살아 있는 작업 없음, 보관 작업 이관·삭제 작업 백로그 복원, 마지막 final 유지 |
+| 현재 권한 | owner/admin/member 실제 쓰기·viewer 조회/쓰기 거부, 세션/Bearer 동일, 제거된 멤버 지정 거부·과거 담당 보존, 인스턴스 관리자 우회 없음, must_change의 오래된 주체 값 우회 거부 |
+| 검색·페이징·집계 | 날짜·우선순위·트리거·담당자·완료·보관/삭제 필터, 위치 동률의 커서 경계, 검색 조건이 다른 커서 거부, 두 공간에 속한 같은 사용자의 My Tasks/커서/집계 격리, 페이지 크기와 무관한 집계 |
+| 실제 HTTP | Bearer 생성·에이전트 기록, nullable PATCH·명시적 이동 대상 필수, 컬럼 색상만 변경/비우기 시 final 유지, 권한 부족 403/없는 대상 404를 입력 바인딩 전에 적용 |
+| API·클라이언트 | OpenAPI/생성 타입 동기화, nullable 필드·enum·이름 충돌 계약 검사, `npm run check --prefix client` 성공(9개 검사·타입·빌드) |
+
+이 단계의 서버 기능은 분리 커밋한다. T-004 전체 완료는 아니다. 프로젝트 목록·생성/설정, 사이드바, 보드/목록/백로그/일정/상세·My Tasks 화면과 모바일/키보드/Inset·Split 확인, Docker V2→V3·동일 볼륨 재생성 검증이 남았다. 이전 진행 기록의 '남은 서버 구현' 항목은 이 기록으로 갱신한다. MCP 서버·결정/세션·링크·문서함·Git 기능은 후속 작업이다.

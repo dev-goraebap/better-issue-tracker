@@ -55,6 +55,11 @@ jooq {
                     schema { inputSchema = 'PUBLIC'; outputSchemaToDefault = true }
                 }
                 forcedTypes {
+                    // SQLite REAL stores doubles; DDLDatabase otherwise maps SQL REAL to Java Float.
+                    forcedType {
+                        name = 'DOUBLE'
+                        includeExpression = '(?i:.*work_item\\.position)'
+                    }
                     forcedType {
                         userType = 'java.time.Instant'
                         binding = 'io.github.goraebap.bit.shared.persistence.InstantTextBinding'
