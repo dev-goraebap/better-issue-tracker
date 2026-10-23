@@ -1,0 +1,18 @@
+/* Tabs inside a page sit on a rule as wide as the page, like the header's. */
+.rule { border-block-end: 1px solid var(--color-border); }
+.rule [role="tablist"] { margin-block-end: -1px; }
+/* The chosen tab's line runs the tab's whole width, as far as its hover area, rather than stopping at the padding. */
+.tabs :global(.astryx-tab-indicator) { inset-inline: 0 !important; }
+/* The switch: the tabs on a muted track that hugs them, the chosen one raised on the card's colour; no underline. The
+   class lands on Astryx's wrapper and the tablist is the strip inside it. It hugs its tabs at the start of its row, as
+   tall as a row's tool buttons (28px); in the header's tab row page-chrome centres it and lines it up with the header. */
+.switch { align-self: flex-start; block-size: auto !important; flex-shrink: 0; }
+.switch [role="tablist"] { block-size: auto !important; margin-block-end: 0 !important; gap: 2px; padding: 2px;
+  border-radius: var(--radius-element); background: var(--color-background-muted); }
+.switch [role="tab"] { block-size: 1.5rem !important; padding-inline: var(--spacing-3) !important; font-size: 0.8125rem;
+  border-radius: calc(var(--radius-element) - 2px); color: var(--color-text-secondary); }
+.switch [role="tab"]:hover { color: var(--color-text-primary); }
+.switch [role="tab"][aria-selected="true"] { background: var(--color-background-card, var(--color-background));
+  color: var(--color-text-primary); box-shadow: 0 0 0 1px var(--color-border), 0 1px 2px rgb(0 0 0 / 0.08); }
+.switch :global(.astryx-tab-indicator) { display: none; }
+.switch [role="tab"] svg { inline-size: 1rem; block-size: 1rem; }

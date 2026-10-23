@@ -1,9 +1,43 @@
- .page { inline-size: 100%; box-sizing: border-box; padding: var(--spacing-6); margin-inline: auto; }
-.default { max-inline-size: 72rem; } .narrow { max-inline-size: 48rem; } .full { max-inline-size: none; }
-.srOnly { position: absolute; inline-size: 1px; block-size: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-.toolbar, .conditions { padding: var(--spacing-2) var(--spacing-6); border-block-end: var(--border-width) solid var(--color-border); min-block-size: var(--spacing-10); box-sizing: border-box; }
-.conditions { background: var(--color-background-muted); }
-.rowEnd { margin-inline-start: auto; }
-@media (width < 64rem) { .page { padding: var(--spacing-4); } .toolbar, .conditions { padding-inline: var(--spacing-4); } }
-
-@media (width < 64rem) { .toolbar a { display: inline-flex; align-items: center; min-block-size: var(--size-element-touch); } }
+.page { flex: 1; width: 100%; max-width: 64rem; margin-inline: auto; padding: var(--spacing-8); box-sizing: border-box; }
+/* Widths by what the page holds; the padding stays inside, so each is the content's width plus the page's gutters. */
+.narrow { max-width: calc(48rem + 2 * var(--spacing-8)); }
+.wide { max-width: 80rem; }
+.full { max-width: none; }
+.waiting { width: 100%; min-height: calc(var(--spacing-8) * 3); }
+.requestError { display: flex; justify-content: center; }
+.reveal { width: 100%; min-width: 0; animation: content-reveal 180ms ease-out both; }
+@keyframes content-reveal { from { opacity: 0; } to { opacity: 1; } }
+@media (width < 64rem) { .page { padding: var(--spacing-5); } }
+@media (prefers-reduced-motion: reduce) { .reveal { animation: none; } }
+/* A list page's header: the title gives way to the action, then tabs sit on the rule that ends the header. */
+.titleRow { min-block-size: 2.5rem; }
+.title { flex: 1; min-width: 0; }
+.titleIcon { display: grid; place-items: center; flex-shrink: 0; inline-size: 2rem; block-size: 2rem; border-radius: var(--radius-element);
+  color: var(--color-icon-accent); background: var(--color-accent-muted); }
+.titleIcon svg { inline-size: 1.125rem; block-size: 1.125rem; }
+.actions { flex-shrink: 0; margin-inline-start: auto; }
+.rule { border-block-end: 1px solid var(--color-border); }
+.rule [role="tablist"] { margin-block-end: -1px; }
+/* Tabs and the page's actions on one row: the tabs sit on the rule, the actions keep to its end. */
+.tabRow { display: flex; align-items: flex-end; gap: var(--spacing-4); }
+.tabRow > :first-child { min-width: 0; }
+.tabActions { flex-shrink: 0; margin-inline-start: auto; padding-block-end: var(--spacing-2); }
+.more { display: flex; flex-direction: column; align-items: center; gap: var(--spacing-2); padding-block: var(--spacing-2) var(--spacing-4); }
+/*
+ * The card's header row names the page, so a list page's large title is kept only for screen readers (quiet), as a
+ * phone's top bar does (mobileQuiet); its actions stand alone at the row's end.
+ */
+.quiet { position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.titleRow:not(:has(> :not(.quiet))) { position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden; clip-path: inset(50%); }
+/* A phone's top bar names the page, so a list page's large title is kept only for screen readers there. */
+@media (width < 64rem) {
+  .mobileQuiet { position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .mobileGone { display: none; }
+  /* A title row left with nothing in sight leaves the flow too, and still names the page for screen readers. */
+  .titleRow:not(:has(> :not(.mobileQuiet, .mobileGone))) { position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden; clip-path: inset(50%); }
+}
+/* A title that runs on to more lines breaks between words, as Korean reads. */
+.title[data-wraps] { word-break: keep-all; overflow-wrap: anywhere; }
+/* Legacy conditions row (PageFrame conditions) under the header row, until the old pages move to ListToolbar. */
+.conditions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--spacing-3); padding: var(--spacing-2) var(--spacing-6); border-block-end: 1px solid var(--color-border); }
+@media (width < 64rem) { .conditions { padding-inline: var(--spacing-5); } }

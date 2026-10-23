@@ -1,0 +1,77 @@
+/* Sticks under the workspace top bar on the page's own surface, so rows scroll beneath it without a box around it. */
+.toolbar {
+  position: sticky; top: var(--workspace-topbar-height, 0); z-index: 2;
+  display: flex; flex-direction: column; gap: var(--spacing-2);
+  margin-inline: calc(-1 * var(--spacing-8)); margin-block: calc(-1 * var(--spacing-6)) calc(-1 * var(--spacing-3));
+  padding: var(--spacing-3) var(--spacing-8);
+  background: var(--color-background-surface);
+  box-shadow: inset 0 -1px 0 transparent; transition: box-shadow var(--duration-medium, 240ms) ease-out;
+}
+/*
+ * On a desktop the bar sits a step (spacing-2) below the header row where the page starts, and sticks right there, so a
+ * list without tabs does not shift up as it starts to scroll; the step above it is filled with the page's surface so
+ * rows do not show through it once stuck, and taken off the bar's own top padding, so its controls stay centred between
+ * the header row and the list.
+ */
+@media (width >= 64rem) {
+  .toolbar { top: calc(var(--workspace-topbar-height, 0px) + var(--spacing-2)); padding-block-start: calc(var(--spacing-3) - var(--spacing-2)); }
+  .toolbar::before { content: ''; position: absolute; inset-inline: 0; inset-block-end: 100%; block-size: var(--spacing-2); background: inherit; }
+}
+/* Once rows slide beneath the stuck bar, its bottom rule fades in. */
+.toolbar[data-stuck] { box-shadow: inset 0 -1px 0 var(--color-border); }
+/* The marker takes no room: its negative margin cancels the page stack's gap it would otherwise add. */
+.sentinel { block-size: 0; margin-block-end: calc(-1 * var(--spacing-6)); }
+@media (prefers-reduced-motion: reduce) { .toolbar { transition: none; } }
+@media (width < 64rem) {
+  .toolbar { margin-inline: calc(-1 * var(--spacing-5)); padding-inline: var(--spacing-5); }
+  /* The filter and add buttons stand as tall as the phone's 48px search beside them. */
+  .bar { --size-element-sm: 3rem; --size-element-md: 3rem; --size-element-lg: 3rem; }
+}
+.bar { min-width: 0; }
+/* Search takes what the buttons leave, up to a readable width; on a desktop it keeps room to type beside the filters. */
+.search { flex: 1; min-width: 0; max-inline-size: 24rem; }
+@media (width >= 64rem) { .search { flex: 0 1 20rem; min-inline-size: 13rem; } }
+/* Beside inline filters the search keeps to a narrow box, leaving the line to them. */
+@media (width >= 64rem) { .bar[data-inline] .search { flex: 0 0 14rem; min-inline-size: 0; } }
+/* The filters in the bar take the rest of the line beside the search, and never wrap; what does not fit folds behind 필터 +N. */
+.inline { position: relative; flex: 1; min-width: 0; display: flex; align-items: center; justify-content: flex-start; gap: var(--spacing-2); overflow: hidden; }
+.inlineFilter { flex-shrink: 0; border-radius: var(--radius-element); }
+/* A filter in force reads as chosen: the accent surface behind its selector. */
+.inlineFilter[data-active] { background: var(--color-accent-muted); }
+.ruler { position: absolute; inset-block-start: 0; inset-inline-start: 0; display: flex; gap: var(--spacing-2);
+  visibility: hidden; pointer-events: none; }
+.ruler > * { flex-shrink: 0; }
+.barAction { flex-shrink: 0; margin-inline-start: auto; }
+/* On a phone search takes the row the filter button and the page's action leave. */
+@media (width < 64rem) { .search { max-inline-size: none; } }
+.trigger { position: relative; display: inline-flex; flex-shrink: 0; }
+/* How many conditions are in force, on the phone's icon-only filter button. */
+.count { position: absolute; inset-block-start: -0.25rem; inset-inline-end: -0.25rem; min-inline-size: 1.125rem; block-size: 1.125rem;
+  padding-inline: 0.25rem; border-radius: var(--radius-full); display: grid; place-items: center; pointer-events: none;
+  font-size: 0.6875rem; font-weight: 700; color: var(--color-on-accent); background: var(--color-accent); }
+.applied { min-width: 0; }
+/* On a desktop the filters in force lead the bar and the boxes keep to its end. */
+.desktopApplied { flex: 1; min-width: 0; }
+/* The filter dialog: a ruled header, the fields on a comfortable inset, and a footer band holding the actions. */
+.panel { display: flex; flex-direction: column; min-width: 0; min-block-size: 100%; }
+.panelHead { padding: var(--spacing-4) var(--spacing-4) var(--spacing-4) var(--spacing-6); border-block-end: 1px solid var(--color-border); }
+/* Astryx pulls the dialog title 8px toward its close button; the header centres them instead. */
+.panelHead div:has(> div > h2) { align-items: center; }
+.panelHead div:has(> h2) { margin-block: 0; }
+.panelBody { flex: 1; padding: var(--spacing-6); }
+/* In a phone's sheet the header leaves the grab handle its room, the sheet scrolling from its top edge. */
+@media (width < 64rem) { .panelHead { padding-block-start: var(--spacing-6); } }
+.filterLabel { color: var(--color-icon-secondary); }
+.filterLabel svg { inline-size: 1rem; block-size: 1rem; }
+/* In a bottom sheet the body scrolls and the footer stays at the bottom. */
+.panelFoot { position: sticky; bottom: 0; z-index: 1; padding: var(--spacing-4) var(--spacing-6);
+  padding-block-end: max(var(--spacing-4), env(safe-area-inset-bottom));
+  border-block-start: 1px solid var(--color-border);
+  background: var(--color-background-surface); }
+.panel[data-compact] .panelHead { display: flex; align-items: center; justify-content: space-between; gap: var(--spacing-2);
+  padding: var(--spacing-1) var(--spacing-1) var(--spacing-1) var(--spacing-3); }
+.panel[data-compact] .panelBody { padding: var(--spacing-3); }
+.panel[data-compact] .panelFoot { padding: var(--spacing-2) var(--spacing-3); background: transparent; }
+/* 초기화's arrow sits small beside its word, a step below the field icons. */
+.resetIcon { display: inline-flex; }
+.resetIcon svg { inline-size: 0.875rem; block-size: 0.875rem; }

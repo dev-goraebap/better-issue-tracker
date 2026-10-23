@@ -1,33 +1,85 @@
- .shell { display: flex; inline-size: 100%; block-size: 100%; min-block-size: 0; min-inline-size: 0; background: var(--color-background-body); }
-.sidebar.sidebar { flex-shrink: 0; block-size: 100%; border: 0; background: transparent; }
-.frame { flex: 1; min-inline-size: 0; min-block-size: 0; padding: var(--spacing-2) var(--spacing-2) 0 0; }
-.card { display: flex; flex-direction: column; flex: 1; min-inline-size: 0; min-block-size: 0; overflow: auto; overscroll-behavior: contain; background: var(--color-background-surface); border: var(--border-width) solid var(--color-border); border-radius: var(--radius-container); }
-.chrome { position: sticky; inset-block-start: 0; z-index: 2; flex-shrink: 0; background: var(--color-background-surface); }
-.topbar { min-block-size: 3rem; padding: var(--spacing-2) var(--spacing-5); box-sizing: border-box; border-block-end: var(--border-width) solid var(--color-border); }
-.breadcrumb { display: flex; align-items: center; gap: var(--spacing-2); min-inline-size: 0; }
-.breadcrumb a { max-inline-size: 18rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--text-supporting-size); color: var(--color-text-secondary); text-decoration: none; }
-.breadcrumb a:hover { color: var(--color-text-primary); }
-.headerEnd { margin-inline-start: auto; flex-shrink: 0; }
-.slot { display: flex; align-items: center; gap: var(--spacing-2); }
-.content { flex: 1 0 auto; min-inline-size: 0; }
-.agentBar { display: flex; align-items: center; justify-content: flex-end; gap: var(--spacing-1); flex-shrink: 0; min-block-size: 2rem; padding-inline: var(--spacing-2); }
-.agentButton { display: inline-flex; align-items: center; gap: var(--spacing-1); padding: var(--spacing-1) var(--spacing-2); border: 0; border-radius: var(--radius-element); background: none; color: var(--color-text-secondary); font: inherit; font-size: var(--text-supporting-size); cursor: pointer; }
+/* The window, as SandboxHr's: a desktop's menu on the wash and the page's card beside it; a phone's card and tab bar. */
+.shell { display: flex; flex-direction: column; inline-size: 100%; block-size: 100%; min-block-size: 0; min-inline-size: 0; background: var(--color-background-body); }
+.frame { position: relative; flex: 1; min-inline-size: 0; min-block-size: 0; padding: 0; box-sizing: border-box; }
+/* The page's card: one scroll box on a surface of its own. */
+.panel { display: flex; flex: 1; block-size: 100%; min-block-size: 0; min-inline-size: 0; overflow: hidden; background: var(--color-background-surface);
+  border: var(--border-width) solid var(--color-border); border-radius: var(--radius-container); }
+.card { --workspace-topbar-height: 2.75rem; flex: 1; block-size: 100%; min-block-size: 0; min-inline-size: 0; overflow-y: auto; overflow-x: hidden;
+  scrollbar-gutter: stable; scrollbar-width: thin; scrollbar-color: var(--color-border-emphasized, var(--color-border)) transparent; overscroll-behavior: contain;
+  background: var(--color-background-surface); }
+
+/* The menu on the wash: no surface or rule of its own; Astryx's resizable keeps its width (D-044). */
+.sidebar.sidebar { flex-shrink: 0; block-size: 100%; border: 0; background: transparent; padding: 6px 6px 2px; box-sizing: border-box; }
+.sidebarHeading { display: flex; align-items: center; gap: var(--spacing-2); min-block-size: 2.25rem; min-inline-size: 0; padding-inline: var(--spacing-2) 0; }
+.sidebarHeading[data-folded] { justify-content: center; padding-inline: 0; }
+.brand { display: inline-flex; align-items: center; gap: var(--spacing-2); color: var(--color-text-primary); text-decoration: none; flex-shrink: 0; }
+.brandRule { inline-size: var(--border-width); block-size: 1rem; background: var(--color-border-emphasized, var(--color-border)); flex-shrink: 0; }
+.spaceName { min-inline-size: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.9375rem; font-weight: 700; letter-spacing: -0.01em;
+  color: var(--color-text-primary); text-decoration: none; }
+.newsDot { display: inline-block; inline-size: 0.5rem; block-size: 0.5rem; border-radius: var(--radius-full); background: var(--color-accent); flex-shrink: 0; }
+
+/* The card's header row: the fold, the trail, then the page's tools and actions at its end. */
+.topbar { position: sticky; inset-block-start: 0; z-index: 3; flex-shrink: 0; align-items: center; box-sizing: border-box; block-size: var(--workspace-topbar-height);
+  padding-inline: var(--spacing-6); border-block-end: var(--border-width) solid var(--color-border); background: var(--color-background-surface); }
+.menuToggle { display: inline-flex; align-items: center; flex-shrink: 0; margin-inline: calc(-1 * var(--spacing-2)) var(--spacing-2); }
+.crumbGroup { display: inline-flex; align-items: center; min-inline-size: 0; flex-shrink: 0; }
+.crumbGroup[data-current] { flex-shrink: 1; }
+.crumbStep { flex-shrink: 0; white-space: nowrap; font-size: 0.8125rem; font-weight: 500; color: var(--color-text-secondary); }
+.crumbCurrent { min-inline-size: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.8125rem; font-weight: 500; color: var(--color-text-primary); }
+.crumbLink { flex-shrink: 0; max-inline-size: 18rem; overflow: hidden; text-overflow: ellipsis; padding: 0.125rem 0.25rem; margin-inline: -0.25rem; border-radius: 4px;
+  font-size: 0.8125rem; font-weight: 500; color: var(--color-text-secondary); text-decoration: none; white-space: nowrap; }
+.crumbLink:hover { color: var(--color-text-primary); background: var(--color-overlay-hover); }
+.crumbLink:focus-visible { outline: var(--focus-outline-width) var(--focus-outline-style) var(--focus-outline-color); }
+.crumbSeparator { display: inline-grid; place-items: center; flex-shrink: 0; padding-inline: 0.25rem; color: var(--color-text-secondary); opacity: 0.7; }
+.crumbSeparator svg { inline-size: 0.875rem; block-size: 0.875rem; }
+.topbarEnd { flex-shrink: 0; margin-inline-start: auto; display: flex; align-items: center; gap: var(--spacing-2); }
+.chromeTools, .chromeActions { display: flex; align-items: center; gap: var(--spacing-2); }
+.chromeTools:empty, .chromeActions:empty { display: none; }
+.chromeActions[data-page-action] button:not([aria-label]) { gap: var(--spacing-1-5, 0.375rem); border-radius: var(--radius-element); font-size: 0.8125rem; }
+/* The rows a page hands the shell (tabs, conditions) stick under the header row; its foot row sticks to the card's bottom. */
+.chromeRows { position: sticky; inset-block-start: var(--workspace-topbar-height); z-index: 2; flex-shrink: 0; background: var(--color-background-surface); }
+.chromeRows:empty { display: none; }
+.content { inline-size: 100%; flex-shrink: 0; flex-grow: 1; min-inline-size: 0; animation: reveal 180ms ease-out both; }
+.footSlot { position: sticky; inset-block-end: 0; z-index: 2; flex-shrink: 0; }
+.footSlot:empty { display: none; }
+.footSlot > [data-fallback]:not(:only-child) { display: none; }
+@keyframes reveal { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .content { animation: none; } }
+
+/* The strip under a desktop's card: 32px on the wash, its contents at the end, quiet until pointed at. */
+.agentBar { display: flex; align-items: center; justify-content: flex-end; gap: var(--spacing-1); flex-shrink: 0; block-size: 2rem; padding-inline: var(--spacing-1); }
+.agentButton { display: inline-flex; align-items: center; gap: var(--spacing-1); block-size: 1.5rem; padding-inline: var(--spacing-2); border: 0; border-radius: var(--radius-element);
+  background: none; color: var(--color-text-secondary); font: inherit; font-size: 0.75rem; cursor: pointer; }
 .agentButton:hover { background: var(--color-background-muted); color: var(--color-text-primary); }
 .agentButton:focus-visible { outline: var(--focus-outline-width) var(--focus-outline-style) var(--focus-outline-color); }
-.barcode { inline-size: 3.25rem; block-size: var(--spacing-3); margin-inline-end: var(--spacing-1); color: var(--color-text-secondary); opacity: 0.6; background: repeating-linear-gradient(90deg, currentColor 0 1px, transparent 1px 3px, currentColor 3px 5px, transparent 5px 6px, currentColor 6px 7px, transparent 7px 9px, currentColor 9px 12px, transparent 12px 13px, currentColor 13px 14px, transparent 14px 17px); }
+.barcode { inline-size: 3.25rem; block-size: 0.75rem; margin-inline-end: var(--spacing-1); color: var(--color-text-secondary); opacity: 0.6; background: repeating-linear-gradient(90deg, currentColor 0 1px, transparent 1px 3px, currentColor 3px 5px, transparent 5px 6px, currentColor 6px 7px, transparent 7px 9px, currentColor 9px 12px, transparent 12px 13px, currentColor 13px 14px, transparent 14px 17px); }
+
+/* A desktop: the menu and the card side by side; the card keeps 8px from the window's top and right edges. */
+@media (width >= 64rem) {
+  .shell { flex-direction: row; }
+  .frame { padding: var(--spacing-2) var(--spacing-2) 0 0; }
+}
+/* Split (D-044): the card meets the window's edges and the strip under it is ruled off. */
 .shell[data-layout="split"] .frame { padding: 0; }
-.shell[data-layout="split"] .card { border-block: 0; border-inline-end: 0; border-radius: 0; }
+.shell[data-layout="split"] .panel { border-block: 0; border-inline-end: 0; border-radius: 0; }
 .shell[data-layout="split"] .agentBar { border-block-start: var(--border-width) solid var(--color-border); border-inline-start: var(--border-width) solid var(--color-border); background: var(--color-background-surface); }
-.mobileNavigation { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); flex-shrink: 0; padding-block: var(--spacing-1) calc(var(--spacing-1) + env(safe-area-inset-bottom)); background: var(--color-background-surface); border-top: var(--border-width) solid var(--color-border); }
-.tab { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--spacing-1); min-block-size: var(--size-element-touch); padding: var(--spacing-2); color: var(--color-text-secondary); background: transparent; border: 0; text-decoration: none; cursor: pointer; }
-.tab[aria-current="page"], .moreLink[aria-current="page"] { color: var(--color-text-primary); background: var(--color-background-muted); }
+
+/* A phone's tab bar and the more sheet. */
+.mobileNavigation { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); flex-shrink: 0; padding-block-end: env(safe-area-inset-bottom); background: var(--color-background-surface); border-block-start: var(--border-width) solid var(--color-border); }
+.tab { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--spacing-1); min-block-size: 4rem; padding: var(--spacing-2);
+  font: inherit; font-size: 0.75rem; color: var(--color-text-secondary); background: transparent; border: 0; text-decoration: none; cursor: pointer; }
+.tab[aria-current="page"], .moreLink[aria-current="page"] { color: var(--color-text-primary); background: var(--color-background-muted); font-weight: 700; }
 .tab:focus-visible, .moreLink:focus-visible { outline: var(--focus-outline-width) var(--focus-outline-style) var(--focus-outline-color); outline-offset: calc(-1 * var(--spacing-1)); }
 .moreNavigation { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--spacing-3); }
-.moreLink { display: flex; align-items: center; gap: var(--spacing-3); min-block-size: var(--size-element-touch); padding: var(--spacing-3); color: var(--color-text-primary); text-decoration: none; border: var(--border-width) solid var(--color-border); border-radius: var(--radius-container); }
-@media (width < 64rem) { .frame { padding: 0; } .card, .shell[data-layout="split"] .card { border: 0; border-radius: 0; } .topbar { padding-inline: var(--spacing-4); } .breadcrumb a { max-inline-size: 10rem; } }
-
-.sidebarHeading { display: flex; align-items: center; gap: var(--spacing-3); min-block-size: var(--spacing-10); min-inline-size: 0; }
-.sidebarHeading[data-folded] { justify-content: center; }
-.brand { display: inline-flex; align-items: center; gap: var(--spacing-2); color: var(--color-text-primary); text-decoration: none; flex-shrink: 0; }
-.brandRule { inline-size: var(--border-width); block-size: var(--spacing-4); background: var(--color-border); flex-shrink: 0; }
-.spaceName { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--text-label-size); color: var(--color-text-primary); text-decoration: none; }
+.moreLink { display: flex; align-items: center; gap: var(--spacing-3); min-block-size: var(--size-element-touch); padding: var(--spacing-3); color: var(--color-text-primary); text-decoration: none;
+  border: var(--border-width) solid var(--color-border); border-radius: var(--radius-container); }
+@media (width < 64rem) {
+  .panel, .shell[data-layout="split"] .panel { border: 0; border-radius: 0; }
+  .topbar { padding-inline: var(--spacing-5); }
+  .crumbLink { max-inline-size: 10rem; }
+  .frame:not([data-tabless]) { --workspace-tab-bar-height: 4rem; }
+  .frame[data-tabless] { padding-block-end: env(safe-area-inset-bottom); background: var(--color-background-surface); }
+  .frame[data-bare] .card { --workspace-topbar-height: 0px; }
+  /* While a floating + is on screen, the content ends with room for it, so it never covers the last row. */
+  .card:has([data-floating-action]) > .content { padding-block-end: calc(3.5rem + var(--spacing-4)); }
+}

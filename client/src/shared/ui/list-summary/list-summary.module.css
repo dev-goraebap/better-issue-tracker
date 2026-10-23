@@ -1,0 +1,15 @@
+/*
+ * The list's end line: 44px like a row, on the rows' inset (24px, a phone's 20px), laid on faint diagonal hatching so it
+ * reads apart from the rows above. The count and the next slice's button sit together at its start, under the titles
+ * where the eye already is. Inside a table's box it stays put while the table scrolls sideways.
+ */
+.summary { position: sticky; inset-inline-start: 0; display: flex; align-items: center; gap: var(--spacing-3);
+  box-sizing: border-box; inline-size: 100%; block-size: 2.75rem; padding-inline: var(--spacing-6);
+  border-block-end: 1px solid var(--color-border-subtle);
+  background-color: var(--color-background-surface);
+  background-image: repeating-linear-gradient(-45deg,
+    color-mix(in srgb, var(--color-text-primary) 6%, transparent) 0 1px, transparent 1px 7px); }
+.count { font-variant-numeric: tabular-nums; }
+.summary :global(.astryx-button) { margin-inline-start: calc(-1 * var(--spacing-1)); color: var(--color-text-primary); }
+.summary svg { inline-size: 0.875rem; block-size: 0.875rem; }
+@media (width < 64rem) { .summary { padding-inline: var(--spacing-5); } }

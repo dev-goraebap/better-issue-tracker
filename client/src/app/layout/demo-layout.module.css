@@ -1,0 +1,13 @@
+/* The demo's menu: the same wash, sizes and head as the workspace's (widgets/app-shell). */
+.sidebar.sidebar { flex-shrink: 0; block-size: 100%; border: 0; background: transparent; padding: 6px 6px 2px; box-sizing: border-box; }
+.heading { display: flex; align-items: center; gap: var(--spacing-2); min-block-size: 2.25rem; min-inline-size: 0; padding-inline: var(--spacing-2) 0; }
+.heading[data-folded] { justify-content: center; padding-inline: 0; }
+.brand { display: inline-flex; align-items: center; color: var(--color-text-primary); text-decoration: none; }
+.rule { inline-size: var(--border-width); block-size: 1rem; background: var(--color-border-emphasized, var(--color-border)); flex-shrink: 0; }
+.space { min-inline-size: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.9375rem; font-weight: 700; letter-spacing: -0.01em; }
+.account { display: flex; align-items: center; gap: var(--spacing-3); padding: var(--spacing-2); border-radius: var(--radius-container);
+  background: color-mix(in srgb, var(--color-text-primary) 9%, var(--color-background-body)); }
+.accountFolded { display: flex; justify-content: center; }
+.accountText { display: flex; flex-direction: column; flex: 1; min-inline-size: 0; }
+.newsDot { display: inline-block; inline-size: 0.5rem; block-size: 0.5rem; border-radius: var(--radius-full); background: var(--color-accent); flex-shrink: 0; }
+

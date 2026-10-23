@@ -1,0 +1,31 @@
+/*
+ * The one anatomy every dialog, sheet and panel shares: a ruled head (title, a line under it, its actions and close), a
+ * body that scrolls, and a ruled foot holding the actions, its background the surface's own. A page of its own keeps
+ * the same parts under its title.
+ */
+.head { position: sticky; top: 0; z-index: 2; display: flex; align-items: center; gap: var(--spacing-1);
+  padding: var(--spacing-4) var(--spacing-4) var(--spacing-4) var(--spacing-6); border-block-end: 1px solid var(--color-border); background: var(--color-background-surface); }
+.headText { display: flex; flex-direction: column; flex: 1; min-inline-size: 0; }
+.title { margin: 0; font-size: 1.125rem; font-weight: 600; line-height: 1.4; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.title[data-wraps] { white-space: normal; word-break: keep-all; overflow-wrap: anywhere; }
+.actions { display: flex; align-items: center; gap: var(--spacing-1); }
+.close { display: inline-flex; }
+.body { flex: 1; min-block-size: 0; padding: var(--spacing-4) var(--spacing-6); overflow-y: auto; }
+.foot { position: sticky; bottom: 0; display: flex; align-items: center; justify-content: space-between; gap: var(--spacing-2);
+  padding: var(--spacing-4) var(--spacing-6); padding-block-end: max(var(--spacing-4), env(safe-area-inset-bottom));
+  border-block-start: 1px solid var(--color-border); background: var(--color-background-surface); }
+.footEnd { display: flex; align-items: center; gap: var(--spacing-2); margin-inline-start: auto; }
+/* A compact frame's body: its fields evenly spaced. */
+.stack { display: flex; flex-direction: column; gap: var(--spacing-4); }
+/* On a phone the parts keep to the phone's narrower insets; a full-screen panel's head clears the status bar. */
+@media (width < 64rem) {
+  .head { padding: var(--spacing-3) var(--spacing-3) var(--spacing-3) var(--spacing-5); }
+  .head[data-full] { padding-block-start: max(var(--spacing-3), env(safe-area-inset-top)); }
+  .body { padding-inline: var(--spacing-5); }
+  .foot { padding-inline: var(--spacing-5); }
+}
+/* In a bottom sheet (a phone's, at any width the app treats as one) the grab handle's strip (24px) lies over the sheet's
+   top; the head starts below it. A sheet closes by its handle, a press outside or back, like the 더보기 sheet; it shows
+   no close button. */
+:global(.astryx-bottom-sheet) .head { padding-block-start: calc(1.5rem + var(--spacing-1)); }
+:global(.astryx-bottom-sheet) .close { display: none; }

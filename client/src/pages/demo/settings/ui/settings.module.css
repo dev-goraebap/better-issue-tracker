@@ -1,0 +1,10 @@
+.form { display: flex; flex-direction: column; gap: var(--spacing-4); }
+.save { display: flex; justify-content: flex-end; }
+.rows { display: flex; flex-direction: column; gap: var(--spacing-4); }
+/* Section lists keep the page's column, not the card's edges. */
+.members ul > li { padding-inline: 0; }
+.danger { display: flex; flex-direction: column; border: 1px solid color-mix(in srgb, var(--color-text-danger, #d94848) 35%, var(--color-border)); border-radius: var(--radius-container); }
+.dangerRow { display: flex; align-items: center; justify-content: space-between; gap: var(--spacing-4); padding: var(--spacing-4); }
+.dangerRow > div { display: flex; flex-direction: column; gap: var(--spacing-1); min-inline-size: 0; word-break: keep-all; }
+.dangerRow > button { flex-shrink: 0; }
+.dangerRow + .dangerRow { border-block-start: 1px solid var(--color-border); }

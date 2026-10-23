@@ -1,0 +1,25 @@
+/*
+ * A state screen: the landscape, the title, the description and the action as one group. Alone in its room (a page with
+ * nothing else to show) its box fills the height the page leaves (useFillRoom) and the group sits a little above the
+ * middle of it; beside other content (isCompact) it keeps to the top under that content. The drawing sizes against the
+ * room's width: up to 40rem in a wide one, 24rem in a narrow one (a phone, a dialog), its height never more than half
+ * the window's, and a quarter on a low one, so the action stays in reach; isCompact keeps it at 26rem, never wider than
+ * its room.
+ */
+.room { display: flex; flex-direction: column; justify-content: center; inline-size: 100%; min-width: 0; }
+.room[data-compact] { justify-content: flex-start; }
+.state { container-type: inline-size; justify-content: flex-start; padding-block: var(--spacing-4) var(--spacing-6); }
+.state.compact { padding-block: var(--spacing-4); }
+/* The title reads as a note, not a heading over content: medium weight. Astryx sets it at raised specificity. */
+.state :is(h1, h2, h3, h4, h5, h6):not(#\#):not(#\#):not(#\#) { font-weight: var(--font-weight-medium); font-size: 1.25rem; }
+.state.compact :is(h1, h2, h3, h4, h5, h6):not(#\#):not(#\#):not(#\#) { font-size: 1rem; }
+.state :global(.astryx-empty-state-description) { max-inline-size: 28rem; line-height: 1.6; word-break: keep-all; }
+
+/* The state's mark: its icon on a soft disc, the accent's for most states and the danger's for a failure. */
+.mark { display: grid; place-items: center; inline-size: 4rem; block-size: 4rem; border-radius: var(--radius-full); color: var(--color-icon-secondary); background: var(--color-background-muted); }
+.mark[data-tone="accent"] { color: var(--color-icon-accent); background: var(--color-accent-muted); }
+.mark[data-tone="danger"] { color: var(--color-text-danger, var(--color-icon-secondary)); background: color-mix(in srgb, var(--color-text-danger, currentColor) 12%, transparent); }
+.mark svg { inline-size: 1.75rem; block-size: 1.75rem; }
+.mark.compact { inline-size: 3rem; block-size: 3rem; }
+.mark.compact svg { inline-size: 1.375rem; block-size: 1.375rem; }
+@container (width < 48rem) { .state:not(.compact) :is(h1, h2, h3, h4, h5, h6):not(#\#):not(#\#):not(#\#) { font-size: 1.125rem; } }

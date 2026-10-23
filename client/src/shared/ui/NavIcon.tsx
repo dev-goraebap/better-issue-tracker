@@ -1,20 +1,75 @@
-import { CalendarDays, ArrowLeftRight, Ellipsis, Folder, House, Inbox, ListTodo, PanelLeft, Settings, Users, X } from 'lucide-react';
+import {
+  ArrowDownWideNarrow, ArrowLeft, ArrowLeftRight, ArrowRight, ArrowUpNarrowWide, ArrowUpDown, Bell, BookOpen, CalendarDays, Check, CheckCheck,
+  ChevronDown, ChevronRight, CircleCheck, CircleDot, Clock, Copy, Ellipsis, File, FileText, Filter, Flag, Folder, GitBranch, Hash, House,
+  Inbox, KanbanSquare, LayoutGrid, LayoutList, Link, ListFilter, ListTodo, Lock, Mail, MessageSquare, Milestone, PanelLeft, Paperclip,
+  Pencil, Plus, RefreshCw, Rows3, Scale, Search, Settings, Shield, SlidersHorizontal, Sparkles, Table2, Tag, Trash2, User, Users, Workflow, X,
+  type LucideIcon,
+} from 'lucide-react';
 
-const icons = {
+// The icon set is lucide's (D-044); names follow SandboxHr's so its shared parts keep their calls.
+const icons: Record<string, LucideIcon> = {
   home: House,
   calendar: CalendarDays,
   inbox: Inbox,
   tasks: ListTodo,
   members: Users,
+  people: Users,
+  person: User,
   documents: Folder,
+  document: FileText,
+  file: File,
   more: Ellipsis,
   sidebar: PanelLeft,
   close: X,
   settings: Settings,
-  switcher: CalendarDays, ArrowLeftRight,
+  switcher: ArrowLeftRight,
+  back: ArrowLeft,
+  forward: ChevronRight,
+  next: ArrowRight,
+  check: Check,
+  done: CheckCheck,
+  'chevron-down': ChevronDown,
+  filter: SlidersHorizontal,
+  'list-filter': ListFilter,
+  plus: Plus,
+  retry: RefreshCw,
+  search: Search,
+  sort: ArrowUpDown,
+  'sort-asc': ArrowUpNarrowWide,
+  'sort-desc': ArrowDownWideNarrow,
+  bell: Bell,
+  status: CircleDot,
+  closed: CircleCheck,
+  clock: Clock,
+  priority: Flag,
+  label: Tag,
+  tag: Tag,
+  link: Link,
+  copy: Copy,
+  edit: Pencil,
+  delete: Trash2,
+  attach: Paperclip,
+  comment: MessageSquare,
+  mail: Mail,
+  lock: Lock,
+  shield: Shield,
+  board: KanbanSquare,
+  list: LayoutList,
+  table: Table2,
+  rows: Rows3,
+  grid: LayoutGrid,
+  decision: Scale,
+  session: BookOpen,
+  milestone: Milestone,
+  branch: GitBranch,
+  workflow: Workflow,
+  key: Hash,
+  agent: Sparkles,
+  'filter-funnel': Filter,
 };
 
-export function NavIcon({ name }: { name: keyof typeof icons }) {
-  const Icon = icons[name];
+/** A menu or action icon by name; an unknown name draws a plain file rather than nothing. */
+export function NavIcon({ name }: { name: string }) {
+  const Icon = icons[name] ?? File;
   return <Icon className="bit-nav-icon" size={20} strokeWidth={1.75} aria-hidden="true" focusable="false" />;
 }

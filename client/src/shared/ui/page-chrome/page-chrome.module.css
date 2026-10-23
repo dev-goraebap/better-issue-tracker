@@ -1,0 +1,39 @@
+/*
+ * A page in the header chrome: its content across the card's whole width, edge to edge; its tabs in a row of 44px (the
+ * header row's height) under the header row, the active one underlined, the tools at the row's end; the conditions in
+ * force in the next row. A phone's tabs share the row's whole width and its content keeps the phone's inset.
+ */
+/* The list runs to the card's edges, as Plane's does; rows keep their own inset, and the list ends at its own last line
+   (ListSummary, or the last row's rule) on the card's floor, so the page keeps no inset below it either (BIT, D-058). */
+.page { flex: 1; inline-size: 100%; box-sizing: border-box; padding: 0;
+  /* The list's news mark sticks under the tab row and pulls nothing up, as the page has no gap above the list. */
+  --list-news-offset: 3rem; --list-news-pull: 0px; }
+.quiet { position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.tabRow { display: flex; align-items: stretch; gap: var(--spacing-4); min-block-size: 2.75rem; padding-inline: var(--spacing-6);
+  border-block-end: 1px solid var(--color-border); box-sizing: border-box; }
+.tabs { display: flex; align-items: stretch; min-width: 0; }
+.tabs > * { align-self: stretch; }
+.tabs [role="tablist"] { block-size: 100%; margin-block-end: -1px; }
+.tabs [role="tab"] { block-size: calc(2.75rem - 1px); padding-inline: var(--spacing-4); font-size: 0.8125rem; font-weight: 500; }
+/* A desktop's tabs are PageTabs' switch: centred in the row's 44px, its edge under the header's first icon (4px left of
+   the row's padding). */
+.tabRow:not([data-mobile]) .tabs > :global(.astryx-tab-list) { align-self: center !important; position: relative; inset-inline-start: -4px; }
+.tabTools { display: flex; align-items: center; gap: var(--spacing-2); margin-inline-start: auto; }
+.applied:empty { display: none; }
+.applied { display: flex; flex-wrap: wrap; align-items: center; gap: var(--spacing-2); padding: var(--spacing-2) var(--spacing-6);
+  border-block-end: 1px solid var(--color-border); }
+/* A phone: the tabs split the row's whole width, a little larger type; the chips row draws its own inset and rule; the
+   content runs edge to edge as a desktop's does, its rows keeping the phone's inset (20px) inside them. */
+.tabRow[data-mobile] { padding-inline: 0; }
+.tabRow[data-mobile] .tabs, .tabRow[data-mobile] .tabs > *, .tabRow[data-mobile] [role="tablist"] { flex: 1; inline-size: 100%; }
+.tabRow[data-mobile] [role="tab"] { flex: 1; justify-content: center; font-size: 0.875rem; }
+.applied[data-mobile] { display: block; padding: 0; border: 0; }
+.applied[data-mobile]:empty { display: none; }
+/* A page that keeps its content to a column (PageFrame width): centred, as wide as the classic page of that width with its
+   gutters inside, the content starting a little under the rows above. A phone keeps its own inset instead. */
+/* A column of sections ends with room under its last one. */
+.column { inline-size: 100%; max-inline-size: 64rem; margin-inline: auto; padding: var(--spacing-6) var(--spacing-8) var(--spacing-8); box-sizing: border-box; }
+.column[data-width="narrow"] { max-inline-size: calc(48rem + 2 * var(--spacing-8)); }
+.column[data-width="wide"] { max-inline-size: 80rem; }
+.column[data-width="full"] { max-inline-size: none; }
+@media (width < 64rem) { .column { padding: var(--spacing-5); } }

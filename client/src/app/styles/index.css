@@ -5,6 +5,12 @@
 @import '@fontsource-variable/jetbrains-mono';
 
 :root {
+  /*
+   * Soft rules from SandboxHr, lighter than the page's border in light mode and firmer in dark mode: between rows of a
+   * table or list and in menus (subtle), and round controls in the header's tools and chips (control, a step firmer).
+   */
+  --color-border-subtle: light-dark(color-mix(in srgb, var(--color-border) 70%, transparent), color-mix(in srgb, var(--color-text-primary) 12%, transparent));
+  --color-border-control: light-dark(color-mix(in srgb, var(--color-border) 70%, transparent), color-mix(in srgb, var(--color-text-primary) 20%, transparent));
   --size-element-touch: 3rem;
   --size-element-sm: 1.75rem;
   --size-element-md: 2rem;

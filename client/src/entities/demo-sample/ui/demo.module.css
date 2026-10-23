@@ -1,0 +1,30 @@
+/* Shared bits of the demo pages. */
+.clip { min-inline-size: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.key { flex-shrink: 0; font-family: var(--font-family-code); font-size: 0.75rem; color: var(--color-text-secondary); }
+.none { color: var(--color-text-secondary); opacity: 0.6; }
+.figure { display: inline-flex; align-items: center; gap: var(--spacing-1); font-variant-numeric: tabular-nums; color: var(--color-text-secondary); }
+.figure svg { inline-size: 0.875rem; block-size: 0.875rem; }
+.priority { display: inline-flex; align-items: center; gap: var(--spacing-1); }
+.priority svg { inline-size: 0.875rem; block-size: 0.875rem; }
+.priority[data-level="urgent"] { color: var(--color-text-danger, #d94848); }
+.priority[data-level="high"] { color: var(--color-text-warning, #c98a1b); }
+.unread { font-weight: 700; color: var(--color-text-primary); }
+.labels { display: flex; gap: var(--spacing-1); min-inline-size: 0; overflow: hidden; }
+/* An Inbox row's title as a button that marks it read: the notice, then what it is about in the secondary ink. */
+.rowButton { display: flex; align-items: baseline; gap: var(--spacing-2); min-inline-size: 0; max-inline-size: 100%; padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: start; cursor: pointer; white-space: nowrap; overflow: hidden; }
+.rowButton:hover { text-decoration: underline; }
+.rowButton:focus-visible { outline: var(--focus-outline-width) var(--focus-outline-style) var(--focus-outline-color); }
+.rowTarget { min-inline-size: 0; overflow: hidden; text-overflow: ellipsis; font-weight: 400; color: var(--color-text-secondary); }
+@media (width < 64rem) { .rowTarget { display: none; } }
+/* A computed progress: a thin bar then the figures, in a fixed width so the column lines up. */
+.progress { display: flex; align-items: center; gap: var(--spacing-2); inline-size: 100%; }
+.progress > :first-child { flex: 1; min-inline-size: 0; }
+/* The states page: a tab's state fills what the page leaves. */
+.statePanel { display: flex; flex-direction: column; flex: 1; }
+.skeletonRow { display: flex; align-items: center; gap: var(--spacing-3); block-size: 2.75rem; padding-inline: var(--spacing-6); border-block-end: 1px solid var(--color-border-subtle, var(--color-border)); }
+.skeletonEnd { margin-inline-start: auto; }
+/* A form's short fields side by side, as many as fit (one per row on a phone). */
+.fieldGrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: var(--spacing-4); }
+@media (width < 64rem) { .skeletonRow { padding-inline: var(--spacing-5); } }
+/* Lists in a page's column (not edge to edge) line up with the section labels. */
+.flush ul > li { padding-inline: 0; }

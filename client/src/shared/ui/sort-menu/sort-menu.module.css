@@ -1,0 +1,17 @@
+/* Plane's sort menu: small rows under their section's name, the key and the way in force ticked, the reset under a hairline. */
+.body { display: flex; flex-direction: column; padding: var(--spacing-1-5, 0.375rem); }
+.item { display: flex; align-items: center; justify-content: space-between; gap: var(--spacing-2); padding: var(--spacing-1-5, 0.375rem) var(--spacing-2);
+  border: 0; border-radius: 4px; background: none; font: inherit; font-size: 0.75rem; color: var(--color-text-secondary); text-align: start; cursor: pointer; }
+.item:hover:not(:disabled) { background: var(--color-overlay-hover); color: var(--color-text-primary); }
+.item[aria-checked="true"] { color: var(--color-text-primary); }
+.item:disabled { cursor: default; opacity: 0.5; }
+.item svg { inline-size: 0.875rem; block-size: 0.875rem; }
+/* A section's name (정렬 기준, 방향) and a way's icon before its name. */
+.heading { margin: 0; padding: var(--spacing-1) var(--spacing-2); font-size: 0.6875rem; font-weight: 600; color: var(--color-text-secondary); }
+.itemLabel { display: inline-flex; align-items: center; gap: var(--spacing-2); }
+.rule { margin: var(--spacing-1) 0; border: 0; border-block-start: 1px solid var(--color-border-subtle); }
+/* A phone's sheet (the shared frame's body gives the inset): touch rows of 44px in 14px type. */
+.body[data-size="lg"] { padding: 0; margin-inline: calc(-1 * var(--spacing-2)); }
+.body[data-size="lg"] .item { min-block-size: 2.75rem; font-size: 0.875rem; color: var(--color-text-primary); }
+.body[data-size="lg"] .heading { font-size: 0.75rem; }
+.body[data-size="lg"] .item svg { inline-size: 1.125rem; block-size: 1.125rem; }

@@ -1,0 +1,1 @@
+export { FloatingAction } from './FloatingAction';

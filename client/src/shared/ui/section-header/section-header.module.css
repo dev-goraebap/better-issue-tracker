@@ -1,0 +1,5 @@
+/* A quiet label names the section; the page's gaps part the sections, with no rule. */
+/* One height with or without an action (a small button), so every section's content starts at the same distance. */
+.head { box-sizing: border-box; display: flex; align-items: center; justify-content: space-between; gap: var(--spacing-3); min-block-size: 2rem; }
+.title { margin: 0; font-size: 0.8125rem; font-weight: 600; line-height: 1.25rem; letter-spacing: 0.01em; color: var(--color-text-secondary); }
+.actions { display: flex; align-items: center; gap: var(--spacing-2); flex-shrink: 0; }

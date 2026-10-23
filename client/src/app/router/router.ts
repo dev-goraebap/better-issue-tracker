@@ -22,6 +22,20 @@ import { SecurityPage } from '@/pages/settings/security';
 import { ApiKeysPage } from '@/pages/settings/api-keys';
 import { WorkspaceSettingsPage } from '@/pages/settings/workspace';
 import { AppearancePage } from '@/pages/settings/appearance';
+import { DemoHomePage } from '@/pages/demo/home';
+import { DemoInboxPage } from '@/pages/demo/inbox';
+import { DemoTablePage } from '@/pages/demo/table';
+import { DemoTabsPage } from '@/pages/demo/tabs';
+import { DemoBoardPage } from '@/pages/demo/board';
+import { DemoDetailPage } from '@/pages/demo/item-detail';
+import { DemoFormPage } from '@/pages/demo/item-form';
+import { DemoSettingsPage } from '@/pages/demo/settings';
+import { DemoStatesPage } from '@/pages/demo/states';
+import { DemoDialogsPage } from '@/pages/demo/dialogs';
+import { parseInboxSearch, parseStatesSearch, parseTableSearch, parseTabsSearch } from '@/entities/demo-sample';
+import { DemoLayout } from '../layout/DemoLayout';
+import { followHistory } from '@/shared/lib/history-trail';
+import { ownSearch } from '@/shared/lib/route-search';
 import { membersQuery, workspaceQuery, workspacesQuery } from '@/entities/workspace';
 import { ApiError, bootstrapQueryOptions, capabilitiesQueryOptions, keyQueryOptions, resetCsrf, sessionQueryOptions, setUnauthorizedHandler } from '@/shared/api';
 import { RootLayout } from '../layout/RootLayout';
@@ -96,6 +110,22 @@ const login = createRoute({ getParentRoute: () => rootRoute, path: '/login', com
 const setup = createRoute({ getParentRoute: () => rootRoute, path: '/setup', component: BootstrapPage, beforeLoad: () => entryGuard(true) });
 const join = createRoute({ getParentRoute: () => rootRoute, path: '/join', component: JoinPage });
 const forcedPassword = createRoute({ getParentRoute: () => rootRoute, path: '/change-password', component: ChangePasswordPage, beforeLoad: async () => { const session = await requireSession(); if (!session.mustChangePassword) throw redirect({ to: '/settings/security' }); } });
-export const router = createRouter({ routeTree: rootRoute.addChildren([workspace.addChildren([start, chooser, scoped.addChildren([home, inbox, myTasks, members, documents, settings, projects, projectItems, projectSettings, itemDetail, itemReference]), security, keys, appearance, ...legacy]), login, setup, join, forcedPassword]), defaultPreload: 'intent', scrollRestoration: true });
+// The UI demo (dev only): every screen pattern on mock data inside the real shell, a reference for new screens.
+const demo = createRoute({ getParentRoute: () => rootRoute, path: '/demo', component: DemoLayout });
+const demoRoutes = [
+  createRoute({ getParentRoute: () => demo, path: '/', component: DemoHomePage }),
+  createRoute({ getParentRoute: () => demo, path: '/inbox', component: DemoInboxPage, validateSearch: ownSearch(parseInboxSearch) }),
+  createRoute({ getParentRoute: () => demo, path: '/table', component: DemoTablePage, validateSearch: ownSearch(parseTableSearch) }),
+  createRoute({ getParentRoute: () => demo, path: '/tabs', component: DemoTabsPage, validateSearch: ownSearch(parseTabsSearch) }),
+  createRoute({ getParentRoute: () => demo, path: '/board', component: DemoBoardPage }),
+  createRoute({ getParentRoute: () => demo, path: '/items/new', component: DemoFormPage }),
+  createRoute({ getParentRoute: () => demo, path: '/items/$id', component: DemoDetailPage, validateSearch: ownSearch(parseTableSearch) }),
+  createRoute({ getParentRoute: () => demo, path: '/settings', component: DemoSettingsPage }),
+  createRoute({ getParentRoute: () => demo, path: '/states', component: DemoStatesPage, validateSearch: ownSearch(parseStatesSearch) }),
+  createRoute({ getParentRoute: () => demo, path: '/dialogs', component: DemoDialogsPage }),
+] as const;
+const demoTree = import.meta.env.DEV ? [demo.addChildren(demoRoutes)] : [];
+export const router = createRouter({ routeTree: rootRoute.addChildren([...demoTree, workspace.addChildren([start, chooser, scoped.addChildren([home, inbox, myTasks, members, documents, settings, projects, projectItems, projectSettings, itemDetail, itemReference]), security, keys, appearance, ...legacy]), login, setup, join, forcedPassword]), defaultPreload: 'intent', scrollRestoration: true });
 setUnauthorizedHandler(() => { resetCsrf(); void queryClient.cancelQueries().then(() => { queryClient.clear(); void router.navigate({ to: '/login' }); }); });
+followHistory(router.history);
 declare module '@tanstack/react-router' { interface Register { router: typeof router } }

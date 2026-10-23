@@ -1,0 +1,16 @@
+/*
+ * The page's foot row: a rule over it, the surface's own background, 16px above and below (more below on a phone, to
+ * clear the home indicator), its content as wide as the page and on the page's insets: the start (a way back, cancel)
+ * at the left, the actions at the right.
+ */
+.foot { border-block-start: 1px solid var(--color-border); background: var(--color-background-surface); }
+.inner { display: flex; align-items: center; gap: var(--spacing-2); inline-size: 100%; max-inline-size: 64rem; margin-inline: auto;
+  padding: var(--spacing-4) var(--spacing-8); box-sizing: border-box; }
+.inner[data-width="narrow"] { max-inline-size: 48rem; }
+.inner[data-width="wide"] { max-inline-size: 80rem; }
+.inner[data-width="full"] { max-inline-size: none; }
+.start { display: flex; align-items: center; gap: var(--spacing-2); }
+.end { display: flex; align-items: center; justify-content: flex-end; gap: var(--spacing-2); flex: 1; min-inline-size: 0; }
+@media (width < 64rem) {
+  .inner, .inner[data-width] { max-inline-size: none; padding: var(--spacing-3) var(--spacing-5) max(var(--spacing-3), env(safe-area-inset-bottom)); }
+}

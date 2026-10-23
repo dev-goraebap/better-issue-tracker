@@ -1,0 +1,20 @@
+/* A strip of figures: each a quiet label over a large number, parted by hairlines, no boxes. */
+.figures { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 0; border-block: 1px solid var(--color-border); }
+.figure { display: flex; flex-direction: column; gap: var(--spacing-1); padding: var(--spacing-4) var(--spacing-5); }
+.figure + .figure { border-inline-start: 1px solid var(--color-border); }
+.figure dd { margin: 0; }
+.value { font-size: 1.75rem; font-weight: 600; line-height: 1.2; font-variant-numeric: tabular-nums; }
+.more { font-size: 0.8125rem; color: var(--color-text-secondary); text-decoration: none; }
+.more:hover { color: var(--color-text-primary); text-decoration: underline; }
+.key { font-family: var(--font-family-code); font-size: 0.75rem; color: var(--color-text-secondary); }
+.icon { display: inline-grid; place-items: center; color: var(--color-icon-secondary); }
+.icon svg { inline-size: 1rem; block-size: 1rem; }
+.pattern { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (width < 64rem) {
+  .figures { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .figure:nth-child(3) { border-inline-start: 0; }
+  .figure:nth-child(n + 3) { border-block-start: 1px solid var(--color-border); }
+  .pattern { display: none; }
+}
+/* Lists in the page's column line up with the section labels, not the card's edges. */
+.sections ul > li { padding-inline: 0; }

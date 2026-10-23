@@ -1,0 +1,24 @@
+/* The search opener reads as a quiet field, as in the docs browser: icon, 검색, and the key on the far end. */
+.trigger { display: inline-flex; align-items: center; gap: var(--spacing-2); inline-size: 11rem; block-size: 2rem; box-sizing: border-box;
+  padding: 0.25rem 0.5rem 0.25rem 0.75rem; border: 1px solid var(--color-border); border-radius: 8px; background: var(--color-background-body);
+  color: var(--color-text-secondary); cursor: pointer; }
+.trigger > :last-child { margin-inline-start: auto; }
+.trigger:hover { border-color: var(--color-border-emphasized); }
+.trigger:focus-visible { outline: var(--focus-outline-width) var(--focus-outline-style) var(--focus-outline-color); outline-offset: 1px; }
+.trigger svg { inline-size: 1rem; block-size: 1rem; }
+/* Wide, it reads as a field across its bar, as the list search it takes the place of did. */
+.trigger[data-wide] { inline-size: auto; flex: 1; max-inline-size: 22rem; }
+/*
+ * A narrow desktop (the smallest window with the side menu open leaves about 45rem) has no room for the field: the
+ * opener becomes its icon alone, square like the buttons beside it, and its name and keys stay in the label.
+ */
+@container (width < 54rem) {
+  .trigger:not([data-wide]) { inline-size: 2rem; padding: 0; justify-content: center; }
+  .trigger:not([data-wide]) > :not(svg) { display: none; }
+}
+
+.keys { display: inline-flex; align-items: center; }
+@media (width < 48rem) { .keys { display: none; } }
+
+/* The words searched, marked where they stand. */
+.mark { border-radius: 2px; background: var(--color-background-orange); color: inherit; }
