@@ -5,7 +5,13 @@
  */
 export type Person = { id: string; name: string; kind: 'user' | 'agent'; email?: string; role?: Role };
 export type Role = 'owner' | 'admin' | 'member' | 'viewer';
-export type Workspace = { id: string; name: string; myRole: Role; projects: number; members: number };
+export type Workspace = {
+  id: string; name: string; myRole: Role; projects: number; members: number; description?: string;
+  /** The workspace's logo as an image address; none draws its first letter on its colour. */
+  logo?: string;
+  /** The colour its mark falls back to, one of the mark's tones. */
+  tone: number;
+};
 export type Project = { id: string; workspaceId: string; key: string; name: string; status: 'active' | 'archived'; leadId: string; updatedAt: string };
 export type Status = 'todo' | 'doing' | 'review' | 'done';
 export type Priority = 'urgent' | 'high' | 'medium' | 'low';
@@ -38,9 +44,10 @@ export const personOf = (id?: string) => PEOPLE.find(person => person.id === id)
 /** The member signed in to the demo. */
 export const ME = 'u1';
 
+/** The member's workspaces; the demo's create dialog adds to it for the visit (model/workspaces). */
 export const WORKSPACES: Workspace[] = [
-  { id: 'ws-bit', name: 'BIT 개발', myRole: 'owner', projects: 3, members: 4 },
-  { id: 'ws-lab', name: '디자인 랩', myRole: 'member', projects: 1, members: 6 },
+  { id: 'ws-bit', name: 'BIT 개발', myRole: 'owner', projects: 3, members: 4, tone: 0, description: '경량 ALM을 만드는 팀' },
+  { id: 'ws-lab', name: '디자인 랩', myRole: 'member', projects: 1, members: 6, tone: 3 },
 ];
 export const workspaceOf = (id?: string) => WORKSPACES.find(workspace => workspace.id === id);
 /** Where /demo opens. */

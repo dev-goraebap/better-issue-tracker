@@ -1,7 +1,7 @@
 import type { MouseEvent } from 'react';
 import { Button, Text, VStack } from '@astryxdesign/core';
 import { Link, useNavigate, useParams } from '@tanstack/react-router';
-import { ITEM_ROW_LINK, ItemList, ItemMeta, ItemRow, NavIcon, PageFrame, SectionHeader } from '@/shared/ui';
+import { ITEM_ROW_LINK, ItemList, ItemMeta, ItemRow, NavIcon, PageFrame, PageState, SectionHeader } from '@/shared/ui';
 import { dateText, DECISIONS, ME, PATTERN_MENU, PersonCell, PROJECT_MENU, projectsIn, StatusBadge, WORK_ITEMS, WORKSPACE_MENU } from '@/entities/demo-sample';
 import styles from './home.module.css';
 
@@ -34,6 +34,11 @@ export function DemoHomePage() {
     ...(first ? PROJECT_MENU.map(entry => ({ ...entry, label: `${first.name} · ${entry.label}`, href: `/demo/w/${workspaceId}/p/${first.id}${entry.path}` })) : []),
     ...PATTERN_MENU.map(entry => ({ ...entry, href: entry.path })),
   ];
+  // A workspace just made has nothing yet: its home says what to do first rather than showing empty sections.
+  if (!first) return <PageFrame title="홈" icon="home">
+    <PageState title="첫 프로젝트를 만들어 보세요" description="작업·결정·세션은 프로젝트 안에 모입니다. 프로젝트를 만들고 멤버를 초대하면 여기에 요약이 보입니다."
+      actions={<Button label="프로젝트 만들기" variant="primary" onClick={() => void navigate({ to: '/demo/w/$workspaceId/projects', params: { workspaceId } })} />} />
+  </PageFrame>;
   return <PageFrame title="홈" icon="home" actions={first && <Button label="새 작업" variant="primary" icon={<NavIcon name="plus" />}
     onClick={() => void navigate({ to: '/demo/w/$workspaceId/p/$projectId/work-items/new', params: { workspaceId, projectId: first.id } })} />}>
     <VStack gap={8} className={styles.sections}>

@@ -1,9 +1,10 @@
 import { useState, type MouseEvent } from 'react';
 import { SideNav, SideNavItem, SideNavSection, Text } from '@astryxdesign/core';
-import { Link, Outlet, useNavigate, useRouterState } from '@tanstack/react-router';
+import { Outlet, useNavigate, useRouterState } from '@tanstack/react-router';
 import { ShellFrame, ShellTabBar, Trail, type ShellTab, type TrailStep } from '@/widgets/app-shell';
 import { PRODUCT_NAME } from '@/shared/config';
-import { DefaultAvatar, NavIcon, ProductMark } from '@/shared/ui';
+import { DefaultAvatar, NavIcon } from '@/shared/ui';
+import { WorkspaceSwitcher } from '@/features/demo-workspace-switcher';
 import {
   demoPlace, NOTICES, PATTERN_MENU, placeNames, PROJECT_MENU, PROJECT_TABS, projectPath, projectsIn, workspaceOf, workspacePath, WORKSPACE_MENU, WORKSPACE_TABS,
 } from '@/entities/demo-sample';
@@ -11,7 +12,8 @@ import styles from './demo-layout.module.css';
 
 /**
  * The demo's frame: the same ShellFrame the workspace draws, with the real app's menus at the real addresses under /demo
- * (공간 선택, the workspace's menu and settings, its projects with the open one's own menu), then the pattern pages. It
+ * (the workspace switcher at its head, the workspace's menu and settings, its projects with the open one's own menu), then
+ * the pattern pages. It
  * reads nothing from the server, so it opens without signing in; the account box is a stand-in.
  */
 export function DemoLayout() {
@@ -48,15 +50,11 @@ export function DemoLayout() {
     <SideNavItem key={href} label={label} href={href} icon={<NavIcon name={icon} />} isSelected={isSelected} onClick={go(href)} {...extra} />;
   const sidebar = <SideNav aria-label="데모 메뉴" className={styles.sidebar} collapsible={{ hasButton: false }}
     resizable={{ defaultWidth: 250, minWidth: 236, maxWidth: 350, autoSaveId: 'bit-demo-sidebar', isCollapsed: folded, onCollapseChange: setFolded }}
-    header={<header className={styles.heading} data-folded={folded || undefined}>
-      <Link to="/demo" className={styles.brand} aria-label={`${PRODUCT_NAME} 데모 처음으로`}><ProductMark /></Link>
-      {!folded && <><i className={styles.rule} aria-hidden="true" /><Link to="/demo/workspaces" className={styles.space} title={workspace?.name}>{workspace?.name ?? 'UI Demo'}</Link></>}
-    </header>}
+    header={<header className={styles.heading} data-folded={folded || undefined}><WorkspaceSwitcher current={workspace} isFolded={folded} /></header>}
     topContent={folded ? <div className={styles.accountFolded}><DefaultAvatar seed="u1" name="고재범" /></div>
       : <div className={styles.account}><DefaultAvatar seed="u1" name="고재범" /><span className={styles.accountText}><Text weight="semibold" maxLines={1}>고재범</Text><Text type="supporting" color="secondary" maxLines={1}>데모 · 목데이터</Text></span></div>}
     footer={!folded && <Text type="supporting" color="secondary">v0.0.0 · demo</Text>}>
     <SideNavSection title="워크스페이스" isHeaderHidden>
-      {item('공간 선택 · 전환', 'switcher', '/demo/workspaces', !!place.isWorkspaces)}
       {workspace && WORKSPACE_MENU.map(entry => item(entry.label, entry.icon, workspacePath(workspaceId, entry.path), !place.projectId && place.workspaceSection === entry.path,
         entry.path === '/inbox' && hasNews ? { endContent: <span className={styles.newsDot} role="img" aria-label="확인할 것 있음" /> } : undefined))}
       {workspace && item('워크스페이스 설정', 'settings', workspacePath(workspaceId, '/settings'), place.workspaceSection === '/settings')}

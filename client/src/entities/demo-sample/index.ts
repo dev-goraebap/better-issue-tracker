@@ -4,6 +4,8 @@ export * from './model/mock';
 export * from './model/search';
 export * from './model/navigation';
 export { filterWork } from './model/work';
+export { addWorkspace, useWorkspaces } from './model/workspaces';
+export { WorkspaceMark } from './ui/WorkspaceMark';
 export { PersonCell } from './ui/PersonCell';
 export { StatusBadge } from './ui/StatusBadge';
 export { PriorityMark } from './ui/PriorityMark';
