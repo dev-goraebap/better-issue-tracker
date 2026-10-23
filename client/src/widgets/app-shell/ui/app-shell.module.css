@@ -1,5 +1,5 @@
 /* The window, as SandboxHr's: a desktop's menu on the wash and the page's card beside it; a phone's card and tab bar. */
-.shell { display: flex; flex-direction: column; inline-size: 100%; block-size: 100%; min-block-size: 0; min-inline-size: 0; background: var(--color-background-body); }
+.shell { display: flex; flex-direction: column; inline-size: 100%; block-size: 100%; min-block-size: 0; min-inline-size: 0; background: var(--bit-theme-wash, var(--color-background-body)); }
 .frame { position: relative; flex: 1; min-inline-size: 0; min-block-size: 0; padding: 0; box-sizing: border-box; }
 /* The page's card: one scroll box on a surface of its own. */
 .panel { display: flex; flex: 1; block-size: 100%; min-block-size: 0; min-inline-size: 0; overflow: hidden; background: var(--color-background-surface);

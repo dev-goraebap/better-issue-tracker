@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Button, MoreMenu, Text, TextInput, VStack } from '@astryxdesign/core';
-import { CompactDialog, ConfirmDialog, NavIcon, PageFrame, SettingsCard, SettingsRow } from '@/shared/ui';
+import { CompactDialog, ConfirmDialog, NavIcon, PageFrame, SettingsCard, SettingsHead, SettingsRow } from '@/shared/ui';
 import { API_KEYS, agoText, dateText, demoStyles, type ApiKey } from '@/entities/demo-sample';
 
 /**
@@ -23,6 +23,7 @@ export function DemoApiKeysPage() {
   };
   return <PageFrame title="API 키" icon="key" width="narrow">
     <VStack gap={8}>
+      <SettingsHead title="API 키" description="에이전트와 스크립트가 내 권한으로 BIT에 접근할 키를 관리합니다." />
       <SettingsCard title="내 키" id="api-keys" actions={<Button label="새 키" variant="secondary" size="sm" icon={<NavIcon name="plus" />} onClick={() => setCreating(true)} />}>
         {keys.length === 0 && <SettingsRow label="키가 없습니다" description="에이전트나 스크립트가 내 권한으로 일하게 하려면 키를 만드세요." />}
         {keys.map(key => <SettingsRow key={key.id} label={key.name}

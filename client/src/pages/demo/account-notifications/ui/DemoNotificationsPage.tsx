@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Switch, VStack } from '@astryxdesign/core';
-import { PageFrame, SettingsCard, SettingsRow } from '@/shared/ui';
+import { PageFrame, SettingsCard, SettingsHead, SettingsRow } from '@/shared/ui';
 
 const KINDS = [
   { key: 'mention', label: '언급', description: '댓글이나 세션 요약에서 나를 부를 때' },
@@ -18,6 +18,7 @@ export function DemoNotificationsPage() {
   const [on, setOn] = useState<Record<string, boolean>>({ mention: true, assigned: true, review: true, decision: false });
   return <PageFrame title="알림" icon="bell" width="narrow">
     <VStack gap={8}>
+      <SettingsHead title="알림" description="어떤 일이 생기면 알릴지, 어디로 받을지 고릅니다." />
       <SettingsCard title="알림 종류" id="notify-kinds">
         {KINDS.map(kind => <SettingsRow key={kind.key} label={kind.label} description={kind.description}>
           <Switch label={kind.label} isLabelHidden value={on[kind.key]} onChange={value => setOn({ ...on, [kind.key]: value })} />

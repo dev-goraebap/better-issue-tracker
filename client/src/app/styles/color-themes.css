@@ -1,0 +1,104 @@
+/*
+ * Colour themes (shared/config LOOK_CHOICES), painted over the stone theme from the root's data-color-theme
+ * (AppearanceProvider), made to rest the eyes over a long day: four light (살구, 새싹, 솜사탕, 새벽안개) on their mode's
+ * light ground, each washed top to bottom with a two-hue gradient that the menu, standing the window's full height on
+ * it, shows whole; two dark (밤바다, 모닥불) on its dark one. Each sets its surfaces and borders, an accent of its own and
+ * softer ink than the stone theme's (never pure black on white or pure white on black), so contrast stays readable
+ * without glare. The doubled attribute outranks the theme's atomic classes.
+ */
+
+/* 살구: warm cream fading into soft apricot, sepia ink. */
+:root[data-color-theme="apricot"], :root[data-color-theme="apricot"] [data-astryx-theme] {
+  --bit-theme-wash: linear-gradient(172deg, #f8f0dd 0%, #f3e3c9 50%, #f0d0b6 100%);
+  --color-background-body: #efe7d6;
+  --color-background-surface: #fbf8f1;
+  --color-background-muted: #f3eddf;
+  --color-border: #e3d9c4;
+  --color-border-subtle: #ebe3d1;
+  --color-text-primary: #3a3328;
+  --color-text-secondary: #7a6f5d;
+  --color-icon-secondary: #8c806c;
+  --color-accent: #9a6b3c;
+  --color-accent-muted: color-mix(in srgb, #9a6b3c 11%, transparent);
+  --color-icon-accent: #9a6b3c;
+}
+
+/* 새싹: spring mint fading into pale lemon, deep green-grey ink. */
+:root[data-color-theme="sprout"], :root[data-color-theme="sprout"] [data-astryx-theme] {
+  --bit-theme-wash: linear-gradient(172deg, #e7f4e2 0%, #e1efd3 50%, #eef0c2 100%);
+  --color-background-body: #e3ebdd;
+  --color-background-surface: #f8faf6;
+  --color-background-muted: #eef3ea;
+  --color-border: #d6e0cf;
+  --color-border-subtle: #e1e9db;
+  --color-text-primary: #2c3a2f;
+  --color-text-secondary: #66756a;
+  --color-icon-secondary: #778679;
+  --color-accent: #4f7d5c;
+  --color-accent-muted: color-mix(in srgb, #4f7d5c 11%, transparent);
+  --color-icon-accent: #4f7d5c;
+}
+
+/* 솜사탕: candy pink warming into peach, warm grey-brown ink. */
+:root[data-color-theme="cotton-candy"], :root[data-color-theme="cotton-candy"] [data-astryx-theme] {
+  --bit-theme-wash: linear-gradient(172deg, #f9dbe7 0%, #f9dee2 50%, #fae2d9 100%);
+  --color-background-body: #f1e3e8;
+  --color-background-surface: #fdf9fa;
+  --color-background-muted: #f7eef1;
+  --color-border: #ead8de;
+  --color-border-subtle: #f0e3e7;
+  --color-text-primary: #3d3236;
+  --color-text-secondary: #7d6c72;
+  --color-icon-secondary: #8f7d83;
+  --color-accent: #b0687f;
+  --color-accent-muted: color-mix(in srgb, #b0687f 11%, transparent);
+  --color-icon-accent: #b0687f;
+}
+
+/* 새벽안개: blue-grey mist with the faintest lilac at its foot, slate ink. */
+:root[data-color-theme="dawn-mist"], :root[data-color-theme="dawn-mist"] [data-astryx-theme] {
+  --bit-theme-wash: linear-gradient(172deg, #e0e9f5 0%, #e1e6f3 50%, #e5e4f3 100%);
+  --color-background-body: #e2e7ee;
+  --color-background-surface: #f7f9fb;
+  --color-background-muted: #edf0f5;
+  --color-border: #d5dbe5;
+  --color-border-subtle: #e0e5ec;
+  --color-text-primary: #2b3442;
+  --color-text-secondary: #667184;
+  --color-icon-secondary: #768196;
+  --color-accent: #4a6a96;
+  --color-accent-muted: color-mix(in srgb, #4a6a96 11%, transparent);
+  --color-icon-accent: #4a6a96;
+}
+
+/* 밤바다: deep navy, soft white ink, a calm sea-blue accent. */
+:root[data-color-theme="night-sea"], :root[data-color-theme="night-sea"] [data-astryx-theme] {
+  --bit-theme-wash: linear-gradient(160deg, #151c28 0%, #121924 60%, #18202d 100%);
+  --color-background-body: #141b26;
+  --color-background-surface: #1b2331;
+  --color-background-muted: #232d3d;
+  --color-border: #2c3747;
+  --color-border-subtle: #263041;
+  --color-text-primary: #d9dfe8;
+  --color-text-secondary: #8d99ab;
+  --color-icon-secondary: #7f8b9e;
+  --color-accent: #7aa2d6;
+  --color-accent-muted: color-mix(in srgb, #7aa2d6 16%, transparent);
+  --color-icon-accent: #7aa2d6;
+}
+
+/* 모닥불: warm charcoal, parchment ink, an amber glow for the accent. */
+:root[data-color-theme="campfire"], :root[data-color-theme="campfire"] [data-astryx-theme] {
+  --bit-theme-wash: linear-gradient(160deg, #1f1a17 0%, #1b1714 60%, #231d19 100%);
+  --color-background-body: #1d1815;
+  --color-background-surface: #25201c;
+  --color-background-muted: #2f2924;
+  --color-border: #3a322c;
+  --color-border-subtle: #332c26;
+  --color-text-primary: #e6dccd;
+  --color-text-secondary: #a59886;
+  --color-icon-secondary: #978a78;
+  --color-accent: #d99a4e;
+  --color-accent-muted: color-mix(in srgb, #d99a4e 16%, transparent);
+  --color-icon-accent: #d99a4e;
+}

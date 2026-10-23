@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Button, VStack } from '@astryxdesign/core';
-import { CompactDialog, NavIcon, PageFrame, SettingsCard, SettingsRow, StatusToken } from '@/shared/ui';
+import { CompactDialog, NavIcon, PageFrame, SettingsCard, SettingsHead, SettingsRow, StatusToken } from '@/shared/ui';
 import { agoText, LOGIN_SESSIONS, type LoginSession } from '@/entities/demo-sample';
 
 /**
@@ -13,6 +13,7 @@ export function DemoSecurityPage() {
   const [isChanging, setChanging] = useState(false);
   return <PageFrame title="시큐리티" icon="lock" width="narrow">
     <VStack gap={8}>
+      <SettingsHead title="시큐리티" description="비밀번호와 로그인된 기기를 관리합니다." />
       <SettingsCard title="로그인" id="security-login">
         <SettingsRow label="비밀번호" description="마지막 변경 32일 전. 바꾸면 다른 기기는 모두 로그아웃됩니다.">
           <Button label="비밀번호 변경" variant="secondary" size="sm" onClick={() => setChanging(true)} />

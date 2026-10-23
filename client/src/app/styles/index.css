@@ -3,6 +3,7 @@
 @import '@astryxdesign/theme-stone/theme.css';
 @import 'pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css';
 @import '@fontsource-variable/jetbrains-mono';
+@import './color-themes.css';
 
 :root {
   /*
