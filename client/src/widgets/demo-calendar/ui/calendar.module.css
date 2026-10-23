@@ -17,6 +17,7 @@
  */
 .nav { display: flex; align-items: center; gap: var(--spacing-2); min-width: 0; }
 .nav > * { flex-shrink: 0; }
+.navEnd { display: flex; margin-inline-start: auto; }
 .title { margin: 0 0 0 var(--spacing-1); font-size: 0.9375rem; font-weight: 650; white-space: nowrap; flex-shrink: 1;
   min-inline-size: 0; overflow: hidden; text-overflow: ellipsis; }
 /* The calendar fills the room it is given, down to the card's foot (BIT's header page keeps no inset below it). */
@@ -174,4 +175,4 @@
 .item[data-draggable], .bar[data-draggable] { cursor: grab; user-select: none; }
 .main[data-dragging="day"] { cursor: grabbing; user-select: none; }
 .item[data-moving], .bar[data-moving] { opacity: 0.4; }
-.day[data-drop] { outline: 2px dashed var(--color-accent); outline-offset: -2px; background: color-mix(in srgb, var(--color-accent) 10%, transparent); }
+:is(.day, .weekHeadDay, .column)[data-drop] { outline: 2px dashed var(--color-accent); outline-offset: -2px; background: color-mix(in srgb, var(--color-accent) 10%, transparent); }

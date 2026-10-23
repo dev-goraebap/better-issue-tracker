@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useSchedules, useWorkDues } from '@/entities/demo-sample';
 import { atMinutes, shifted } from '../model/drag';
 import { buildDemoEvents, HOLIDAYS, type DemoEvent } from '../model/events';
 import { timedByDay } from '../model/layout';
@@ -17,11 +18,15 @@ type Moves = { workspaceId: string; byId: Record<string, { start: string; end: s
  * "+N개 더" opens its week. An event that may move is dragged to another day or time and stays there while the page is
  * open; nothing is saved.
  */
-export function DemoCalendar({ workspaceId, search, onPlace, onOpen }: {
+export function DemoCalendar({ workspaceId, search, onPlace, onOpen, onDropWork }: {
   workspaceId: string; search: DemoCalendarSearch; onPlace: (next: DemoCalendarSearch) => void; onOpen: (href: string) => void;
+  /** Work carried in from outside (the home's 날짜 미정 drawer) and dropped on a day. */
+  onDropWork?: (itemId: string, day: string) => void;
 }) {
   const { view, day, days, isWeekly } = useCalendarPlace(search);
-  const sample = useMemo(() => buildDemoEvents(workspaceId), [workspaceId]);
+  const schedules = useSchedules();
+  const dues = useWorkDues();
+  const sample = useMemo(() => buildDemoEvents(workspaceId, schedules, dues), [workspaceId, schedules, dues]);
   const [moves, setMoves] = useState<Moves>({ workspaceId, byId: {} });
   const moved = moves.workspaceId === workspaceId ? moves.byId : {};
   const events = useMemo(() => sample.map(event => {
@@ -41,9 +46,9 @@ export function DemoCalendar({ workspaceId, search, onPlace, onOpen }: {
   return <div className={styles.calendar}>
     {isWeekly
       ? <WeekGrid key={view} days={days} events={shown} timed={timed} holidays={HOLIDAYS} onDay={chooseDay} onEvent={openEvent}
-        onMove={(event, date, start, end) => move(event, atMinutes(date, start), atMinutes(date, end))} />
+        onMove={(event, date, start, end) => move(event, atMinutes(date, start), atMinutes(date, end))} onDropWork={onDropWork} />
       : <MonthView anchor={day} days={days} events={shown} timed={timed} holidays={HOLIDAYS} selected={search.date ?? null}
         onDay={chooseDay} onMore={date => onPlace(placedSearch(view, day, { view: 'week', date }))} onEvent={openEvent}
-        onMoveDays={(event, by) => { const next = shifted(event, by); move(event, next.start, next.end); }} />}
+        onMoveDays={(event, by) => { const next = shifted(event, by); move(event, next.start, next.end); }} onDropWork={onDropWork} />}
   </div>;
 }

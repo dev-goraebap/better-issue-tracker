@@ -1,9 +1,9 @@
-import { DECISIONS, projectsIn, SESSIONS, WORK_ITEMS } from '@/entities/demo-sample';
+import { DECISIONS, projectsIn, SESSIONS, WORK_ITEMS, type DemoSchedule } from '@/entities/demo-sample';
 import { shiftDay, weekdayOf } from './dates';
 
 /**
- * What the demo's calendar shows, in place of SandboxHr's company and personal events, leave and overtime: the team's
- * own events (a sprint review, a release week), sessions at their time, work items on their due day (the last stretch
+ * What the demo's calendar shows, in place of SandboxHr's company and personal events, leave and overtime: the
+ * workspace's own schedules (a sprint review, a release week, and those made from the home's 만들기), sessions at their time, work items on their due day (the last stretch
  * before it for a few) and decisions on the day they were made. Each opens its demo page when it has one.
  */
 export type DemoEventKind = 'team' | 'session' | 'work' | 'decision';
@@ -19,7 +19,7 @@ export type DemoEvent = {
   href?: string;
 };
 
-export const KIND_NAMES: Record<DemoEventKind, string> = { team: '팀 일정', session: '세션', work: '작업 마감', decision: '결정' };
+export const KIND_NAMES: Record<DemoEventKind, string> = { team: '일정', session: '세션', work: '작업 마감', decision: '결정' };
 
 export const eventKey = (event: Pick<DemoEvent, 'id'>) => event.id;
 
@@ -68,9 +68,18 @@ function teamEvents(): DemoEvent[] {
   ];
 }
 
-/** The calendar's events for a workspace: the team's own, then those its projects' sample data gives. */
-export function buildDemoEvents(workspaceId: string): DemoEvent[] {
-  const projects = new Set(projectsIn(workspaceId).map(project => project.id));
+/**
+ * The calendar's events for a workspace: the team's own, those made on the visit (a project's key before the title of
+ * one tied to it), then those its projects' sample data gives; work given a day on the visit (dues) shows on that day.
+ */
+export function buildDemoEvents(workspaceId: string, schedules: readonly DemoSchedule[], dues: Readonly<Record<string, string>>): DemoEvent[] {
+  const all = projectsIn(workspaceId);
+  const projects = new Set(all.map(project => project.id));
+  const made: DemoEvent[] = schedules.filter(schedule => schedule.workspaceId === workspaceId).map(schedule => {
+    const key = all.find(project => project.id === schedule.projectId)?.key;
+    return { id: schedule.id, kind: 'team', title: key ? `${key} · ${schedule.title}` : schedule.title, allDay: schedule.allDay,
+      start: schedule.start, end: schedule.end, recurring: false };
+  });
   const base = `/demo/w/${workspaceId}/p`;
   const sessions: DemoEvent[] = SESSIONS.filter(session => projects.has(session.projectId)).map(session => {
     const start = seoul(session.occurredAt);
@@ -78,11 +87,12 @@ export function buildDemoEvents(workspaceId: string): DemoEvent[] {
       href: `${base}/${session.projectId}/sessions` };
   });
   // The first few due items show the stretch before their due day (from when they were made, four days at most).
-  const due = WORK_ITEMS.filter(item => projects.has(item.projectId) && item.dueAt);
-  const work: DemoEvent[] = due.map((item, index) => {
-    const last = seoul(item.dueAt!).slice(0, 10);
+  const due = WORK_ITEMS.filter(item => projects.has(item.projectId) && (item.dueAt || dues[item.id]));
+  const stretched = new Set(due.filter(item => item.dueAt).slice(0, 3).map(item => item.id));
+  const work: DemoEvent[] = due.map(item => {
+    const last = dues[item.id] ?? seoul(item.dueAt!).slice(0, 10);
     const made = seoul(item.createdAt).slice(0, 10);
-    const first = index < 3 ? (made > shiftDay(last, -4) ? made : shiftDay(last, -4)) : last;
+    const first = stretched.has(item.id) ? (made > shiftDay(last, -4) ? made : shiftDay(last, -4)) : last;
     return { id: `work-${item.id}`, kind: 'work', title: `${item.key} ${item.title}`, ...allDay(first, last), recurring: false,
       href: `${base}/${item.projectId}/work-items/${item.id}` };
   });
@@ -91,5 +101,8 @@ export function buildDemoEvents(workspaceId: string): DemoEvent[] {
     return { id: `decision-${decision.id}`, kind: 'decision', title: `${decision.key} ${decision.title}`, ...allDay(day, day), recurring: false,
       href: `${base}/${decision.projectId}/decisions` };
   });
-  return [...teamEvents(), ...sessions, ...work, ...decisions];
+  return [...teamEvents(), ...made, ...sessions, ...work, ...decisions];
 }
+
+/** What the home's 날짜 미정 drawer carries in a drag: a work item's id, dropped on a calendar day to give it that day. */
+export const WORK_DRAG_TYPE = 'application/x-bit-work';

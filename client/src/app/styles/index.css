@@ -37,6 +37,17 @@ body { font-family: 'Pretendard Variable', Pretendard, system-ui, sans-serif; }
 .astryx-button, .astryx-icon-button, .astryx-toggle-button {
   border-radius: var(--radius-element);
 }
+/*
+ * A page's own labelled buttons (새 작업, 만들기, …), as SandboxHr draws them: heavier type, corners rounded off on a
+ * superellipse, and a primary one lifted by a soft glow of the accent. A browser without corner-shape keeps the modest
+ * corners above rather than a pill. Icon-only boxes keep theirs.
+ */
+[data-page-action] button:not([aria-label]) { font-weight: 600; }
+[data-page-action] button[data-variant="primary"]:not([aria-label]) {
+  box-shadow: 0 1px 0 rgb(255 255 255 / 0.12) inset, 0 4px 14px -6px color-mix(in srgb, var(--color-accent) 70%, transparent); }
+@supports (corner-shape: superellipse(1.6)) {
+  [data-page-action] button:not([aria-label]) { border-radius: 24px; corner-shape: superellipse(1.6); }
+}
 .astryx-button.bit-auth-submit {
   inline-size: 100%;
   min-block-size: var(--bit-auth-field-height, var(--size-element-lg));

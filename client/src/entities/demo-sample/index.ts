@@ -1,10 +1,12 @@
-// Sample data for the UI demo: fixed mock workspaces, projects, work items, decisions, sessions and notices, their URL
+// Sample data for the UI demo: fixed mock workspaces, projects, work items, decisions, sessions and notices, schedules made on the visit, their URL
 // conditions, the demo's menus (the real app's under /demo) and the rows that draw them, shared by the /demo pages.
 export * from './model/mock';
 export * from './model/search';
 export * from './model/navigation';
 export { filterWork } from './model/work';
 export { addWorkspace, useWorkspaces } from './model/workspaces';
+export { addSchedule, useSchedules, type DemoSchedule } from './model/schedules';
+export { clearWorkDue, setWorkDue, useWorkDues } from './model/work-dates';
 export { markAllRead, markRead, markUnread, useReadNotices } from './model/read-notices';
 export { WorkspaceMark } from './ui/WorkspaceMark';
 export { PersonCell } from './ui/PersonCell';

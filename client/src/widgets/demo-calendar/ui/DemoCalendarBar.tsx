@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { Button, IconButton } from '@astryxdesign/core';
 import { NavIcon } from '@/shared/ui';
 import { shiftDay, shiftMonth } from '../model/dates';
@@ -11,9 +12,10 @@ const VIEW_CHOICES = [{ value: 'month', label: '월', keys: 'M' }, { value: 'wee
 
 /**
  * The calendar's own controls for the header chrome's tab row, as SandboxHr's team calendar has them: 오늘, the
- * period's steps, its title, then the view behind the … button. On a desktop the keys move it too (←/→, T, M·W·X).
+ * period's steps, its title, then the view behind the … button, and the page's own control at the bar's end (end) when
+ * the bar has the row to itself, as on a phone. On a desktop the keys move it too (←/→, T, M·W·X).
  */
-export function DemoCalendarBar({ search, onPlace }: { search: DemoCalendarSearch; onPlace: (next: DemoCalendarSearch) => void }) {
+export function DemoCalendarBar({ search, onPlace, end }: { search: DemoCalendarSearch; onPlace: (next: DemoCalendarSearch) => void; end?: ReactNode }) {
   const { view, day, days, today, isWeekly, isMobile } = useCalendarKeys(search, onPlace);
   const place = (next: { view?: CalendarView; date?: string }) => onPlace(placedSearch(view, day, next));
   const step = (by: number) => place({ date: isWeekly ? shiftDay(day, by * 7) : shiftMonth(day, by) });
@@ -26,5 +28,6 @@ export function DemoCalendarBar({ search, onPlace }: { search: DemoCalendarSearc
     <IconButton label={`다음 ${unit}`} tooltip={`다음 ${unit} (→)`} variant="ghost" size="sm" icon={<NavIcon name="forward" />} onClick={() => step(1)} />
     <h2 className={styles.title}>{isWeekly ? weekTitle(days) : monthTitle(day)}</h2>
     <ViewMenu value={view} choices={choices} onChange={next => place({ view: next })} />
+    {end && <span className={styles.navEnd}>{end}</span>}
   </div>;
 }

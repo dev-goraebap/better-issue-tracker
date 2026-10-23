@@ -1,42 +1,41 @@
-/*
- * The calendar fills the card under the header rows; the workspace's sections follow under it, or stand beside it on a
- * wide screen as a column of their own that scrolls by itself (contain: size keeps it from making the card taller).
- */
-.home { display: flex; flex-direction: column; flex: 1; min-block-size: 0; min-inline-size: 0; }
-/* With the sections under it, the calendar still takes the card's visible height (the window less the card's header and
-   tab rows, its 8px margin and the strip under it, about 8.125rem), so its weeks keep the room the month's lines need. */
-.home > :first-child { min-block-size: max(36rem, calc(100dvh - 8.125rem)); }
-.side { padding: var(--spacing-6) var(--spacing-8) var(--spacing-8); border-block-start: 1px solid var(--color-border); }
-@media (width >= 80rem) {
-  .home { flex-direction: row; }
-  .home > :first-child { min-block-size: 36rem; }
-  .side { contain: size; flex-shrink: 0; inline-size: 21rem; box-sizing: border-box; overflow-y: auto; scrollbar-width: thin;
-    padding: var(--spacing-5); border-block-start: 0; border-inline-start: 1px solid var(--color-border); }
-  .side .figures { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .side .figure { padding: var(--spacing-3) var(--spacing-4); }
-  .side .figure:nth-child(3) { border-inline-start: 0; }
-  .side .figure:nth-child(n + 3) { border-block-start: 1px solid var(--color-border); }
-  .side .value { font-size: 1.375rem; }
-  .side .pattern { display: none; }
-}
-/* A strip of figures: each a quiet label over a large number, parted by hairlines, no boxes. */
-.figures { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 0; border-block: 1px solid var(--color-border); }
-.figure { display: flex; flex-direction: column; gap: var(--spacing-1); padding: var(--spacing-4) var(--spacing-5); }
-.figure + .figure { border-inline-start: 1px solid var(--color-border); }
-.figure dd { margin: 0; }
-.value { font-size: 1.75rem; font-weight: 600; line-height: 1.2; font-variant-numeric: tabular-nums; }
-.more { font-size: 0.8125rem; color: var(--color-text-secondary); text-decoration: none; }
-.more:hover { color: var(--color-text-primary); text-decoration: underline; }
-.key { font-family: var(--font-family-code); font-size: 0.75rem; color: var(--color-text-secondary); }
-.icon { display: inline-grid; place-items: center; color: var(--color-icon-secondary); }
-.icon svg { inline-size: 1rem; block-size: 1rem; }
-.pattern { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-@media (width < 64rem) {
-  .side { padding: var(--spacing-5); }
-  .figures { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .figure:nth-child(3) { border-inline-start: 0; }
-  .figure:nth-child(n + 3) { border-block-start: 1px solid var(--color-border); }
-  .pattern { display: none; }
-}
-/* Lists in the sections line up with the section labels, not the card's edges. */
-.sections ul > li { padding-inline: 0; }
+/* The calendar fills the card under the header rows, keeping at least the room a month's lines need; the 날짜 미정
+   drawer, when open, stands at its end as a column of its own that scrolls by itself. */
+.home { display: flex; flex: 1; min-block-size: 36rem; min-inline-size: 0; }
+.home > :first-child { flex: 1; }
+.drawer { contain: size; flex-shrink: 0; display: flex; flex-direction: column; inline-size: 18rem; border-inline-start: 1px solid var(--color-border);
+  overflow-y: auto; scrollbar-width: thin; }
+.drawerHead { position: sticky; inset-block-start: 0; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: var(--spacing-2);
+  min-block-size: 2.75rem; padding-inline: var(--spacing-4) var(--spacing-2); background: var(--color-background-surface); border-block-end: 1px solid var(--color-border); }
+.drawerTitle { margin: 0; font-size: 0.8125rem; font-weight: 600; }
+.drawerCount { margin-inline-start: var(--spacing-1); color: var(--color-text-secondary); font-weight: 500; font-variant-numeric: tabular-nums; }
+/* A row of work without a day: its key over its title, priority and assignee at the end; grabbed to carry it. */
+.undated { display: flex; flex-direction: column; margin: 0; padding: var(--spacing-2); list-style: none; }
+.undatedRow { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: 'key meta' 'title meta'; align-items: center; column-gap: var(--spacing-2);
+  padding: var(--spacing-2); border-radius: 6px; color: var(--color-text-primary); text-decoration: none; cursor: grab; }
+.undatedRow:hover { background: var(--color-overlay-hover); }
+.undatedRow:active { cursor: grabbing; }
+.undatedRow:focus-visible { outline: var(--focus-outline-width) var(--focus-outline-style) var(--focus-outline-color); }
+.undatedKey { grid-area: key; font-family: var(--font-family-code); font-size: 0.6875rem; color: var(--color-text-secondary); }
+.undatedTitle { grid-area: title; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.8125rem; }
+.undatedMeta { grid-area: meta; display: flex; align-items: center; gap: var(--spacing-1-5, 0.375rem); }
+:global(.astryx-bottom-sheet) .undated { padding: 0; }
+.undatedEmpty { margin: 0; padding: var(--spacing-4); font-size: 0.8125rem; color: var(--color-text-secondary); }
+
+/* What 만들기 offers, each led by its kind's tile in the calendar's colours: a schedule the accent, work orange. */
+.menuIcon { display: inline-grid; place-items: center; inline-size: 1.75rem; block-size: 1.75rem; border-radius: 8px; corner-shape: superellipse(1.6); flex-shrink: 0;
+  color: var(--color-icon-accent); background: var(--color-accent-muted); }
+.menuIcon[data-kind='work'] { color: var(--color-icon-orange, #bc4c00); background: color-mix(in srgb, var(--color-icon-orange, #bc4c00) 14%, transparent); }
+.menuIcon svg { inline-size: 1rem; block-size: 1rem; }
+/* A project in the 작업 submenu: its key's first letter, as the side menu marks it. */
+.projectKey { display: inline-grid; place-items: center; inline-size: 1.25rem; block-size: 1.25rem; border-radius: 4px; background: var(--color-background-muted);
+  font-size: 0.6875rem; font-weight: 700; color: var(--color-text-secondary); }
+
+/* A phone's sheet of choices: one full-width row each. */
+.choices { display: flex; flex-direction: column; gap: var(--spacing-1); margin: 0; padding: 0; list-style: none; }
+.choice { display: flex; align-items: center; gap: var(--spacing-3); inline-size: 100%; min-block-size: 3rem; padding: var(--spacing-2); border: 0; border-radius: 8px;
+  background: none; color: var(--color-text-primary); font: inherit; font-weight: 500; text-align: start; cursor: pointer; }
+.choice:hover { background: var(--color-overlay-hover); }
+.choice:focus-visible { outline: var(--focus-outline-width) var(--focus-outline-style) var(--focus-outline-color); }
+
+/* The schedule's hours: start and end side by side, their tops level when the end says what is wrong. */
+.times { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; gap: var(--spacing-3); }
