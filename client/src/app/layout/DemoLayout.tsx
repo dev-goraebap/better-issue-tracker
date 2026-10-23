@@ -114,7 +114,7 @@ export function DemoLayout() {
           const base = projectPath(workspaceId, project.id);
           return <SideNavItem key={project.id} label={project.name} href={base} icon={<span className={styles.projectMark} aria-hidden="true">{project.key.slice(0, 1)}</span>}
             isSelected={false} onClick={go(base)}>
-            {isOpen && PROJECT_MENU.map(entry => <SideNavItem key={entry.path} label={entry.label} href={base + entry.path}
+            {isOpen && PROJECT_MENU.map(entry => <SideNavItem key={entry.path} label={entry.label} href={base + entry.path} icon={<NavIcon name={entry.icon} />}
               isSelected={place.projectSection === entry.path} onClick={go(base + entry.path)} />)}
           </SideNavItem>;
         })}

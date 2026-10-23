@@ -13,6 +13,14 @@
 /* A project's mark in the menu: its key's first letter on a muted square, the size of the menu's icons. */
 .projectMark { display: inline-grid; place-items: center; inline-size: 1.25rem; block-size: 1.25rem; border-radius: 4px; background: var(--color-background-muted);
   font-size: 0.6875rem; font-weight: 700; color: var(--color-text-secondary); }
+/* An open project's menu hangs from a faint line dropped from the project's mark (18px in from the group's edge); the
+   chosen row darkens its stretch of the line. */
+.sidebar :global(.astryx-side-nav-item) + [role='group'] > div { position: relative; }
+.sidebar :global(.astryx-side-nav-item) + [role='group'] > div::before { content: ''; position: absolute; inset-block: 2px; inset-inline-start: 18px;
+  border-inline-start: 1px solid var(--color-border); }
+.sidebar :global(.astryx-side-nav-item) + [role='group'] :global(.astryx-side-nav-item) { position: relative; }
+.sidebar :global(.astryx-side-nav-item) + [role='group'] :global(.astryx-side-nav-item)[aria-current='page']::before { content: ''; position: absolute; inset-block: 6px; inset-inline-start: -6.5px;
+  inline-size: 2px; border-radius: 1px; background: var(--color-text-primary); }
 /* The menu's foot: 워크스페이스 설정 under everything else, then the version. */
 .foot { display: flex; flex-direction: column; gap: var(--spacing-1); }
 .version { padding-inline: var(--spacing-2); }

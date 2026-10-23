@@ -27,9 +27,10 @@ body { font-family: 'Pretendard Variable', Pretendard, system-ui, sans-serif; }
 }
 /*
  * Menu items and avatars keep tight corners (D-058): a menu item 4px, a person's picture a rounded square rather than a
- * circle. Doubled classes outrank the design system's own single-class rules.
+ * circle. Doubled classes outrank the design system's own single-class rules. Menu rows stand 2px apart so a chosen or
+ * hovered row never touches the next.
  */
-.astryx-side-nav-item.astryx-side-nav-item { border-radius: 4px; }
+.astryx-side-nav-item.astryx-side-nav-item { border-radius: 4px; margin-block: 1px; }
 .astryx-avatar.astryx-avatar { border-radius: 22%; }
 .astryx-avatar.astryx-avatar img { border-radius: inherit; }
 /* Buttons use the same modest corners as fields, never pill or circular shapes. */
