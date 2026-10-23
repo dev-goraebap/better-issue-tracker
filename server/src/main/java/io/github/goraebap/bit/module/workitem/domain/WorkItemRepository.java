@@ -11,6 +11,8 @@ import java.util.UUID;
 public interface WorkItemRepository {
     Optional<WorkItem> findById(UUID projectId, UUID id, boolean includeDeleted);
 
+    Optional<WorkItem> findTarget(UUID workspaceId, UUID id);
+
     Optional<WorkItem> findByNumber(UUID projectId, long number);
 
     List<WorkItem> findColumnItems(UUID projectId, UUID columnId, boolean includeDeleted);

@@ -34,6 +34,20 @@ class JooqWorkItemRepository implements WorkItemRepository {
     }
 
     @Override
+    public Optional<WorkItem> findTarget(UUID workspaceId, UUID id) {
+        return dslContext
+                .select(WORK_ITEM.fields())
+                .from(WORK_ITEM)
+                .join(PROJECT)
+                .on(PROJECT.PROJECT_ID.eq(WORK_ITEM.PROJECT_ID))
+                .where(PROJECT.WORKSPACE_ID.eq(workspaceId))
+                .and(PROJECT.DELETED_AT.isNull())
+                .and(WORK_ITEM.WORK_ITEM_ID.eq(id))
+                .and(WORK_ITEM.DELETED_AT.isNull())
+                .fetchOptional(this::item);
+    }
+
+    @Override
     public Optional<WorkItem> findByNumber(UUID projectId, long number) {
         return dslContext
                 .selectFrom(WORK_ITEM)
