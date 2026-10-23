@@ -1,5 +1,18 @@
-.frame { inline-size: 100%; max-inline-size: calc(var(--spacing-10) * 12); margin: var(--spacing-10) auto; }
+.frame { inline-size: 100%; max-inline-size: calc(var(--spacing-10) * 12); margin: var(--spacing-10) auto;
+  --bit-auth-font-size: 1rem;
+  --bit-auth-field-height: calc(var(--spacing-6) + var(--spacing-3) * 2 + var(--border-width) * 2);
+}
+.frame :global(.astryx-text-input) {
+  --size-element-sm: var(--bit-auth-field-height);
+  --size-element-md: var(--bit-auth-field-height);
+  --size-element-lg: var(--bit-auth-field-height);
+  --text-body-size: var(--bit-auth-font-size);
+}
 .emailLabel { display: grid; gap: var(--spacing-2); font-size: var(--text-label-size); }
-.emailInput { box-sizing: border-box; width: 100%; min-height: var(--bit-field-height); padding: var(--bit-field-padding); border: 1px solid var(--color-border); border-radius: var(--radius-element); background: var(--color-background-card); color: var(--color-text-primary); font: inherit; font-size: var(--bit-field-font-size); line-height: var(--bit-field-line-height); }
+.emailInput { box-sizing: border-box; width: 100%; block-size: var(--size-element-md); padding-inline: var(--spacing-2); border: 1px solid var(--color-border); border-radius: var(--radius-element); background: var(--color-background-card); color: var(--color-text-primary); font: inherit; font-size: var(--text-body-size); }
+.frame .emailInput { block-size: var(--bit-auth-field-height); font-size: var(--bit-auth-font-size); padding-inline: var(--spacing-3); }
 .emailInput:focus-visible { outline: 2px solid var(--color-text-primary); outline-offset: 2px; }
 .sectionHeader { margin: 0; min-block-size: var(--spacing-6); font-size: var(--text-label-size); font-weight: 600; color: var(--color-text-secondary); }
+@media (max-width: 63.999rem) {
+  .emailInput { min-block-size: var(--size-element-touch); font-size: 1rem; }
+}
