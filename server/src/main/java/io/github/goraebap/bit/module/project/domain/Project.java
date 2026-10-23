@@ -13,8 +13,8 @@ public final class Project {
     private String description;
     private final int position;
     private long lastWorkItemNumber;
-    private final long lastDecisionNumber;
-    private final long lastSessionNumber;
+    private long lastDecisionNumber;
+    private long lastSessionNumber;
     private Instant archivedAt;
     private long version;
     private Audit audit;
@@ -110,6 +110,16 @@ public final class Project {
         if (audit.deletedAt() == null) return;
         audit = audit.restore(actor, agent, now);
         version++;
+    }
+
+    public long allocateDecisionNumber() {
+        lastDecisionNumber = Math.incrementExact(lastDecisionNumber);
+        return lastDecisionNumber;
+    }
+
+    public long allocateSessionNumber() {
+        lastSessionNumber = Math.incrementExact(lastSessionNumber);
+        return lastSessionNumber;
     }
 
     public long allocateWorkItemNumber() {

@@ -61,6 +61,24 @@ public class ProjectService implements ProjectFacade {
     }
 
     @Override
+    @Transactional
+    public long allocateDecisionNumber(CurrentUser actor, UUID workspaceId, UUID projectId) {
+        var p = access(actor, workspaceId, projectId, true, false);
+        long number = p.allocateDecisionNumber();
+        projectRepository.save(p);
+        return number;
+    }
+
+    @Override
+    @Transactional
+    public long allocateSessionNumber(CurrentUser actor, UUID workspaceId, UUID projectId) {
+        var p = access(actor, workspaceId, projectId, true, false);
+        long number = p.allocateSessionNumber();
+        projectRepository.save(p);
+        return number;
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public ColumnRef requireColumn(CurrentUser actor, UUID workspaceId, UUID projectId, UUID columnId) {
         return findColumn(actor, workspaceId, projectId, columnId)

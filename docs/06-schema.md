@@ -109,7 +109,7 @@ erDiagram
 - **작업항목끼리의 관계**(blocks, subtask 등)는 `link`에 둔다 (D-014).
 - 1차에 넣지 않는 Kaneo 기능: 시간 기록(`time_entry`), 사용자 정의 필드, 상태 자동 이동 규칙(`workflow_rule`).
 
-### T-004 실제 V3 계약 (구현 중)
+### T-004 실제 V3 계약
 
 - V3에 project / project_key / board_column / work_item을 추가했다. V1/V2는 수정하지 않는다. 작업 번호는 bigint이며 프로젝트 카운터와 같은 쓰기 트랜잭션에서 발급한다.
 - 프로젝트·컬럼·작업에 version을 둔다. 새 감사 열에는 생성·수정·삭제의 사용자와 에이전트 이름을 함께 둔다. archived_at과 deleted_at은 별개다.
@@ -130,6 +130,15 @@ erDiagram
 - 이행 진행은 저장하지 않고 계산한다 (D-012).
 - 테이블 이름이 `session`이 아닌 이유: 로그인 세션(`iam_session`)과 헷갈리지 않게.
 - 표시 번호: 프로젝트 안에서 `D-007`, `S-003`. 다른 프로젝트 것을 가리킬 때는 `BIT D-007`처럼 프로젝트 키를 앞에 붙인다.
+
+### T-005 실제 V4 계약 (기반 구현 중)
+
+- `decision`과 `session_record`는 `version bigint`를 갖는다. 번호의 `(project_id, number)` 고유 제약은 soft delete 여부와 무관하다. accepted/superseded 상태와 최초 시각의 조합을 DB CHECK로 검사한다.
+- `session_participant`는 같은 세션의 user ID 중복을 DB에서 막는다. user는 ID 필수, guest/agent는 ID 없음이며 표시 이름은 스냅샷이다.
+- `link`의 활성 edge는 workspace까지 묶어 고유하며 relates_to의 양쪽 순서를 정규화한다. 대체될 결정당 대체자 하나, subtask당 부모 하나는 부분 고유 인덱스로 보호한다. 관계별 허용 타입과 자기 연결 금지도 CHECK로 검사한다. 그래프 순환·현재 권한·대상 존재는 서비스의 책임이다.
+- `comment`에 workspace_id/version과 표준 생성·수정·삭제 agent 감사 열을 추가한다. 응답의 authorAgent는 created_by_agent에서 읽으며 같은 값을 별도 열로 중복 저장하지 않는다.
+- `activity`는 payload의 JSON 유효성과 UTF-8 128KiB 상한을 검사하고 workspace/project 복합 소속 FK를 둔다. target ID에는 다형 FK를 두지 않는다. 조회의 삭제 대상 숨김과 업무 변경 원자 기록은 후속 서비스 단계에서 연결한다.
+- V4 기반 스키마와 순수 도메인은 T-005 전체 완료를 뜻하지 않는다. 공개 업무 Facade·저장소·REST·화면 및 통합 게이트는 작업 지시서에 따라 이어서 구현한다.
 
 ## 6. artifact — 문서함
 

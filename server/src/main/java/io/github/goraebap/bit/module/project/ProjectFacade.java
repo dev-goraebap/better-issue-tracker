@@ -14,6 +14,10 @@ public interface ProjectFacade {
 
     long allocateWorkItemNumber(CurrentUser actor, UUID workspaceId, UUID projectId);
 
+    long allocateDecisionNumber(CurrentUser actor, UUID workspaceId, UUID projectId);
+
+    long allocateSessionNumber(CurrentUser actor, UUID workspaceId, UUID projectId);
+
     ColumnRef requireColumn(CurrentUser actor, UUID workspaceId, UUID projectId, UUID columnId);
 
     Optional<ColumnRef> findColumn(CurrentUser actor, UUID workspaceId, UUID projectId, UUID columnId);
