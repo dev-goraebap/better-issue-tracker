@@ -5,9 +5,12 @@
 .brand { display: inline-flex; align-items: center; color: var(--color-text-primary); text-decoration: none; }
 .rule { inline-size: var(--border-width); block-size: 1rem; background: var(--color-border-emphasized, var(--color-border)); flex-shrink: 0; }
 .space { min-inline-size: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.9375rem; font-weight: 700; letter-spacing: -0.01em; }
-.account { display: flex; align-items: center; gap: var(--spacing-3); padding: var(--spacing-2); border-radius: var(--radius-container);
+.account { display: flex; align-items: center; gap: var(--spacing-3); padding: var(--spacing-2); border-radius: 6px;
   background: color-mix(in srgb, var(--color-text-primary) 9%, var(--color-background-body)); }
 .accountFolded { display: flex; justify-content: center; }
 .accountText { display: flex; flex-direction: column; flex: 1; min-inline-size: 0; }
 .newsDot { display: inline-block; inline-size: 0.5rem; block-size: 0.5rem; border-radius: var(--radius-full); background: var(--color-accent); flex-shrink: 0; }
 
+/* A project's mark in the menu: its key's first letter on a muted square, the size of the menu's icons. */
+.projectMark { display: inline-grid; place-items: center; inline-size: 1.25rem; block-size: 1.25rem; border-radius: 4px; background: var(--color-background-muted);
+  font-size: 0.6875rem; font-weight: 700; color: var(--color-text-secondary); }

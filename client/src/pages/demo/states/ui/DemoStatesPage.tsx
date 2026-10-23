@@ -22,12 +22,12 @@ const TABS: PageTab<State>[] = [
  * other content.
  */
 export function DemoStatesPage() {
-  const search = useSearch({ from: '/demo/states' });
+  const search = useSearch({ from: '/demo/patterns/states' });
   const navigate = useNavigate();
   const panelId = useId();
   const state: State = search.state ?? 'empty';
   return <PageFrame title="상태" icon="status" chrome="header"
-    tabs={<PageTabs value={state} items={TABS} panelId={panelId} onChange={next => void navigate({ to: '/demo/states', search: next === 'empty' ? {} : { state: next } })} />}>
+    tabs={<PageTabs value={state} items={TABS} panelId={panelId} onChange={next => void navigate({ to: '/demo/patterns/states', search: next === 'empty' ? {} : { state: next } })} />}>
     <div role="tabpanel" id={panelId} className={demoStyles.statePanel}>
       {state === 'empty' && <PageState title="아직 작업이 없습니다" description="첫 작업을 만들면 여기에 보입니다. 에이전트도 MCP로 작업을 만들 수 있습니다." actions={<Button label="새 작업 만들기" variant="secondary" />} />}
       {state === 'search' && <PageState kind="search" title="조건에 맞는 작업이 없습니다" description="'배포' 검색어와 '긴급' 우선순위 필터가 걸려 있습니다." actions={<Button label="조건 지우기" variant="secondary" />} />}

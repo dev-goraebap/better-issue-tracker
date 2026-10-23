@@ -1,0 +1,41 @@
+/*
+ * A desktop's inbox as Kaneo's: the card under the header row split into a narrow list (22rem) and the open notice,
+ * each scrolling on its own, the split as tall as the card leaves under the header rows (the window less the frame's
+ * 8px above and the agent strip's 32px below).
+ */
+.split { display: grid; grid-template-columns: 22rem minmax(0, 1fr); min-block-size: 0;
+  block-size: calc(100dvh - var(--workspace-topbar-height, 2.75rem) - var(--workspace-rows-height, 0px) - 2.5rem); }
+.listPane { min-block-size: 0; overflow-y: auto; border-inline-end: 1px solid var(--color-border); scrollbar-width: thin; }
+.detailPane { min-block-size: 0; overflow-y: auto; scrollbar-width: thin; }
+
+.list { margin: 0; padding: var(--spacing-1); list-style: none; }
+.entry { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: var(--spacing-3); align-items: start; padding: var(--spacing-3);
+  border-radius: 6px; color: inherit; text-decoration: none; }
+.entry:hover { background: var(--color-overlay-hover); }
+.entry[data-open] { background: var(--color-background-muted); }
+.entry:focus-visible { outline: var(--focus-outline-width) var(--focus-outline-style) var(--focus-outline-color); outline-offset: -2px; }
+.entryText { display: flex; flex-direction: column; gap: 2px; min-inline-size: 0; }
+.entryTitle { display: flex; align-items: center; gap: var(--spacing-1-5, 0.375rem); min-inline-size: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font-size: 0.875rem; color: var(--color-text-secondary); }
+.entry[data-unread] .entryTitle { font-weight: 600; color: var(--color-text-primary); }
+.entryTarget { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.75rem; color: var(--color-text-secondary); }
+.entryTime { font-size: 0.75rem; color: var(--color-text-secondary); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.dot { flex-shrink: 0; inline-size: 0.5rem; block-size: 0.5rem; border-radius: var(--radius-full); background: var(--color-accent); }
+.key { flex-shrink: 0; white-space: nowrap; font-family: var(--font-family-code); font-size: 0.75rem; color: var(--color-text-secondary); }
+
+/* The open notice: who and when, the quote, what it is about, and its actions, in a readable column. */
+.detail { display: flex; flex-direction: column; gap: var(--spacing-6); max-inline-size: 44rem; padding: var(--spacing-8); box-sizing: border-box; }
+.detailHead { display: flex; align-items: center; gap: var(--spacing-3); }
+.detailTitle { font-size: 1.0625rem; word-break: keep-all; }
+.quote { margin: 0; padding: var(--spacing-3) var(--spacing-4); border-inline-start: 3px solid var(--color-border-emphasized, var(--color-border));
+  background: var(--color-background-muted); border-radius: 0 6px 6px 0; line-height: 1.6; word-break: keep-all; }
+.target { display: flex; flex-direction: column; gap: var(--spacing-3); padding: var(--spacing-4); border: 1px solid var(--color-border); border-radius: 6px; }
+.targetHead { display: flex; align-items: center; gap: var(--spacing-2); min-inline-size: 0; word-break: keep-all; }
+.targetHead svg { inline-size: 1rem; block-size: 1rem; flex-shrink: 0; color: var(--color-icon-secondary); }
+.targetProps { display: flex; flex-wrap: wrap; gap: var(--spacing-2) var(--spacing-6); margin: 0; font-size: 0.8125rem; }
+.targetProps > div { display: flex; align-items: center; gap: var(--spacing-2); }
+.targetProps dt { color: var(--color-text-secondary); }
+.targetProps dd { display: flex; align-items: center; gap: var(--spacing-1-5, 0.375rem); margin: 0; }
+.detailActions { display: flex; flex-wrap: wrap; gap: var(--spacing-2); }
+.rowTarget { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (width < 64rem) { .detail { padding: 0; } }

@@ -13,9 +13,9 @@ const ACTIVITY = [
 ];
 
 /**
- * PATTERN · 상세. Copy this page for one item read on its own address.
+ * PATTERN · 상세, /demo/w/$workspaceId/p/$projectId/work-items/$workItemId. Copy this page for one item read on its own address.
  *
- * - PageFrame back={<BackLink>} marks a detail: the trail names the list it belongs to (Demo › 작업 표 › BIT-118), a
+ * - PageFrame back={<BackLink>} marks a detail: the trail names the list it belongs to (BIT 개발 › BIT 코어 › BIT-118), a
  *   phone gives the page the whole screen with '이전으로' in its foot row, and the back goes through history first.
  * - The title is the content here, so it stays visible and wraps (wrapsTitle). The page's actions end the title row:
  *   one labelled button (편집), the rest in the more menu, delete last and always behind ConfirmDialog.
@@ -23,13 +23,14 @@ const ACTIVITY = [
  * - Sections (설명, 연결, 활동) are SectionHeader over their content; a missing item is a not-found PageState.
  */
 export function DemoDetailPage() {
-  const { id } = useParams({ from: '/demo/items/$id' });
-  const search = useSearch({ from: '/demo/items/$id' });
+  const { workspaceId, projectId, workItemId: id } = useParams({ from: '/demo/w/$workspaceId/p/$projectId/work-items/$workItemId' });
+  const search = useSearch({ from: '/demo/w/$workspaceId/p/$projectId/work-items/$workItemId' });
+  const list = { to: '/demo/w/$workspaceId/p/$projectId', params: { workspaceId, projectId }, search } as const;
   const navigate = useNavigate();
   const [isDeleting, setDeleting] = useState(false);
   const [comment, setComment] = useState('');
-  const item = WORK_ITEMS.find(each => each.id === id);
-  const back = <BackLink to="/demo/table" search={search} label="작업 표" />;
+  const item = WORK_ITEMS.find(each => each.id === id && each.projectId === projectId);
+  const back = <BackLink {...list} label="작업" />;
   if (!item) return <PageFrame title="작업을 찾을 수 없습니다" back={back}>
     <PageState kind="not-found" title="작업을 찾을 수 없습니다" description="지워졌거나 주소가 바뀌었습니다. 목록에서 다시 찾아보세요." />
   </PageFrame>;
@@ -43,7 +44,7 @@ export function DemoDetailPage() {
     ['만든 날', dateText(item.createdAt)],
   ];
   return <PageFrame title={item.title} wrapsTitle back={back} actions={<>
-    <Button label="편집" variant="secondary" icon={<NavIcon name="edit" />} onClick={() => void navigate({ to: '/demo/items/new' })} />
+    <Button label="편집" variant="secondary" icon={<NavIcon name="edit" />} onClick={() => void navigate({ to: '/demo/w/$workspaceId/p/$projectId/work-items/new', params: { workspaceId, projectId } })} />
     <MoreMenu label="작업 메뉴" variant="ghost" placement="end" items={[
       { label: '링크 복사', icon: <NavIcon name="link" />, onClick: () => void navigator.clipboard?.writeText(window.location.href) },
       { label: '삭제', icon: <NavIcon name="delete" />, onClick: () => setDeleting(true) },
@@ -91,6 +92,6 @@ export function DemoDetailPage() {
       </aside>
     </div>
     {isDeleting && <ConfirmDialog title="작업을 삭제할까요?" description={`${item.key} ${item.title}을(를) 삭제합니다. 연결과 댓글은 기록으로 남습니다.`}
-      confirmLabel="삭제" variant="destructive" onClose={() => setDeleting(false)} onConfirm={() => { setDeleting(false); void navigate({ to: '/demo/table', search }); }} />}
+      confirmLabel="삭제" variant="destructive" onClose={() => setDeleting(false)} onConfirm={() => { setDeleting(false); void navigate(list); }} />}
   </PageFrame>;
 }

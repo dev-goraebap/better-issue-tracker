@@ -22,17 +22,23 @@ import { SecurityPage } from '@/pages/settings/security';
 import { ApiKeysPage } from '@/pages/settings/api-keys';
 import { WorkspaceSettingsPage } from '@/pages/settings/workspace';
 import { AppearancePage } from '@/pages/settings/appearance';
+import { DemoWorkspacesPage } from '@/pages/demo/workspaces';
 import { DemoHomePage } from '@/pages/demo/home';
 import { DemoInboxPage } from '@/pages/demo/inbox';
-import { DemoTablePage } from '@/pages/demo/table';
-import { DemoTabsPage } from '@/pages/demo/tabs';
-import { DemoBoardPage } from '@/pages/demo/board';
+import { DemoMyTasksPage } from '@/pages/demo/my-tasks';
+import { DemoMembersPage } from '@/pages/demo/members';
+import { DemoDocumentsPage } from '@/pages/demo/documents';
+import { DemoProjectsPage } from '@/pages/demo/projects';
+import { DemoProjectWorkPage } from '@/pages/demo/project-work';
 import { DemoDetailPage } from '@/pages/demo/item-detail';
 import { DemoFormPage } from '@/pages/demo/item-form';
+import { DemoDecisionsPage } from '@/pages/demo/decisions';
+import { DemoSessionsPage } from '@/pages/demo/sessions';
+import { DemoArtifactsPage } from '@/pages/demo/artifacts';
 import { DemoSettingsPage } from '@/pages/demo/settings';
 import { DemoStatesPage } from '@/pages/demo/states';
 import { DemoDialogsPage } from '@/pages/demo/dialogs';
-import { parseInboxSearch, parseStatesSearch, parseTableSearch, parseTabsSearch } from '@/entities/demo-sample';
+import { DEFAULT_WORKSPACE, parseDecisionsSearch, parseInboxSearch, parseMembersSearch, parseProjectsSearch, parseStatesSearch, parseTableSearch, parseWorkSearch as parseDemoWorkSearch } from '@/entities/demo-sample';
 import { DemoLayout } from '../layout/DemoLayout';
 import { followHistory } from '@/shared/lib/history-trail';
 import { ownSearch } from '@/shared/lib/route-search';
@@ -110,19 +116,37 @@ const login = createRoute({ getParentRoute: () => rootRoute, path: '/login', com
 const setup = createRoute({ getParentRoute: () => rootRoute, path: '/setup', component: BootstrapPage, beforeLoad: () => entryGuard(true) });
 const join = createRoute({ getParentRoute: () => rootRoute, path: '/join', component: JoinPage });
 const forcedPassword = createRoute({ getParentRoute: () => rootRoute, path: '/change-password', component: ChangePasswordPage, beforeLoad: async () => { const session = await requireSession(); if (!session.mustChangePassword) throw redirect({ to: '/settings/security' }); } });
-// The UI demo (dev only): every screen pattern on mock data inside the real shell, a reference for new screens.
+// The UI demo (dev only): the real app's menus and addresses under /demo, every screen pattern on mock data inside the
+// real shell, a reference for new screens (D-058).
 const demo = createRoute({ getParentRoute: () => rootRoute, path: '/demo', component: DemoLayout });
+const demoStart = createRoute({ getParentRoute: () => demo, path: '/', beforeLoad: () => { throw redirect({ href: `/demo/w/${DEFAULT_WORKSPACE}` }); } });
+const demoSpace = createRoute({ getParentRoute: () => demo, path: '/w/$workspaceId' });
+const demoInboxRoutes = [
+  createRoute({ getParentRoute: () => demoSpace, path: '/inbox', component: DemoInboxPage, validateSearch: ownSearch(parseInboxSearch) }),
+  createRoute({ getParentRoute: () => demoSpace, path: '/inbox/$noticeId', component: DemoInboxPage, validateSearch: ownSearch(parseInboxSearch) }),
+];
+const demoSpaceRoutes = [
+  createRoute({ getParentRoute: () => demoSpace, path: '/', component: DemoHomePage }),
+  ...demoInboxRoutes,
+  createRoute({ getParentRoute: () => demoSpace, path: '/my-tasks', component: DemoMyTasksPage, validateSearch: ownSearch(parseTableSearch) }),
+  createRoute({ getParentRoute: () => demoSpace, path: '/members', component: DemoMembersPage, validateSearch: ownSearch(parseMembersSearch) }),
+  createRoute({ getParentRoute: () => demoSpace, path: '/documents', component: DemoDocumentsPage }),
+  createRoute({ getParentRoute: () => demoSpace, path: '/projects', component: DemoProjectsPage, validateSearch: ownSearch(parseProjectsSearch) }),
+  createRoute({ getParentRoute: () => demoSpace, path: '/settings', component: DemoSettingsPage }),
+  createRoute({ getParentRoute: () => demoSpace, path: '/p/$projectId', component: DemoProjectWorkPage, validateSearch: ownSearch(parseDemoWorkSearch) }),
+  createRoute({ getParentRoute: () => demoSpace, path: '/p/$projectId/work-items/new', component: DemoFormPage }),
+  createRoute({ getParentRoute: () => demoSpace, path: '/p/$projectId/work-items/$workItemId', component: DemoDetailPage, validateSearch: ownSearch(parseDemoWorkSearch) }),
+  createRoute({ getParentRoute: () => demoSpace, path: '/p/$projectId/decisions', component: DemoDecisionsPage, validateSearch: ownSearch(parseDecisionsSearch) }),
+  createRoute({ getParentRoute: () => demoSpace, path: '/p/$projectId/sessions', component: DemoSessionsPage }),
+  createRoute({ getParentRoute: () => demoSpace, path: '/p/$projectId/artifacts', component: DemoArtifactsPage }),
+  createRoute({ getParentRoute: () => demoSpace, path: '/p/$projectId/settings', component: DemoSettingsPage }),
+] as const;
 const demoRoutes = [
-  createRoute({ getParentRoute: () => demo, path: '/', component: DemoHomePage }),
-  createRoute({ getParentRoute: () => demo, path: '/inbox', component: DemoInboxPage, validateSearch: ownSearch(parseInboxSearch) }),
-  createRoute({ getParentRoute: () => demo, path: '/table', component: DemoTablePage, validateSearch: ownSearch(parseTableSearch) }),
-  createRoute({ getParentRoute: () => demo, path: '/tabs', component: DemoTabsPage, validateSearch: ownSearch(parseTabsSearch) }),
-  createRoute({ getParentRoute: () => demo, path: '/board', component: DemoBoardPage }),
-  createRoute({ getParentRoute: () => demo, path: '/items/new', component: DemoFormPage }),
-  createRoute({ getParentRoute: () => demo, path: '/items/$id', component: DemoDetailPage, validateSearch: ownSearch(parseTableSearch) }),
-  createRoute({ getParentRoute: () => demo, path: '/settings', component: DemoSettingsPage }),
-  createRoute({ getParentRoute: () => demo, path: '/states', component: DemoStatesPage, validateSearch: ownSearch(parseStatesSearch) }),
-  createRoute({ getParentRoute: () => demo, path: '/dialogs', component: DemoDialogsPage }),
+  demoStart,
+  createRoute({ getParentRoute: () => demo, path: '/workspaces', component: DemoWorkspacesPage }),
+  demoSpace.addChildren(demoSpaceRoutes),
+  createRoute({ getParentRoute: () => demo, path: '/patterns/states', component: DemoStatesPage, validateSearch: ownSearch(parseStatesSearch) }),
+  createRoute({ getParentRoute: () => demo, path: '/patterns/dialogs', component: DemoDialogsPage }),
 ] as const;
 const demoTree = import.meta.env.DEV ? [demo.addChildren(demoRoutes)] : [];
 export const router = createRouter({ routeTree: rootRoute.addChildren([...demoTree, workspace.addChildren([start, chooser, scoped.addChildren([home, inbox, myTasks, members, documents, settings, projects, projectItems, projectSettings, itemDetail, itemReference]), security, keys, appearance, ...legacy]), login, setup, join, forcedPassword]), defaultPreload: 'intent', scrollRestoration: true });

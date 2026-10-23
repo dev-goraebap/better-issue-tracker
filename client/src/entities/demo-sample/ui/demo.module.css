@@ -1,6 +1,6 @@
 /* Shared bits of the demo pages. */
 .clip { min-inline-size: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.key { flex-shrink: 0; font-family: var(--font-family-code); font-size: 0.75rem; color: var(--color-text-secondary); }
+.key { flex-shrink: 0; white-space: nowrap; font-family: var(--font-family-code); font-size: 0.75rem; color: var(--color-text-secondary); }
 .none { color: var(--color-text-secondary); opacity: 0.6; }
 .figure { display: inline-flex; align-items: center; gap: var(--spacing-1); font-variant-numeric: tabular-nums; color: var(--color-text-secondary); }
 .figure svg { inline-size: 0.875rem; block-size: 0.875rem; }
@@ -28,3 +28,8 @@
 @media (width < 64rem) { .skeletonRow { padding-inline: var(--spacing-5); } }
 /* Lists in a page's column (not edge to edge) line up with the section labels. */
 .flush ul > li { padding-inline: 0; }
+/* A card's lead when nobody is assigned: an empty dashed square the size of a picture. */
+.leadEmpty { display: block; inline-size: 2rem; block-size: 2rem; border: 1px dashed var(--color-border-emphasized, var(--color-border)); border-radius: 22%; box-sizing: border-box; }
+/* A row's kind as a small mark (a meeting, an agent session) on a muted square. */
+.typeMark { display: inline-grid; place-items: center; inline-size: 1.75rem; block-size: 1.75rem; border-radius: 6px; background: var(--color-background-muted); color: var(--color-icon-secondary); }
+.typeMark svg { inline-size: 1rem; block-size: 1rem; }

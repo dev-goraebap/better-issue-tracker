@@ -1,50 +1,73 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { Button } from '@astryxdesign/core';
-import { useNavigate, useSearch } from '@tanstack/react-router';
-import { DefaultAvatar, ITEM_ROW_LINK, ItemList, ItemMeta, ItemRow, ListToolbar, NavIcon, PageFrame, PageState, type ListFilter, type ListFilterValues } from '@/shared/ui';
-import { agoText, demoStyles, type InboxSearch, NOTICES, personOf } from '@/entities/demo-sample';
+import { useMediaQuery } from '@astryxdesign/core/hooks';
+import { Link, useNavigate, useParams, useSearch } from '@tanstack/react-router';
+import { MOBILE_QUERY } from '@/shared/config';
+import { BackLink, DefaultAvatar, ITEM_ROW_LINK, ItemList, ItemMeta, ItemRow, ListToolbar, PageFrame, PageState, type ListFilter, type ListFilterValues } from '@/shared/ui';
+import { agoText, NOTICES, personOf, type InboxSearch } from '@/entities/demo-sample';
+import { markAllRead, markRead, useReadNotices } from '../model/read-notices';
+import { NoticeDetail } from './NoticeDetail';
+import { NoticeList } from './NoticeList';
+import styles from './inbox.module.css';
 
 const KIND_LABELS = { mention: '언급', assigned: '배정', decision: '결정', review: '검토 요청' } as const;
 
 /**
- * PATTERN · 행 목록 (Inbox). Copy this page for a list read by its titles, where some rows are new to the member.
+ * PATTERN · 목록과 내용 (Inbox), /demo/w/$workspaceId/inbox and /inbox/$noticeId. Copy this page for a stream of short
+ * items each opened on the spot.
  *
- * - ItemList/ItemRow: no header, one 44px line per row, the actor's avatar as lead, small meta at the end (the time
- *   with its clock icon, lined up by a fixed width).
- * - An unread row lies on the accent surface (tone="accent") with its title bold; reading it clears the tone.
- * - The page's main action is not a create (모두 읽음): ListToolbar action without isCreate is a secondary button on a
- *   desktop and an accent icon button on a phone, never the floating +.
- * - Filters with two or three choices pick one (read); the URL keeps them.
+ * - A desktop splits the card as Kaneo does: a narrow list at the left (NoticeList, its own scroll) and the open item at
+ *   the right (NoticeDetail), the split filling the card under the header row. Nothing open shows a quiet hint.
+ * - A phone shows the list as cards (ItemRow); a notice opens as a full-screen page with its own way back (PageFrame back).
+ * - Both use the same addresses: /inbox lists, /inbox/$noticeId opens one; the filters stay in the URL across both.
+ * - Opening a notice marks it read. 모두 읽음 is the page's action but not a create, so it is never the floating +.
  */
 export function DemoInboxPage() {
-  const search = useSearch({ from: '/demo/inbox' });
+  const { workspaceId, noticeId } = useParams({ strict: false }) as { workspaceId: string; noticeId?: string };
+  const search = useSearch({ strict: false }) as InboxSearch;
   const navigate = useNavigate();
-  const [read, setRead] = useState<Set<string>>(() => new Set(NOTICES.filter(notice => notice.isRead).map(notice => notice.id)));
-  const go = useCallback((patch: Partial<InboxSearch>) => void navigate({ to: '/demo/inbox', search: previous => Object.fromEntries(Object.entries({ ...previous, ...patch }).filter(([, value]) => value !== undefined)) }), [navigate]);
-  const rows = useMemo(() => NOTICES
+  const isMobile = useMediaQuery(MOBILE_QUERY);
+  const read = useReadNotices();
+  useEffect(() => { if (noticeId) markRead(noticeId); }, [noticeId]);
+  const go = useCallback((patch: Partial<InboxSearch>) => void navigate({
+    to: '/demo/w/$workspaceId/inbox', params: { workspaceId },
+    search: previous => Object.fromEntries(Object.entries({ ...previous, ...patch }).filter(([, value]) => value !== undefined)),
+  }), [navigate, workspaceId]);
+  const notices = useMemo(() => NOTICES
     .filter(notice => !search.read || (search.read === 'read') === read.has(notice.id))
     .filter(notice => !search.kind || notice.kind === search.kind), [search, read]);
+  const open = NOTICES.find(notice => notice.id === noticeId);
   const unread = NOTICES.filter(notice => !read.has(notice.id)).length;
   const filters: ListFilter[] = [
     { key: 'read', label: '읽음', icon: 'bell', value: search.read, options: [{ value: 'unread', label: '안 읽음' }, { value: 'read', label: '읽음' }] },
     { key: 'kind', label: '종류', icon: 'list-filter', value: search.kind, options: Object.entries(KIND_LABELS).map(([value, label]) => ({ value, label })) },
   ];
+  const empty = search.read || search.kind
+    ? <PageState kind="search" title="조건에 맞는 알림이 없습니다" description="다른 조건으로 찾아보세요." actions={<Button label="조건 지우기" variant="secondary" onClick={() => go({ read: undefined, kind: undefined })} />} />
+    : <PageState title="새 알림이 없습니다" description="언급되거나 작업이 배정되면 여기에 모입니다." />;
+
+  // A phone opens one notice as a page of its own, with its own way back to the list.
+  if (isMobile && noticeId) return <PageFrame title={open?.title ?? '알림'} wrapsTitle back={<BackLink to="/demo/w/$workspaceId/inbox" params={{ workspaceId }} search={search} label="Inbox" />}>
+    {open ? <NoticeDetail workspaceId={workspaceId} notice={open} isTitleShown={false} /> : <PageState kind="not-found" title="알림을 찾을 수 없습니다" description="지워졌거나 오래되어 정리되었습니다." />}
+  </PageFrame>;
+
   return <PageFrame title="Inbox" icon="inbox" chrome="header">
     <ListToolbar label="알림 조건" filters={filters} onFiltersChange={(values: ListFilterValues) => go(values as Partial<InboxSearch>)}
-      action={unread > 0 ? { label: '모두 읽음', icon: 'done', onClick: () => setRead(new Set(NOTICES.map(notice => notice.id))) } : undefined} />
-    {rows.length > 0 && <ItemList label="알림">{rows.map(notice => {
-      const actor = personOf(notice.actorId);
-      const isUnread = !read.has(notice.id);
-      return <ItemRow key={notice.id} tone={isUnread ? 'accent' : undefined}
-        lead={<DefaultAvatar seed={notice.actorId} name={actor?.name} size={20} />}
-        title={<button type="button" className={`${ITEM_ROW_LINK} ${demoStyles.rowButton} ${isUnread ? demoStyles.unread : ''}`} onClick={() => setRead(new Set([...read, notice.id]))}>
-          {notice.title}<span className={demoStyles.rowTarget}>{notice.target}</span>
-        </button>}
-        meta={<><ItemMeta width="5rem">{KIND_LABELS[notice.kind]}</ItemMeta>
-          <ItemMeta width="5.5rem" align="end" label={agoText(notice.at)}><span className={demoStyles.figure}><NavIcon name="clock" />{agoText(notice.at)}</span></ItemMeta></>} />;
-    })}</ItemList>}
-    {rows.length === 0 && (search.read || search.kind
-      ? <PageState kind="search" title="조건에 맞는 알림이 없습니다" description="다른 조건으로 찾아보세요." actions={<Button label="조건 지우기" variant="secondary" onClick={() => go({ read: undefined, kind: undefined })} />} />
-      : <PageState title="새 알림이 없습니다" description="언급되거나 작업이 배정되면 여기에 모입니다." />)}
+      action={unread > 0 ? { label: '모두 읽음', icon: 'done', onClick: markAllRead } : undefined} />
+    {isMobile
+      ? (notices.length > 0 ? <ItemList label="알림">{notices.map(notice => {
+        const actor = personOf(notice.actorId);
+        return <ItemRow key={notice.id} tone={read.has(notice.id) ? undefined : 'accent'} lead={<DefaultAvatar seed={notice.actorId} name={actor?.name} size={32} />}
+          title={<Link to="/demo/w/$workspaceId/inbox/$noticeId" params={{ workspaceId, noticeId: notice.id }} search={search} className={ITEM_ROW_LINK}>{notice.title}</Link>}
+          meta={<><ItemMeta><span className={styles.rowTarget}>{notice.target.key} {notice.target.title}</span></ItemMeta><ItemMeta>{agoText(notice.at)}</ItemMeta></>} />;
+      })}</ItemList> : empty)
+      : <div className={styles.split}>
+        <div className={styles.listPane}>{notices.length > 0 ? <NoticeList workspaceId={workspaceId} notices={notices} read={read} openId={noticeId} search={search} /> : empty}</div>
+        <div className={styles.detailPane}>
+          {open ? <NoticeDetail workspaceId={workspaceId} notice={open} />
+            : noticeId ? <PageState kind="not-found" isCompact title="알림을 찾을 수 없습니다" description="지워졌거나 오래되어 정리되었습니다." />
+            : <PageState isCompact title="알림을 고르세요" description="왼쪽 목록에서 알림을 고르면 내용과 관련 항목이 여기에 보입니다." />}
+        </div>
+      </div>}
   </PageFrame>;
 }

@@ -29,5 +29,19 @@
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .row :is(button:not(.rowLink), a:not(.rowLink), [role="button"], [tabindex="0"]) { position: relative; z-index: 2; }
 .row:has(.rowLink) { cursor: pointer; }
-/* A phone keeps its own inset (20px) inside the rows. */
-@media (width < 64rem) { .row { padding-inline: var(--spacing-5); } }
+/*
+ * A phone reads each row as a small card (BIT, D-058): its own inset (20px), the lead (a person's picture, a mark) beside
+ * two lines, the title (up to two lines) over the properties, about 72px a row and taller for a long title. Properties
+ * give up their desktop widths and follow one another.
+ */
+@media (width < 64rem) {
+  .row { display: grid; grid-template-columns: minmax(0, 1fr); grid-template-areas: "title" "meta"; align-content: center; row-gap: var(--spacing-1-5, 0.375rem);
+    column-gap: var(--spacing-3); block-size: auto; min-block-size: 4.5rem; padding: var(--spacing-3) var(--spacing-5); }
+  .row:has(> .lead) { grid-template-columns: auto minmax(0, 1fr); grid-template-areas: "lead title" "lead meta"; }
+  .lead { grid-area: lead; align-self: center; }
+  .title { grid-area: title; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; white-space: normal; font-size: 0.9375rem;
+    line-height: 1.4; word-break: keep-all; overflow-wrap: anywhere; }
+  .title .rowLink:is(button) { white-space: normal; }
+  .meta { grid-area: meta; flex-wrap: wrap; gap: var(--spacing-1) var(--spacing-3); }
+  .metaItem { inline-size: auto !important; }
+}

@@ -1,4 +1,4 @@
- .account { display: flex; align-items: center; gap: var(--spacing-2); padding: var(--spacing-2); min-inline-size: 0; border-radius: var(--radius-container); background: color-mix(in srgb, var(--color-text-primary) 9%, var(--color-background-body)); }
+ .account { display: flex; align-items: center; gap: var(--spacing-2); padding: var(--spacing-2); min-inline-size: 0; border-radius: 6px; background: color-mix(in srgb, var(--color-text-primary) 9%, var(--color-background-body)); }
 .who { display: flex; align-items: center; gap: var(--spacing-3); min-inline-size: 0; }
 .identity { flex: 1; min-inline-size: 0; }
 .accountLink { flex: 1; min-inline-size: 0; color: inherit; text-decoration: none; padding: var(--spacing-1); margin: calc(-1 * var(--spacing-1)); border-radius: var(--radius-element); }
@@ -12,5 +12,5 @@
 .link:hover, .link:focus-visible { background: var(--color-background-muted); }
 .signOut { display: flex; flex-direction: column; padding: var(--spacing-1); border-block-start: var(--border-width) solid var(--color-border); }
 .folded { display: flex; justify-content: center; }
-.avatarButton { display: inline-flex; padding: 0; border: 0; border-radius: var(--radius-full); background: none; cursor: pointer; }
+.avatarButton { display: inline-flex; padding: 0; border: 0; border-radius: 22%; background: none; cursor: pointer; }
 @media (width < 64rem) { .link, .signOut button { min-block-size: var(--size-element-touch); } }

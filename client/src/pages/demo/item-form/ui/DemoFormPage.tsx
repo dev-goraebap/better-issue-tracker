@@ -1,6 +1,6 @@
 import { useId, useState } from 'react';
 import { Button, TextArea, TextInput, VStack } from '@astryxdesign/core';
-import { useNavigate } from '@tanstack/react-router';
+import { useNavigate, useParams } from '@tanstack/react-router';
 import { BackLink, DateField, PageFoot, PageFrame, Select } from '@/shared/ui';
 import { demoStyles, PEOPLE, type Priority, PRIORITY_LABELS, type Status, STATUS_LABELS } from '@/entities/demo-sample';
 
@@ -9,7 +9,7 @@ const priorityOptions = Object.entries(PRIORITY_LABELS).map(([value, label]) => 
 const peopleOptions = PEOPLE.map(person => ({ value: person.id, label: person.name }));
 
 /**
- * PATTERN · 작성 양식. Copy this page for creating or editing one item on its own address (not in a dialog).
+ * PATTERN · 작성 양식, /demo/w/$workspaceId/p/$projectId/work-items/new. Copy this page for creating or editing one item on its own address (not in a dialog).
  *
  * - PageFrame width="narrow" with back: a phone gives the form the whole screen, no tab bar.
  * - The foot row is PageFoot: 취소 at its start, the submit at its end. The shell draws it at the card's bottom, outside
@@ -19,6 +19,7 @@ const peopleOptions = PEOPLE.map(person => ({ value: person.id, label: person.na
  * - The route sets staticData form in a real app so a phone keeps the action row above the keyboard.
  */
 export function DemoFormPage() {
+  const { workspaceId, projectId } = useParams({ from: '/demo/w/$workspaceId/p/$projectId/work-items/new' });
   const navigate = useNavigate();
   const formId = useId();
   const [title, setTitle] = useState('');
@@ -29,8 +30,8 @@ export function DemoFormPage() {
   const [due, setDue] = useState<string | undefined>();
   const [isChecked, setChecked] = useState(false);
   const titleError = isChecked && !title.trim() ? '제목을 입력해 주세요.' : undefined;
-  const leave = () => void navigate({ to: '/demo/table' });
-  return <PageFrame title="새 작업" width="narrow" back={<BackLink to="/demo/table" label="작업 표" />}>
+  const leave = () => void navigate({ to: '/demo/w/$workspaceId/p/$projectId', params: { workspaceId, projectId } });
+  return <PageFrame title="새 작업" width="narrow" back={<BackLink to="/demo/w/$workspaceId/p/$projectId" params={{ workspaceId, projectId }} label="작업" />}>
     <form id={formId} noValidate onSubmit={event => { event.preventDefault(); setChecked(true); if (title.trim()) leave(); }}>
       <VStack gap={5}>
         <TextInput label="제목" value={title} onChange={setTitle} isRequired hasAutoFocus placeholder="무엇을 해야 하나요?"
