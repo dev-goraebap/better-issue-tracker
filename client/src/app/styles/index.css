@@ -19,6 +19,15 @@ body { font-family: 'Pretendard Variable', Pretendard, system-ui, sans-serif; }
   --font-family-code: 'JetBrains Mono Variable', monospace;
   word-break: keep-all;
 }
+/* Buttons use the same modest corners as fields, never pill or circular shapes. */
+.astryx-button, .astryx-icon-button, .astryx-toggle-button {
+  border-radius: var(--radius-element);
+}
+.astryx-button.bit-auth-submit {
+  inline-size: 100%;
+  min-block-size: var(--bit-field-height);
+  font-size: var(--bit-field-font-size);
+}
 .bit-nav-icon { inline-size: var(--spacing-5); block-size: var(--spacing-5); flex-shrink: 0; }
 /* Floating surfaces remain distinct from the page in both color modes. */
 .astryx-popover,

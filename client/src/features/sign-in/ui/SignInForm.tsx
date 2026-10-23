@@ -14,6 +14,6 @@ export function SignInForm({ initialEmail = '', onSignedIn }: { initialEmail?: s
   }}><VStack gap={4}>
     <EmailField value={email} onChange={setEmail} disabled={busy} />
     <TextInput label="비밀번호" type="password" placeholder="비밀번호를 입력하세요" value={password} onChange={setPassword} isRequired isDisabled={busy} />
-    <FormMessage message={error} /><section data-action-row><Button type="submit" label="로그인" variant="primary" isLoading={busy} /></section>
+    <FormMessage message={error} /><section data-action-row><Button className="bit-auth-submit" type="submit" label="로그인" variant="primary" isLoading={busy} /></section>
   </VStack></form>;
 }
