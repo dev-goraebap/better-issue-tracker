@@ -1,7 +1,8 @@
-import { ArrowLeftRight, Ellipsis, Folder, House, Inbox, ListTodo, PanelLeft, Settings, Users, X } from 'lucide-react';
+import { CalendarDays, ArrowLeftRight, Ellipsis, Folder, House, Inbox, ListTodo, PanelLeft, Settings, Users, X } from 'lucide-react';
 
 const icons = {
   home: House,
+  calendar: CalendarDays,
   inbox: Inbox,
   tasks: ListTodo,
   members: Users,
@@ -10,7 +11,7 @@ const icons = {
   sidebar: PanelLeft,
   close: X,
   settings: Settings,
-  switcher: ArrowLeftRight,
+  switcher: CalendarDays, ArrowLeftRight,
 };
 
 export function NavIcon({ name }: { name: keyof typeof icons }) {

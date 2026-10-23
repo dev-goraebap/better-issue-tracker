@@ -1,4 +1,4 @@
-import { queryOptions } from '@tanstack/react-query';
+import { infiniteQueryOptions, queryOptions } from '@tanstack/react-query';
 import { command, readJson } from '@/shared/api';
 import type { components } from '@/shared/api';
 
@@ -8,6 +8,7 @@ export const spacePath = (id: string) => `/api/v1/workspaces/${encodeURIComponen
 export const workspaceQuery = (id: string) => queryOptions({ queryKey: ['workspace', id], queryFn: ({ signal }) => readJson<Space>(spacePath(id), signal), retry: false, staleTime: 0 });
 export const workspacesQuery = (cursor?: string) => queryOptions({ queryKey: ['workspaces', cursor ?? ''], queryFn: ({ signal }) => readJson<components['schemas']['Spaces']>(`/api/v1/me/workspaces${cursor ? `?cursor=${encodeURIComponent(cursor)}` : ''}`, signal), staleTime: 0 });
 export const membersQuery = (id: string, cursor?: string) => queryOptions({ queryKey: ['workspace', id, 'members', cursor ?? ''], queryFn: ({ signal }) => readJson<components['schemas']['Members']>(`${spacePath(id)}/members${cursor ? `?cursor=${encodeURIComponent(cursor)}` : ''}`, signal), retry: false });
+export const memberOptionsQuery = (id: string) => infiniteQueryOptions({ queryKey: ['workspace', id, 'member-options'], initialPageParam: undefined as string | undefined, queryFn: ({ pageParam, signal }) => readJson<components['schemas']['Members']>(`${spacePath(id)}/members${pageParam ? `?cursor=${encodeURIComponent(pageParam)}` : ''}`, signal), getNextPageParam: page => page.nextCursor ?? undefined, retry: false });
 export async function selectWorkspace(id: string) { await command('PUT', '/api/v1/auth/sessions/current/workspace', { workspaceId: id }); }
 export async function createWorkspace(name: string, slug: string) {
   let location = '';

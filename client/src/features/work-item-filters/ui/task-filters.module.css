@@ -1,0 +1,2 @@
+.panel { max-block-size: 65dvh; overflow-y: auto; }
+.footer { position: sticky; inset-block-end: 0; background: var(--color-background-popover); padding-block: var(--spacing-2); }

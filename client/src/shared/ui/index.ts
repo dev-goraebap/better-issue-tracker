@@ -7,3 +7,6 @@ export { SectionHeader } from './SectionHeader';
 export { DefaultAvatar } from './DefaultAvatar';
 export { ProductMark } from './ProductMark';
 export { CompactDialog } from './CompactDialog';
+export { QueryMessage } from './QueryMessage';
+
+export { DateField } from './date-field';

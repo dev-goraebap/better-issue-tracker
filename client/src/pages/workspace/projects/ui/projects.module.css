@@ -1,0 +1,5 @@
+.list { border-block-start: var(--border-width) solid var(--color-border); }
+.row { display: flex; align-items: center; gap: var(--spacing-4); padding: var(--spacing-4) 0; border-block-end: var(--border-width) solid var(--color-border); }
+.info { flex: 1; min-inline-size: 0; }
+.info a { color: var(--color-text-primary); font-weight: 600; text-decoration: none; }
+.info a:hover { text-decoration: underline; }

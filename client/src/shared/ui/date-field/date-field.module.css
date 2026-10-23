@@ -1,0 +1,6 @@
+/* The calendar in the popover with its quick picks under it, parted by a faint rule. */
+.popover { display: flex; flex-direction: column; gap: var(--spacing-2); padding: var(--spacing-3); }
+.footer { display: flex; justify-content: space-between; gap: var(--spacing-2); padding-top: var(--spacing-2);
+  border-top: 1px solid color-mix(in srgb, var(--color-border) 60%, transparent); }
+/* The box the calendar drops from; it takes the width it is given. */
+.field { min-inline-size: 0; }
