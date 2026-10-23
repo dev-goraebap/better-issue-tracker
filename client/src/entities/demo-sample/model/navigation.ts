@@ -30,9 +30,34 @@ export const PROJECT_MENU: readonly DemoEntry[] = [
   { path: '/decisions', label: '결정', icon: 'decision', pattern: '상태 탭과 탭 줄 끝의 도구, 계산된 이행 진행 막대' },
   { path: '/sessions', label: '세션·회의', icon: 'session', pattern: '종류 표시와 참석자 아바타 묶음이 있는 행 목록' },
   { path: '/artifacts', label: '산출물', icon: 'documents', pattern: '아직 준비 중인 기능의 빈 상태' },
-  { path: '/settings', label: '설정', icon: 'settings', pattern: '섹션 머리로 나눈 설정, 행 단위 항목과 위험 구역' },
+  { path: '/settings', label: '설정', icon: 'settings', pattern: '워크스페이스 설정 안의 이 프로젝트 설정으로 간다' },
 ];
 export const PROJECT_TABS = 3;
+
+/**
+ * The workspace's settings, which 워크스페이스 설정 at the menu's foot opens: the menu turns into these, headed by
+ * 돌아가기 (or Esc) as the member's own settings are. The workspace's pages first, then each project's (PROJECT_SETTINGS_MENU
+ * under its name, as Kaneo lays them out), then the instance's for its administrators (ADMIN_MENU). Addresses:
+ * /w/$workspaceId/settings/…, a project's /w/$workspaceId/settings/projects/$projectId/…, the instance's /admin/….
+ */
+export const WORKSPACE_SETTINGS_MENU: readonly DemoEntry[] = [
+  { path: '/general', label: '일반', icon: 'settings', pattern: '로고·이름·설명, 소유권 이전, 위험 구역' },
+  { path: '/roles', label: '역할', icon: 'shield', pattern: '역할마다 할 수 있는 일을 읽는 표' },
+  { path: '/labels', label: '라벨', icon: 'label', pattern: '색과 이름, 쓰는 작업 수가 있는 목록과 추가 짧은 창' },
+  { path: '/integrations', label: '연동', icon: 'link', pattern: 'Git 서버 연결과 복사해 쓰는 웹훅 주소' },
+];
+export const PROJECT_SETTINGS_MENU: readonly DemoEntry[] = [
+  { path: '/general', label: '일반', icon: 'settings', pattern: '이름·키·설명, 보관과 삭제' },
+  { path: '/board', label: '보드 칸', icon: 'board', pattern: '칸의 순서·색과 완료 칸 표시' },
+  { path: '/control', label: '통제', icon: 'lock', pattern: '개인 모드와 팀 모드, 팀 모드의 잠금·승인' },
+  { path: '/repository', label: '저장소', icon: 'branch', pattern: '연결한 Git 저장소와 마지막으로 받은 웹훅' },
+];
+/** The instance's settings, outside any workspace; only its administrators see them. */
+export const ADMIN_MENU: readonly DemoEntry[] = [
+  { path: '/demo/admin/users', label: '사용자', icon: 'people', pattern: '인스턴스의 모든 사용자, 관리자 표시와 계정 잠금' },
+  { path: '/demo/admin/workspaces', label: '워크스페이스', icon: 'grid', pattern: '인스턴스의 모든 워크스페이스와 소유자' },
+  { path: '/demo/admin/features', label: '서버 기능', icon: 'workflow', pattern: '서버가 켠 선택 기능(메일·Git·파일 저장소·문서 변환)의 상태' },
+];
 
 /**
  * The member's own settings, which the profile card's gear opens: the menu turns into these under 계정, headed by
@@ -54,6 +79,9 @@ export const PATTERN_MENU: readonly DemoEntry[] = [
 
 export const workspacePath = (workspaceId: string, path = '') => `/demo/w/${workspaceId}${path}`;
 export const projectPath = (workspaceId: string, projectId: string, path = '') => `/demo/w/${workspaceId}/p/${projectId}${path}`;
+export const workspaceSettingsPath = (workspaceId: string, path = '/general') => `/demo/w/${workspaceId}/settings${path}`;
+export const projectSettingsPath = (workspaceId: string, projectId: string, path = '/general') =>
+  `/demo/w/${workspaceId}/settings/projects/${projectId}${path}`;
 
 /** Where a demo address is: its workspace, project, the menu entry it belongs to, and the item a page shows. */
 export type DemoPlace = {
@@ -66,8 +94,14 @@ export type DemoPlace = {
   itemId?: string;
   noticeId?: string;
   isWorkspaces?: boolean; pattern?: string;
-  /** An account settings page's address, when the menu is the settings'. */
+  /** An account settings page's address, when the menu is the member's own settings. */
   account?: string;
+  /** A workspace settings page's entry path ('/general', …), when the menu is the workspace's settings. */
+  settings?: string;
+  /** The project whose settings page it is, within the workspace's settings. */
+  settingsProjectId?: string;
+  /** An instance settings page's address (/demo/admin/…), shown with the workspace's settings. */
+  admin?: string;
 };
 
 export function demoPlace(pathname: string): DemoPlace {
@@ -75,10 +109,13 @@ export function demoPlace(pathname: string): DemoPlace {
   if (path === '/demo/workspaces') return { isWorkspaces: true };
   if (path.startsWith('/demo/patterns/')) return { pattern: path };
   if (path.startsWith('/demo/settings/')) return { account: path };
+  if (path.startsWith('/demo/admin/')) return { admin: path };
   const match = /^\/demo\/w\/([^/]+)(\/.*)?$/.exec(path);
   if (!match) return {};
   const [, workspaceId, rest = ''] = match;
   const project = /^\/p\/([^/]+)(\/.*)?$/.exec(rest);
+  const settings = /^\/settings(?:\/projects\/([^/]+))?(\/[^/]+)$/.exec(rest);
+  if (settings) return { workspaceId, settingsProjectId: settings[1], settings: settings[2] };
   if (!project) {
     const notice = /^\/inbox\/([^/]+)$/.exec(rest);
     return { workspaceId, workspaceSection: notice ? '/inbox' : rest, noticeId: notice?.[1] };
@@ -96,5 +133,5 @@ export function placeNames(place: DemoPlace) {
     ? PROJECT_MENU.find(entry => entry.path === place.projectSection)
     : [NOTICE_ENTRY, ...WORKSPACE_MENU].find(entry => entry.path === place.workspaceSection) ?? (place.workspaceSection === '/projects' ? { label: '모든 프로젝트' } : place.workspaceSection === '/settings' ? { label: '워크스페이스 설정' } : undefined);
   const item = place.itemId === 'new' ? '새 작업' : itemOf(place.itemId)?.key;
-  return { workspace: workspace?.name, project: project?.name, section: section?.label, item };
+  return { workspace: workspace?.name, project: project?.name, section: section?.label, item, settingsProject: projectOf(place.settingsProjectId)?.name };
 }

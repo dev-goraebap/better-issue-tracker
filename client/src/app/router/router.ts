@@ -34,7 +34,9 @@ import { DemoFormPage } from '@/pages/demo/item-form';
 import { DemoDecisionsPage } from '@/pages/demo/decisions';
 import { DemoSessionsPage } from '@/pages/demo/sessions';
 import { DemoArtifactsPage } from '@/pages/demo/artifacts';
-import { DemoSettingsPage } from '@/pages/demo/settings';
+import { DemoWorkspaceSettingsPage } from '@/pages/demo/settings/workspace';
+import { DemoProjectSettingsPage } from '@/pages/demo/settings/project';
+import { DemoAdminPage } from '@/pages/demo/settings/admin';
 import { DemoStatesPage } from '@/pages/demo/states';
 import { DemoDialogsPage } from '@/pages/demo/dialogs';
 import { DemoProfilePage } from '@/pages/demo/account-profile';
@@ -136,14 +138,17 @@ const demoSpaceRoutes = [
   createRoute({ getParentRoute: () => demoSpace, path: '/members', component: DemoMembersPage, validateSearch: ownSearch(parseMembersSearch) }),
   createRoute({ getParentRoute: () => demoSpace, path: '/documents', component: DemoDocumentsPage }),
   createRoute({ getParentRoute: () => demoSpace, path: '/projects', component: DemoProjectsPage, validateSearch: ownSearch(parseProjectsSearch) }),
-  createRoute({ getParentRoute: () => demoSpace, path: '/settings', component: DemoSettingsPage }),
+  // 워크스페이스 설정 turns the menu into the workspace's settings: its pages, then each project's (D-061).
+  createRoute({ getParentRoute: () => demoSpace, path: '/settings', beforeLoad: ({ params }) => { throw redirect({ href: `/demo/w/${params.workspaceId}/settings/general` }); } }),
+  createRoute({ getParentRoute: () => demoSpace, path: '/settings/$section', component: DemoWorkspaceSettingsPage }),
+  createRoute({ getParentRoute: () => demoSpace, path: '/settings/projects/$projectId/$section', component: DemoProjectSettingsPage }),
   createRoute({ getParentRoute: () => demoSpace, path: '/p/$projectId', component: DemoProjectWorkPage, validateSearch: ownSearch(parseDemoWorkSearch) }),
   createRoute({ getParentRoute: () => demoSpace, path: '/p/$projectId/work-items/new', component: DemoFormPage }),
   createRoute({ getParentRoute: () => demoSpace, path: '/p/$projectId/work-items/$workItemId', component: DemoDetailPage, validateSearch: ownSearch(parseDemoWorkSearch) }),
   createRoute({ getParentRoute: () => demoSpace, path: '/p/$projectId/decisions', component: DemoDecisionsPage, validateSearch: ownSearch(parseDecisionsSearch) }),
   createRoute({ getParentRoute: () => demoSpace, path: '/p/$projectId/sessions', component: DemoSessionsPage }),
   createRoute({ getParentRoute: () => demoSpace, path: '/p/$projectId/artifacts', component: DemoArtifactsPage }),
-  createRoute({ getParentRoute: () => demoSpace, path: '/p/$projectId/settings', component: DemoSettingsPage }),
+  createRoute({ getParentRoute: () => demoSpace, path: '/p/$projectId/settings', beforeLoad: ({ params }) => { throw redirect({ href: `/demo/w/${params.workspaceId}/settings/projects/${params.projectId}/general` }); } }),
 ] as const;
 const demoRoutes = [
   demoStart,
@@ -154,6 +159,8 @@ const demoRoutes = [
   createRoute({ getParentRoute: () => demo, path: '/settings/notifications', component: DemoNotificationsPage }),
   createRoute({ getParentRoute: () => demo, path: '/settings/api-keys', component: DemoApiKeysPage }),
   createRoute({ getParentRoute: () => demo, path: '/settings/security', component: DemoSecurityPage }),
+  // The instance's settings, for its administrators, outside any workspace as the real /admin/….
+  createRoute({ getParentRoute: () => demo, path: '/admin/$section', component: DemoAdminPage }),
   demoSpace.addChildren(demoSpaceRoutes),
   createRoute({ getParentRoute: () => demo, path: '/patterns/states', component: DemoStatesPage, validateSearch: ownSearch(parseStatesSearch) }),
   createRoute({ getParentRoute: () => demo, path: '/patterns/dialogs', component: DemoDialogsPage }),

@@ -7,7 +7,8 @@ import { isJustBefore } from '@/shared/lib/history-trail';
 import { DefaultAvatar, NavIcon, NotificationBell } from '@/shared/ui';
 import { WorkspaceSwitcher } from '@/features/demo-workspace-switcher';
 import {
-  ACCOUNT_MENU, demoPlace, NOTICES, PATTERN_MENU, useReadNotices, placeNames, PROJECT_MENU, PROJECT_TABS, projectPath, projectsIn, workspaceOf, workspacePath, WORKSPACE_MENU, WORKSPACE_TABS,
+  ACCOUNT_MENU, ADMIN_MENU, DEFAULT_WORKSPACE, demoPlace, NOTICES, PATTERN_MENU, useReadNotices, placeNames, PROJECT_MENU, PROJECT_SETTINGS_MENU, PROJECT_TABS, projectPath, projectSettingsPath,
+  projectsIn, workspaceOf, workspacePath, WORKSPACE_MENU, WORKSPACE_SETTINGS_MENU, WORKSPACE_TABS, workspaceSettingsPath,
 } from '@/entities/demo-sample';
 import styles from './demo-layout.module.css';
 
@@ -15,19 +16,24 @@ import styles from './demo-layout.module.css';
  * The demo's frame: the same ShellFrame the workspace draws, with the real app's menus at the real addresses under /demo
  * (the workspace switcher and the bell at its head, the workspace's menu, its projects with the open one's own menu, the
  * pattern pages, and 워크스페이스 설정 at its foot). The profile card's gear turns the menu into the member's own settings
- * (/demo/settings/…): 돌아가기 or Esc goes back to the page of work left. It reads nothing from the server, so it opens
- * without signing in; the account box is a stand-in.
+ * (/demo/settings/…), and 워크스페이스 설정 into the workspace's (its pages, each project's, then the instance's, D-061):
+ * either way 돌아가기 or Esc goes back to the page of work left. It reads nothing from the server, so it opens without
+ * signing in; the account box is a stand-in.
  */
 
-/** The last page of work in view, where the settings' 돌아가기 returns. */
+/** The last page of work in view, where the settings' 돌아가기 returns, and the last workspace, whose settings show. */
 let lastWork = '';
+let lastSpace = DEFAULT_WORKSPACE;
 export function DemoLayout() {
   const pathname = useRouterState({ select: state => (state.resolvedLocation ?? state.location).pathname });
   const navigate = useNavigate();
   const router = useRouter();
   const [folded, setFolded] = useState(false);
   const place = demoPlace(pathname);
-  const isSettings = !!place.account;
+  const isAccount = !!place.account;
+  const isSpaceSettings = !!place.settings || !!place.admin;
+  const isSettings = isAccount || isSpaceSettings;
+  if (place.workspaceId) lastSpace = place.workspaceId;
   const searchStr = useRouterState({ select: state => (state.resolvedLocation ?? state.location).searchStr });
   useEffect(() => { if (!isSettings) lastWork = `${pathname}${searchStr}`; }, [isSettings, pathname, searchStr]);
   // 돌아가기: back through history when the page of work is just before, else to it (or the demo's start).
@@ -47,9 +53,9 @@ export function DemoLayout() {
     return () => window.removeEventListener('keydown', onKey);
   });
   const names = placeNames(place);
-  const workspaceId = place.workspaceId ?? '';
-  const workspace = workspaceOf(place.workspaceId);
-  const projects = projectsIn(place.workspaceId).filter(project => project.status === 'active');
+  const workspaceId = place.workspaceId ?? (place.admin ? lastSpace : '');
+  const workspace = workspaceOf(workspaceId || undefined);
+  const projects = projectsIn(workspaceId || undefined).filter(project => project.status === 'active');
   const go = (href: string) => (event: MouseEvent) => {
     if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
     event.preventDefault(); void navigate({ href });
@@ -62,7 +68,15 @@ export function DemoLayout() {
 
   // The trail: the workspace (to its home), the project (to its work), the menu entry, then the item in view.
   const steps: TrailStep[] = [];
-  if (isSettings) steps.push({ label: '계정' }, { label: ACCOUNT_MENU.find(entry => entry.path === place.account)?.label ?? '설정' });
+  if (isAccount) steps.push({ label: '계정' }, { label: ACCOUNT_MENU.find(entry => entry.path === place.account)?.label ?? '설정' });
+  else if (place.admin) steps.push({ label: '인스턴스 관리' }, { label: ADMIN_MENU.find(entry => entry.path === place.admin)?.label ?? '설정' });
+  else if (isSpaceSettings && workspace) {
+    const home = workspacePath(workspaceId);
+    steps.push({ label: workspace.name, href: home, onClick: go(home) }, { label: '설정' });
+    const entries = place.settingsProjectId ? PROJECT_SETTINGS_MENU : WORKSPACE_SETTINGS_MENU;
+    if (names.settingsProject) steps.push({ label: names.settingsProject });
+    steps.push({ label: entries.find(entry => entry.path === place.settings)?.label ?? '페이지 찾기' });
+  }
   else if (place.isWorkspaces) steps.push({ label: PRODUCT_NAME, href: '/demo', onClick: go('/demo') }, { label: '워크스페이스' });
   else if (place.pattern) steps.push({ label: 'UI 패턴' }, { label: PATTERN_MENU.find(entry => entry.path === place.pattern)?.label ?? '패턴' });
   else if (workspace) {
@@ -82,15 +96,37 @@ export function DemoLayout() {
   const resizable = { defaultWidth: 250, minWidth: 236, maxWidth: 350, autoSaveId: 'bit-demo-sidebar', isCollapsed: folded, onCollapseChange: setFolded };
   // 워크스페이스 설정 sits at the menu's foot (with the version), under everything else.
   const version = !folded && <Text type="supporting" color="secondary" className={styles.version}>v0.0.0 · demo</Text>;
-  const sidebar = isSettings
+  const backHead = <button type="button" className={styles.backHead} data-folded={folded || undefined} onClick={leaveSettings} aria-label="돌아가기 (Esc)">
+    <NavIcon name="previous" />{!folded && <><span className={styles.backLabel}>돌아가기</span><kbd className={styles.kbd}>Esc</kbd></>}
+  </button>;
+  const projectMark = (key: string) => <span className={styles.projectMark} aria-hidden="true">{key.slice(0, 1)}</span>;
+  const sidebar = isAccount
     // The member's own settings: 돌아가기 (or Esc) at the head, then 계정 and its pages.
-    ? <SideNav aria-label="설정 메뉴" className={styles.sidebar} collapsible={{ hasButton: false }} resizable={resizable}
-      header={<button type="button" className={styles.backHead} data-folded={folded || undefined} onClick={leaveSettings} aria-label="돌아가기 (Esc)">
-        <NavIcon name="previous" />{!folded && <><span className={styles.backLabel}>돌아가기</span><kbd className={styles.kbd}>Esc</kbd></>}
-      </button>}
-      footer={version}>
+    ? <SideNav aria-label="설정 메뉴" className={styles.sidebar} collapsible={{ hasButton: false }} resizable={resizable} header={backHead} footer={version}>
       <SideNavSection title="계정">
         {ACCOUNT_MENU.map(entry => item(entry.label, entry.icon, entry.path, place.account === entry.path))}
+      </SideNavSection>
+    </SideNav>
+    : isSpaceSettings
+    // The workspace's settings: 돌아가기 (or Esc), then the workspace's pages under its name, each project folding open
+    // to its own pages (the one in view open), and the instance's for its administrators.
+    ? <SideNav aria-label="워크스페이스 설정 메뉴" className={styles.sidebar} collapsible={{ hasButton: false }} resizable={resizable} header={backHead} footer={version}>
+      <SideNavSection title={workspace?.name ?? '워크스페이스'}>
+        {WORKSPACE_SETTINGS_MENU.map(entry => item(entry.label, entry.icon, workspaceSettingsPath(workspaceId, entry.path), !place.settingsProjectId && place.settings === entry.path))}
+      </SideNavSection>
+      {!folded && projects.length > 0 && <SideNavSection title="프로젝트">
+        {projects.map(project => {
+          const isOpen = place.settingsProjectId === project.id;
+          return <SideNavItem key={`${project.id}${isOpen ? '-open' : ''}`} label={project.name} icon={projectMark(project.key)} collapsible={{ defaultIsCollapsed: !isOpen }}>
+            {PROJECT_SETTINGS_MENU.map(entry => {
+              const href = projectSettingsPath(workspaceId, project.id, entry.path);
+              return <SideNavItem key={entry.path} label={entry.label} href={href} icon={<NavIcon name={entry.icon} />} isSelected={isOpen && place.settings === entry.path} onClick={go(href)} />;
+            })}
+          </SideNavItem>;
+        })}
+      </SideNavSection>}
+      <SideNavSection title="인스턴스 관리">
+        {ADMIN_MENU.map(entry => item(entry.label, entry.icon, entry.path, place.admin === entry.path))}
       </SideNavSection>
     </SideNav>
     : <SideNav aria-label="데모 메뉴" className={styles.sidebar} collapsible={{ hasButton: false }} resizable={resizable}
@@ -103,7 +139,7 @@ export function DemoLayout() {
           <span className={styles.accountText}><Text weight="semibold" maxLines={1}>고재범</Text><Text type="supporting" color="secondary" maxLines={1}>데모 · 목데이터</Text></span>
           <IconButton label="내 설정" tooltip="내 설정" icon={<NavIcon name="settings" />} variant="ghost" size="sm" onClick={openSettings} />
         </div>}
-      footer={<div className={styles.foot}>{workspace && item('워크스페이스 설정', 'settings', workspacePath(workspaceId, '/settings'), place.workspaceSection === '/settings')}{version}</div>}>
+      footer={<div className={styles.foot}>{workspace && item('워크스페이스 설정', 'settings', workspaceSettingsPath(workspaceId), false)}{version}</div>}>
       <SideNavSection title="워크스페이스" isHeaderHidden>
         {workspace && WORKSPACE_MENU.map(entry => item(entry.label, entry.icon, workspacePath(workspaceId, entry.path), !place.projectId && place.workspaceSection === entry.path))}
       </SideNavSection>
@@ -112,10 +148,11 @@ export function DemoLayout() {
         {projects.map(project => {
           const isOpen = place.projectId === project.id;
           const base = projectPath(workspaceId, project.id);
-          return <SideNavItem key={project.id} label={project.name} href={base} icon={<span className={styles.projectMark} aria-hidden="true">{project.key.slice(0, 1)}</span>}
-            isSelected={false} onClick={go(base)}>
-            {isOpen && PROJECT_MENU.map(entry => <SideNavItem key={entry.path} label={entry.label} href={base + entry.path} icon={<NavIcon name={entry.icon} />}
-              isSelected={place.projectSection === entry.path} onClick={go(base + entry.path)} />)}
+          // A project's 설정 is its pages within the workspace's settings.
+          const hrefOf = (path: string) => (path === '/settings' ? projectSettingsPath(workspaceId, project.id) : base + path);
+          return <SideNavItem key={project.id} label={project.name} href={base} icon={projectMark(project.key)} isSelected={false} onClick={go(base)}>
+            {isOpen && PROJECT_MENU.map(entry => <SideNavItem key={entry.path} label={entry.label} href={hrefOf(entry.path)} icon={<NavIcon name={entry.icon} />}
+              isSelected={place.projectSection === entry.path} onClick={go(hrefOf(entry.path))} />)}
           </SideNavItem>;
         })}
       </SideNavSection>}
@@ -127,23 +164,38 @@ export function DemoLayout() {
   // A phone's tab bar: the scope's first menus as tabs, everything else in 더보기 (the settings' too, with 돌아가기).
   const tab = (label: string, icon: string, href: string, isCurrent: boolean): ShellTab => ({ label, icon, href, isCurrent });
   const inProject = !!place.projectId;
-  const scopeTabs = isSettings
+  const projectTab = (path: string) => (path === '/settings' ? projectSettingsPath(workspaceId, place.projectId!) : projectPath(workspaceId, place.projectId!, path));
+  // A phone in the workspace's settings: the page's own set as tabs (the workspace's, a project's or the instance's),
+  // the rest of the settings in 더보기 with 돌아가기.
+  const spaceSettingsTabs = place.admin
+    ? ADMIN_MENU.map(entry => tab(entry.label, entry.icon, entry.path, place.admin === entry.path))
+    : place.settingsProjectId
+      ? PROJECT_SETTINGS_MENU.map(entry => tab(entry.label, entry.icon, projectSettingsPath(workspaceId, place.settingsProjectId!, entry.path), place.settings === entry.path))
+      : WORKSPACE_SETTINGS_MENU.map(entry => tab(entry.label, entry.icon, workspaceSettingsPath(workspaceId, entry.path), place.settings === entry.path));
+  const scopeTabs = isAccount
     ? ACCOUNT_MENU.map(entry => tab(entry.label, entry.icon, entry.path, place.account === entry.path))
+    : isSpaceSettings ? spaceSettingsTabs
     : inProject
-      ? PROJECT_MENU.map(entry => tab(entry.label, entry.icon, projectPath(workspaceId, place.projectId!, entry.path), place.projectSection === entry.path))
+      ? PROJECT_MENU.map(entry => tab(entry.label, entry.icon, projectTab(entry.path), place.projectSection === entry.path))
       : WORKSPACE_MENU.map(entry => tab(entry.label, entry.icon, workspacePath(workspaceId, entry.path), place.workspaceSection === entry.path));
   const count = isSettings ? 3 : inProject ? PROJECT_TABS : WORKSPACE_TABS;
-  const more = isSettings ? [...scopeTabs.slice(count), tab('돌아가기', 'previous', lastWork || '/demo', false)] : [
+  const more = isAccount ? [...scopeTabs.slice(count), tab('돌아가기', 'previous', lastWork || '/demo', false)] : isSpaceSettings ? [
+    ...scopeTabs.slice(count),
+    ...(place.admin || place.settingsProjectId ? [tab('워크스페이스 설정', 'settings', workspaceSettingsPath(workspaceId), false)] : []),
+    ...projects.filter(project => project.id !== place.settingsProjectId).map(project => tab(`${project.name} 설정`, 'board', projectSettingsPath(workspaceId, project.id), false)),
+    ...(place.admin ? [] : [tab('인스턴스 관리', 'workflow', ADMIN_MENU[0]!.path, false)]),
+    tab('돌아가기', 'previous', lastWork || '/demo', false),
+  ] : [
     ...scopeTabs.slice(count),
     ...(inProject ? [tab('워크스페이스 홈', 'home', workspacePath(workspaceId), false)] : []),
     tab('모든 프로젝트', 'grid', workspacePath(workspaceId, '/projects'), place.workspaceSection === '/projects'),
-    ...(inProject ? [] : [tab('워크스페이스 설정', 'settings', workspacePath(workspaceId, '/settings'), place.workspaceSection === '/settings')]),
+    ...(inProject ? [] : [tab('워크스페이스 설정', 'settings', workspaceSettingsPath(workspaceId), false)]),
     tab('공간 선택 · 전환', 'switcher', '/demo/workspaces', !!place.isWorkspaces),
     tab('내 설정', 'settings', '/demo/settings/profile', false),
     ...PATTERN_MENU.map(entry => tab(entry.label, entry.icon, entry.path, place.pattern === entry.path)),
   ];
   return <ShellFrame pathname={pathname} folded={folded} onFold={setFolded} trail={<Trail steps={steps} />} sidebar={sidebar} mobileEnd={bell}
-    mobileNav={isSettings ? <ShellTabBar label="설정 메뉴" moreTitle="계정" tabs={scopeTabs.slice(0, count)} more={more} />
+    mobileNav={isSettings ? <ShellTabBar label="설정 메뉴" moreTitle={isAccount ? '계정' : place.admin ? '인스턴스 관리' : `${workspace?.name ?? ''} 설정`} tabs={scopeTabs.slice(0, count)} more={more} />
       : workspace ? <ShellTabBar label={inProject ? '프로젝트 메뉴' : '워크스페이스 메뉴'} moreTitle={`${workspace.name}${inProject ? ` · ${names.project}` : ''}`} tabs={scopeTabs.slice(0, count)} more={more} /> : undefined}>
     <Outlet />
   </ShellFrame>;
