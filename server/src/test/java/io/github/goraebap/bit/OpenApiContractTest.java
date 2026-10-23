@@ -57,6 +57,9 @@ class OpenApiContractTest {
     @MockitoBean
     private io.github.goraebap.bit.module.link.domain.ActivityRepository activityRepository;
 
+    @MockitoBean
+    private io.github.goraebap.bit.module.link.domain.CommentRepository commentRepository;
+
     @Autowired
     private MockMvc mockMvc;
 

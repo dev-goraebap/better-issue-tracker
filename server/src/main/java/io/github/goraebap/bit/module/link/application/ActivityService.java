@@ -1,5 +1,6 @@
 package io.github.goraebap.bit.module.link.application;
 
+import io.github.goraebap.bit.module.link.CommentChangedEvent;
 import io.github.goraebap.bit.module.link.TargetChangedEvent;
 import io.github.goraebap.bit.module.link.TargetType;
 import io.github.goraebap.bit.module.link.domain.Activity;
@@ -36,6 +37,24 @@ public class ActivityService {
             TargetType.session_record, Set.of("title", "type", "summary", "occurredAt", "participants", "deleted"));
     private final ActivityRepository activityRepository;
     private final JsonMapper jsonMapper;
+
+    @Transactional(propagation = Propagation.MANDATORY)
+    @TransactionalEventListener(phase = TransactionPhase.BEFORE_COMMIT)
+    public void recordComment(CommentChangedEvent event) {
+        if (!Set.of("comment_created", "comment_changed", "comment_deleted", "comment_restored")
+                .contains(event.action())) throw new IllegalArgumentException("Unsupported comment activity");
+        var payload = Map.of("commentId", event.commentId().toString(), "version", event.version());
+        activityRepository.saveAll(List.of(Activity.create(
+                event.workspaceId(),
+                event.projectId(),
+                event.targetType(),
+                event.targetId(),
+                event.action(),
+                event.actorId(),
+                event.actorAgent(),
+                jsonMapper.writeValueAsString(payload),
+                event.occurredAt())));
+    }
 
     @Transactional(propagation = Propagation.MANDATORY)
     @TransactionalEventListener(phase = TransactionPhase.BEFORE_COMMIT)

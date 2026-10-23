@@ -7,9 +7,11 @@ import io.github.goraebap.bit.module.decision.DecisionFacade;
 import io.github.goraebap.bit.module.decision.application.DecisionService;
 import io.github.goraebap.bit.module.decision.domain.Decision;
 import io.github.goraebap.bit.module.decision.domain.DecisionRepository;
+import io.github.goraebap.bit.module.link.CommentFacade;
 import io.github.goraebap.bit.module.link.LinkFacade;
 import io.github.goraebap.bit.module.link.TargetFacade;
 import io.github.goraebap.bit.module.link.TargetType;
+import io.github.goraebap.bit.module.link.domain.CommentRepository;
 import io.github.goraebap.bit.module.project.application.ProjectService;
 import io.github.goraebap.bit.module.session.SessionFacade;
 import io.github.goraebap.bit.module.session.application.SessionService;
@@ -62,6 +64,12 @@ class TargetPersistenceIntegrationTest {
 
     @Autowired
     private LinkFacade links;
+
+    @Autowired
+    private CommentFacade comments;
+
+    @Autowired
+    private CommentRepository commentRepository;
 
     @Autowired
     private ProjectService projects;
@@ -858,6 +866,179 @@ class TargetPersistenceIntegrationTest {
 
     private SessionFacade.Draft sessionDraft(String summary) {
         return new SessionFacade.Draft("meeting", "Review", summary, now);
+    }
+
+    @Test
+    void authorCanCorrectDeleteAndRestoreCommentsWithVersionsAndBodyFreeActivities() {
+        UUID work = workItem("Discussion");
+        UUID id = comments.create(actor, workspace, TargetType.work_item, work, " Original private comment ");
+        assertThat(commentRepository.findById(workspace, id).orElseThrow().body())
+                .isEqualTo("Original private comment");
+        comments.revise(actor, workspace, id, "Corrected private comment", 0);
+        comments.revise(actor, workspace, id, "Corrected private comment", 1);
+        assertThat(activityCount()).isEqualTo(2);
+        denied(() -> comments.revise(actor, workspace, id, "Stale", 0), 409);
+        denied(() -> comments.revise(actor, workspace, id, " ", 1), 400);
+        comments.delete(actor, workspace, id, 1);
+        denied(() -> comments.revise(actor, workspace, id, "Deleted", 2), 404);
+        comments.restore(actor, workspace, id, 2);
+        var comment = commentRepository.findById(workspace, id).orElseThrow();
+        assertThat(comment.body()).isEqualTo("Corrected private comment");
+        assertThat(comment.version()).isEqualTo(3);
+        assertThat(comment.audit().deletedAt()).isNull();
+        assertThat(activityCount()).isEqualTo(4);
+        for (String payload : jdbc.queryForList("SELECT payload FROM activity", String.class))
+            assertThat(payload).contains(id.toString()).doesNotContain("private comment", "Original", "Corrected");
+    }
+
+    @Test
+    void moderatorsMayRemoveButNeverRewriteAnotherAuthorsCommentAndMembersCannotModerate() {
+        CurrentUser author = member("member");
+        CurrentUser other = member("member");
+        CurrentUser admin = member("admin");
+        UUID work = workItem("Discussion");
+        UUID id = comments.create(author, workspace, TargetType.work_item, work, "Author text");
+        denied(() -> comments.revise(actor, workspace, id, "Owner rewrite", 0), 403);
+        denied(() -> comments.revise(admin, workspace, id, "Admin rewrite", 0), 403);
+        denied(() -> comments.revise(other, workspace, id, "Member rewrite", 0), 403);
+        denied(() -> comments.delete(other, workspace, id, 0), 403);
+        comments.delete(admin, workspace, id, 0);
+        denied(() -> comments.restore(other, workspace, id, 1), 403);
+        comments.restore(actor, workspace, id, 1);
+        var comment = commentRepository.findById(workspace, id).orElseThrow();
+        assertThat(comment.audit().createdBy()).isEqualTo(author.userId());
+        assertThat(comment.audit().updatedBy()).isEqualTo(actor.userId());
+        assertThat(comment.body()).isEqualTo("Author text");
+        comments.revise(author, workspace, id, "Author correction", 2);
+        assertThat(commentRepository.findById(workspace, id).orElseThrow().body())
+                .isEqualTo("Author correction");
+    }
+
+    @Test
+    void currentMembershipAndTargetLifecycleGovernCommentWritesAndInstanceAdminsCannotBypassThem() {
+        CurrentUser author = member("member");
+        UUID work = workItem("Discussion");
+        UUID id = comments.create(author, workspace, TargetType.work_item, work, "Author text");
+        jdbc.update(
+                "UPDATE workspace_member SET role='viewer' WHERE workspace_id=? AND iam_user_id=?",
+                workspace.toString(),
+                author.userId().toString());
+        denied(() -> comments.revise(author, workspace, id, "Viewer edit", 0), 403);
+        denied(() -> comments.delete(author, workspace, id, 0), 403);
+        denied(() -> comments.create(author, workspace, TargetType.work_item, work, "Viewer post"), 403);
+        jdbc.update(
+                "DELETE FROM workspace_member WHERE workspace_id=? AND iam_user_id=?",
+                workspace.toString(),
+                author.userId().toString());
+        denied(() -> comments.delete(author, workspace, id, 0), 404);
+        denied(() -> comments.delete(actor, UUID.randomUUID(), id, 0), 404);
+        workItems.delete(actor, workspace, project, work, 0);
+        denied(() -> comments.delete(actor, workspace, id, 0), 404);
+        workItems.restore(actor, workspace, project, work, 1);
+        comments.delete(actor, workspace, id, 0);
+        assertThat(commentRepository
+                        .findById(workspace, id)
+                        .orElseThrow()
+                        .audit()
+                        .deletedAt())
+                .isNotNull();
+        projects.archive(actor, workspace, project, 0, true);
+        denied(() -> comments.restore(actor, workspace, id, 1), 409);
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM comment", Integer.class))
+                .isEqualTo(1);
+    }
+
+    @Test
+    void failedCommentActivitiesRollBackCreationCorrectionsAndModeration() {
+        UUID work = workItem("Discussion");
+        rejectActivities();
+        assertThatThrownBy(() -> comments.create(actor, workspace, TargetType.work_item, work, "Not persisted"))
+                .isInstanceOf(RuntimeException.class);
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM comment", Integer.class))
+                .isZero();
+        jdbc.execute("DROP TRIGGER reject_activity");
+        UUID id = comments.create(actor, workspace, TargetType.work_item, work, "Original");
+        rejectActivities();
+        assertThatThrownBy(() -> comments.revise(actor, workspace, id, "Not persisted", 0))
+                .isInstanceOf(RuntimeException.class);
+        assertThatThrownBy(() -> comments.delete(actor, workspace, id, 0)).isInstanceOf(RuntimeException.class);
+        var original = commentRepository.findById(workspace, id).orElseThrow();
+        assertThat(original.body()).isEqualTo("Original");
+        assertThat(original.version()).isZero();
+        assertThat(original.audit().deletedAt()).isNull();
+        jdbc.execute("DROP TRIGGER reject_activity");
+        comments.delete(actor, workspace, id, 0);
+        rejectActivities();
+        assertThatThrownBy(() -> comments.restore(actor, workspace, id, 1)).isInstanceOf(RuntimeException.class);
+        assertThat(commentRepository
+                        .findById(workspace, id)
+                        .orElseThrow()
+                        .audit()
+                        .deletedAt())
+                .isNotNull();
+        assertThat(activityCount()).isEqualTo(2);
+    }
+
+    @Test
+    void commentsUseTheSameSafeTargetChecksForDecisionsSessionsAndUnimplementedTypes() {
+        UUID decision = decisionService.create(
+                actor, workspace, project, new DecisionFacade.Draft("Decision", "Reason", null, null));
+        UUID session = sessionService.record(
+                actor, workspace, project, sessionDraft("Summary"), List.of(), List.of(), List.of());
+        UUID decisionComment = comments.create(actor, workspace, TargetType.decision, decision, "Decision discussion");
+        UUID sessionComment =
+                comments.create(actor, workspace, TargetType.session_record, session, "Session discussion");
+        assertThat(commentRepository
+                        .findById(workspace, decisionComment)
+                        .orElseThrow()
+                        .targetId())
+                .isEqualTo(decision);
+        assertThat(commentRepository
+                        .findById(workspace, sessionComment)
+                        .orElseThrow()
+                        .targetId())
+                .isEqualTo(session);
+        denied(() -> comments.create(actor, workspace, TargetType.artifact, UUID.randomUUID(), "Unimplemented"), 404);
+        denied(() -> comments.create(actor, workspace, TargetType.work_item, UUID.randomUUID(), "Missing"), 404);
+        denied(() -> comments.create(actor, workspace, TargetType.code_ref, UUID.randomUUID(), "Unsupported"), 404);
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM comment", Integer.class))
+                .isEqualTo(2);
+    }
+
+    private CurrentUser member(String role) {
+        UUID user = UUID.randomUUID();
+        UUID credential = UUID.randomUUID();
+        Instant time = Instant.now();
+        String text = InstantTextBinding.text(time);
+        jdbc.update(
+                "INSERT INTO iam_user(iam_user_id,email,name,created_at,updated_at) VALUES(?,?,?,?,?)",
+                user.toString(),
+                user + "@example.test",
+                "Other user",
+                text,
+                text);
+        jdbc.update(
+                "INSERT INTO iam_password(iam_user_id,password_hash,changed_at) VALUES(?,?,?)",
+                user.toString(),
+                "fixture-hash",
+                text);
+        jdbc.update(
+                "INSERT INTO iam_session(iam_session_id,iam_user_id,token_hash,expires_at,absolute_expires_at,last_seen_at,created_at) VALUES(?,?,?,?,?,?,?)",
+                credential.toString(),
+                user.toString(),
+                credential.toString(),
+                InstantTextBinding.text(time.plusSeconds(3600)),
+                InstantTextBinding.text(time.plusSeconds(7200)),
+                text,
+                text);
+        jdbc.update(
+                "INSERT INTO workspace_member(workspace_member_id,workspace_id,iam_user_id,role,joined_at) VALUES(?,?,?,?,?)",
+                UUID.randomUUID().toString(),
+                workspace.toString(),
+                user.toString(),
+                role,
+                text);
+        return new CurrentUser(user, false, CurrentUser.Method.SESSION, credential, null, false);
     }
 
     private UUID workItem(String title) {
