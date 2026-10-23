@@ -21,6 +21,17 @@ class JooqDecisionRepository implements DecisionRepository {
     private final DSLContext dslContext;
 
     @Override
+    public long countAllById(UUID projectId, java.util.Set<UUID> ids) {
+        if (ids.isEmpty()) return 0;
+        return dslContext.fetchCount(
+                DECISION,
+                DECISION.PROJECT_ID
+                        .eq(projectId)
+                        .and(DECISION.DECISION_ID.in(ids))
+                        .and(DECISION.DELETED_AT.isNull()));
+    }
+
+    @Override
     public Optional<Decision> findById(UUID projectId, UUID id, boolean includeDeleted) {
         return dslContext
                 .selectFrom(DECISION)

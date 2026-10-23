@@ -11,6 +11,7 @@ import jakarta.annotation.PostConstruct;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -44,6 +45,21 @@ public class TargetService implements TargetFacade {
         if (resolver == null || id == null) throw LinkErrorCode.LINK_TARGET_NOT_FOUND.raise();
         try {
             return resolver.requireAccess(actor, workspaceId, id, writing);
+        } catch (TargetNotFoundException missing) {
+            throw LinkErrorCode.LINK_TARGET_NOT_FOUND.raise();
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public void requireAllInProject(
+            CurrentUser actor, UUID workspaceId, UUID projectId, TargetType type, Set<UUID> ids, boolean writing) {
+        workspaceFacade.requireAccess(actor, workspaceId, WorkspaceFacade.Action.READ);
+        var resolver = type == null ? null : targets.get(type);
+        if (resolver == null || ids == null || ids.stream().anyMatch(java.util.Objects::isNull) || ids.size() > 120)
+            throw LinkErrorCode.LINK_TARGET_NOT_FOUND.raise();
+        try {
+            resolver.requireAllInProject(actor, workspaceId, projectId, ids, writing);
         } catch (TargetNotFoundException missing) {
             throw LinkErrorCode.LINK_TARGET_NOT_FOUND.raise();
         }

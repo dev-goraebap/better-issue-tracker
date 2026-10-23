@@ -24,6 +24,18 @@ class JooqWorkItemRepository implements WorkItemRepository {
     private final DSLContext dslContext;
 
     @Override
+    public long countAllById(UUID projectId, java.util.Set<UUID> ids) {
+        if (ids.isEmpty()) return 0;
+        return dslContext.fetchCount(
+                WORK_ITEM,
+                WORK_ITEM
+                        .PROJECT_ID
+                        .eq(projectId)
+                        .and(WORK_ITEM.WORK_ITEM_ID.in(ids))
+                        .and(WORK_ITEM.DELETED_AT.isNull()));
+    }
+
+    @Override
     public Optional<WorkItem> findById(UUID projectId, UUID id, boolean includeDeleted) {
         return dslContext
                 .selectFrom(WORK_ITEM)

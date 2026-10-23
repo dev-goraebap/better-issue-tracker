@@ -5,11 +5,13 @@ import static io.github.goraebap.bit.jooq.tables.Link.LINK;
 import io.github.goraebap.bit.module.link.TargetType;
 import io.github.goraebap.bit.module.link.domain.Link;
 import io.github.goraebap.bit.module.link.domain.LinkRepository;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.jooq.DSLContext;
 import org.jooq.Record;
+import org.jooq.impl.DSL;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -38,6 +40,25 @@ class JooqLinkRepository implements LinkRepository {
                 .and(LINK.RELATION.eq(edge.relation()))
                 .and(LINK.DELETED_AT.isNull())
                 .fetchOptional(this::link);
+    }
+
+    @Override
+    public List<Link> findAllActive(UUID workspaceId, List<Link.Edge> edges) {
+        if (edges.isEmpty()) return List.of();
+        org.jooq.Condition condition = DSL.falseCondition();
+        for (var edge : edges)
+            condition = condition.or(LINK.FROM_TYPE
+                    .eq(edge.fromType().name())
+                    .and(LINK.FROM_ID.eq(edge.fromId()))
+                    .and(LINK.TO_TYPE.eq(edge.toType().name()))
+                    .and(LINK.TO_ID.eq(edge.toId()))
+                    .and(LINK.RELATION.eq(edge.relation())));
+        return dslContext
+                .selectFrom(LINK)
+                .where(LINK.WORKSPACE_ID.eq(workspaceId))
+                .and(LINK.DELETED_AT.isNull())
+                .and(condition)
+                .fetch(this::link);
     }
 
     @Override
@@ -86,6 +107,16 @@ class JooqLinkRepository implements LinkRepository {
 
     @Override
     public void save(Link link) {
+        saveAll(List.of(link));
+    }
+
+    @Override
+    public void saveAll(List<Link> links) {
+        if (!links.isEmpty())
+            dslContext.batch(links.stream().map(this::saveQuery).toList()).execute();
+    }
+
+    private org.jooq.Query saveQuery(Link link) {
         var r = dslContext.newRecord(LINK);
         var edge = link.edge();
         r.setLinkId(link.id());
@@ -101,13 +132,12 @@ class JooqLinkRepository implements LinkRepository {
         r.setDeletedAt(link.deletedAt());
         r.setDeletedBy(link.deletedBy());
         r.setDeletedByAgent(link.deletedByAgent());
-        dslContext
+        return dslContext
                 .insertInto(LINK)
                 .set(r)
                 .onConflict(LINK.LINK_ID)
                 .doUpdate()
-                .set(r)
-                .execute();
+                .set(r);
     }
 
     private Link link(Record r) {

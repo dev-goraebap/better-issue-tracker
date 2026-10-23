@@ -29,6 +29,17 @@ class JooqWorkspaceRepository implements WorkspaceRepository {
     private final DSLContext dslContext;
 
     @Override
+    public Set<UUID> findMemberUserIds(UUID workspaceId, Set<UUID> userIds) {
+        if (userIds.isEmpty()) return Set.of();
+        return Set.copyOf(dslContext
+                .select(WORKSPACE_MEMBER.IAM_USER_ID)
+                .from(WORKSPACE_MEMBER)
+                .where(WORKSPACE_MEMBER.WORKSPACE_ID.eq(workspaceId))
+                .and(WORKSPACE_MEMBER.IAM_USER_ID.in(userIds))
+                .fetch(WORKSPACE_MEMBER.IAM_USER_ID));
+    }
+
+    @Override
     public Optional<Workspace> findById(UUID id) {
         return dslContext
                 .selectFrom(WORKSPACE)

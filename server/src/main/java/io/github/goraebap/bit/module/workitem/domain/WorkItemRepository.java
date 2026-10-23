@@ -13,6 +13,8 @@ public interface WorkItemRepository {
 
     Optional<WorkItem> findTarget(UUID workspaceId, UUID id);
 
+    long countAllById(UUID projectId, Set<UUID> ids);
+
     Optional<WorkItem> findByNumber(UUID projectId, long number);
 
     List<WorkItem> findColumnItems(UUID projectId, UUID columnId, boolean includeDeleted);

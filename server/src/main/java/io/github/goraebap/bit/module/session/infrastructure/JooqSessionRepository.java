@@ -22,6 +22,18 @@ class JooqSessionRepository implements SessionRepository {
     private final DSLContext dslContext;
 
     @Override
+    public long countAllById(UUID projectId, java.util.Set<UUID> ids) {
+        if (ids.isEmpty()) return 0;
+        return dslContext.fetchCount(
+                SESSION_RECORD,
+                SESSION_RECORD
+                        .PROJECT_ID
+                        .eq(projectId)
+                        .and(SESSION_RECORD.SESSION_RECORD_ID.in(ids))
+                        .and(SESSION_RECORD.DELETED_AT.isNull()));
+    }
+
+    @Override
     public Optional<SessionRecord> findById(UUID projectId, UUID id, boolean includeDeleted) {
         return dslContext
                 .selectFrom(SESSION_RECORD)
@@ -79,17 +91,19 @@ class JooqSessionRepository implements SessionRepository {
                 .deleteFrom(SESSION_PARTICIPANT)
                 .where(SESSION_PARTICIPANT.SESSION_RECORD_ID.eq(session.id()))
                 .execute();
-        for (var participant : session.participants()) {
-            dslContext
-                    .insertInto(SESSION_PARTICIPANT)
-                    .set(SESSION_PARTICIPANT.SESSION_PARTICIPANT_ID, UUID.randomUUID())
-                    .set(SESSION_PARTICIPANT.SESSION_RECORD_ID, session.id())
-                    .set(SESSION_PARTICIPANT.KIND, participant.kind())
-                    .set(SESSION_PARTICIPANT.IAM_USER_ID, participant.userId())
-                    .set(SESSION_PARTICIPANT.DISPLAY_NAME, participant.displayName())
-                    .set(SESSION_PARTICIPANT.CREATED_AT, session.audit().updatedAt())
-                    .execute();
-        }
+        var participants = session.participants().stream()
+                .map(participant -> {
+                    var person = dslContext.newRecord(SESSION_PARTICIPANT);
+                    person.setSessionParticipantId(UUID.randomUUID());
+                    person.setSessionRecordId(session.id());
+                    person.setKind(participant.kind());
+                    person.setIamUserId(participant.userId());
+                    person.setDisplayName(participant.displayName());
+                    person.setCreatedAt(session.audit().updatedAt());
+                    return person;
+                })
+                .toList();
+        if (!participants.isEmpty()) dslContext.batchInsert(participants).execute();
     }
 
     private SessionRecord session(Record row) {

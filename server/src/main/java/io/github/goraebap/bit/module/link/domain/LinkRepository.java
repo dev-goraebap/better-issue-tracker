@@ -1,5 +1,6 @@
 package io.github.goraebap.bit.module.link.domain;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -8,6 +9,8 @@ public interface LinkRepository {
 
     Optional<Link> findActive(UUID workspaceId, Link.Edge edge);
 
+    List<Link> findAllActive(UUID workspaceId, List<Link.Edge> edges);
+
     boolean hasParent(UUID workspaceId, UUID childId);
 
     boolean hasReplacement(UUID workspaceId, UUID oldDecisionId);
@@ -15,4 +18,6 @@ public interface LinkRepository {
     boolean pathExists(UUID workspaceId, String relation, UUID fromId, UUID toId);
 
     void save(Link link);
+
+    void saveAll(List<Link> links);
 }

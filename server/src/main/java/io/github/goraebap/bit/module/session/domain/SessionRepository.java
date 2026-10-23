@@ -1,6 +1,7 @@
 package io.github.goraebap.bit.module.session.domain;
 
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 public interface SessionRepository {
@@ -9,6 +10,8 @@ public interface SessionRepository {
     Optional<SessionRecord> findByNumber(UUID projectId, long number);
 
     Optional<SessionRecord> findTarget(UUID workspaceId, UUID id);
+
+    long countAllById(UUID projectId, Set<UUID> ids);
 
     void save(SessionRecord session);
 }

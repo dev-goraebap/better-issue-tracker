@@ -32,6 +32,16 @@ public class WorkspaceService implements WorkspaceFacade {
 
     @Override
     @Transactional(readOnly = true)
+    public Map<UUID, String> memberNames(CurrentUser actor, UUID workspaceId, Set<UUID> userIds) {
+        access(actor, workspaceId, Action.READ);
+        var members = workspaceRepository.findMemberUserIds(workspaceId, userIds);
+        if (members.isEmpty()) return Map.of();
+        return iamFacade.users(List.copyOf(members)).stream()
+                .collect(Collectors.toUnmodifiableMap(IamFacade.User::id, IamFacade.User::name));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public boolean hasMember(CurrentUser actor, UUID workspaceId, UUID userId) {
         access(actor, workspaceId, Action.READ);
         return userId != null

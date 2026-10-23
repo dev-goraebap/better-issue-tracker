@@ -11,6 +11,8 @@ import io.github.goraebap.bit.module.link.LinkFacade;
 import io.github.goraebap.bit.module.link.TargetFacade;
 import io.github.goraebap.bit.module.link.TargetType;
 import io.github.goraebap.bit.module.project.application.ProjectService;
+import io.github.goraebap.bit.module.session.SessionFacade;
+import io.github.goraebap.bit.module.session.application.SessionService;
 import io.github.goraebap.bit.module.session.domain.Participant;
 import io.github.goraebap.bit.module.session.domain.SessionRecord;
 import io.github.goraebap.bit.module.session.domain.SessionRepository;
@@ -53,6 +55,9 @@ class TargetPersistenceIntegrationTest {
     private SessionRepository sessions;
 
     @Autowired
+    private SessionService sessionService;
+
+    @Autowired
     private TargetFacade targets;
 
     @Autowired
@@ -86,6 +91,7 @@ class TargetPersistenceIntegrationTest {
     void prepare() {
         jdbc.execute("DROP TRIGGER IF EXISTS reject_guest_participant");
         jdbc.execute("DROP TRIGGER IF EXISTS reject_activity");
+        jdbc.execute("DROP TRIGGER IF EXISTS reject_bundle");
         for (String table : List.of(
                 "comment",
                 "activity",
@@ -625,5 +631,237 @@ class TargetPersistenceIntegrationTest {
     private void rejectActivities() {
         jdbc.execute(
                 "CREATE TRIGGER reject_activity BEFORE INSERT ON activity BEGIN SELECT RAISE(ABORT,'forced activity failure'); END");
+    }
+
+    @Test
+    void sessionBundleSavesCanonicalParticipantSnapshotsDecisionsAndDeduplicatedLinks() {
+        UUID work = workItem("Related work");
+        UUID id = sessionService.record(
+                actor,
+                workspace,
+                project,
+                sessionDraft("Summary"),
+                List.of(
+                        new SessionFacade.Person("user", actor.userId(), "Untrusted client name"),
+                        new SessionFacade.Person("user", actor.userId(), "Another supplied name"),
+                        new SessionFacade.Person("agent", null, "Assistant")),
+                List.of(
+                        new DecisionFacade.Draft("Decision A", "Reason A", null, null),
+                        new DecisionFacade.Draft("Decision B", "Reason B", null, null)),
+                List.of(work, work));
+        var record = sessions.findById(project, id, false).orElseThrow();
+        assertThat(record.participants())
+                .extracting(Participant::displayName)
+                .containsExactlyInAnyOrder("Current owner", "Assistant");
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM decision", Integer.class))
+                .isEqualTo(2);
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM link", Integer.class))
+                .isEqualTo(3);
+        assertThat(activityCount()).isEqualTo(3);
+        transaction()
+                .executeWithoutResult(status -> links.connectSessionRecord(
+                        actor,
+                        workspace,
+                        project,
+                        id,
+                        jdbc.queryForList("SELECT decision_id FROM decision", String.class).stream()
+                                .map(UUID::fromString)
+                                .toList(),
+                        List.of(work)));
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM link", Integer.class))
+                .isEqualTo(3);
+        projects.revise(actor, workspace, project, 0, null, false, "NEW", true, null, false);
+        assertThat(sessionService
+                        .findByRef(actor, workspace, project, "OLD S-001")
+                        .reference())
+                .isEqualTo("NEW S-001");
+        assertThat(decisionService
+                        .findByRef(actor, workspace, project, "OLD D-001")
+                        .reference())
+                .isEqualTo("NEW D-001");
+        assertThat(sessionService.findByRef(actor, workspace, project, "S-001").id())
+                .isEqualTo(id);
+    }
+
+    @Test
+    void failureAtParticipantsLinksOrActivitiesRollsBackTheEntireSessionBundleAndBothCounters() {
+        UUID work = workItem("Related work");
+        for (String table : List.of("session_participant", "link", "activity")) {
+            jdbc.execute("CREATE TRIGGER reject_bundle BEFORE INSERT ON " + table
+                    + " BEGIN SELECT RAISE(ABORT,'forced bundle failure'); END");
+            try {
+                assertThatThrownBy(() -> sessionService.record(
+                                actor,
+                                workspace,
+                                project,
+                                sessionDraft("Summary"),
+                                List.of(new SessionFacade.Person("guest", null, "Guest")),
+                                List.of(new DecisionFacade.Draft("Decision", "Reason", null, null)),
+                                List.of(work)))
+                        .isInstanceOf(RuntimeException.class);
+                for (String child : List.of("session_record", "session_participant", "decision", "link", "activity"))
+                    assertThat(jdbc.queryForObject("SELECT count(*) FROM " + child, Integer.class))
+                            .isZero();
+                assertThat(jdbc.queryForObject(
+                                "SELECT last_session_number+last_decision_number FROM project WHERE project_id=?",
+                                Integer.class,
+                                project.toString()))
+                        .isZero();
+                assertThat(jdbc.queryForObject("SELECT count(*) FROM work_item", Integer.class))
+                        .isEqualTo(1);
+            } finally {
+                jdbc.execute("DROP TRIGGER reject_bundle");
+            }
+        }
+    }
+
+    @Test
+    void sessionCreationRejectsInvalidParticipantsAndCrossProjectOrHiddenRelatedWork() {
+        denied(
+                () -> sessionService.record(
+                        actor,
+                        workspace,
+                        project,
+                        sessionDraft("Summary"),
+                        List.of(new SessionFacade.Person("user", UUID.randomUUID(), "Spoof")),
+                        List.of(),
+                        List.of()),
+                400);
+        denied(
+                () -> sessionService.record(
+                        actor,
+                        workspace,
+                        project,
+                        sessionDraft("Summary"),
+                        List.of(new SessionFacade.Person("guest", actor.userId(), "Guest")),
+                        List.of(),
+                        List.of()),
+                400);
+        denied(
+                () -> sessionService.record(
+                        actor,
+                        workspace,
+                        project,
+                        sessionDraft("Summary"),
+                        List.of(new SessionFacade.Person("user", null, "Missing identity")),
+                        List.of(),
+                        List.of()),
+                400);
+        UUID another = projects.create(actor, workspace, "Other project", "OTH", null);
+        UUID otherWork = workItems.create(
+                actor, workspace, another, new WorkItem.Details("Other", null, null, null, null, null, null), null);
+        denied(
+                () -> sessionService.record(
+                        actor,
+                        workspace,
+                        project,
+                        sessionDraft("Summary"),
+                        List.of(),
+                        List.of(new DecisionFacade.Draft("Decision", "Reason", null, null)),
+                        List.of(otherWork)),
+                404);
+        UUID hidden = workItem("Hidden");
+        workItems.delete(actor, workspace, project, hidden, 0);
+        denied(
+                () -> sessionService.record(
+                        actor, workspace, project, sessionDraft("Summary"), List.of(), List.of(), List.of(hidden)),
+                404);
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM session_record", Integer.class))
+                .isZero();
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM decision", Integer.class))
+                .isZero();
+        assertThat(jdbc.queryForObject(
+                        "SELECT last_session_number+last_decision_number FROM project WHERE project_id=?",
+                        Integer.class,
+                        project.toString()))
+                .isZero();
+    }
+
+    @Test
+    void summaryCorrectionPreservesHistoricalMembersAndDoesNotCopyTheSummaryIntoActivity() {
+        UUID id = sessionService.record(
+                actor,
+                workspace,
+                project,
+                sessionDraft("Original private summary"),
+                List.of(new SessionFacade.Person("user", actor.userId(), null)),
+                List.of(),
+                List.of());
+        jdbc.update(
+                "UPDATE iam_user SET name='Renamed owner' WHERE iam_user_id=?",
+                actor.userId().toString());
+        sessionService.revise(actor, workspace, project, id, sessionDraft("New private summary"), null, 0);
+        assertThat(sessions.findById(project, id, false).orElseThrow().participants())
+                .extracting(Participant::displayName)
+                .containsExactly("Current owner");
+        for (String payload : jdbc.queryForList("SELECT payload FROM activity", String.class))
+            assertThat(payload).doesNotContain("Original private summary", "New private summary");
+        denied(() -> sessionService.revise(actor, workspace, project, id, sessionDraft("Stale"), null, 0), 409);
+        sessionService.delete(actor, workspace, project, id, 1);
+        denied(() -> sessionService.findByRef(actor, workspace, project, "S-001"), 404);
+        sessionService.restore(actor, workspace, project, id, 2);
+        assertThat(sessionService.findByRef(actor, workspace, project, "S-001").id())
+                .isEqualTo(id);
+        jdbc.update("UPDATE workspace_member SET role='viewer' WHERE workspace_id=?", workspace.toString());
+        denied(() -> sessionService.delete(actor, workspace, project, id, 3), 403);
+        assertThat(sessionService.findByRef(actor, workspace, project, "S-001").id())
+                .isEqualTo(id);
+    }
+
+    @Test
+    void sessionBundleSupportsTheFullParticipantDecisionAndWorkItemLimits() {
+        var work = new java.util.ArrayList<UUID>();
+        var people = new java.util.ArrayList<SessionFacade.Person>();
+        var drafts = new java.util.ArrayList<DecisionFacade.Draft>();
+        for (int i = 0; i < 100; i++) {
+            work.add(workItem("Related " + i));
+            people.add(new SessionFacade.Person("guest", null, "Guest " + i));
+        }
+        for (int i = 0; i < 20; i++) drafts.add(new DecisionFacade.Draft("Decision " + i, "Reason", null, null));
+        UUID id = sessionService.record(actor, workspace, project, sessionDraft("Summary"), people, drafts, work);
+        assertThat(sessions.findById(project, id, false).orElseThrow().participants())
+                .hasSize(100);
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM decision", Integer.class))
+                .isEqualTo(20);
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM link", Integer.class))
+                .isEqualTo(120);
+        assertThat(activityCount()).isEqualTo(21);
+    }
+
+    @Test
+    void concurrentSessionBundlesAllocateIndependentSessionAndDecisionNumbers() throws Exception {
+        try (var executor = java.util.concurrent.Executors.newFixedThreadPool(4)) {
+            var jobs = new java.util.ArrayList<java.util.concurrent.Future<UUID>>();
+            for (int i = 0; i < 4; i++)
+                jobs.add(executor.submit(() -> sessionService.record(
+                        actor,
+                        workspace,
+                        project,
+                        sessionDraft("Concurrent"),
+                        List.of(),
+                        List.of(
+                                new DecisionFacade.Draft("A", "Reason", null, null),
+                                new DecisionFacade.Draft("B", "Reason", null, null)),
+                        List.of())));
+            var ids = new java.util.HashSet<UUID>();
+            for (var job : jobs) ids.add(job.get(20, java.util.concurrent.TimeUnit.SECONDS));
+            assertThat(ids).hasSize(4);
+        }
+        assertThat(jdbc.queryForList("SELECT number FROM session_record ORDER BY number", Long.class))
+                .containsExactly(1L, 2L, 3L, 4L);
+        assertThat(jdbc.queryForList("SELECT number FROM decision ORDER BY number", Long.class))
+                .containsExactly(1L, 2L, 3L, 4L, 5L, 6L, 7L, 8L);
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM link", Integer.class))
+                .isEqualTo(8);
+        assertThat(activityCount()).isEqualTo(12);
+    }
+
+    private SessionFacade.Draft sessionDraft(String summary) {
+        return new SessionFacade.Draft("meeting", "Review", summary, now);
+    }
+
+    private UUID workItem(String title) {
+        return workItems.create(
+                actor, workspace, project, new WorkItem.Details(title, null, null, null, null, null, null), null);
     }
 }

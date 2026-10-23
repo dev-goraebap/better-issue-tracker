@@ -17,6 +17,8 @@ public interface WorkspaceRepository {
 
     Optional<Membership> findMember(UUID workspaceId, UUID userId);
 
+    Set<UUID> findMemberUserIds(UUID workspaceId, Set<UUID> userIds);
+
     Optional<Membership> findMemberById(UUID workspaceId, UUID id);
 
     List<Membership> findMembers(UUID workspaceId, Instant afterTime, UUID afterId, int limit);

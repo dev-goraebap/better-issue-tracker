@@ -8,7 +8,12 @@ import io.github.goraebap.bit.module.link.domain.LinkRepository;
 import io.github.goraebap.bit.module.workspace.WorkspaceFacade;
 import io.github.goraebap.bit.shared.web.CurrentUser;
 import java.time.Clock;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -21,6 +26,47 @@ public class LinkService implements LinkFacade {
     private final TargetFacade targets;
     private final WorkspaceFacade workspaceFacade;
     private final Clock clock;
+
+    @Override
+    @Transactional(propagation = Propagation.MANDATORY)
+    public void connectSessionRecord(
+            CurrentUser actor,
+            UUID workspaceId,
+            UUID projectId,
+            UUID sessionId,
+            List<UUID> decisionIds,
+            List<UUID> workItemIds) {
+        workspaceFacade.requireAccess(actor, workspaceId, WorkspaceFacade.Action.WRITE_WORK);
+        if (decisionIds == null
+                || workItemIds == null
+                || decisionIds.size() > 20
+                || workItemIds.size() > 100
+                || sessionId == null
+                || decisionIds.stream().anyMatch(java.util.Objects::isNull)
+                || workItemIds.stream().anyMatch(java.util.Objects::isNull))
+            throw LinkErrorCode.LINK_RELATION_INVALID.raise();
+        var decisions = new LinkedHashSet<>(decisionIds);
+        var workItems = new LinkedHashSet<>(workItemIds);
+        targets.requireAllInProject(actor, workspaceId, projectId, TargetType.session_record, Set.of(sessionId), true);
+        if (!decisions.isEmpty())
+            targets.requireAllInProject(actor, workspaceId, projectId, TargetType.decision, decisions, true);
+        if (!workItems.isEmpty())
+            targets.requireAllInProject(actor, workspaceId, projectId, TargetType.work_item, workItems, true);
+        var edges = new ArrayList<Link.Edge>();
+        for (UUID id : decisions)
+            edges.add(edge(TargetType.decision, id, "derives_from", TargetType.session_record, sessionId));
+        for (UUID id : workItems)
+            edges.add(edge(TargetType.session_record, sessionId, "relates_to", TargetType.work_item, id));
+        var existing = repository.findAllActive(workspaceId, edges).stream()
+                .map(Link::edge)
+                .collect(Collectors.toSet());
+        var now = clock.instant();
+        var missing = edges.stream()
+                .filter(e -> !existing.contains(e))
+                .map(e -> Link.create(workspaceId, e, actor.userId(), agent(actor), now))
+                .toList();
+        repository.saveAll(missing);
+    }
 
     @Override
     @Transactional

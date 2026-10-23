@@ -19,6 +19,14 @@ public class SessionRecordTargetService implements TargetSpi {
     private final ProjectFacade projectFacade;
 
     @Override
+    @Transactional(readOnly = true)
+    public void requireAllInProject(
+            CurrentUser actor, UUID workspaceId, UUID projectId, java.util.Set<UUID> ids, boolean writing) {
+        projectFacade.requireAccess(actor, workspaceId, projectId, writing);
+        if (repository.countAllById(projectId, ids) != ids.size()) throw new TargetNotFoundException();
+    }
+
+    @Override
     public TargetType type() {
         return TargetType.session_record;
     }
