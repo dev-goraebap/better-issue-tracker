@@ -3,6 +3,8 @@ package io.github.goraebap.bit;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import io.github.goraebap.bit.module.decision.DecisionFacade;
+import io.github.goraebap.bit.module.decision.application.DecisionService;
 import io.github.goraebap.bit.module.decision.domain.Decision;
 import io.github.goraebap.bit.module.decision.domain.DecisionRepository;
 import io.github.goraebap.bit.module.link.LinkFacade;
@@ -45,6 +47,9 @@ class TargetPersistenceIntegrationTest {
     private DecisionRepository decisions;
 
     @Autowired
+    private DecisionService decisionService;
+
+    @Autowired
     private SessionRepository sessions;
 
     @Autowired
@@ -80,6 +85,7 @@ class TargetPersistenceIntegrationTest {
     @BeforeEach
     void prepare() {
         jdbc.execute("DROP TRIGGER IF EXISTS reject_guest_participant");
+        jdbc.execute("DROP TRIGGER IF EXISTS reject_activity");
         for (String table : List.of(
                 "comment",
                 "activity",
@@ -418,5 +424,206 @@ class TargetPersistenceIntegrationTest {
             return id;
         });
         denied(() -> links.disconnect(actor, workspace, link), 409);
+    }
+
+    @Test
+    void decisionCommandsPreserveAcceptanceAndCorrectionsAndProtectSupersededHistory() {
+        var draft = new DecisionFacade.Draft("Original", "Reason", "Other choice", "planned");
+        UUID old = decisionService.create(actor, workspace, project, draft);
+        UUID replacement = decisionService.create(actor, workspace, project, draft);
+        decisionService.accept(actor, workspace, project, old, 0);
+        var acceptedAt = decisions.findById(project, old, false).orElseThrow().acceptedAt();
+        decisionService.accept(actor, workspace, project, old, 1);
+        assertThat(activityCount()).isEqualTo(3);
+        decisionService.revise(
+                actor,
+                workspace,
+                project,
+                old,
+                new DecisionFacade.Draft("Correction", "Amended reason", null, null),
+                1);
+        assertThat(decisions.findById(project, old, false).orElseThrow().acceptedAt())
+                .isEqualTo(acceptedAt);
+        assertThat(jdbc.queryForObject(
+                        "SELECT json_extract(payload,'$.before') FROM activity WHERE target_id=? AND json_extract(payload,'$.field')='body'",
+                        String.class,
+                        old.toString()))
+                .isEqualTo("Reason");
+        denied(() -> decisionService.revise(actor, workspace, project, old, draft, 1), 409);
+        denied(() -> decisionService.delete(actor, workspace, project, old, 2), 409);
+        denied(() -> decisionService.supersede(actor, workspace, project, old, 2, replacement, 0), 409);
+        decisionService.accept(actor, workspace, project, replacement, 0);
+        decisionService.supersede(actor, workspace, project, old, 2, replacement, 1);
+        var superseded = decisions.findById(project, old, false).orElseThrow();
+        assertThat(superseded.state()).isEqualTo(Decision.State.SUPERSEDED);
+        assertThat(superseded.acceptedAt()).isEqualTo(acceptedAt);
+        assertThat(superseded.supersededAt()).isNotNull();
+        assertThat(superseded.version()).isEqualTo(3);
+        assertThat(jdbc.queryForObject(
+                        "SELECT count(*) FROM link WHERE relation='supersedes' AND to_id=?",
+                        Integer.class,
+                        old.toString()))
+                .isEqualTo(1);
+        denied(() -> decisionService.revise(actor, workspace, project, old, draft, 3), 409);
+        denied(() -> decisionService.accept(actor, workspace, project, old, 3), 409);
+        denied(() -> decisionService.restore(actor, workspace, project, old, 3), 409);
+        assertThat(jdbc.queryForObject(
+                        "SELECT count(*) FROM activity WHERE occurred_at<>? AND target_id=?",
+                        Integer.class,
+                        InstantTextBinding.text(superseded.audit().updatedAt()),
+                        old.toString()))
+                .isGreaterThan(0);
+    }
+
+    @Test
+    void failedActivityRollsBackDecisionNumbersAndTheRealSupersessionCoordinator() {
+        rejectActivities();
+        assertThatThrownBy(() -> decisionService.create(
+                        actor, workspace, project, new DecisionFacade.Draft("New", "Reason", null, null)))
+                .isInstanceOf(RuntimeException.class);
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM decision", Integer.class))
+                .isZero();
+        assertThat(jdbc.queryForObject(
+                        "SELECT last_decision_number FROM project WHERE project_id=?",
+                        Integer.class,
+                        project.toString()))
+                .isZero();
+        jdbc.execute("DROP TRIGGER reject_activity");
+        var ids = decisionService.createAll(
+                actor,
+                workspace,
+                project,
+                List.of(
+                        new DecisionFacade.Draft("Old", "Reason", null, null),
+                        new DecisionFacade.Draft("New", "Reason", null, null)));
+        for (UUID id : ids) decisionService.accept(actor, workspace, project, id, 0);
+        int before = activityCount();
+        rejectActivities();
+        assertThatThrownBy(
+                        () -> decisionService.supersede(actor, workspace, project, ids.getFirst(), 1, ids.getLast(), 1))
+                .isInstanceOf(RuntimeException.class);
+        assertThat(decisions
+                        .findById(project, ids.getFirst(), false)
+                        .orElseThrow()
+                        .state())
+                .isEqualTo(Decision.State.ACCEPTED);
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM link", Integer.class))
+                .isZero();
+        assertThat(activityCount()).isEqualTo(before);
+    }
+
+    @Test
+    void largeEscapedDecisionCorrectionsAreLosslessAndEveryActivityStaysBelowTheByteLimit() {
+        String before = "x" + "\u0001".repeat(19999);
+        String after = "y" + "\u0002".repeat(19999);
+        UUID id = decisionService.create(
+                actor, workspace, project, new DecisionFacade.Draft("Long", before, before, null));
+        decisionService.accept(actor, workspace, project, id, 0);
+        decisionService.revise(actor, workspace, project, id, new DecisionFacade.Draft("Long", after, after, null), 1);
+        for (String field : List.of("body", "rejectedAlternatives")) {
+            var rows = jdbc.queryForList(
+                    "SELECT payload FROM activity WHERE target_id=? AND json_extract(payload,'$.field')=? ORDER BY json_extract(payload,'$.part')",
+                    String.class,
+                    id.toString(),
+                    field);
+            var json = tools.jackson.databind.json.JsonMapper.builder().build();
+            var oldText = new StringBuilder();
+            var newText = new StringBuilder();
+            for (String row : rows) {
+                assertThat(row.getBytes(java.nio.charset.StandardCharsets.UTF_8).length)
+                        .isLessThanOrEqualTo(131072);
+                var payload = json.readTree(row);
+                oldText.append(payload.path("before").asText());
+                newText.append(payload.path("after").asText());
+                assertThat(payload.path("parts").asInt()).isEqualTo(5);
+            }
+            assertThat(oldText.toString()).isEqualTo(before);
+            assertThat(newText.toString()).isEqualTo(after);
+        }
+    }
+
+    @Test
+    void proposedDeletionRestoreAndCurrentKeyReferencesRespectVersionsAndCurrentRoles() {
+        var draft = new DecisionFacade.Draft("Proposed", "Reason", null, null);
+        UUID id = decisionService.create(actor, workspace, project, draft);
+        String oldKey = projects.findByKey(actor, workspace, "OLD").key();
+        assertThat(decisionService.findByRef(actor, workspace, project, "D-001").id())
+                .isEqualTo(id);
+        assertThat(decisionService
+                        .findByRef(actor, workspace, project, oldKey + " D-001")
+                        .id())
+                .isEqualTo(id);
+        decisionService.delete(actor, workspace, project, id, 0);
+        denied(() -> decisionService.findByRef(actor, workspace, project, "D-001"), 404);
+        denied(() -> decisionService.restore(actor, workspace, project, id, 0), 409);
+        decisionService.restore(actor, workspace, project, id, 1);
+        assertThat(decisionService.findByRef(actor, workspace, project, "D-001").id())
+                .isEqualTo(id);
+        jdbc.update("UPDATE workspace_member SET role='viewer' WHERE workspace_id=?", workspace.toString());
+        assertThat(decisionService.findByRef(actor, workspace, project, "D-001").id())
+                .isEqualTo(id);
+        denied(() -> decisionService.accept(actor, workspace, project, id, 2), 403);
+        denied(() -> decisionService.create(actor, workspace, project, draft), 403);
+        denied(() -> decisionService.findByRef(actor, workspace, project, "D-9999999999999999999"), 404);
+    }
+
+    @Test
+    void concurrentDecisionCreationAllocatesUniqueNumbersAndEvents() throws Exception {
+        try (var executor = java.util.concurrent.Executors.newFixedThreadPool(4)) {
+            var jobs = new java.util.ArrayList<java.util.concurrent.Future<UUID>>();
+            for (int i = 0; i < 8; i++)
+                jobs.add(executor.submit(() -> decisionService.create(
+                        actor, workspace, project, new DecisionFacade.Draft("Concurrent", "Reason", null, null))));
+            var ids = new java.util.HashSet<UUID>();
+            for (var job : jobs) ids.add(job.get(20, java.util.concurrent.TimeUnit.SECONDS));
+            assertThat(ids).hasSize(8);
+        }
+        assertThat(jdbc.queryForList("SELECT number FROM decision ORDER BY number", Long.class))
+                .containsExactly(1L, 2L, 3L, 4L, 5L, 6L, 7L, 8L);
+        assertThat(activityCount()).isEqualTo(8);
+    }
+
+    private int activityCount() {
+        return java.util.Objects.requireNonNull(jdbc.queryForObject("SELECT count(*) FROM activity", Integer.class));
+    }
+
+    @Test
+    void apiKeyDecisionProvenanceUsesTheHumanOwnerAndAgentWithoutPersistingCredentials() {
+        UUID credential = UUID.randomUUID();
+        String time = InstantTextBinding.text(Instant.now());
+        jdbc.update(
+                "INSERT INTO iam_api_key(iam_api_key_id,iam_user_id,name,agent_name,prefix,key_hash,created_at) VALUES(?,?,?,?,?,?,?)",
+                credential.toString(),
+                actor.userId().toString(),
+                "Decision tool",
+                "Decision agent",
+                "fixture",
+                "never-log-fixture-key-hash",
+                time);
+        var agent =
+                new CurrentUser(actor.userId(), true, CurrentUser.Method.API_KEY, credential, "Decision agent", false);
+        UUID id = decisionService.create(
+                agent, workspace, project, new DecisionFacade.Draft("Agent decision", "Reason", null, null));
+        decisionService.accept(agent, workspace, project, id, 0);
+        var decision = decisions.findById(project, id, false).orElseThrow();
+        assertThat(decision.audit().createdBy()).isEqualTo(actor.userId());
+        assertThat(decision.audit().createdByAgent()).isEqualTo("Decision agent");
+        assertThat(jdbc.queryForList("SELECT actor_id FROM activity", String.class))
+                .containsOnly(actor.userId().toString());
+        assertThat(jdbc.queryForList("SELECT actor_agent FROM activity", String.class))
+                .containsOnly("Decision agent");
+        for (String payload : jdbc.queryForList("SELECT payload FROM activity", String.class))
+            assertThat(payload).doesNotContain("never-log-fixture-key-hash", credential.toString());
+        jdbc.update("UPDATE iam_api_key SET revoked_at=? WHERE iam_api_key_id=?", time, credential.toString());
+        denied(
+                () -> decisionService.revise(
+                        agent, workspace, project, id, new DecisionFacade.Draft("Revoked", "Reason", null, null), 1),
+                401);
+        assertThat(activityCount()).isEqualTo(2);
+    }
+
+    private void rejectActivities() {
+        jdbc.execute(
+                "CREATE TRIGGER reject_activity BEFORE INSERT ON activity BEGIN SELECT RAISE(ABORT,'forced activity failure'); END");
     }
 }

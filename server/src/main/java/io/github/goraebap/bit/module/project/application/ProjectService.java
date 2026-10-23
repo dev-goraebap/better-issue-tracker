@@ -63,8 +63,16 @@ public class ProjectService implements ProjectFacade {
     @Override
     @Transactional
     public long allocateDecisionNumber(CurrentUser actor, UUID workspaceId, UUID projectId) {
+        return allocateDecisionNumbers(actor, workspaceId, projectId, 1);
+    }
+
+    @Override
+    @Transactional
+    public long allocateDecisionNumbers(CurrentUser actor, UUID workspaceId, UUID projectId, int count) {
+        if (count < 1 || count > 20) throw new IllegalArgumentException("Invalid decision count");
         var p = access(actor, workspaceId, projectId, true, false);
         long number = p.allocateDecisionNumber();
+        for (int i = 1; i < count; i++) p.allocateDecisionNumber();
         projectRepository.save(p);
         return number;
     }

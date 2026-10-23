@@ -1,7 +1,7 @@
 # T-005. 결정·세션·링크·활동·댓글 (Codex 작업 지시서)
 
 > 작성: 2026-10-23. 선행 코드: T-004 서버 `33c26f8`, 화면 `17ccc6f`. 상태: 정책 확정·기반 구현 진행.
-> 남은 MVP의 권장안·구현·검증·커밋은 D-047의 위임을 따른다. T-004 Docker 완료 게이트는 별도로 남아 있으며 이 작업의 성공으로 대체하지 않는다.
+> 남은 MVP의 권장안·구현·검증·커밋은 D-047의 위임을 따른다. T-004 Docker 게이트는 2026-10-23 검증 완료했고 상세 범위는 T-004 지시서에 있다. T-005의 Docker V4 게이트는 별도다.
 > bit-architecture / bit-backend / bit-database / bit-api-contract / bit-frontend 적용. D-011·D-012·D-014·D-020·D-021·D-037·D-051~D-055 기준.
 
 ## 목표와 범위
@@ -126,3 +126,12 @@ workspace 기본 경로 `/api/v1/workspaces/{workspaceId}`. 각 생성은 201 �
 - 격리 SQLite 통합 9개에서 저장/복원과 이름 스냅샷, 참석자 저장 실패 시 부모·번호 롤백, 최신 역할/비밀번호 변경 강제 상태, 보관/삭제 접근, 링크 역순/재연결/순환/부모 제약, 수동 조율 트랜잭션의 대체 상태·링크 원자성을 확인했다. 수동 조율 검사를 실제 대체 API 완료로 계산하지 않는다.
 - `gradlew.bat --max-workers=2 spotlessApply check` 성공. 단위/계약/아키텍처28개 + SQLite/HTTP 통합63개, 총91개. Spotless·Checkstyle·SpotBugs·ArchUnit 통과. 기존82개 검사를 유지했고 OpenAPI 계약 테스트의 DB 대체 저장소도 새 모듈에 맞췄다.
 - 남은 범위: Decision/Session 업무·REST·조회/화면, 일괄 세션 기록, 댓글·활동과 업무 트랜잭션 연결, SQL 페이징·진행률, 실제 HTTP 권한/동시성·화면·Docker V4 게이트. 이 단계도 HTTP 계약 변경은 없다.
+
+## 결정 업무·활동 원자성 — 2026-10-23
+
+- DecisionService에서 생성/최대20개 일괄 생성, 참조 해석, 정정, 확정, 대체, 제안 삭제/복원을 구현했다. 현재 인가와 version을 검사하며 accepted 최초 시각, superseded 읽기 전용, 같은 프로젝트 확정 대체자와 보호 링크 규칙을 적용한다. 결정 일괄 번호는 프로젝트 한 번 저장, 결정은 batch 저장한다.
+- TargetChangedEvent의 커밋 전 동기 처리로 활동을 같은 트랜잭션에서 저장한다. 실제 활동 INSERT 실패를 강제로 발생시켜 새 결정/번호와 대체 링크/옛 상태가 모두 롤백되는 것을 확인했다. 기존 행의 과거 이력은 만들지 않았다.
+- 정정 필드의 before/after를 허용 목록으로 기록하고 긴 값은 D-056의 조각으로 보존한다. 제어 문자로 JSON이 커지는 2만자 본문/기각 대안도 손실 없이 복원되고 각 행이 128KiB 이하임을 검사했다. 활동에는 CurrentUser나 요청 객체·인증 자격을 넣지 않는다.
+- 결정 동시 생성 8건의 번호/이력 중복 없음, 확정 멱등성, 정정 이력, stale version, 제안 삭제/복원, viewer 거부를 검사했다. 이 단계는 Service 통합 검사이며 HTTP/화면 검증을 대신하지 않는다.
+- API 키를 사용한 서비스 호출에서 사람 소유자와 에이전트를 업무/활동에 보존하고 자격 식별자·해시가 payload에 없으며 폐기된 키는 거부함을 확인했다. `gradlew.bat --max-workers=2 spotlessApply check` 전체 성공: 단위/계약/아키텍처28개 + 통합69개, 총97개. Spotless·Checkstyle·SpotBugs·ArchUnit 통과. 기존91개 검사를 유지했다.
+- 미완료: SessionService 일괄 기록과 참석자 현재 멤버 검증, 댓글·작업/링크 활동 연결, 결정/세션/링크/활동/댓글의 REST·SQL 조회/진행률·화면, 실제 HTTP 정책과 Docker V4. 공개 HTTP 계약은 아직 바뀌지 않았다.

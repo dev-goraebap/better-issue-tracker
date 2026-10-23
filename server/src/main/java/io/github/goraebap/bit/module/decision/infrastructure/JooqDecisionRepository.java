@@ -6,6 +6,7 @@ import static io.github.goraebap.bit.jooq.tables.Project.PROJECT;
 import io.github.goraebap.bit.module.decision.domain.Decision;
 import io.github.goraebap.bit.module.decision.domain.DecisionRepository;
 import io.github.goraebap.bit.shared.persistence.AuditRecords;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -55,6 +56,16 @@ class JooqDecisionRepository implements DecisionRepository {
 
     @Override
     public void save(Decision decision) {
+        saveAll(List.of(decision));
+    }
+
+    @Override
+    public void saveAll(List<Decision> decisions) {
+        if (!decisions.isEmpty())
+            dslContext.batch(decisions.stream().map(this::saveQuery).toList()).execute();
+    }
+
+    private org.jooq.Query saveQuery(Decision decision) {
         var r = dslContext.newRecord(DECISION);
         var details = decision.details();
         r.setDecisionId(decision.id());
@@ -69,13 +80,12 @@ class JooqDecisionRepository implements DecisionRepository {
         r.setSupersededAt(decision.supersededAt());
         r.setVersion(decision.version());
         AuditRecords.write(r, decision.audit());
-        dslContext
+        return dslContext
                 .insertInto(DECISION)
                 .set(r)
                 .onConflict(DECISION.DECISION_ID)
                 .doUpdate()
-                .set(r)
-                .execute();
+                .set(r);
     }
 
     private Decision decision(Record row) {

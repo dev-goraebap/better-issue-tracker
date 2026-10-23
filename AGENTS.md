@@ -13,7 +13,7 @@ AI 네이티브 경량 ALM(Application Lifecycle Management). 제품 가칭은 b
 
 ## 현재 상태
 - 단계: **T-004 서버·화면·Docker 검증 완료 / T-005 기반 구현** — T-004는 서버75개·클라이언트13개 검사와 대표1440/390px 화면, 이미지 빌드·healthy·V2→V3·동일 볼륨 재생성 후 인증/작업 보존 확인. 수동 미실행 범위는 T-004 지시서에 구분했다. 서버 `33c26f8`, 화면 `17ccc6f`, 입력/버튼 수정 `e3f8973`·`c843e9d`.
-- 다음: **T-005 결정·세션·범용 링크/활동·댓글 구현 진행** — 지시서 `docs/tasks/T-005-decisions-sessions-links.md`, 정책 D-053~D-055. V4·결정/세션 도메인·번호·저장소, TargetSpi와 링크 명령 기반까지 서버91개 및 정적 검사 통과. Decision/Session 업무·REST·조회/화면, 댓글·활동·Docker V4는 미완료다. 사용자의 남은 MVP 진행 위임은 D-047을 따른다.
+- 다음: **T-005 결정·세션·범용 링크/활동·댓글 구현 진행** — 지시서 `docs/tasks/T-005-decisions-sessions-links.md`, 정책 D-053~D-056. V4·저장소·TargetSpi/링크 명령 기반과 DecisionService·활동 원자성까지 서버97개 및 정적 검사 통과. SessionService·REST·조회/진행률·화면, 댓글·작업/링크 활동·Docker V4는 미완료다. 사용자의 남은 MVP 진행 위임은 D-047을 따른다.
 - 결정된 것: `docs/decisions.md`
 - 아직 안 정해진 것: `docs/open-questions.md`
 
