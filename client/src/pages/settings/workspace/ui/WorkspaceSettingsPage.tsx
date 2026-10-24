@@ -20,7 +20,7 @@ export function WorkspaceSettingsPage() {
   const role = workspace.data?.myRole;
   return <PageFrame title={entry.label} icon={entry.icon} width="narrow">
     {!workspace.data ? <QueryMessage pending={workspace.isPending} error={workspace.error} retry={() => { void workspace.refetch(); }} />
-      : section === 'general' ? <GeneralSettings key={workspace.data.name} workspace={workspace.data} />
+      : section === 'general' ? <GeneralSettings key={workspace.data.id} workspace={workspace.data} />
       : section === 'roles' ? <RolesSettings workspaceId={workspaceId} />
       : <LabelsSettings workspaceId={workspaceId} canWrite={role === 'owner' || role === 'admin' || role === 'member'} />}
   </PageFrame>;

@@ -20,5 +20,5 @@ export function IssueEditPage() {
   if (!result.data) return <PageFrame title="이슈 편집" width="narrow" back={back}>
     <QueryMessage pending={result.isPending} error={result.error} retry={() => { void result.refetch(); }} />
   </PageFrame>;
-  return <EditForm key={result.data.version} item={result.data} back={back} />;
+  return <EditForm key={result.data.id} item={result.data} back={back} />;
 }

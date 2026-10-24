@@ -207,9 +207,16 @@ export function AppLayout() {
     tab('공간 선택 · 전환', 'switcher', '/workspaces', !!place.isWorkspaces),
     tab('내 설정', 'settings', ACCOUNT_MENU[0]!.path, false),
   ];
+  // A phone's 더보기 sheet ends with the member: their picture and name, their own settings and 로그아웃 (bit-frontend 04 §2).
+  const mobileAccount = <div className={styles.sheetAccount}>
+    <div className={styles.account}><DefaultAvatar seed={me?.id ?? ''} name={name} />
+      <span className={styles.accountText}><Text weight="semibold" maxLines={1}>{name}</Text><Text type="supporting" color="secondary" maxLines={1}>{me?.email}</Text></span>
+    </div>
+    <Button label="로그아웃" variant="secondary" icon={<NavIcon name="logout" />} onClick={() => { void signOut(); }} />
+  </div>;
   return <ShellFrame pathname={pathname} folded={folded} onFold={setFolded} trail={<Trail steps={steps} />} sidebar={sidebar} mobileEnd={bell}
-    mobileNav={isSettings ? <ShellTabBar label="설정 메뉴" moreTitle={isAccount ? '계정' : `${workspace?.name ?? ''} 설정`} tabs={scopeTabs.slice(0, count)} more={more} />
-      : workspace ? <ShellTabBar label="워크스페이스 메뉴" moreTitle={workspace.name} tabs={scopeTabs.slice(0, count)} more={more} /> : undefined}>
+    mobileNav={isSettings ? <ShellTabBar label="설정 메뉴" moreTitle={isAccount ? '계정' : `${workspace?.name ?? ''} 설정`} tabs={scopeTabs.slice(0, count)} more={more} account={mobileAccount} />
+      : workspace ? <ShellTabBar label="워크스페이스 메뉴" moreTitle={workspace.name} tabs={scopeTabs.slice(0, count)} more={more} account={mobileAccount} /> : undefined}>
     <Outlet />
     {workspace && <CreateProjectDialog workspaceId={workspaceId} isOpen={isCreatingProject} onClose={() => setCreatingProject(false)}
       onCreated={id => { setCreatingProject(false); void navigate({ href: projectPath(workspaceId, id) }); }} />}

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useId, useRef, useState, type MouseEvent } from 'react';
+import { useCallback, useEffect, useId, useMemo, useRef, useState, type MouseEvent } from 'react';
 import { useToast } from '@astryxdesign/core';
 import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useParams, useRouterState, useSearch } from '@tanstack/react-router';
@@ -37,7 +37,7 @@ export function IssuesPage() {
   const { workspaceId, projectId } = useParams({ strict: false }) as { workspaceId: string; projectId?: string };
   const fullSearch = useSearch({ strict: false }) as IssueSearch;
   // The list's own place; the issue open over it (panel, depth) belongs to the modal.
-  const search = withoutPanel(fullSearch);
+  const search = useMemo(() => withoutPanel(fullSearch), [fullSearch]);
   const pathname = useRouterState({ select: state => state.location.pathname });
   const { host, depth } = useScreenPanel(pathname, fullSearch, search);
   const navigate = useNavigate();
@@ -55,7 +55,7 @@ export function IssuesPage() {
   const views = useViews(workspaceId);
   const view = views.find(each => each.id === (search.v ?? ALL_VIEW)) ?? views[0]!;
   const tweak = useViewTweak(workspaceId, view.id);
-  const effective = effectiveView(view, tweak, search);
+  const effective = useMemo(() => effectiveView(view, tweak, search), [view, tweak, search]);
   const canWrite = role === 'owner' || role === 'admin' || role === 'member';
   const scope: Scope = { workspaceId, project: project.data, projects, firstProject: project.data ?? projects[0], columns, me, role, canWrite };
   const [editing, setEditing] = useState<Editing | null>(null);

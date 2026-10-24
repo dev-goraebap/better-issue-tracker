@@ -17,13 +17,14 @@ const dayNumber = (day: string) => Date.parse(`${day}T00:00:00Z`) / DAY;
 export function TimelineView({ workspaceId, items, search }: { workspaceId: string; items: readonly WorkItem[]; search: IssueSearch }) {
   const box = useRef<HTMLDivElement>(null);
   const today = currentDay();
-  // Opens on today: its column a third of the way across the days in view.
+  // Opens on today: its column a third of the way across the days in view. Only on opening: a later read (labels,
+  // members on a window's focus) leaves the scroll where the member put it.
   useLayoutEffect(() => {
     const element = box.current;
     const mark = element?.querySelector<HTMLElement>('[data-today]');
     const name = element?.querySelector<HTMLElement>('[role="columnheader"]');
     if (element && mark && name) element.scrollLeft = Math.max(0, mark.offsetLeft - name.offsetWidth - (element.clientWidth - name.offsetWidth) / 3);
-  }, [items]);
+  }, []);
   const dated = items.flatMap(item => {
     const span = spanOf(item);
     return span ? [{ item, ...span }] : [];

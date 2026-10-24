@@ -1,8 +1,8 @@
-import { useState, type ReactNode } from 'react';
+import { useRef, useState, type ReactNode } from 'react';
 import { Button, MoreMenu, useToast, VStack } from '@astryxdesign/core';
 import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
-import { ApiError, authError, type components } from '@/shared/api';
+import { authError, isNotFound, type components } from '@/shared/api';
 import {
   BackLink, ConfirmDialog, DefaultAvatar, DuePicker, NavIcon, PageState, PropertyPicker, QueryMessage, SectionHeader, Surface, usePanelSurface, type PropertyOption,
 } from '@/shared/ui';
@@ -11,7 +11,7 @@ import { columnsQuery } from '@/entities/project';
 import { memberOptionsQuery, workspaceQuery } from '@/entities/workspace';
 import {
   archiveItem, dateText, deleteItem, itemQuery, LabelTokens, moveItem, PersonCell, PRIORITIES, PriorityMark, refreshItems, StatusBadge, updateItem, type IssueSearch,
-  type Priority,
+  type Priority, type WorkItem,
 } from '@/entities/work-item';
 import styles from './detail.module.css';
 
@@ -38,6 +38,8 @@ export function IssueDetail({ workspaceId, projectId, id, search }: { workspaceI
   const toast = useToast();
   const list = { to: '/w/$workspaceId/p/$projectId', params: { workspaceId, projectId }, search } as const;
   const [isDeleting, setDeleting] = useState(false);
+  // Changes run one after another, each over the version the last one left (saving two pills quickly is not a conflict).
+  const queue = useRef<Promise<unknown>>(Promise.resolve());
   const result = useQuery(itemQuery(workspaceId, projectId, id));
   const columns = useQuery(columnsQuery(workspaceId, projectId)).data ?? [];
   const labels = useQuery(labelsQuery(workspaceId)).data ?? [];
@@ -45,7 +47,7 @@ export function IssueDetail({ workspaceId, projectId, id, search }: { workspaceI
   const role = useQuery(workspaceQuery(workspaceId)).data?.myRole;
   const canWrite = role === 'owner' || role === 'admin' || role === 'member';
   const back = <BackLink {...list} label="이슈" />;
-  if (result.isPending || (result.error && !(result.error instanceof ApiError && result.error.status === 404))) return <Surface title="이슈" back={back} width="default">
+  if (result.isPending || (result.error && !result.data && !isNotFound(result.error))) return <Surface title="이슈" back={back} width="default">
     <QueryMessage pending={result.isPending} error={result.error} retry={() => { void result.refetch(); }} />
   </Surface>;
   const item = result.data;
@@ -53,11 +55,18 @@ export function IssueDetail({ workspaceId, projectId, id, search }: { workspaceI
     <PageState kind="not-found" title="이슈를 찾을 수 없습니다" description="지워졌거나 주소가 바뀌었습니다. 목록에서 다시 찾아보세요." />
   </Surface>;
   const refresh = () => refreshItems(client, workspaceId, projectId);
-  const save = async (change: () => Promise<unknown>) => {
-    try { await change(); } catch (failure) { toast({ body: authError(failure) }); }
-    await refresh();
+  const itemKey = itemQuery(workspaceId, projectId, id).queryKey;
+  /** Saves one change over the latest version once the changes before it are done; answers whether it was saved. */
+  const save = (change: (version: number) => Promise<unknown>): Promise<boolean> => {
+    const run = queue.current.then(async () => {
+      try { await change(client.getQueryData<WorkItem>(itemKey)?.version ?? item.version); return true; }
+      catch (failure) { toast({ body: authError(failure) }); return false; }
+      finally { await refresh(); }
+    });
+    queue.current = run;
+    return run;
   };
-  const patch = (body: Omit<components['schemas']['UpdateWorkItem'], 'expectedVersion'>) => save(() => updateItem(workspaceId, projectId, id, { expectedVersion: item.version, ...body }));
+  const patch = (body: Omit<components['schemas']['UpdateWorkItem'], 'expectedVersion'>) => save(version => updateItem(workspaceId, projectId, id, { expectedVersion: version, ...body }));
   const statusOptions: PropertyOption[] = [...[...columns].sort((a, b) => a.position - b.position).map(column => ({ value: column.id, label: column.name, icon: <StatusBadge category={column.category} isLabelHidden /> })),
     { value: NONE, label: '상태 없음' }];
   const priorityOptions: PropertyOption[] = (Object.keys(PRIORITIES) as Priority[]).map(priority => ({ value: priority, label: PRIORITIES[priority], icon: <PriorityMark priority={priority} isLabelHidden /> }));
@@ -67,7 +76,7 @@ export function IssueDetail({ workspaceId, projectId, id, search }: { workspaceI
   // A viewer reads each property as a mark; a member changes it with its pill.
   const properties: [string, ReactNode][] = canWrite ? [
     ['상태', <PropertyPicker label="상태" icon="status" options={statusOptions} value={item.columnId ?? NONE}
-      onChange={value => { void save(() => moveItem(workspaceId, projectId, id, { expectedVersion: item.version, targetColumnId: value === NONE ? null : value as string })); }} />],
+      onChange={value => { void save(version => moveItem(workspaceId, projectId, id, { expectedVersion: version, targetColumnId: value === NONE ? null : value as string })); }} />],
     ['우선순위', <PropertyPicker label="우선순위" icon="priority" options={priorityOptions} value={item.priority ?? undefined} onChange={value => { void patch({ priority: (value as Priority | undefined) ?? null }); }} />],
     ['담당자', <PropertyPicker label="담당자" icon="person" options={peopleOptions} value={item.assigneeId ?? undefined} onChange={value => { void patch({ assigneeId: (value as string | undefined) ?? null }); }} />],
     ['시작일', <DuePicker label="시작일" value={item.startDate} onChange={day => { void patch({ startDate: day ?? null }); }} />],
@@ -86,7 +95,7 @@ export function IssueDetail({ workspaceId, projectId, id, search }: { workspaceI
     <MoreMenu label="이슈 메뉴" variant="ghost" size={panel ? 'sm' : undefined} placement="end" items={[
       { label: '링크 복사', icon: <NavIcon name="link" />, onClick: () => void navigator.clipboard?.writeText(`${window.location.origin}/w/${workspaceId}/p/${projectId}/work-items/${id}`) },
       ...(canWrite ? [
-        { label: item.archivedAt ? '보관 해제' : '보관', icon: <NavIcon name="documents" />, onClick: () => { void save(() => archiveItem(workspaceId, projectId, id, item.version, !item.archivedAt)).then(() => { if (!item.archivedAt) leave(); }); } },
+        { label: item.archivedAt ? '보관 해제' : '보관', icon: <NavIcon name="documents" />, onClick: () => { void save(version => archiveItem(workspaceId, projectId, id, version, !item.archivedAt)).then(isSaved => { if (isSaved && !item.archivedAt) leave(); }); } },
         { label: '삭제', icon: <NavIcon name="delete" />, onClick: () => setDeleting(true) },
       ] : []),
     ]} />
@@ -115,6 +124,6 @@ export function IssueDetail({ workspaceId, projectId, id, search }: { workspaceI
     </div>
     {isDeleting && <ConfirmDialog title="이슈를 삭제할까요?" description={`${item.key} ${item.title}을(를) 삭제합니다. 관리자는 되살릴 수 있습니다.`}
       confirmLabel="삭제" variant="destructive" onClose={() => setDeleting(false)}
-      onConfirm={() => { setDeleting(false); void save(() => deleteItem(workspaceId, projectId, id, item.version)).then(leave); }} />}
+      onConfirm={() => { setDeleting(false); void save(version => deleteItem(workspaceId, projectId, id, version)).then(isSaved => { if (isSaved) leave(); }); }} />}
   </Surface>;
 }

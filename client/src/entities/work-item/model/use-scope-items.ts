@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { itemsQuery, workspaceItemsQuery, type WorkItem } from '../api/work-item';
 
@@ -18,6 +18,7 @@ export function useScopeItems(workspaceId: string, projectId?: string) {
   useEffect(() => {
     if (hasNextPage && !isFetchingNextPage && pages < MOST_PAGES) void fetchNextPage();
   }, [hasNextPage, isFetchingNextPage, fetchNextPage, pages]);
-  const items: WorkItem[] = query.data?.pages.flatMap(page => page.items) ?? [];
+  // The same array until the pages change, so what is filtered and laid out from it holds between renders.
+  const items: WorkItem[] = useMemo(() => query.data?.pages.flatMap(page => page.items) ?? [], [query.data]);
   return { items, isLoading: query.isPending, isMissing: !query.data, error: query.error, isCapped: !!hasNextPage && pages >= MOST_PAGES, refetch: query.refetch };
 }

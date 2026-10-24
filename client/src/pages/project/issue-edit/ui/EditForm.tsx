@@ -6,11 +6,15 @@ import { authError } from '@/shared/api';
 import { FormMessage, PageFoot, PageFrame } from '@/shared/ui';
 import { refreshItems, updateItem, type WorkItem } from '@/entities/work-item';
 
-/** The edit page's form over one version of the issue: a newer version (after a save elsewhere) starts it afresh. */
+/**
+ * The edit page's form: the draft is the member's until saved, whatever is read again meanwhile, and it saves over the
+ * version it opened with, so a save someone made since is a conflict (409) said under the form, never overwritten.
+ */
 export function EditForm({ item, back }: { item: WorkItem; back: ReactNode }) {
   const navigate = useNavigate();
   const client = useQueryClient();
   const formId = useId();
+  const [openedVersion] = useState(item.version);
   const [title, setTitle] = useState(item.title);
   const [body, setBody] = useState(item.description ?? '');
   const [isChecked, setChecked] = useState(false);
@@ -23,7 +27,7 @@ export function EditForm({ item, back }: { item: WorkItem; back: ReactNode }) {
     if (!title.trim() || isBusy) return;
     setBusy(true); setError('');
     try {
-      await updateItem(item.workspaceId, item.projectId, item.id, { expectedVersion: item.version, title: title.trim(), description: body.trim() || null });
+      await updateItem(item.workspaceId, item.projectId, item.id, { expectedVersion: openedVersion, title: title.trim(), description: body.trim() || null });
       await refreshItems(client, item.workspaceId, item.projectId);
       leave();
     } catch (failure) { setError(authError(failure)); }

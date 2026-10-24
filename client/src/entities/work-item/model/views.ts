@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useQuery, type QueryClient } from '@tanstack/react-query';
 import type { components } from '@/shared/api';
 import type { WorkItem } from '../api/work-item';
@@ -51,13 +52,13 @@ const fromServer = ({ description, position: _position, createdAt: _createdAt, u
 
 /** The views the member sees in a workspace: 전체 이슈 first, then the server's in order. */
 export function useViews(workspaceId: string): IssueView[] {
-  const views = useQuery(viewsQuery(workspaceId)).data ?? [];
-  return [allView(workspaceId), ...[...views].sort((a, b) => a.position - b.position).map(fromServer)];
+  const views = useQuery(viewsQuery(workspaceId)).data;
+  return useMemo(() => [allView(workspaceId), ...[...(views ?? [])].sort((a, b) => a.position - b.position).map(fromServer)], [workspaceId, views]);
 }
 /** The member's adjustments to a view, if any. */
 export function useViewTweak(workspaceId: string, viewId: string): ViewTweak | undefined {
   const tweak = useQuery(tweaksQuery(workspaceId)).data?.find(each => each.viewKey === viewId);
-  return tweak && (tweak.layout || tweak.sort || tweak.columns) ? { layout: tweak.layout, sort: tweak.sort, columns: tweak.columns } : undefined;
+  return useMemo(() => (tweak && (tweak.layout || tweak.sort || tweak.columns) ? { layout: tweak.layout, sort: tweak.sort, columns: tweak.columns } : undefined), [tweak]);
 }
 
 type ViewDraft = Pick<IssueView, 'name' | 'icon' | 'color' | 'isPersonal' | 'layout' | 'filters' | 'sort' | 'columns'> & { description?: string };
