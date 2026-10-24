@@ -22,11 +22,12 @@
 .applied:empty { display: none; }
 .applied { display: flex; flex-wrap: wrap; align-items: center; gap: var(--spacing-2); padding: var(--spacing-2) var(--spacing-6);
   border-block-end: 1px solid var(--color-border); }
-/* A phone: the tabs split the row's whole width, a little larger type; the chips row draws its own inset and rule; the
-   content runs edge to edge as a desktop's does, its rows keeping the phone's inset (20px) inside them. */
-.tabRow[data-mobile] { padding-inline: 0; }
-.tabRow[data-mobile] .tabs, .tabRow[data-mobile] .tabs > *, .tabRow[data-mobile] [role="tablist"] { flex: 1; inline-size: 100%; }
-.tabRow[data-mobile] [role="tab"] { flex: 1; justify-content: center; font-size: 0.875rem; }
+/* A phone: the view chips in a 48px row at the phone's inset (20px), scrolling sideways when they do not fit (D-067); the
+   chips row draws its own inset and rule; the content runs edge to edge, its rows keeping the phone's inset inside them. */
+.tabRow[data-mobile] { min-block-size: 3rem; padding-inline: var(--spacing-5); }
+.tabRow[data-mobile] .tabs { flex: 1; min-inline-size: 0; }
+.tabRow[data-mobile] .tabs > :global(.astryx-tab-list) { align-self: center !important; min-inline-size: 0; max-inline-size: 100%; }
+.tabRow[data-mobile] [role="tab"] { font-size: 0.8125rem; }
 .applied[data-mobile] { display: block; padding: 0; border: 0; }
 .applied[data-mobile]:empty { display: none; }
 /* A page that keeps its content to a column (PageFrame width): centred, as wide as the classic page of that width with its

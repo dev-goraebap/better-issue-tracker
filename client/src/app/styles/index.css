@@ -18,6 +18,10 @@
   --size-element-md: 1.75rem;
   --size-element-lg: 2rem;
 }
+/* A phone presses with a thumb: its buttons stand 32, 40 and 44px (fields take 48px, below). */
+@media (max-width: 63.999rem) {
+  :root { --size-element-sm: 2rem; --size-element-md: 2.5rem; --size-element-lg: 2.75rem; }
+}
 html { font-size: 100%; }
 body { font-family: 'Pretendard Variable', Pretendard, system-ui, sans-serif; }
 /*
