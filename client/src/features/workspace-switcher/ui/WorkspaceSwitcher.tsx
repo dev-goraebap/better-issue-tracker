@@ -1,9 +1,8 @@
 import { useState } from 'react';
 import { Popover } from '@astryxdesign/core';
-import { useQuery } from '@tanstack/react-query';
 import { Link, useNavigate } from '@tanstack/react-router';
 import { NavIcon } from '@/shared/ui';
-import { WorkspaceMark, workspacesQuery, type Space } from '@/entities/workspace';
+import { useAllWorkspaces, WorkspaceMark, type Space } from '@/entities/workspace';
 import { CreateWorkspaceDialog } from './CreateWorkspaceDialog';
 import styles from './workspace-switcher.module.css';
 
@@ -13,7 +12,7 @@ import styles from './workspace-switcher.module.css';
  * workspace's home. Folded, the head is the mark alone and the list opens to its right.
  */
 export function WorkspaceSwitcher({ current, isFolded = false }: { current?: Space; isFolded?: boolean }) {
-  const workspaces = useQuery(workspacesQuery()).data?.items ?? [];
+  const workspaces = useAllWorkspaces().items;
   const navigate = useNavigate();
   const [isOpen, setOpen] = useState(false);
   const [isCreating, setCreating] = useState(false);

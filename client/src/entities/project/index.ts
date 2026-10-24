@@ -1,2 +1,5 @@
-export { projectBase, projectPath, projectKey, projectQuery, projectsQuery, columnsQuery, createProject, refreshProjects } from './api/project';
+export {
+  archiveProject, columnsQuery, createColumn, createProject, deleteColumn, deleteProject, PROJECT_KEY, projectBase, projectKey, projectPath, projectQuery, projectsQuery,
+  refreshProjects, reorderColumns, restoreProject, updateColumn, updateProject,
+} from './api/project';
 export type { Project, BoardColumn, ProjectStatus } from './api/project';

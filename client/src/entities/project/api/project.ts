@@ -1,5 +1,5 @@
 import { infiniteQueryOptions, queryOptions, type QueryClient } from '@tanstack/react-query';
-import { command, readJson, type components } from '@/shared/api';
+import { command, createAt, readJson, type components } from '@/shared/api';
 
 export type Project = components['schemas']['Project'];
 export type BoardColumn = components['schemas']['BoardColumn'];
@@ -14,8 +14,18 @@ export const projectsQuery = (w: string, status: ProjectStatus = 'active', q = '
   queryFn: ({ pageParam, signal }) => { const params = new URLSearchParams({ status, q, size: '50' }); if (pageParam) params.set('cursor', pageParam); return readJson<components['schemas']['Projects']>(`${projectBase(w)}?${params}`, signal); },
   getNextPageParam: page => page.nextCursor ?? undefined, retry: false,
 });
-export async function createProject(w: string, body: components['schemas']['CreateProject']) {
-  let location = ''; await command('POST', projectBase(w), body, value => { location = value; });
-  const id = location.split('/').at(-1); if (!id) throw new Error('Missing project Location'); return id;
-}
+export const createProject = (w: string, body: components['schemas']['CreateProject']) => createAt(projectBase(w), body);
+/** A project key: 2–10 Latin capitals and digits (an old key stays found after a change, D-011). */
+export const PROJECT_KEY = /^[A-Z0-9]{2,10}$/;
+export const updateProject = (w: string, p: string, body: components['schemas']['UpdateProject']) => command('PATCH', projectPath(w, p), body);
+/** Makes a project read-only (archived) or writable again. */
+export const archiveProject = (w: string, p: string, expectedVersion: number, isArchived = true) => command('POST', `${projectPath(w, p)}/${isArchived ? 'archive' : 'unarchive'}`, { expectedVersion });
+export const deleteProject = (w: string, p: string, expectedVersion: number) => command('DELETE', `${projectPath(w, p)}?expectedVersion=${expectedVersion}`);
+export const restoreProject = (w: string, p: string, expectedVersion: number) => command('POST', `${projectPath(w, p)}/restore`, { expectedVersion });
+export const createColumn = (w: string, p: string, body: components['schemas']['CreateBoardColumn']) => command('POST', `${projectPath(w, p)}/columns`, body);
+export const updateColumn = (w: string, p: string, columnId: string, body: components['schemas']['UpdateBoardColumn']) => command('PATCH', `${projectPath(w, p)}/columns/${encodeURIComponent(columnId)}`, body);
+/** Deletes a column, its issues moving to another column or to no status ('backlog'). */
+export const deleteColumn = (w: string, p: string, columnId: string, expectedVersion: number, moveTo: string) =>
+  command('DELETE', `${projectPath(w, p)}/columns/${encodeURIComponent(columnId)}?expectedVersion=${expectedVersion}&moveTo=${encodeURIComponent(moveTo)}`);
+export const reorderColumns = (w: string, p: string, expectedVersion: number, order: string[]) => command('POST', `${projectPath(w, p)}/columns/reorder`, { expectedVersion, order });
 export const refreshProjects = (client: QueryClient, w: string) => client.invalidateQueries({ queryKey: ['workspace', w] }).catch(() => {});

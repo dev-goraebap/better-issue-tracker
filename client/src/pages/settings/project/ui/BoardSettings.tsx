@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { Button, IconButton, VStack } from '@astryxdesign/core';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { authError, command } from '@/shared/api';
+import { authError } from '@/shared/api';
 import { CompactDialog, FormMessage, NavIcon, QueryMessage, Select, SettingsCard, SettingsHead, SettingsRow, StatusToken } from '@/shared/ui';
-import { columnsQuery, projectPath, refreshProjects, type BoardColumn, type Project } from '@/entities/project';
+import { columnsQuery, deleteColumn, refreshProjects, reorderColumns, type BoardColumn, type Project } from '@/entities/project';
 import { CATEGORY_LABELS, StatusBadge } from '@/entities/work-item';
 import { ColumnDialog } from './ColumnDialog';
 import styles from './project-settings.module.css';
@@ -30,7 +30,7 @@ export function BoardSettings({ project, canManage }: { project: Project; canMan
     const order = list.map(column => column.id);
     [order[from], order[from + by]] = [order[from + by]!, order[from]!];
     setBusy(true); setError('');
-    try { await command('POST', `${projectPath(project.workspaceId, project.id)}/columns/reorder`, { expectedVersion: project.version, order }); }
+    try { await reorderColumns(project.workspaceId, project.id, project.version, order); }
     catch (failure) { setError(authError(failure)); }
     finally { setBusy(false); await refreshProjects(client, project.workspaceId); }
   };
@@ -38,7 +38,7 @@ export function BoardSettings({ project, canManage }: { project: Project; canMan
     if (!removing || isBusy) return;
     setBusy(true); setError('');
     try {
-      await command('DELETE', `${projectPath(project.workspaceId, project.id)}/columns/${removing.id}?expectedVersion=${removing.version}&moveTo=${encodeURIComponent(moveTo)}`);
+      await deleteColumn(project.workspaceId, project.id, removing.id, removing.version, moveTo);
       setRemoving(null);
     } catch (failure) { setError(authError(failure)); }
     finally { setBusy(false); await refreshProjects(client, project.workspaceId); }

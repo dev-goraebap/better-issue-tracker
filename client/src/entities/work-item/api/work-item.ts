@@ -1,5 +1,5 @@
 import { infiniteQueryOptions, queryOptions, type QueryClient } from '@tanstack/react-query';
-import { command, readJson, type components } from '@/shared/api';
+import { command, createAt, readJson, type components } from '@/shared/api';
 
 export type WorkItem = components['schemas']['WorkItem'];
 export type ItemLabel = WorkItem['labels'][number];
@@ -35,7 +35,7 @@ export const workspaceItemsQuery = (w: string, filters: TaskFilters = {}) => inf
 export const countsQuery = (w: string, p: string, filters: TaskFilters = {}) => queryOptions({ queryKey: [...root(w, p), 'counts', filters], queryFn: ({ signal }) => readJson<components['schemas']['WorkItemColumnCount'][]>(`${workBase(w, p)}/counts?${taskParams(filters)}`, signal), retry: false });
 export const myTasksQuery = (w: string, filters: TaskFilters = {}) => infiniteQueryOptions({ queryKey: ['workspace', w, 'my-tasks', filters], initialPageParam: undefined as string | undefined, queryFn: ({ pageParam, signal }) => readJson<components['schemas']['WorkItems']>(`/api/v1/workspaces/${encodeURIComponent(w)}/my-tasks?${taskParams(filters, pageParam)}`, signal), getNextPageParam: page => page.nextCursor ?? undefined, retry: false });
 export const byRefQuery = (w: string, reference: string) => queryOptions({ queryKey: ['workspace', w, 'task-ref', reference], queryFn: ({ signal }) => readJson<WorkItem>(`/api/v1/workspaces/${encodeURIComponent(w)}/work-items/by-ref/${encodeURIComponent(reference)}`, signal), retry: false });
-export async function createItem(w: string, p: string, body: components['schemas']['CreateWorkItem']) { let location = ''; await command('POST', workBase(w, p), body, value => { location = value; }); const id = location.split('/').at(-1); if (!id) throw new Error('Missing work item Location'); return id; }
+export const createItem = (w: string, p: string, body: components['schemas']['CreateWorkItem']) => createAt(workBase(w, p), body);
 export const moveItem = (w: string, p: string, id: string, body: components['schemas']['MoveWorkItem']) => command('POST', `${itemPath(w, p, id)}/move`, body);
 /** Changes an issue's fields (absent ones kept); a stale expectedVersion is 409. */
 export const updateItem = (w: string, p: string, id: string, body: components['schemas']['UpdateWorkItem']) => command('PATCH', itemPath(w, p, id), body);

@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useParams } from '@tanstack/react-router';
 import { WORKSPACE_SETTINGS_MENU } from '@/shared/config';
 import { PageFrame, PageState, QueryMessage } from '@/shared/ui';
-import { workspaceQuery } from '@/entities/workspace';
+import { canWrite, workspaceQuery } from '@/entities/workspace';
 import { GeneralSettings } from './GeneralSettings';
 import { LabelsSettings } from './LabelsSettings';
 import { RolesSettings } from './RolesSettings';
@@ -22,6 +22,6 @@ export function WorkspaceSettingsPage() {
     {!workspace.data ? <QueryMessage pending={workspace.isPending} error={workspace.error} retry={() => { void workspace.refetch(); }} />
       : section === 'general' ? <GeneralSettings key={workspace.data.id} workspace={workspace.data} />
       : section === 'roles' ? <RolesSettings workspaceId={workspaceId} />
-      : <LabelsSettings workspaceId={workspaceId} canWrite={role === 'owner' || role === 'admin' || role === 'member'} />}
+      : <LabelsSettings workspaceId={workspaceId} canWrite={canWrite(role)} />}
   </PageFrame>;
 }

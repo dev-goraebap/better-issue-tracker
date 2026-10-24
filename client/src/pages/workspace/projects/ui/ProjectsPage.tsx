@@ -4,12 +4,12 @@ import { useMediaQuery } from '@astryxdesign/core/hooks';
 import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import { MOBILE_QUERY } from '@/shared/config';
-import { authError, command } from '@/shared/api';
+import { authError } from '@/shared/api';
 import {
   FormMessage, ITEM_ROW_LINK, ItemList, ItemMeta, ItemRow, ListToolbar, PageFrame, PageState, PageTabs, QueryMessage, SHEET_ROW_LINK, SheetTable, type PageTab, type SheetColumn,
 } from '@/shared/ui';
-import { projectPath, projectsQuery, refreshProjects, type Project, type ProjectStatus } from '@/entities/project';
-import { workspaceQuery } from '@/entities/workspace';
+import { projectsQuery, refreshProjects, restoreProject, type Project, type ProjectStatus } from '@/entities/project';
+import { canManage as canManageIn, canWrite as canWriteIn, workspaceQuery } from '@/entities/workspace';
 import { CreateProjectDialog } from '@/features/project-create';
 import styles from './projects.module.css';
 
@@ -28,8 +28,8 @@ export function ProjectsPage() {
   const client = useQueryClient();
   const panelId = useId();
   const role = useQuery(workspaceQuery(workspaceId)).data?.myRole;
-  const canManage = role === 'owner' || role === 'admin';
-  const canWrite = canManage || role === 'member';
+  const canManage = canManageIn(role);
+  const canWrite = canWriteIn(role);
   const tab = search.status;
   const result = useInfiniteQuery(projectsQuery(workspaceId, tab, search.q));
   const rows = useMemo(() => result.data?.pages.flatMap(page => page.items) ?? [], [result.data]);
@@ -41,7 +41,7 @@ export function ProjectsPage() {
   }), [navigate, workspaceId, search]);
   const restore = async (project: Project) => {
     setRestoring(project.id); setError('');
-    try { await command('POST', `${projectPath(workspaceId, project.id)}/restore`, { expectedVersion: project.version }); }
+    try { await restoreProject(workspaceId, project.id, project.version); }
     catch (failure) { setError(authError(failure)); }
     finally { setRestoring(''); await refreshProjects(client, workspaceId); }
   };

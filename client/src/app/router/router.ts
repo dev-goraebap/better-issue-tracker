@@ -4,7 +4,7 @@ import { NewIssuePage } from '@/pages/workspace/issue-new';
 import { IssuePage } from '@/pages/project/issue';
 import { IssueEditPage } from '@/pages/project/issue-edit';
 import { ProjectSettingsPage } from '@/pages/settings/project';
-import { projectQuery, columnsQuery, type ProjectStatus } from '@/entities/project';
+import { projectKey, projectQuery, columnsQuery, type ProjectStatus } from '@/entities/project';
 import { byRefQuery, parseIssueSearch as parseRealIssueSearch, parseNewIssueSearch as parseRealNewIssueSearch } from '@/entities/work-item';
 import { createRootRoute, createRoute, createRouter, redirect } from '@tanstack/react-router';
 import { InboxPage } from '@/pages/workspace/inbox';
@@ -24,8 +24,8 @@ import { ApiKeysPage } from '@/pages/settings/api-keys';
 import { WorkspaceSettingsPage } from '@/pages/settings/workspace';
 import { AppearancePage } from '@/pages/settings/appearance';
 import { followHistory } from '@/shared/lib/history-trail';
-import { ownSearch } from '@/shared/lib/route-search';
-import { workspaceQuery, workspacesQuery } from '@/entities/workspace';
+import { isId, ownSearch } from '@/shared/lib/route-search';
+import { workspaceKey, workspacePagesQuery, workspaceQuery, workspacesQuery } from '@/entities/workspace';
 import { ApiError, bootstrapQueryOptions, capabilitiesQueryOptions, keyQueryOptions, resetCsrf, sessionQueryOptions, setUnauthorizedHandler } from '@/shared/api';
 import { RootLayout } from '../layout/RootLayout';
 import { RouteError } from '../layout/RouteError';
@@ -61,18 +61,17 @@ async function resume(suffix = '') {
   if (spaces.items.length === 1 && !spaces.nextCursor) throw redirect({ href: `/w/${spaces.items[0].id}${suffix}` });
   throw redirect({ to: '/workspaces' });
 }
-const pageCursor = (search: Record<string, unknown>): { cursor?: string } => ({ cursor: typeof search.cursor === 'string' ? search.cursor : undefined });
 const rootRoute = createRootRoute({ component: RootLayout, notFoundComponent: NotFoundPage, errorComponent: RouteError, loader: () => queryClient.prefetchQuery(capabilitiesQueryOptions) });
 const workspace = createRoute({ getParentRoute: () => rootRoute, id: 'workspace', component: AppLayout,
   beforeLoad: async () => { const session = await requireSession(); if (session.mustChangePassword) throw redirect({ to: '/change-password' }); },
   loader: () => queryClient.prefetchQuery(workspacesQuery()) });
 const start = createRoute({ getParentRoute: () => workspace, path: '/', beforeLoad: () => resume() });
-const chooser = createRoute({ getParentRoute: () => workspace, path: '/workspaces', component: WorkspacesPage, validateSearch: pageCursor, loaderDeps: ({ search }) => search, loader: ({ deps }) => queryClient.prefetchQuery(workspacesQuery(deps.cursor)) });
+const chooser = createRoute({ getParentRoute: () => workspace, path: '/workspaces', component: WorkspacesPage, loader: () => queryClient.prefetchInfiniteQuery(workspacePagesQuery()) });
 const scoped = createRoute({ getParentRoute: () => workspace, path: '/w/$workspaceId', beforeLoad: async ({ params }) => {
   const id = params.workspaceId;
-  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) throw redirect({ to: '/workspaces' });
+  if (!isId(id)) throw redirect({ to: '/workspaces' });
   try { await routeRead(() => queryClient.fetchQuery(workspaceQuery(id))); }
-  catch (error) { if (error instanceof ApiError && error.status === 404) { queryClient.removeQueries({ queryKey: ['workspace', id] }); throw redirect({ to: '/workspaces' }); } throw error; }
+  catch (error) { if (error instanceof ApiError && error.status === 404) { queryClient.removeQueries({ queryKey: workspaceKey(id) }); throw redirect({ to: '/workspaces' }); } throw error; }
 } });
 // A workspace opens on its home, 전체: the issues of every project through the workspace's views (D-065, D-066).
 const home = createRoute({ getParentRoute: () => scoped, path: '/', component: IssuesPage, validateSearch: ownSearch(parseRealIssueSearch) });
@@ -83,7 +82,7 @@ const inbox = createRoute({ getParentRoute: () => scoped, path: '/inbox', compon
 const myTasks = createRoute({ getParentRoute: () => scoped, path: '/my-tasks', beforeLoad: ({ params }) => { throw redirect({ href: `/w/${params.workspaceId}` }); } });
 async function loadProject(w: string, p: string) {
   try { await routeRead(() => queryClient.fetchQuery(projectQuery(w, p))); }
-  catch (error) { if (error instanceof ApiError && error.status === 404) { queryClient.removeQueries({ queryKey: ['workspace', w, 'project', p] }); throw redirect({ href: `/w/${w}/projects` }); } throw error; }
+  catch (error) { if (error instanceof ApiError && error.status === 404) { queryClient.removeQueries({ queryKey: projectKey(w, p) }); throw redirect({ href: `/w/${w}/projects` }); } throw error; }
 }
 const projects = createRoute({ getParentRoute: () => scoped, path: '/projects', component: ProjectsPage, validateSearch: (raw: Record<string, unknown>): { status: ProjectStatus; q: string } => ({ status: raw.status === 'archived' || raw.status === 'deleted' ? raw.status : 'active', q: typeof raw.q === 'string' ? raw.q : '' }) });
 const projectItems = createRoute({ getParentRoute: () => scoped, path: '/p/$projectId', component: IssuesPage, validateSearch: ownSearch(parseRealIssueSearch), loader: async ({ params }) => { await loadProject(params.workspaceId, params.projectId); await queryClient.prefetchQuery(columnsQuery(params.workspaceId, params.projectId)); } });

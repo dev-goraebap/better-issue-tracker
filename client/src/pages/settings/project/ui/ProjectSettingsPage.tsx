@@ -3,7 +3,7 @@ import { useParams } from '@tanstack/react-router';
 import { PROJECT_SETTINGS_MENU } from '@/shared/config';
 import { PageFrame, PageState, QueryMessage } from '@/shared/ui';
 import { projectQuery } from '@/entities/project';
-import { workspaceQuery } from '@/entities/workspace';
+import { canManage as canManageIn, workspaceQuery } from '@/entities/workspace';
 import { BoardSettings } from './BoardSettings';
 import { ProjectGeneralSettings } from './ProjectGeneralSettings';
 
@@ -18,7 +18,7 @@ export function ProjectSettingsPage() {
   const role = useQuery(workspaceQuery(workspaceId)).data?.myRole;
   const entry = PROJECT_SETTINGS_MENU.find(each => each.path === `/${section}`);
   if (!entry) return <PageFrame title="설정" icon="settings"><PageState kind="not-found" title="설정을 찾을 수 없습니다" /></PageFrame>;
-  const canManage = role === 'owner' || role === 'admin';
+  const canManage = canManageIn(role);
   return <PageFrame title={project.data ? `${project.data.name} · ${entry.label}` : entry.label} icon={entry.icon} width="narrow">
     {!project.data ? <QueryMessage pending={project.isPending} error={project.error} retry={() => { void project.refetch(); }} />
       : section === 'general' ? <ProjectGeneralSettings key={project.data.id} project={project.data} canManage={canManage} />

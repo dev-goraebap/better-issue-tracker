@@ -2,12 +2,13 @@ import { useCallback, useEffect, useId, useMemo, useRef, useState, type MouseEve
 import { useToast } from '@astryxdesign/core';
 import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useParams, useRouterState, useSearch } from '@tanstack/react-router';
-import { authError, sessionQueryOptions } from '@/shared/api';
+import { authError, isNotFound, sessionQueryOptions } from '@/shared/api';
+import { isForOther } from '@/shared/lib/key-target';
 import { PanelHostContext, useScreenPanel, withoutPanel } from '@/shared/lib/routed-panel';
 import { ConfirmDialog, PageFrame, PageState, RequestBoundary, RoutedPanel } from '@/shared/ui';
 import { labelsQuery } from '@/entities/label';
 import { columnsQuery, projectQuery, projectsQuery } from '@/entities/project';
-import { memberOptionsQuery, workspaceQuery } from '@/entities/workspace';
+import { canWrite as canWriteIn, useMembers, workspaceQuery } from '@/entities/workspace';
 import {
   ALL_VIEW, addView, effectiveView, removeView, updateView, useScopeItems, useViews, useViewTweak, VIEW_COLORS, type IssueSearch,
 } from '@/entities/work-item';
@@ -48,7 +49,7 @@ export function IssuesPage() {
   const project = useQuery({ ...projectQuery(workspaceId, projectId ?? ''), enabled: !!projectId });
   const columns = useQuery({ ...columnsQuery(workspaceId, projectId ?? ''), enabled: !!projectId }).data ?? [];
   const labels = useQuery(labelsQuery(workspaceId)).data ?? [];
-  const members = useInfiniteQuery(memberOptionsQuery(workspaceId)).data?.pages.flatMap(page => page.items) ?? [];
+  const members = useMembers(workspaceId).items;
   const scopeItems = useScopeItems(workspaceId, projectId);
   const client = useQueryClient();
   const toast = useToast();
@@ -56,7 +57,7 @@ export function IssuesPage() {
   const view = views.find(each => each.id === (search.v ?? ALL_VIEW)) ?? views[0]!;
   const tweak = useViewTweak(workspaceId, view.id);
   const effective = useMemo(() => effectiveView(view, tweak, search), [view, tweak, search]);
-  const canWrite = role === 'owner' || role === 'admin' || role === 'member';
+  const canWrite = canWriteIn(role);
   const scope: Scope = { workspaceId, project: project.data, projects, firstProject: project.data ?? projects[0], columns, me, role, canWrite };
   const [editing, setEditing] = useState<Editing | null>(null);
   const [isRemoving, setRemoving] = useState(false);
@@ -87,15 +88,14 @@ export function IssuesPage() {
   // C opens 새 이슈, as Linear's, unless the member is typing or something is already open.
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if (event.key.toLowerCase() !== 'c' || event.ctrlKey || event.metaKey || event.altKey || event.defaultPrevented) return;
-      if ((event.target instanceof Element && event.target.closest('input, textarea, select, [contenteditable="true"]')) || document.querySelector('dialog[open]')) return;
+      if (event.key.toLowerCase() !== 'c' || isForOther(event)) return;
       event.preventDefault();
       openRef.current();
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, []);
-  if (projectId && project.isError) return <PageFrame title="프로젝트를 찾을 수 없습니다">
+  if (projectId && isNotFound(project.error)) return <PageFrame title="프로젝트를 찾을 수 없습니다">
     <PageState kind="not-found" title="프로젝트를 찾을 수 없습니다" description="지워졌거나 이 워크스페이스의 프로젝트가 아닙니다." />
   </PageFrame>;
   const startCreate = () => setEditing({ mode: 'create', initial: { name: '', description: '', icon: 'list', color: VIEW_COLORS[1]!, isPersonal: false } });

@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { Button, Switch, TextInput } from '@astryxdesign/core';
 import { useQueryClient } from '@tanstack/react-query';
-import { authError, command } from '@/shared/api';
+import { authError } from '@/shared/api';
 import { CompactDialog, FormMessage, Select } from '@/shared/ui';
-import { projectPath, refreshProjects, type BoardColumn, type Project } from '@/entities/project';
+import { createColumn, refreshProjects, updateColumn, type BoardColumn, type Project } from '@/entities/project';
 
 const CATEGORIES = [{ value: 'todo', label: '할 일' }, { value: 'doing', label: '진행 중' }, { value: 'done', label: '완료' }] as const;
 type Category = BoardColumn['category'];
@@ -27,8 +27,9 @@ export function ColumnDialog({ project, column, onClose }: { project: Project; c
     if (!name.trim() || isBusy) return;
     setBusy(true); setError('');
     try {
-      const body = { expectedVersion: column?.version ?? project.version, name: name.trim(), isFinal, category: isFinal ? 'done' : category };
-      await command(column ? 'PATCH' : 'POST', `${projectPath(project.workspaceId, project.id)}/columns${column ? `/${column.id}` : ''}`, body);
+      const finalCategory = isFinal ? 'done' as const : category;
+      if (column) await updateColumn(project.workspaceId, project.id, column.id, { expectedVersion: column.version, name: name.trim(), isFinal, category: finalCategory });
+      else await createColumn(project.workspaceId, project.id, { expectedVersion: project.version, name: name.trim(), isFinal, category: finalCategory });
       await refreshProjects(client, project.workspaceId);
       onClose();
     } catch (failure) { setError(authError(failure)); }

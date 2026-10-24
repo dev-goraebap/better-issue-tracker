@@ -117,3 +117,12 @@ export function authError(error: unknown): string {
   };
   return messages[error.code] ?? error.message;
 }
+
+/** Makes something with a POST and answers the id at the end of the Location it was made at. */
+export async function createAt(path: string, body: unknown): Promise<string> {
+  let location = '';
+  await command('POST', path, body, value => { location = value; });
+  const id = location.split('/').at(-1);
+  if (!id) throw new Error(`Missing Location for ${path}`);
+  return id;
+}

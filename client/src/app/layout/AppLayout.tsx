@@ -8,11 +8,12 @@ import {
   workspaceSettingsPath,
 } from '@/shared/config';
 import { ApiError, logout, sessionQueryOptions } from '@/shared/api';
-import { isJustBefore } from '@/shared/lib/history-trail';
+import { isJustBefore, isPlainClick } from '@/shared/lib/history-trail';
+import { isForOther } from '@/shared/lib/key-target';
 import { DefaultAvatar, NavIcon, NotificationBell } from '@/shared/ui';
 import { WorkspaceSwitcher } from '@/features/workspace-switcher';
 import { CreateProjectDialog } from '@/features/project-create';
-import { workspaceQuery } from '@/entities/workspace';
+import { forgetWorkspace, workspaceQuery } from '@/entities/workspace';
 import { projectsQuery } from '@/entities/project';
 import { itemQuery } from '@/entities/work-item';
 import { ScopeSwitcher } from './ScopeSwitcher';
@@ -56,11 +57,7 @@ export function AppLayout() {
   // A workspace the member can no longer see: back to choosing one.
   useEffect(() => {
     if (!workspaceId || !(space.error instanceof ApiError) || space.error.status !== 404) return;
-    void client.cancelQueries({ queryKey: ['workspace', workspaceId] }).then(async () => {
-      await navigate({ to: '/workspaces', replace: true });
-      client.removeQueries({ queryKey: ['workspace', workspaceId] });
-      await client.invalidateQueries({ queryKey: ['workspaces'] });
-    });
+    void navigate({ to: '/workspaces', replace: true }).then(() => forgetWorkspace(client, workspaceId));
   }, [space.error, workspaceId, client, navigate]);
   useEffect(() => { if (!isSettings) lastWork = `${pathname}${searchStr}`; }, [isSettings, pathname, searchStr]);
   // 돌아가기: back through history when the page of work is just before, else to it (or the start).
@@ -72,15 +69,14 @@ export function AppLayout() {
   useEffect(() => {
     if (!isSettings) return undefined;
     const onKey = (event: KeyboardEvent) => {
-      if (event.key !== 'Escape' || event.defaultPrevented || document.querySelector('dialog[open]')) return;
-      if ((event.target as HTMLElement | null)?.closest('input, textarea, select, [contenteditable="true"], [role="combobox"], [role="listbox"], [role="menu"]')) return;
+      if (event.key !== 'Escape' || isForOther(event)) return;
       leaveSettings();
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   });
   const go = (href: string) => (event: MouseEvent) => {
-    if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    if (!isPlainClick(event)) return;
     event.preventDefault(); void navigate({ href });
   };
   const signOut = async () => {

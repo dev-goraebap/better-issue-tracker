@@ -8,7 +8,7 @@ import { authError } from '@/shared/api';
 import { BackLink, DefaultAvatar, DuePicker, FormMessage, NavIcon, PageFoot, PageFrame, PropertyPicker, usePanelSurface, type PropertyOption } from '@/shared/ui';
 import { labelsQuery } from '@/entities/label';
 import { columnsQuery, projectsQuery, type BoardColumn, type Project } from '@/entities/project';
-import { memberOptionsQuery } from '@/entities/workspace';
+import { useMembers } from '@/entities/workspace';
 import { createItem, PRIORITIES, PriorityMark, refreshItems, StatusBadge, type Priority } from '@/entities/work-item';
 import styles from './create-issue.module.css';
 
@@ -47,7 +47,7 @@ export function NewIssue({ workspaceId, projectId, status }: { workspaceId: stri
   const isMobile = useMediaQuery(MOBILE_QUERY);
   const projects = useInfiniteQuery(projectsQuery(workspaceId)).data?.pages.flatMap(page => page.items) ?? [];
   const labels = useQuery(labelsQuery(workspaceId)).data ?? [];
-  const members = useInfiniteQuery(memberOptionsQuery(workspaceId)).data?.pages.flatMap(page => page.items) ?? [];
+  const members = useMembers(workspaceId).items;
   const titleBox = useRef<HTMLInputElement>(null);
   const [draft, setDraft] = useState<Draft>({ projectId, title: '', body: '', priority: 'medium', labelIds: [] });
   const [isMore, setMore] = useState(false);

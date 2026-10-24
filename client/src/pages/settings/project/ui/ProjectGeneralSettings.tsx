@@ -2,11 +2,9 @@ import { useState } from 'react';
 import { Button, TextArea, TextInput, VStack } from '@astryxdesign/core';
 import { useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
-import { ApiError, authError, command } from '@/shared/api';
+import { ApiError, authError } from '@/shared/api';
 import { ConfirmDialog, FormMessage, SettingsCard, SettingsHead, SettingsRow } from '@/shared/ui';
-import { projectPath, refreshProjects, type Project } from '@/entities/project';
-
-const KEY = /^[A-Z0-9]{2,10}$/;
+import { archiveProject, deleteProject, PROJECT_KEY as KEY, refreshProjects, updateProject, type Project } from '@/entities/project';
 
 /**
  * 일반: the project's name, key (a key changed keeps the old one found, D-011) and description, saved together; then
@@ -36,7 +34,7 @@ export function ProjectGeneralSettings({ project, canManage }: { project: Projec
     if (!name.trim() || !KEY.test(key) || key === takenKey || isBusy) return;
     setBusy(true); setError(''); setNotice('');
     try {
-      await command('PATCH', projectPath(project.workspaceId, project.id), { expectedVersion: project.version, name: name.trim(), key, description: description.trim() || null });
+      await updateProject(project.workspaceId, project.id, { expectedVersion: project.version, name: name.trim(), key, description: description.trim() || null });
       setNotice('저장했습니다.'); setChecked(false);
       await refreshProjects(client, project.workspaceId);
     } catch (failure) {
@@ -48,8 +46,8 @@ export function ProjectGeneralSettings({ project, canManage }: { project: Projec
     if (!asking || isBusy) return;
     setBusy(true); setAskError(null);
     try {
-      if (asking === 'archive') await command('POST', `${projectPath(project.workspaceId, project.id)}/${isArchived ? 'unarchive' : 'archive'}`, { expectedVersion: project.version });
-      else await command('DELETE', `${projectPath(project.workspaceId, project.id)}?expectedVersion=${project.version}`);
+      if (asking === 'archive') await archiveProject(project.workspaceId, project.id, project.version, !isArchived);
+      else await deleteProject(project.workspaceId, project.id, project.version);
       setAsking(null);
       await refreshProjects(client, project.workspaceId);
       if (asking === 'delete') void navigate({ to: '/w/$workspaceId', params: { workspaceId: project.workspaceId } });

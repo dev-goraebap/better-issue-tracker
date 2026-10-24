@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { Button, TextInput, VStack } from '@astryxdesign/core';
-import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
-import { authError, command, sessionQueryOptions } from '@/shared/api';
+import { authError, sessionQueryOptions } from '@/shared/api';
 import { CompactDialog, ConfirmDialog, FormMessage, Select, SettingsCard, SettingsHead, SettingsRow } from '@/shared/ui';
-import { memberOptionsQuery, spacePath, WorkspaceMark, type Space } from '@/entities/workspace';
+import {
+  canManage, deleteWorkspace, forgetWorkspace, leaveWorkspace, refreshWorkspace, renameWorkspace, transferOwner, useMembers, WorkspaceMark, type Space,
+} from '@/entities/workspace';
 import styles from './workspace-settings.module.css';
 
 /**
@@ -16,9 +18,9 @@ export function GeneralSettings({ workspace }: { workspace: Space }) {
   const client = useQueryClient();
   const navigate = useNavigate();
   const me = useQuery(sessionQueryOptions).data?.user.id;
-  const members = useInfiniteQuery(memberOptionsQuery(workspace.id)).data?.pages.flatMap(page => page.items) ?? [];
+  const members = useMembers(workspace.id).items;
   const isOwner = workspace.myRole === 'owner';
-  const canEdit = isOwner || workspace.myRole === 'admin';
+  const canEdit = canManage(workspace.myRole);
   const [name, setName] = useState(workspace.name);
   const [isBusy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -29,11 +31,10 @@ export function GeneralSettings({ workspace }: { workspace: Space }) {
   const [handError, setHandError] = useState('');
   const [leaving, setLeaving] = useState<'delete' | 'leave' | null>(null);
   const [leaveError, setLeaveError] = useState<Error | null>(null);
-  const refresh = async () => { await client.invalidateQueries({ queryKey: ['workspace', workspace.id] }); await client.invalidateQueries({ queryKey: ['workspaces'] }); };
   const rename = async () => {
     if (!name.trim() || name.trim() === workspace.name || isBusy) return;
     setBusy(true); setError(''); setNotice('');
-    try { await command('PATCH', spacePath(workspace.id), { name: name.trim() }); setNotice('이름을 바꿨습니다.'); await refresh(); }
+    try { await renameWorkspace(workspace.id, name.trim()); setNotice('이름을 바꿨습니다.'); await refreshWorkspace(client, workspace.id); }
     catch (failure) { setError(authError(failure)); }
     finally { setBusy(false); }
   };
@@ -41,8 +42,9 @@ export function GeneralSettings({ workspace }: { workspace: Space }) {
     if (!nextOwner || !password || isBusy) return;
     setBusy(true); setHandError('');
     try {
-      await command('PUT', `${spacePath(workspace.id)}/owner`, { userId: nextOwner, currentPassword: password });
-      setHanding(false); setPassword(''); setNextOwner(undefined); setNotice('소유권을 넘겼습니다. 내 역할은 관리자입니다.'); await refresh();
+      await transferOwner(workspace.id, nextOwner, password);
+      setHanding(false); setPassword(''); setNextOwner(undefined); setNotice('소유권을 넘겼습니다. 내 역할은 관리자입니다.');
+      await refreshWorkspace(client, workspace.id);
     } catch (failure) { setHandError(authError(failure)); setPassword(''); }
     finally { setBusy(false); }
   };
@@ -50,10 +52,8 @@ export function GeneralSettings({ workspace }: { workspace: Space }) {
     if (!leaving || isBusy) return;
     setBusy(true); setLeaveError(null);
     try {
-      await command('DELETE', `${spacePath(workspace.id)}${leaving === 'leave' ? '/members/me' : ''}`);
-      await client.cancelQueries({ queryKey: ['workspace', workspace.id] });
-      client.removeQueries({ queryKey: ['workspace', workspace.id] });
-      await client.invalidateQueries({ queryKey: ['workspaces'] });
+      await (leaving === 'leave' ? leaveWorkspace(workspace.id) : deleteWorkspace(workspace.id));
+      await forgetWorkspace(client, workspace.id);
       await navigate({ to: '/workspaces' });
     } catch (failure) { setLeaveError(new Error(authError(failure))); }
     finally { setBusy(false); }

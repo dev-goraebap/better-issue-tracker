@@ -3,9 +3,8 @@ import { Button, TextInput } from '@astryxdesign/core';
 import { useQueryClient } from '@tanstack/react-query';
 import { ApiError, authError } from '@/shared/api';
 import { CompactDialog, FormMessage } from '@/shared/ui';
-import { createProject, refreshProjects } from '@/entities/project';
+import { createProject, PROJECT_KEY as KEY, refreshProjects } from '@/entities/project';
 
-const KEY = /^[A-Z0-9]{2,10}$/;
 /** A key offered from the name: its Latin letters and digits, upper case, up to four; else nothing to offer. */
 const keyFrom = (name: string) => name.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 4);
 

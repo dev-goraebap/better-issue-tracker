@@ -1,14 +1,10 @@
 import { Button, VStack } from '@astryxdesign/core';
-import { useInfiniteQuery } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { workspacePath } from '@/shared/config';
 import { NavIcon, SettingsCard, SettingsHead, SettingsRow } from '@/shared/ui';
-import { memberOptionsQuery, type Member } from '@/entities/workspace';
+import { ROLE_LABELS, ROLES, useMembers, type Role } from '@/entities/workspace';
 import styles from './workspace-settings.module.css';
 
-type Role = Member['role'];
-const ROLES: readonly Role[] = ['viewer', 'member', 'admin', 'owner'];
-const ROLE_LABELS: Record<Role, string> = { owner: '소유자', admin: '관리자', member: '멤버', viewer: '보기 전용' };
 /** What each role may do, the least first; a role may do all that the roles before it may (D-040, D-048, D-049). */
 const ABILITIES: readonly { label: string; from: Role }[] = [
   { label: '이슈·결정·문서 보기', from: 'viewer' },
@@ -25,7 +21,7 @@ const ABILITIES: readonly { label: string; from: Role }[] = [
  */
 export function RolesSettings({ workspaceId }: { workspaceId: string }) {
   const navigate = useNavigate();
-  const members = useInfiniteQuery(memberOptionsQuery(workspaceId)).data?.pages.flatMap(page => page.items) ?? [];
+  const members = useMembers(workspaceId).items;
   const holders = (role: Role) => members.filter(member => member.role === role).length;
   return <VStack gap={8}>
     <SettingsHead title="역할" description="역할은 네 가지이고, 오른쪽 역할은 왼쪽 역할이 하는 일을 모두 합니다." />

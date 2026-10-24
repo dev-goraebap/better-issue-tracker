@@ -1,29 +1,28 @@
-import { useCallback, useEffect, useId, useMemo, useState } from 'react';
+import { useCallback, useId, useState } from 'react';
 import { MoreMenu } from '@astryxdesign/core';
 import { useMediaQuery } from '@astryxdesign/core/hooks';
-import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import { MOBILE_QUERY } from '@/shared/config';
-import { authError, command, sessionQueryOptions } from '@/shared/api';
+import { authError, sessionQueryOptions } from '@/shared/api';
 import {
   ConfirmDialog, DefaultAvatar, ItemList, ItemMeta, ItemRow, ListToolbar, NavIcon, PageFrame, PageState, PageTabs, QueryMessage, Select, SheetTable, StatusToken, type PageTab,
   type SheetColumn,
 } from '@/shared/ui';
-import { memberOptionsQuery, spacePath, workspaceQuery, type Member } from '@/entities/workspace';
-import { invitationsQuery } from '../api/members';
+import {
+  canManage, changeRole, invitationsQuery, refreshWorkspace, removeMember, revokeInvitation, ROLE_LABELS, useMembers, workspaceQuery, type Invitation, type Member,
+  type Role,
+} from '@/entities/workspace';
 import type { MembersSearch } from '../model/search';
 import { InvitationDialog } from './InvitationDialog';
 import styles from './members.module.css';
 
 type Tab = 'members' | 'invitations';
-type Role = Member['role'];
-type Invite = { id: string; email: string; role: Role; status: string; expiresAt: string; inviterName: string };
-const ROLE_LABELS: Record<Role, string> = { owner: '소유자', admin: '관리자', member: '멤버', viewer: '보기 전용' };
 const STATUS_TOKENS: Record<string, { label: string; color: 'blue' | 'green' | 'gray' | 'red' }> = {
   pending: { label: '대기', color: 'blue' }, accepted: { label: '수락', color: 'green' }, expired: { label: '만료', color: 'gray' }, revoked: { label: '폐기', color: 'red' },
 };
 const dayText = (iso: string) => new Date(iso).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' });
-type Pending = { kind: 'role'; member: Member; role: Role } | { kind: 'remove'; member: Member } | { kind: 'revoke'; invite: Invite };
+type Pending = { kind: 'role'; member: Member; role: Role } | { kind: 'remove'; member: Member } | { kind: 'revoke'; invite: Invitation };
 
 /**
  * PATTERN · 탭마다 다른 리스트 (구성원), /w/$workspaceId/members (?view=invitations). One menu holding two lists of
@@ -45,12 +44,10 @@ export function MembersPage() {
   const panelId = useId();
   const me = useQuery(sessionQueryOptions).data?.user.id;
   const myRole = useQuery(workspaceQuery(workspaceId)).data?.myRole ?? 'viewer';
-  const isManager = myRole === 'owner' || myRole === 'admin';
+  const isManager = canManage(myRole);
   const tab: Tab = isManager && search.view === 'invitations' ? 'invitations' : 'members';
-  const people = useInfiniteQuery(memberOptionsQuery(workspaceId));
-  const { hasNextPage, isFetchingNextPage, fetchNextPage } = people;
-  useEffect(() => { if (hasNextPage && !isFetchingNextPage) void fetchNextPage(); }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
-  const invitations = useQuery({ ...invitationsQuery(workspaceId, ''), enabled: tab === 'invitations' });
+  const people = useMembers(workspaceId);
+  const invitations = useQuery({ ...invitationsQuery(workspaceId), enabled: tab === 'invitations' });
   const [isInviting, setInviting] = useState(false);
   const [pending, setPending] = useState<Pending | null>(null);
   const [isBusy, setBusy] = useState(false);
@@ -59,29 +56,25 @@ export function MembersPage() {
     to: '/w/$workspaceId/members', params: { workspaceId }, replace,
     search: Object.fromEntries(Object.entries({ ...search, ...patch }).filter(([, value]) => value !== undefined)),
   }), [navigate, workspaceId, search]);
-  const changed = async () => {
-    await client.invalidateQueries({ queryKey: ['workspace', workspaceId] });
-    await client.invalidateQueries({ queryKey: ['workspaces'] });
-  };
-  const all = useMemo(() => people.data?.pages.flatMap(page => page.items) ?? [], [people.data]);
-  const members = all.filter(member => !search.q || member.name.includes(search.q) || member.email.includes(search.q));
-  const canManage = (member: Member) => member.role !== 'owner' && member.userId !== me && (myRole === 'owner' || (myRole === 'admin' && member.role !== 'admin'));
+  const changed = () => refreshWorkspace(client, workspaceId).then(() => undefined);
+  const members = people.items.filter(member => !search.q || member.name.includes(search.q) || member.email.includes(search.q));
+  const canChange = (member: Member) => member.role !== 'owner' && member.userId !== me && (myRole === 'owner' || (myRole === 'admin' && member.role !== 'admin'));
   const roleOptions = (myRole === 'owner' ? ['admin', 'member', 'viewer'] as const : ['member', 'viewer'] as const).map(role => ({ value: role, label: ROLE_LABELS[role] }));
   const person = (member: Member) => <span className={styles.person}><DefaultAvatar seed={member.userId} name={member.name} size={32} />
     <span className={styles.personText}><span className={styles.personName}>{member.name}{member.userId === me ? ' (나)' : ''}</span><span className={styles.personEmail}>{member.email}</span></span></span>;
   const memberColumns: SheetColumn<Member>[] = [
     { key: 'name', header: '이름', render: person },
-    { key: 'role', header: '역할', width: '9rem', render: row => (canManage(row)
+    { key: 'role', header: '역할', width: '9rem', render: row => (canChange(row)
       ? <Select label={`${row.name} 역할`} isLabelHidden size="sm" options={roleOptions} value={row.role}
         onChange={value => { if (value && value !== row.role) setPending({ kind: 'role', member: row, role: value as Role }); }} />
       : ROLE_LABELS[row.role]) },
     { key: 'joined', header: '참여한 날', width: '8rem', render: row => dayText(row.joinedAt) },
-    { key: 'menu', header: '', width: '3.5rem', align: 'end', render: row => (canManage(row)
+    { key: 'menu', header: '', width: '3.5rem', align: 'end', render: row => (canChange(row)
       ? <MoreMenu label={`${row.name} 메뉴`} variant="ghost" size="sm" placement="end" items={[{ label: '구성원에서 제거', icon: <NavIcon name="delete" />, onClick: () => setPending({ kind: 'remove', member: row }) }]} />
       : null) },
   ];
-  const invites = (invitations.data?.items ?? []) as Invite[];
-  const inviteColumns: SheetColumn<Invite>[] = [
+  const invites = invitations.data?.items ?? [];
+  const inviteColumns: SheetColumn<Invitation>[] = [
     { key: 'email', header: '이메일', render: row => <span className={styles.clip}>{row.email}</span> },
     { key: 'role', header: '역할', width: '7rem', render: row => ROLE_LABELS[row.role] },
     { key: 'by', header: '보낸 사람', width: '8rem', render: row => row.inviterName },
@@ -95,22 +88,22 @@ export function MembersPage() {
     if (!pending || isBusy) return;
     setBusy(true); setError(null);
     try {
-      if (pending.kind === 'role') await command('PATCH', `${spacePath(workspaceId)}/members/${pending.member.memberId}`, { role: pending.role });
-      else if (pending.kind === 'remove') await command('DELETE', `${spacePath(workspaceId)}/members/${pending.member.memberId}`);
-      else await command('DELETE', `${spacePath(workspaceId)}/invitations/${pending.invite.id}`);
+      if (pending.kind === 'role') await changeRole(workspaceId, pending.member.memberId, pending.role);
+      else if (pending.kind === 'remove') await removeMember(workspaceId, pending.member.memberId);
+      else await revokeInvitation(workspaceId, pending.invite.id);
       setPending(null);
     } catch (failure) { setError(new Error(authError(failure))); }
     finally { setBusy(false); await changed(); }
   };
   const tabs: PageTab<Tab>[] = [{ value: 'members', label: '구성원', icon: 'members' }, ...(isManager ? [{ value: 'invitations' as const, label: '초대', icon: 'mail' }] : [])];
-  const request = tab === 'members' ? people : invitations;
+  const request = tab === 'members' ? { isPending: people.isPending, isError: !!people.error, error: people.error, refetch: people.refetch } : invitations;
   return <PageFrame title="구성원" icon="members" chrome="header"
     tabs={<PageTabs value={tab} items={tabs} panelId={panelId} onChange={next => go({ view: next === 'members' ? undefined : 'invitations' })} />}>
     <ListToolbar search={tab === 'members' ? { label: '구성원 검색', placeholder: '이름이나 이메일로 찾기', value: search.q, onChange: q => go({ q: q || undefined }, true) } : undefined}
       label="초대 조건" action={tab === 'invitations' ? { label: '구성원 초대', icon: 'plus', onClick: () => setInviting(true), isCreate: true } : undefined} />
     <div role="tabpanel" id={panelId}>
       {(request.isPending || request.isError) && <QueryMessage pending={request.isPending} error={request.error} retry={() => { void request.refetch(); }} />}
-      {tab === 'members' && people.data && (members.length === 0
+      {tab === 'members' && people.hasData && (members.length === 0
         ? <PageState kind="search" title={`'${search.q}'에 맞는 구성원이 없습니다`} description="다른 이름이나 이메일로 찾아보세요." />
         : isMobile
           ? <ItemList label="구성원">{members.map(member => <ItemRow key={member.memberId} lead={<DefaultAvatar seed={member.userId} name={member.name} size={32} />}

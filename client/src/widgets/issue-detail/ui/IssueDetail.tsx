@@ -1,6 +1,6 @@
 import { useRef, useState, type ReactNode } from 'react';
 import { Button, MoreMenu, useToast, VStack } from '@astryxdesign/core';
-import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { authError, isNotFound, type components } from '@/shared/api';
 import {
@@ -8,7 +8,7 @@ import {
 } from '@/shared/ui';
 import { labelsQuery } from '@/entities/label';
 import { columnsQuery } from '@/entities/project';
-import { memberOptionsQuery, workspaceQuery } from '@/entities/workspace';
+import { canWrite as canWriteIn, useMembers, workspaceQuery } from '@/entities/workspace';
 import {
   archiveItem, dateText, deleteItem, itemQuery, LabelTokens, moveItem, PersonCell, PRIORITIES, PriorityMark, refreshItems, StatusBadge, updateItem, type IssueSearch,
   type Priority, type WorkItem,
@@ -43,9 +43,9 @@ export function IssueDetail({ workspaceId, projectId, id, search }: { workspaceI
   const result = useQuery(itemQuery(workspaceId, projectId, id));
   const columns = useQuery(columnsQuery(workspaceId, projectId)).data ?? [];
   const labels = useQuery(labelsQuery(workspaceId)).data ?? [];
-  const members = useInfiniteQuery(memberOptionsQuery(workspaceId)).data?.pages.flatMap(page => page.items) ?? [];
+  const members = useMembers(workspaceId).items;
   const role = useQuery(workspaceQuery(workspaceId)).data?.myRole;
-  const canWrite = role === 'owner' || role === 'admin' || role === 'member';
+  const canWrite = canWriteIn(role);
   const back = <BackLink {...list} label="이슈" />;
   if (result.isPending || (result.error && !result.data && !isNotFound(result.error))) return <Surface title="이슈" back={back} width="default">
     <QueryMessage pending={result.isPending} error={result.error} retry={() => { void result.refetch(); }} />
