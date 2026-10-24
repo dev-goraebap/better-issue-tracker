@@ -1,0 +1,7 @@
+/* A phone's 작업 view switch, a row of its own over the content. */
+.viewRow { display: flex; justify-content: center; padding: var(--spacing-3) var(--spacing-4) 0; }
+/* The 작업 calendar: its controls in a row over it (the tab row holds the project's tabs), then the calendar filling
+   the window's height less the card's rows above it. */
+.calendarRoom { display: flex; flex-direction: column; min-block-size: max(36rem, calc(100dvh - 11rem)); }
+.calendarBar { display: flex; align-items: center; min-block-size: 2.75rem; padding-inline: var(--spacing-6); border-block-end: 1px solid var(--color-border); }
+@media (width < 64rem) { .calendarBar { padding-inline: var(--spacing-4); } }

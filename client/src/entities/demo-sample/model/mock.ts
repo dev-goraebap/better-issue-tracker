@@ -20,7 +20,7 @@ export type WorkItem = {
   createdAt: string; updatedAt: string; dueAt?: string; comments: number; decisionKey?: string;
 };
 export type Decision = { id: string; projectId: string; key: string; title: string; status: 'proposed' | 'accepted' | 'superseded'; ownerId: string; decidedAt?: string; progress: [done: number, total: number] };
-export type Session = { id: string; projectId: string; key: string; type: 'meeting' | 'agent_session'; title: string; occurredAt: string; participantIds: string[]; decisions: number };
+export type Session = { id: string; projectId: string; key: string; type: 'meeting' | 'agent_session'; title: string; occurredAt: string; participantIds: string[]; decisions: number; summary: string };
 export type Notice = {
   id: string; kind: 'mention' | 'assigned' | 'decision' | 'review'; title: string; actorId: string; at: string; isRead: boolean;
   /** What the notice is about, opened from its detail. */
@@ -111,11 +111,16 @@ export const DECISIONS: Decision[] = [
 ];
 
 export const SESSIONS: Session[] = [
-  { id: 's1', projectId: 'p-core', key: 'S-014', type: 'meeting', title: 'T-005 설계 회의', occurredAt: day(1, 14), participantIds: ['u1', 'u2', 'u3'], decisions: 3 },
-  { id: 's2', projectId: 'p-core', key: 'S-013', type: 'agent_session', title: 'Claude 세션: 링크 순환 검사 구현', occurredAt: day(2, 11), participantIds: ['u1', 'a2'], decisions: 1 },
-  { id: 's3', projectId: 'p-core', key: 'S-012', type: 'agent_session', title: 'Codex 세션: 결정 대체 원자성', occurredAt: day(3, 16), participantIds: ['u2', 'a1'], decisions: 2 },
-  { id: 's4', projectId: 'p-core', key: 'S-011', type: 'meeting', title: '주간 점검 · UI 레이아웃', occurredAt: day(7, 10), participantIds: ['u1', 'u2', 'u3', 'u4'], decisions: 0 },
-  { id: 's5', projectId: 'p-mcp', key: 'S-003', type: 'meeting', title: 'MCP 도구 범위 정리', occurredAt: day(4, 15), participantIds: ['u2', 'u3'], decisions: 1 },
+  { id: 's1', projectId: 'p-core', key: 'S-014', type: 'meeting', title: 'T-005 설계 회의', occurredAt: day(1, 14), participantIds: ['u1', 'u2', 'u3'], decisions: 3,
+    summary: '결정·세션·링크를 한 트랜잭션으로 묶을지 논의. 대체는 원자적으로, 세션 일괄 기록은 결정과 함께 저장하기로 함. 활동 기록은 같은 변경의 조각으로 남긴다.' },
+  { id: 's2', projectId: 'p-core', key: 'S-013', type: 'agent_session', title: 'Claude 세션: 링크 순환 검사 구현', occurredAt: day(2, 11), participantIds: ['u1', 'a2'], decisions: 1,
+    summary: '링크 그래프에 순환이 생기지 않게 검사하는 코드를 Claude와 작성. 깊이 제한 없이 방문 집합으로 막는다.' },
+  { id: 's3', projectId: 'p-core', key: 'S-012', type: 'agent_session', title: 'Codex 세션: 결정 대체 원자성', occurredAt: day(3, 16), participantIds: ['u2', 'a1'], decisions: 2,
+    summary: '결정을 대체할 때 옛 결정의 상태와 새 결정의 링크를 한 번에 바꾸도록 정리. 실패하면 둘 다 되돌린다.' },
+  { id: 's4', projectId: 'p-core', key: 'S-011', type: 'meeting', title: '주간 점검 · UI 레이아웃', occurredAt: day(7, 10), participantIds: ['u1', 'u2', 'u3', 'u4'], decisions: 0,
+    summary: '메뉴 간격, 표 테두리, 모바일 카드 행을 점검. 다음 주까지 데모 페이지를 기준으로 맞춰 보기로.' },
+  { id: 's5', projectId: 'p-mcp', key: 'S-003', type: 'meeting', title: 'MCP 도구 범위 정리', occurredAt: day(4, 15), participantIds: ['u2', 'u3'], decisions: 1,
+    summary: '1차 MCP 도구 24개 중 맥락 묶음과 검색 도구의 응답 크기를 정함. 큰 응답은 커서로 이어 읽는다.' },
 ];
 
 export const NOTICES: Notice[] = [

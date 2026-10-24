@@ -1,0 +1,54 @@
+/* The home: its widgets down one column of a readable width, each a section with room between. */
+.home { display: flex; flex-direction: column; gap: var(--spacing-10); max-inline-size: 64rem; padding: var(--spacing-6) var(--spacing-6) var(--spacing-10); box-sizing: border-box; }
+.widget ul > li { padding-inline: 0; }
+.arrangeRow { display: flex; justify-content: flex-end; margin-block-end: calc(-1 * var(--spacing-4)); }
+.emptyLine { margin: 0; padding-block: var(--spacing-3); font-size: 0.875rem; color: var(--color-text-secondary); }
+
+/* 활동 잔디: 11px squares 3px apart, shaded in five steps of green as GitHub's; months over, 월·수·금 beside. */
+.graph { --cell: 11px; --gap: 3px; display: flex; flex-direction: column; gap: var(--spacing-2); }
+.graphTotal { margin: 0; font-size: 0.8125rem; color: var(--color-text-secondary); }
+.graphTotal strong { color: var(--color-text-primary); }
+.graphScroll { overflow-x: auto; scrollbar-width: thin; padding-block-end: var(--spacing-1); }
+.graphGrid { display: grid; grid-template-columns: auto max-content; grid-template-rows: auto auto; column-gap: var(--spacing-2); row-gap: var(--spacing-1); inline-size: max-content; }
+.months, .cells { display: grid; column-gap: var(--gap); }
+.month { font-size: 0.6875rem; color: var(--color-text-secondary); white-space: nowrap; overflow: visible; }
+.weekdays { display: grid; grid-template-rows: repeat(7, var(--cell)); row-gap: var(--gap); font-size: 0.625rem; line-height: var(--cell); color: var(--color-text-secondary); }
+.week { display: grid; grid-template-rows: repeat(7, var(--cell)); row-gap: var(--gap); }
+.cell { display: inline-block; inline-size: var(--cell); block-size: var(--cell); border-radius: 2px;
+  background: color-mix(in srgb, var(--color-text-primary) 7%, transparent); outline: 1px solid color-mix(in srgb, var(--color-text-primary) 5%, transparent); outline-offset: -1px; }
+.cell[data-level='1'] { background: color-mix(in srgb, var(--color-icon-green, #1a7f37) 30%, transparent); }
+.cell[data-level='2'] { background: color-mix(in srgb, var(--color-icon-green, #1a7f37) 55%, transparent); }
+.cell[data-level='3'] { background: color-mix(in srgb, var(--color-icon-green, #1a7f37) 78%, transparent); }
+.cell[data-level='4'] { background: var(--color-icon-green, #1a7f37); }
+.legend { display: flex; align-items: center; justify-content: flex-end; gap: 3px; font-size: 0.6875rem; color: var(--color-text-secondary); }
+.legend .cell { margin-inline: 1px; }
+
+/* 최근 활동: a picture, who did what over the thing's key and title, the project and when at the end. */
+.feed { display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none; }
+.feedRow { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: start; gap: var(--spacing-3); padding-block: var(--spacing-3);
+  border-block-end: 1px solid var(--color-border-subtle, var(--color-border)); }
+.feedRow:last-child { border-block-end: 0; }
+.feedBody { display: flex; flex-direction: column; gap: 0.125rem; min-inline-size: 0; }
+.feedLine { font-size: 0.8125rem; color: var(--color-text-secondary); }
+.feedLine strong { color: var(--color-text-primary); font-weight: 600; }
+.feedTarget { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.875rem; color: var(--color-text-primary); text-decoration: none; }
+.feedTarget:hover { text-decoration: underline; }
+.feedKey { margin-inline-end: var(--spacing-1-5, 0.375rem); font-family: var(--font-family-code); font-size: 0.75rem; color: var(--color-text-secondary); }
+.feedMeta { display: flex; flex-direction: column; align-items: flex-end; gap: 0.125rem; font-size: 0.75rem; color: var(--color-text-secondary); white-space: nowrap; }
+.feedProject { padding: 0 var(--spacing-1-5, 0.375rem); border-radius: 4px; background: var(--color-background-muted); }
+
+/* 홈 구성: a row per widget, a handle to drag, its icon and name, its switch at the end. */
+.layoutRows { display: flex; flex-direction: column; gap: var(--spacing-1); margin: 0; padding: 0; list-style: none; }
+.layoutRow { display: flex; align-items: center; gap: var(--spacing-2); min-block-size: 2.75rem; padding-inline: var(--spacing-1) var(--spacing-2);
+  border: 1px solid var(--color-border); border-radius: 8px; background: var(--color-background-surface); }
+.layoutRow[data-dragging] { position: relative; z-index: 1; border-color: var(--color-border-emphasized, var(--color-border)); box-shadow: var(--shadow-mid, 0 6px 16px rgb(0 0 0 / 0.18)); }
+.handle { display: inline-grid; place-items: center; inline-size: 1.75rem; block-size: 2rem; padding: 0; border: 0; border-radius: 6px; background: none;
+  color: var(--color-icon-secondary); cursor: grab; touch-action: none; }
+.handle:hover { background: var(--color-overlay-hover); }
+.layoutRow[data-dragging] .handle { cursor: grabbing; }
+.handle:focus-visible { outline: var(--focus-outline-width) var(--focus-outline-style) var(--focus-outline-color); }
+.handle svg, .layoutIcon svg { inline-size: 1rem; block-size: 1rem; }
+.layoutIcon { display: inline-grid; place-items: center; color: var(--color-icon-secondary); }
+.layoutLabel { flex: 1; min-inline-size: 0; font-size: 0.875rem; }
+.layoutRow[data-hidden] :is(.layoutIcon, .layoutLabel) { opacity: 0.5; }
+@media (width < 64rem) { .home { gap: var(--spacing-8); padding: var(--spacing-4) var(--spacing-4) var(--spacing-8); } .feedProject { display: none; } }

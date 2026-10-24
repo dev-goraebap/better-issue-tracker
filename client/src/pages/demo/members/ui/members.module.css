@@ -1,0 +1,8 @@
+/* A member's cell: the picture beside the name over the email. */
+.person { display: flex; align-items: center; gap: var(--spacing-3); min-inline-size: 0; }
+.personText { display: flex; flex-direction: column; min-inline-size: 0; }
+.personName { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+.personEmail { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.75rem; color: var(--color-text-secondary); }
+/* The projects they take part in, as tokens that wrap; what they have done, in one quiet line. */
+.projects { display: flex; flex-wrap: wrap; gap: var(--spacing-1); }
+.part { font-size: 0.8125rem; color: var(--color-text-secondary); white-space: nowrap; }

@@ -7,13 +7,15 @@ import type { SortKey } from '@/shared/ui';
  * same list.
  */
 export type TableSearch = { q?: string; status?: string; priority?: string; assignee?: string; sort?: string; direction?: 'asc' | 'desc'; finding?: 1 };
-export type WorkView = 'board' | 'list' | 'table' | 'gantt';
-/** An issue menu's scope: the project chosen, the whole workspace when left out (D-063). */
-export type ScopeSearch = { project?: string };
-/** The 작업 menu: its view (board when left out), its scope and the list's conditions. */
-export type WorkSearch = TableSearch & ScopeSearch & { view?: Exclude<WorkView, 'board'> };
-export type DecisionsSearch = ScopeSearch & { q?: string };
-export type NotesSearch = ScopeSearch & { label?: string; q?: string };
+/** 작업's views (D-064): a list (a table on a desktop), a calendar, a kanban or a timeline. */
+export type WorkView = 'list' | 'calendar' | 'board' | 'timeline';
+/**
+ * A project's page: its tab (작업 when left out), 작업's view (list when left out), the calendar's own place (cal, date),
+ * the label chosen in 노트, the search words and the list's conditions.
+ */
+export type WorkSearch = TableSearch & {
+  tab?: 'backlog' | 'notes' | 'decisions'; view?: Exclude<WorkView, 'list'>; cal?: 'week' | 'workweek'; date?: string; label?: string;
+};
 export type InboxSearch = { read?: 'unread' | 'read'; kind?: string };
 export type MembersSearch = { view?: 'invitations'; q?: string };
 export type ProjectsSearch = { status?: 'archived'; q?: string };
@@ -34,10 +36,11 @@ export function parseTableSearch(raw: Record<string, unknown>): TableSearch {
     sort: oneOf(raw.sort, TABLE_SORT_KEYS.map(key => key.value)), direction: oneOf(raw.direction, ['asc', 'desc'] as const), finding: findingOf(raw),
   };
 }
-export const parseScope = (raw: Record<string, unknown>): ScopeSearch => ({ project: text(raw.project) });
-export const parseWorkSearch = (raw: Record<string, unknown>): WorkSearch => ({ ...parseTableSearch(raw), ...parseScope(raw), view: oneOf(raw.view, ['list', 'table', 'gantt'] as const) });
-export const parseDecisionsSearch = (raw: Record<string, unknown>): DecisionsSearch => ({ ...parseScope(raw), q: text(raw.q) });
-export const parseNotesSearch = (raw: Record<string, unknown>): NotesSearch => ({ ...parseScope(raw), label: text(raw.label), q: text(raw.q) });
+const DAY = /^\d{4}-\d{2}-\d{2}$/;
+export const parseWorkSearch = (raw: Record<string, unknown>): WorkSearch => ({
+  ...parseTableSearch(raw), tab: oneOf(raw.tab, ['backlog', 'notes', 'decisions'] as const), view: oneOf(raw.view, ['calendar', 'board', 'timeline'] as const),
+  cal: oneOf(raw.cal, ['week', 'workweek'] as const), date: typeof raw.date === 'string' && DAY.test(raw.date) ? raw.date : undefined, label: text(raw.label),
+});
 export const parseInboxSearch = (raw: Record<string, unknown>): InboxSearch => ({ read: oneOf(raw.read, ['unread', 'read'] as const), kind: text(raw.kind) });
 export const parseMembersSearch = (raw: Record<string, unknown>): MembersSearch => ({ view: oneOf(raw.view, ['invitations'] as const), q: text(raw.q) });
 export const parseProjectsSearch = (raw: Record<string, unknown>): ProjectsSearch => ({ status: oneOf(raw.status, ['archived'] as const), q: text(raw.q) });
