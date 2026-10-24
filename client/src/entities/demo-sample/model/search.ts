@@ -1,4 +1,5 @@
 import { findingOf, oneOf } from '@/shared/lib/route-search';
+import { parsePanelPlace, type PanelPlace } from '@/shared/lib/routed-panel';
 import type { SortKey } from '@/shared/ui';
 
 /**
@@ -9,9 +10,10 @@ import type { SortKey } from '@/shared/ui';
 export type TableSearch = { q?: string; status?: string; priority?: string; assignee?: string; sort?: string; direction?: 'asc' | 'desc'; finding?: 1 };
 /**
  * The issue pages (전체 and a project's, D-066): the view in sight (전체 이슈 when left out), the filters changed over the
- * view's own ('-' for one taken off, D-068), the search words and the calendar's own place (cal, date).
+ * view's own ('-' for one taken off, D-068), the search words, the calendar's own place (cal, date), and the issue open
+ * in the modal over them (panel, depth: the address bar shows the issue's own, D-069).
  */
-export type IssueSearch = { v?: string; q?: string; status?: string; priority?: string; assignee?: string; label?: string; cal?: 'week' | 'workweek'; date?: string; finding?: 1 };
+export type IssueSearch = PanelPlace & { v?: string; q?: string; status?: string; priority?: string; assignee?: string; label?: string; cal?: 'week' | 'workweek'; date?: string; finding?: 1 };
 export type InboxSearch = { read?: 'unread' | 'read'; kind?: string };
 export type MembersSearch = { view?: 'invitations'; q?: string };
 export type ProjectsSearch = { status?: 'archived'; q?: string };
@@ -36,6 +38,7 @@ const DAY = /^\d{4}-\d{2}-\d{2}$/;
 export const parseIssueSearch = (raw: Record<string, unknown>): IssueSearch => ({
   v: text(raw.v), q: text(raw.q), status: text(raw.status), priority: text(raw.priority), assignee: text(raw.assignee), label: text(raw.label),
   cal: oneOf(raw.cal, ['week', 'workweek'] as const), date: typeof raw.date === 'string' && DAY.test(raw.date) ? raw.date : undefined, finding: findingOf(raw),
+  ...parsePanelPlace(raw),
 });
 export const parseInboxSearch = (raw: Record<string, unknown>): InboxSearch => ({ read: oneOf(raw.read, ['unread', 'read'] as const), kind: text(raw.kind) });
 export const parseMembersSearch = (raw: Record<string, unknown>): MembersSearch => ({ view: oneOf(raw.view, ['invitations'] as const), q: text(raw.q) });

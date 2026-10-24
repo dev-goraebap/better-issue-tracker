@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react';
 import { Button } from '@astryxdesign/core';
 import { useMediaQuery } from '@astryxdesign/core/hooks';
-import { useNavigate } from '@tanstack/react-router';
 import { MOBILE_QUERY } from '@/shared/config';
+import { useGo } from '@/shared/lib/routed-panel';
 import { DefaultAvatar, ListSummary, ListToolbar, PageState, type ListDisplay, type ListFilter, type ListSort, type ListViews } from '@/shared/ui';
 import {
   canEditView, FILTER_KEYS, filterIssues, ISSUE_LABELS, IssueRows, IssueTable, LABEL_COLORS, NO_FILTER, PEOPLE, PRIORITY_LABELS, setViewTweak, STATUS_LABELS,
@@ -40,7 +40,8 @@ export function IssuesView({ scope, view, tweak, effective, issues, search, go, 
   onCreate?: (status?: Status) => void; onSaveAsView: () => void;
 }) {
   const isMobile = useMediaQuery(MOBILE_QUERY);
-  const navigate = useNavigate();
+  // An issue opened from the calendar goes where a pressed link would: into the page's modal (D-069).
+  const openPage = useGo();
   const [shown, setShown] = useState(SLICE);
   const { workspaceId, projectIds } = scope;
   const canEdit = canEditView(view);
@@ -118,7 +119,7 @@ export function IssuesView({ scope, view, tweak, effective, issues, search, go, 
       : <BoardView workspaceId={workspaceId} items={withStatus} search={search} onCreate={onCreate} />)}
     {effective.layout === 'calendar' && <div className={styles.calendarRoom}>
       <div className={styles.calendarBar}><DemoCalendarBar search={calendarSearch} onPlace={placeCalendar} /></div>
-      <DemoCalendar workspaceId={workspaceId} issues={rows} search={calendarSearch} onPlace={placeCalendar} onOpen={href => void navigate({ href })} />
+      <DemoCalendar workspaceId={workspaceId} issues={rows} search={calendarSearch} onPlace={placeCalendar} onOpen={href => openPage(href)} />
     </div>}
     {effective.layout === 'timeline' && <TimelineView workspaceId={workspaceId} items={rows} search={search} />}
     {effective.layout === 'cards' && <CardsView workspaceId={workspaceId} items={rows} search={search} />}

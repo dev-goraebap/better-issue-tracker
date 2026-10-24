@@ -1,0 +1,42 @@
+/* A detail's frame: a ruled header, a body that scrolls, and a footer band at the foot for its action. */
+.panel { display: flex; flex-direction: column; min-block-size: 100%; }
+/*
+ * The desktop content modal: a browser modal centred over the whole window, its backdrop dimming (never blurring, D-067)
+ * everything under it, on a hairline with 16px corners and the dialog's shadow.
+ * Its height is set in pixels by useModalHeight (at least 560px, or 440px
+ * compact; at most 90% of the window) and eases when it changes; the frame inside fills it, so short content sits at
+ * the top of the body and the footer stays at the foot.
+ */
+.modal { position: fixed; inset: 0; display: flex; flex-direction: column; box-sizing: border-box; inline-size: min(832px, 100vw - 48px); max-inline-size: none;
+  max-block-size: 90dvh; margin: auto; padding: 0; overflow: hidden; outline: none; color: var(--color-text-primary); background: var(--color-background-surface);
+  border: 1px solid var(--bit-float-border); border-radius: 1rem; box-shadow: var(--shadow-high);
+  transition: height var(--duration-fast-max, 230ms) var(--ease-standard, ease-out); animation: modal-rise var(--duration-fast, 175ms) var(--ease-standard, ease-out) both; }
+.modal::backdrop { background: var(--color-overlay); animation: modal-fade var(--duration-fast, 175ms) ease-out both; }
+.modal:not([open]) { display: none; }
+.modal[data-size="compact"] { inline-size: min(560px, 100vw - 48px); }
+/* However deep the detail's frame sits, every box down to it fills the modal, and only its body scrolls. */
+.modal :has(.panel), .modal .panel { display: flex; flex-direction: column; flex: 1 1 auto; min-block-size: 0; }
+.modal .panel { max-block-size: none; }
+.modal .body { flex: 1 1 auto; min-block-size: 0; scrollbar-gutter: stable; }
+/* While the height eases the body clips rather than flashing a scrollbar; its scroll position stays. */
+.modal[data-resizing] .body { overflow-y: hidden; }
+/* The closing copy (useCloseGhost): a backdrop and the card in a centring box above the page, fading and sinking. */
+.backdrop { position: fixed; z-index: 30; inset: 0; background: var(--color-overlay); }
+.modalPlace { position: fixed; z-index: 31; inset: 0; display: grid; place-items: center; }
+.modalPlace .modal { position: static; margin: 0; }
+.closing { pointer-events: none; }
+.closing.backdrop { animation: modal-fade-out var(--duration-fast, 175ms) ease-in both; }
+.closing .modal { animation: modal-sink var(--duration-fast, 175ms) ease-in both; transition: none; }
+@keyframes modal-fade { from { opacity: 0; } }
+@keyframes modal-fade-out { to { opacity: 0; } }
+@keyframes modal-rise { from { opacity: 0; transform: translateY(8px) scale(0.98); } }
+@keyframes modal-sink { to { opacity: 0; transform: translateY(4px) scale(0.98); } }
+@media (prefers-reduced-motion: reduce) { .modal, .modal::backdrop { animation: none; transition: none; } }
+.body { flex: 1; padding: var(--spacing-2) var(--spacing-6); overflow-y: auto; }
+.foot { position: sticky; bottom: 0; padding: var(--spacing-4) var(--spacing-6); padding-block-end: max(var(--spacing-4), env(safe-area-inset-bottom));
+  border-block-start: 1px solid var(--color-border); background: var(--color-background-surface); }
+/* On a phone the panel fills the screen; its header, body and footer keep to the phone's narrower insets. */
+@media (width < 64rem) {
+  .body { padding-inline: var(--spacing-5); }
+  .foot { padding-inline: var(--spacing-5); }
+}

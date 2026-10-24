@@ -163,7 +163,9 @@ const demoRoutes = [
   createRoute({ getParentRoute: () => demo, path: '/patterns/dialogs', component: DemoDialogsPage }),
 ] as const;
 const demoTree = import.meta.env.DEV ? [demo.addChildren(demoRoutes)] : [];
-export const router = createRouter({ routeTree: rootRoute.addChildren([...demoTree, workspace.addChildren([start, chooser, scoped.addChildren([home, inbox, myTasks, members, documents, settings, projects, projectItems, projectSettings, itemDetail, itemReference]), security, keys, appearance, ...legacy]), login, setup, join, forcedPassword]), defaultPreload: 'intent', scrollRestoration: true });
+export const router = createRouter({ routeTree: rootRoute.addChildren([...demoTree, workspace.addChildren([start, chooser, scoped.addChildren([home, inbox, myTasks, members, documents, settings, projects, projectItems, projectSettings, itemDetail, itemReference]), security, keys, appearance, ...legacy]), login, setup, join, forcedPassword]), defaultPreload: 'intent', scrollRestoration: true,
+  // A panel opened over a screen shows the page's own address (a masked move); reloaded, the address is that page (D-069).
+  unmaskOnReload: true });
 setUnauthorizedHandler(() => { resetCsrf(); void queryClient.cancelQueries().then(() => { queryClient.clear(); void router.navigate({ to: '/login' }); }); });
 followHistory(router.history);
 declare module '@tanstack/react-router' { interface Register { router: typeof router } }
