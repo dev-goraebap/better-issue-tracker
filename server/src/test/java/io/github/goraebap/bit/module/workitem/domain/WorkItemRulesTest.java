@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +19,7 @@ class WorkItemRulesTest {
                 project,
                 1,
                 WorkItem.Details.of("Task", null, null, null, null, null, null),
+                Set.of(),
                 null,
                 false,
                 0,

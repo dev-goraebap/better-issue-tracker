@@ -4,6 +4,7 @@ import io.github.goraebap.bit.shared.domain.Audit;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 import lombok.Getter;
 
@@ -54,6 +55,7 @@ public final class WorkItem {
     private final UUID projectId;
     private final long number;
     private Details details;
+    private Set<UUID> labelIds;
     private UUID columnId;
     private double position;
     private Instant closedAt;
@@ -66,6 +68,7 @@ public final class WorkItem {
             UUID projectId,
             long number,
             Details details,
+            Set<UUID> labelIds,
             UUID columnId,
             double position,
             Instant closedAt,
@@ -76,6 +79,7 @@ public final class WorkItem {
         this.projectId = projectId;
         this.number = number;
         this.details = details;
+        this.labelIds = Set.copyOf(labelIds);
         this.columnId = columnId;
         this.position = position;
         this.closedAt = closedAt;
@@ -88,6 +92,7 @@ public final class WorkItem {
             UUID projectId,
             long number,
             Details details,
+            Set<UUID> labelIds,
             UUID columnId,
             boolean finalColumn,
             double position,
@@ -102,6 +107,7 @@ public final class WorkItem {
                 projectId,
                 number,
                 valid,
+                Objects.requireNonNull(labelIds, "labelIds"),
                 columnId,
                 position,
                 finalColumn ? now : null,
@@ -115,17 +121,28 @@ public final class WorkItem {
             UUID projectId,
             long number,
             Details details,
+            Set<UUID> labelIds,
             UUID columnId,
             double position,
             Instant closedAt,
             Instant archivedAt,
             long version,
             Audit audit) {
-        return new WorkItem(id, projectId, number, details, columnId, position, closedAt, archivedAt, version, audit);
+        return new WorkItem(
+                id, projectId, number, details, labelIds, columnId, position, closedAt, archivedAt, version, audit);
     }
 
     public void revise(Details next, UUID actor, String agent, Instant now) {
-        this.details = validate(next);
+        revise(next, labelIds, actor, agent, now);
+    }
+
+    /** One revision for the fields and the label set together, so a combined edit is one version. */
+    public void revise(Details next, Set<UUID> nextLabelIds, UUID actor, String agent, Instant now) {
+        Details valid = validate(next);
+        Set<UUID> labels = Set.copyOf(Objects.requireNonNull(nextLabelIds, "labelIds"));
+        if (valid.equals(details) && labels.equals(labelIds)) return;
+        this.details = valid;
+        this.labelIds = labels;
         touch(actor, agent, now);
     }
 

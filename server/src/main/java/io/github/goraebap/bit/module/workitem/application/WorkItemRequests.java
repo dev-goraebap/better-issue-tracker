@@ -9,11 +9,15 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import org.springframework.format.annotation.DateTimeFormat;
 
 public final class WorkItemRequests {
+    static final int MAX_LABELS = 50;
+
     private WorkItemRequests() {}
 
     @Schema(name = "CreateWorkItem")
@@ -25,9 +29,20 @@ public final class WorkItemRequests {
             @Schema(nullable = true) UUID assigneeId,
             @Schema(nullable = true) LocalDate startDate,
             @Schema(nullable = true) LocalDate dueDate,
-            @Schema(nullable = true) UUID columnId) {
+            @Schema(nullable = true) UUID columnId,
+
+            @Size(max = MAX_LABELS) @Schema(nullable = true, description = "Workspace labels to attach; omitted or null attaches none")
+            List<@NotNull UUID> labelIds) {
+        public Create {
+            labelIds = labelIds == null ? null : List.copyOf(labelIds);
+        }
+
         WorkItem.Details details() {
             return new WorkItem.Details(title, description, priority, triggerType, assigneeId, startDate, dueDate);
+        }
+
+        Set<UUID> labels() {
+            return labelIds == null ? Set.of() : Set.copyOf(labelIds);
         }
     }
 
@@ -45,7 +60,11 @@ public final class WorkItemRequests {
         private @Schema(nullable = true) UUID assigneeId;
         private @Schema(nullable = true) LocalDate startDate;
         private @Schema(nullable = true) LocalDate dueDate;
+
+        @Size(max = MAX_LABELS) private List<@NotNull UUID> labelIds;
+
         private boolean hasTitle, hasDescription, hasPriority, hasTriggerType, hasAssigneeId, hasStartDate, hasDueDate;
+        private boolean hasLabelIds;
 
         public Long getExpectedVersion() {
             return expectedVersion;
@@ -116,6 +135,26 @@ public final class WorkItemRequests {
         public void setDueDate(LocalDate value) {
             dueDate = value;
             hasDueDate = true;
+        }
+
+        @Schema(
+                nullable = true,
+                description = "Omitted: labels are kept. Present: the whole set is replaced; [] or null clears it")
+        public List<UUID> getLabelIds() {
+            return labelIds == null ? null : java.util.Collections.unmodifiableList(labelIds);
+        }
+
+        public void setLabelIds(List<UUID> value) {
+            labelIds = value == null ? null : new ArrayList<>(value);
+            hasLabelIds = true;
+        }
+
+        public boolean hasLabelIds() {
+            return hasLabelIds;
+        }
+
+        Set<UUID> labels() {
+            return labelIds == null ? Set.of() : Set.copyOf(labelIds);
         }
 
         public boolean hasTitle() {
@@ -205,9 +244,12 @@ public final class WorkItemRequests {
         }
     }
 
-    public static final class ListRequest {
+    /** Filters shared by the project, My Tasks and workspace lists. */
+    public abstract static class Filters {
         private @Schema(nullable = true) UUID assigneeId;
-        private String column;
+        private List<UUID> labelId = List.of();
+        private List<String> category = List.of();
+        private Boolean hasDates;
         private List<String> priority = List.of();
         private List<String> triggerType = List.of();
 
@@ -237,12 +279,31 @@ public final class WorkItemRequests {
             assigneeId = value;
         }
 
-        public String getColumn() {
-            return column;
+        @Schema(description = "Any of these labels (repeatable). Deleted labels match nothing")
+        public List<UUID> getLabelId() {
+            return List.copyOf(labelId);
         }
 
-        public void setColumn(String value) {
-            column = value;
+        public void setLabelId(List<UUID> value) {
+            labelId = value == null ? List.of() : List.copyOf(value);
+        }
+
+        @Schema(description = "Any of todo, doing, done, or none for items without a status (repeatable)")
+        public List<String> getCategory() {
+            return List.copyOf(category);
+        }
+
+        public void setCategory(List<String> value) {
+            category = value == null ? List.of() : List.copyOf(value);
+        }
+
+        @Schema(nullable = true, description = "true: has a start or due date. false: has neither")
+        public Boolean getHasDates() {
+            return hasDates;
+        }
+
+        public void setHasDates(Boolean value) {
+            hasDates = value;
         }
 
         public List<String> getPriority() {
@@ -293,6 +354,7 @@ public final class WorkItemRequests {
             closed = value;
         }
 
+        @Schema(description = "Keeps items whose start..due span (one day when only one is set) ends on or after it")
         public LocalDate getFrom() {
             return from;
         }
@@ -301,6 +363,7 @@ public final class WorkItemRequests {
             from = value;
         }
 
+        @Schema(description = "Keeps items whose start..due span starts on or before it")
         public LocalDate getTo() {
             return to;
         }
@@ -339,6 +402,42 @@ public final class WorkItemRequests {
 
         public void setDirection(String value) {
             direction = value;
+        }
+    }
+
+    public static final class ListRequest extends Filters {
+        private String column;
+
+        @Schema(description = "A column id of the project, or backlog")
+        public String getColumn() {
+            return column;
+        }
+
+        public void setColumn(String value) {
+            column = value;
+        }
+    }
+
+    public static final class WorkspaceListRequest extends Filters {
+        private List<UUID> projectId = List.of();
+        private List<UUID> columnId = List.of();
+
+        @Schema(description = "Any of these projects (repeatable). Archived and deleted projects are always left out")
+        public List<UUID> getProjectId() {
+            return List.copyOf(projectId);
+        }
+
+        public void setProjectId(List<UUID> value) {
+            projectId = value == null ? List.of() : List.copyOf(value);
+        }
+
+        @Schema(description = "Any of these columns (repeatable); use category=none for items without a status")
+        public List<UUID> getColumnId() {
+            return List.copyOf(columnId);
+        }
+
+        public void setColumnId(List<UUID> value) {
+            columnId = value == null ? List.of() : List.copyOf(value);
         }
     }
 }

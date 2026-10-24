@@ -78,6 +78,7 @@ class WorkspaceIntegrationTest {
         for (String table : List.of(
                 "workspace_invitation",
                 "workspace_member",
+                "label",
                 "workspace",
                 "iam_api_key",
                 "iam_session",

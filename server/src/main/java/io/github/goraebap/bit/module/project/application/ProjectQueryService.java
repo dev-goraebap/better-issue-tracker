@@ -1,5 +1,6 @@
 package io.github.goraebap.bit.module.project.application;
 
+import io.github.goraebap.bit.module.project.domain.BoardColumn;
 import io.github.goraebap.bit.module.project.domain.ProjectRepository;
 import io.github.goraebap.bit.module.workspace.WorkspaceFacade;
 import io.github.goraebap.bit.shared.error.CommonErrorCode;
@@ -78,8 +79,7 @@ public class ProjectQueryService {
     public List<ProjectViews.Column> columns(CurrentUser actor, UUID workspaceId, UUID projectId) {
         get(actor, workspaceId, projectId);
         return projectRepository.findColumns(projectId).stream()
-                .map(c -> new ProjectViews.Column(
-                        c.id(), c.name(), c.color(), c.position(), c.finalColumn(), c.version()))
+                .map(ProjectQueryService::column)
                 .toList();
     }
 
@@ -89,7 +89,12 @@ public class ProjectQueryService {
         var c = projectRepository
                 .findColumn(projectId, columnId)
                 .orElseThrow(ProjectErrorCode.PROJECT_COLUMN_NOT_FOUND::raise);
-        return new ProjectViews.Column(c.id(), c.name(), c.color(), c.position(), c.finalColumn(), c.version());
+        return column(c);
+    }
+
+    private static ProjectViews.Column column(BoardColumn c) {
+        return new ProjectViews.Column(
+                c.id(), c.name(), c.color(), c.position(), c.finalColumn(), c.category(), c.version());
     }
 
     private ProjectViews.ProjectInfo view(ProjectRepository.Row row) {

@@ -1,5 +1,6 @@
 package io.github.goraebap.bit.module.project.application;
 
+import io.github.goraebap.bit.module.project.ColumnCategory;
 import io.github.goraebap.bit.module.project.ColumnWorkItemSpi;
 import io.github.goraebap.bit.module.project.ProjectFacade;
 import io.github.goraebap.bit.module.project.domain.BoardColumn;
@@ -97,8 +98,10 @@ public class ProjectService implements ProjectFacade {
     @Transactional(readOnly = true)
     public Optional<ColumnRef> findColumn(CurrentUser actor, UUID workspaceId, UUID projectId, UUID columnId) {
         access(actor, workspaceId, projectId, false, false);
-        if (columnId == null) return Optional.of(new ColumnRef(null, false));
-        return projectRepository.findColumn(projectId, columnId).map(c -> new ColumnRef(c.id(), c.finalColumn()));
+        if (columnId == null) return Optional.of(new ColumnRef(null, false, null));
+        return projectRepository
+                .findColumn(projectId, columnId)
+                .map(c -> new ColumnRef(c.id(), c.finalColumn(), c.category()));
     }
 
     @Transactional
@@ -117,9 +120,18 @@ public class ProjectService implements ProjectFacade {
         projectRepository.save(p);
         projectRepository.switchKey(workspaceId, p.id(), normalized, clock.instant());
         var names = List.of("할 일", "진행 중", "검토 중", "완료");
+        var categories = List.of(ColumnCategory.todo, ColumnCategory.doing, ColumnCategory.doing, ColumnCategory.done);
         for (int i = 0; i < names.size(); i++) {
             projectRepository.save(BoardColumn.create(
-                    p.id(), names.get(i), null, i, i == 3, actor.userId(), agent(actor), clock.instant()));
+                    p.id(),
+                    names.get(i),
+                    null,
+                    i,
+                    i == 3,
+                    categories.get(i),
+                    actor.userId(),
+                    agent(actor),
+                    clock.instant()));
         }
         return p.id();
     }
@@ -193,16 +205,18 @@ public class ProjectService implements ProjectFacade {
             long version,
             String name,
             String color,
-            boolean finalColumn) {
+            boolean finalColumn,
+            ColumnCategory category) {
         var p = settings(actor, workspaceId, projectId, false, false);
         version(p.version(), version);
+        var resolved = category(finalColumn, category, null);
         int position = projectRepository.findColumns(projectId).stream()
                         .mapToInt(BoardColumn::position)
                         .max()
                         .orElse(-1)
                 + 1;
         var c = BoardColumn.create(
-                projectId, name, color, position, finalColumn, actor.userId(), agent(actor), clock.instant());
+                projectId, name, color, position, finalColumn, resolved, actor.userId(), agent(actor), clock.instant());
         projectRepository.save(c);
         touch(p, actor);
         return c.id();
@@ -214,8 +228,10 @@ public class ProjectService implements ProjectFacade {
         settings(actor, workspaceId, projectId, false, false);
         var c = column(projectId, columnId);
         version(c.version(), request.getExpectedVersion());
-        if (request.hasIsFinal() && request.getIsFinal() == null) throw CommonErrorCode.COMMON_INVALID_REQUEST.raise();
-        if (!request.hasName() && !request.hasColor() && !request.hasIsFinal()) return;
+        if (request.hasIsFinal() && request.getIsFinal() == null
+                || request.hasCategory() && request.getCategory() == null)
+            throw CommonErrorCode.COMMON_INVALID_REQUEST.raise();
+        if (!request.hasName() && !request.hasColor() && !request.hasIsFinal() && !request.hasCategory()) return;
         reviseColumn(
                 actor,
                 workspaceId,
@@ -224,7 +240,8 @@ public class ProjectService implements ProjectFacade {
                 request.getExpectedVersion(),
                 request.hasName() ? request.getName() : c.name(),
                 request.hasColor() ? request.getColor() : c.color(),
-                request.hasIsFinal() ? request.getIsFinal() : c.finalColumn());
+                request.hasIsFinal() ? request.getIsFinal() : c.finalColumn(),
+                request.hasCategory() ? request.getCategory() : null);
     }
 
     @Transactional
@@ -237,12 +254,28 @@ public class ProjectService implements ProjectFacade {
             String name,
             String color,
             boolean finalColumn) {
+        reviseColumn(actor, workspaceId, projectId, columnId, version, name, color, finalColumn, null);
+    }
+
+    /** A null category keeps the current one, moving it to done or doing only when finality changes. */
+    @Transactional
+    public void reviseColumn(
+            CurrentUser actor,
+            UUID workspaceId,
+            UUID projectId,
+            UUID columnId,
+            long version,
+            String name,
+            String color,
+            boolean finalColumn,
+            ColumnCategory category) {
         var p = settings(actor, workspaceId, projectId, false, false);
         var c = column(projectId, columnId);
         version(c.version(), version);
+        var resolved = category(finalColumn, category, c);
         if (c.finalColumn() && !finalColumn) assertAnotherFinal(projectId, columnId);
         boolean changed = c.finalColumn() != finalColumn;
-        c.configure(name, color, finalColumn, actor.userId(), agent(actor), clock.instant());
+        c.configure(name, color, finalColumn, resolved, actor.userId(), agent(actor), clock.instant());
         projectRepository.save(c);
         if (changed)
             columnWorkItemSpiProvider.getObject().reclassify(actor, workspaceId, projectId, columnId, finalColumn);
@@ -330,6 +363,17 @@ public class ProjectService implements ProjectFacade {
         var existing = projectRepository.findKey(workspaceId, key.value());
         if (existing.isPresent() && !existing.get().projectId().equals(projectId))
             throw ProjectErrorCode.PROJECT_KEY_CONFLICT.raise();
+    }
+
+    private static ColumnCategory category(boolean finalColumn, ColumnCategory requested, BoardColumn current) {
+        if (requested != null) {
+            if (!BoardColumn.allows(finalColumn, requested))
+                throw ProjectErrorCode.PROJECT_COLUMN_CATEGORY_INVALID.raise();
+            return requested;
+        }
+        if (finalColumn) return ColumnCategory.done;
+        if (current == null || current.finalColumn()) return ColumnCategory.doing;
+        return current.category();
     }
 
     private void assertAnotherFinal(UUID projectId, UUID columnId) {

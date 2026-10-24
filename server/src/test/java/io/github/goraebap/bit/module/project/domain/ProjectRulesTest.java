@@ -3,6 +3,7 @@ package io.github.goraebap.bit.module.project.domain;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import io.github.goraebap.bit.module.project.ColumnCategory;
 import java.time.Instant;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -38,8 +39,13 @@ class ProjectRulesTest {
 
     @Test
     void columnConfigurationValidatesEverythingBeforeChangingState() {
-        var c = BoardColumn.create(UUID.randomUUID(), "Todo", null, 0, false, actor, null, now);
-        assertThatThrownBy(() -> c.configure("New", "red", true, actor, null, now))
+        var c = BoardColumn.create(UUID.randomUUID(), "Todo", null, 0, false, ColumnCategory.todo, actor, null, now);
+        assertThatThrownBy(() -> c.configure("New", "red", true, ColumnCategory.done, actor, null, now))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> c.configure("New", null, true, ColumnCategory.doing, actor, null, now))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> BoardColumn.create(
+                        UUID.randomUUID(), "Done", null, 1, true, ColumnCategory.todo, actor, null, now))
                 .isInstanceOf(IllegalArgumentException.class);
         assertThat(c.name()).isEqualTo("Todo");
         assertThat(c.finalColumn()).isFalse();

@@ -87,12 +87,14 @@ class WorkItemIntegrationTest {
         for (String trigger : List.of("reject_task", "reject_move", "reject_close"))
             jdbcTemplate.execute("DROP TRIGGER IF EXISTS " + trigger);
         for (String table : List.of(
+                "work_item_label",
                 "work_item",
                 "board_column",
                 "project_key",
                 "project",
                 "workspace_invitation",
                 "workspace_member",
+                "label",
                 "workspace",
                 "iam_api_key",
                 "iam_session",

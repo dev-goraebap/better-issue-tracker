@@ -26,5 +26,6 @@ public interface ProjectFacade {
 
     record ProjectRef(UUID id, UUID workspaceId, String key, long version, boolean archived) {}
 
-    record ColumnRef(UUID id, boolean finalColumn) {}
+    /** A null id is the backlog, which has no category. */
+    record ColumnRef(UUID id, boolean finalColumn, ColumnCategory category) {}
 }

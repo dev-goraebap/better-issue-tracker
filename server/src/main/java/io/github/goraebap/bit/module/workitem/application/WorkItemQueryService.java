@@ -1,6 +1,8 @@
 package io.github.goraebap.bit.module.workitem.application;
 
 import io.github.goraebap.bit.module.iam.IamFacade;
+import io.github.goraebap.bit.module.label.LabelFacade;
+import io.github.goraebap.bit.module.project.ColumnCategory;
 import io.github.goraebap.bit.module.project.ProjectFacade;
 import io.github.goraebap.bit.module.workitem.WorkItemFacade;
 import io.github.goraebap.bit.module.workitem.domain.WorkItem;
@@ -13,7 +15,10 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -24,10 +29,12 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 public class WorkItemQueryService {
+    private static final String NO_CATEGORY = "none";
     private final WorkItemRepository workItemRepository;
     private final WorkItemFacade workItemFacade;
     private final ProjectFacade projectFacade;
     private final WorkspaceFacade workspaceFacade;
+    private final LabelFacade labelFacade;
     private final IamFacade iamFacade;
     private final SecretTokens secretTokens;
 
@@ -43,21 +50,26 @@ public class WorkItemQueryService {
                         .user(w.details().assigneeId())
                         .map(IamFacade.User::name)
                         .orElse("탈퇴한 사용자");
-        return view(
-                workspaceId,
-                new WorkItemRepository.Row(
-                        w.id(),
-                        projectId,
-                        p.key(),
-                        w.number(),
-                        w.details(),
-                        w.columnId(),
-                        w.position(),
-                        w.closedAt(),
-                        w.archivedAt(),
-                        w.version(),
-                        w.audit(),
-                        name));
+        var category = projectFacade
+                .findColumn(actor, workspaceId, projectId, w.columnId())
+                .map(ProjectFacade.ColumnRef::category)
+                .orElse(null);
+        var row = new WorkItemRepository.Row(
+                w.id(),
+                projectId,
+                p.key(),
+                w.number(),
+                w.details(),
+                w.labelIds(),
+                w.columnId(),
+                category == null ? null : category.name(),
+                w.position(),
+                w.closedAt(),
+                w.archivedAt(),
+                w.version(),
+                w.audit(),
+                name);
+        return view(workspaceId, row, labels(actor, workspaceId, List.of(row)));
     }
 
     @Transactional(readOnly = true)
@@ -66,40 +78,104 @@ public class WorkItemQueryService {
         return get(actor, workspaceId, ref.projectId(), ref.id());
     }
 
+    /** The project list ({@code projectId} set) or My Tasks ({@code mine}). */
     @Transactional(readOnly = true)
     public WorkItemViews.WorkItems list(
             CurrentUser actor, UUID workspaceId, UUID projectId, boolean mine, WorkItemRequests.ListRequest request) {
         var q = query(actor, workspaceId, projectId, mine, request);
+        return page(actor, workspaceId, "workitem-list", q, request);
+    }
+
+    /** Every project of the workspace that is neither archived nor deleted, with the same paging as a project list. */
+    @Transactional(readOnly = true)
+    public WorkItemViews.WorkItems listWorkspace(
+            CurrentUser actor, UUID workspaceId, WorkItemRequests.WorkspaceListRequest request) {
+        var q = query(
+                actor,
+                workspaceId,
+                null,
+                false,
+                request,
+                null,
+                false,
+                Set.copyOf(request.getProjectId()),
+                Set.copyOf(request.getColumnId()));
+        return page(actor, workspaceId, "workitem-workspace-list", q, request);
+    }
+
+    @Transactional(readOnly = true)
+    public List<WorkItemViews.ColumnCount> counts(
+            CurrentUser actor, UUID workspaceId, UUID projectId, WorkItemRequests.ListRequest request) {
+        var q = query(actor, workspaceId, projectId, false, request);
+        return workItemRepository.countByColumn(q).stream()
+                .map(c -> new WorkItemViews.ColumnCount(c.columnId(), c.count()))
+                .toList();
+    }
+
+    private WorkItemViews.WorkItems page(
+            CurrentUser actor,
+            UUID workspaceId,
+            String purpose,
+            WorkItemRepository.Query q,
+            WorkItemRequests.Filters request) {
         String sort = q.sort();
         String canonical = String.join(
                 "\n",
                 actor.userId().toString(),
                 workspaceId.toString(),
-                String.valueOf(projectId),
+                String.valueOf(q.projectId()),
+                ids(q.projectIds()),
                 String.valueOf(q.assigneeId()),
                 String.valueOf(q.columnId()),
                 Boolean.toString(q.backlog()),
+                ids(q.columnIds()),
+                ids(q.labelIds()),
+                String.join(",", q.categories().stream().sorted().toList()),
+                Boolean.toString(q.noCategory()),
                 names(q.priorities()),
                 names(q.triggers()),
                 Boolean.toString(q.archived()),
                 Boolean.toString(q.deleted()),
                 String.valueOf(q.closed()),
+                String.valueOf(q.hasDates()),
                 String.valueOf(q.from()),
                 String.valueOf(q.to()),
                 sort,
                 q.direction(),
                 q.search());
-        String scope = secretTokens.hash("workitem-list", canonical);
+        String scope = secretTokens.hash(purpose, canonical);
         var point = decode(request.getCursor(), scope, sort);
         var rows = workItemRepository.findAll(q, point, request.getSize() + 1);
         var page = rows.stream().limit(request.getSize()).toList();
         String next = rows.size() > request.getSize() ? encode(scope, page.getLast(), sort) : null;
+        var labels = labels(actor, workspaceId, page);
         return new WorkItemViews.WorkItems(
-                page.stream().map(row -> view(workspaceId, row)).toList(), next);
+                page.stream().map(row -> view(workspaceId, row, labels)).toList(), next);
     }
 
     private WorkItemRepository.Query query(
             CurrentUser actor, UUID workspaceId, UUID projectId, boolean mine, WorkItemRequests.ListRequest request) {
+        boolean backlog = "backlog".equals(request.getColumn());
+        UUID column = null;
+        try {
+            if (!backlog && request.getColumn() != null && !request.getColumn().isBlank())
+                column = UUID.fromString(request.getColumn());
+        } catch (IllegalArgumentException invalid) {
+            throw CommonErrorCode.COMMON_INVALID_REQUEST.raise();
+        }
+        return query(actor, workspaceId, projectId, mine, request, column, backlog, Set.of(), Set.of());
+    }
+
+    private WorkItemRepository.Query query(
+            CurrentUser actor,
+            UUID workspaceId,
+            UUID projectId,
+            boolean mine,
+            WorkItemRequests.Filters request,
+            UUID column,
+            boolean backlog,
+            Set<UUID> projectIds,
+            Set<UUID> columnIds) {
         workspaceFacade.requireAccess(
                 actor,
                 workspaceId,
@@ -118,46 +194,51 @@ public class WorkItemQueryService {
                 && request.getTo() != null
                 && request.getFrom().isAfter(request.getTo()))
             throw WorkItemErrorCode.WORKITEM_DATE_RANGE_INVALID.raise();
-        boolean backlog = "backlog".equals(request.getColumn());
-        UUID column = null;
-        try {
-            if (!backlog && request.getColumn() != null && !request.getColumn().isBlank())
-                column = UUID.fromString(request.getColumn());
-        } catch (IllegalArgumentException invalid) {
-            throw CommonErrorCode.COMMON_INVALID_REQUEST.raise();
-        }
         if (column != null && projectId != null) projectFacade.requireColumn(actor, workspaceId, projectId, column);
         var priorities = values(request.getPriority(), WorkItem.Priority.class);
         var triggers = values(request.getTriggerType(), WorkItem.TriggerType.class);
+        var categories = new HashSet<>(split(request.getCategory()));
+        boolean noCategory = categories.remove(NO_CATEGORY);
+        var categoryNames = values(List.copyOf(categories), ColumnCategory.class).stream()
+                .map(Enum::name)
+                .collect(Collectors.toUnmodifiableSet());
+        if (projectIds.size() > 100
+                || columnIds.size() > 100
+                || request.getLabelId().size() > 100) throw CommonErrorCode.COMMON_INVALID_REQUEST.raise();
         UUID assignee = mine ? actor.userId() : request.getAssigneeId();
         return new WorkItemRepository.Query(
                 workspaceId,
                 projectId,
+                projectIds,
                 assignee,
                 column,
                 backlog,
+                columnIds,
+                Set.copyOf(request.getLabelId()),
+                categoryNames,
+                noCategory,
                 priorities,
                 triggers,
                 search,
                 request.isArchived(),
                 request.isDeleted(),
                 request.getClosed(),
+                request.getHasDates(),
                 request.getFrom(),
                 request.getTo(),
                 sort,
                 direction);
     }
 
-    @Transactional(readOnly = true)
-    public List<WorkItemViews.ColumnCount> counts(
-            CurrentUser actor, UUID workspaceId, UUID projectId, WorkItemRequests.ListRequest request) {
-        var q = query(actor, workspaceId, projectId, false, request);
-        return workItemRepository.countByColumn(q).stream()
-                .map(c -> new WorkItemViews.ColumnCount(c.columnId(), c.count()))
-                .toList();
+    /** One label lookup for every row shown together; deleted labels are absent and so disappear from the rows. */
+    private Map<UUID, LabelFacade.LabelRef> labels(
+            CurrentUser actor, UUID workspaceId, Collection<WorkItemRepository.Row> rows) {
+        var ids = rows.stream().flatMap(r -> r.labelIds().stream()).collect(Collectors.toSet());
+        return ids.isEmpty() ? Map.of() : labelFacade.findAllById(actor, workspaceId, ids);
     }
 
-    private WorkItemViews.Item view(UUID workspaceId, WorkItemRepository.Row row) {
+    private WorkItemViews.Item view(
+            UUID workspaceId, WorkItemRepository.Row row, Map<UUID, LabelFacade.LabelRef> labels) {
         var d = row.details();
         var a = row.audit();
         return new WorkItemViews.Item(
@@ -169,6 +250,13 @@ public class WorkItemQueryService {
                 d.title(),
                 d.description(),
                 row.columnId(),
+                row.columnCategory() == null ? null : ColumnCategory.valueOf(row.columnCategory()),
+                row.labelIds().stream()
+                        .map(labels::get)
+                        .filter(java.util.Objects::nonNull)
+                        .sorted(LabelFacade.LabelRef.ORDER)
+                        .map(l -> new WorkItemViews.Label(l.id(), l.name(), l.color(), l.system()))
+                        .toList(),
                 row.position(),
                 d.priority(),
                 d.triggerType(),
@@ -188,14 +276,17 @@ public class WorkItemQueryService {
                 a.updatedByAgent());
     }
 
+    private static List<String> split(List<String> raw) {
+        return raw.stream()
+                .flatMap(s -> Arrays.stream(s.split(",")))
+                .map(String::strip)
+                .filter(s -> !s.isEmpty())
+                .toList();
+    }
+
     private static <E extends Enum<E>> Set<E> values(List<String> raw, Class<E> type) {
         try {
-            return raw.stream()
-                    .flatMap(s -> Arrays.stream(s.split(",")))
-                    .map(String::strip)
-                    .filter(s -> !s.isEmpty())
-                    .map(s -> Enum.valueOf(type, s))
-                    .collect(Collectors.toUnmodifiableSet());
+            return split(raw).stream().map(s -> Enum.valueOf(type, s)).collect(Collectors.toUnmodifiableSet());
         } catch (IllegalArgumentException invalid) {
             throw CommonErrorCode.COMMON_INVALID_REQUEST.raise();
         }
@@ -203,6 +294,10 @@ public class WorkItemQueryService {
 
     private static String names(Set<? extends Enum<?>> values) {
         return values.stream().map(Enum::name).sorted().collect(Collectors.joining(","));
+    }
+
+    private static String ids(Set<UUID> values) {
+        return values.stream().map(UUID::toString).sorted().collect(Collectors.joining(","));
     }
 
     private static WorkItemRepository.Point decode(String raw, String scope, String sort) {

@@ -12,7 +12,8 @@ public enum WorkItemErrorCode implements ErrorCode {
     WORKITEM_VERSION_CONFLICT(HttpStatus.CONFLICT, "다른 변경이 있습니다. 새로 읽은 뒤 다시 시도해 주세요"),
     WORKITEM_ASSIGNEE_NOT_MEMBER(HttpStatus.BAD_REQUEST, "현재 워크스페이스 멤버에게만 배정할 수 있습니다"),
     WORKITEM_DATE_RANGE_INVALID(HttpStatus.BAD_REQUEST, "시작일은 마감일보다 늦을 수 없습니다"),
-    WORKITEM_MOVE_INVALID(HttpStatus.BAD_REQUEST, "이동할 위치를 다시 확인해 주세요");
+    WORKITEM_MOVE_INVALID(HttpStatus.BAD_REQUEST, "이동할 위치를 다시 확인해 주세요"),
+    WORKITEM_LABEL_INVALID(HttpStatus.BAD_REQUEST, "이 워크스페이스의 라벨만 붙일 수 있습니다");
     private final HttpStatus status;
     private final String message;
 }

@@ -20,7 +20,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 final class WorkItemHttpAuthorizationFilter extends OncePerRequestFilter {
     private static final Pattern PATH = Pattern.compile(
-            "^/api/v1/workspaces/([^/]+)/(?:projects/([^/]+)/work-items(?:/([^/]+)(?:/([^/]+))?)?|my-tasks|work-items/by-ref/[^/]+)$");
+            "^/api/v1/workspaces/([^/]+)/(?:projects/([^/]+)/work-items(?:/([^/]+)(?:/([^/]+))?)?|my-tasks|work-items|work-items/by-ref/[^/]+)$");
     private final WorkItemFacade workItemFacade;
     private final ProjectFacade projectFacade;
     private final WorkspaceFacade workspaceFacade;

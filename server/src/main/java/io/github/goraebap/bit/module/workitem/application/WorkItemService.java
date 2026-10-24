@@ -1,5 +1,6 @@
 package io.github.goraebap.bit.module.workitem.application;
 
+import io.github.goraebap.bit.module.label.LabelFacade;
 import io.github.goraebap.bit.module.project.ColumnWorkItemSpi;
 import io.github.goraebap.bit.module.project.ProjectFacade;
 import io.github.goraebap.bit.module.workitem.WorkItemFacade;
@@ -12,6 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 import java.util.regex.Pattern;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +28,7 @@ public class WorkItemService implements WorkItemFacade, ColumnWorkItemSpi {
     private final WorkItemRepository workItemRepository;
     private final ProjectFacade projectFacade;
     private final WorkspaceFacade workspaceFacade;
+    private final LabelFacade labelFacade;
     private final Clock clock;
 
     @Override
@@ -61,9 +64,21 @@ public class WorkItemService implements WorkItemFacade, ColumnWorkItemSpi {
 
     @Transactional
     public UUID create(CurrentUser actor, UUID workspaceId, UUID projectId, WorkItem.Details details, UUID columnId) {
+        return create(actor, workspaceId, projectId, details, columnId, Set.of());
+    }
+
+    @Transactional
+    public UUID create(
+            CurrentUser actor,
+            UUID workspaceId,
+            UUID projectId,
+            WorkItem.Details details,
+            UUID columnId,
+            Set<UUID> labelIds) {
         projectFacade.requireAccess(actor, workspaceId, projectId, true);
         validateDates(details);
         assignee(actor, workspaceId, details.assigneeId());
+        labels(actor, workspaceId, labelIds);
         var column = projectFacade.requireColumn(actor, workspaceId, projectId, columnId);
         long number = projectFacade.allocateWorkItemNumber(actor, workspaceId, projectId);
         double position = workItemRepository.findColumnItems(projectId, columnId, false).stream()
@@ -75,6 +90,7 @@ public class WorkItemService implements WorkItemFacade, ColumnWorkItemSpi {
                 projectId,
                 number,
                 details,
+                labelIds,
                 columnId,
                 column.finalColumn(),
                 position,
@@ -100,9 +116,11 @@ public class WorkItemService implements WorkItemFacade, ColumnWorkItemSpi {
                 request.hasDueDate() ? request.getDueDate() : d.dueDate());
         validateDates(next);
         if (!Objects.equals(next.assigneeId(), d.assigneeId())) assignee(actor, workspaceId, next.assigneeId());
-        if (next.equals(d)) return;
-        w.revise(next, actor.userId(), agent(actor), clock.instant());
-        workItemRepository.save(w);
+        var labelIds = request.hasLabelIds() ? request.labels() : w.labelIds();
+        if (!labelIds.equals(w.labelIds())) labels(actor, workspaceId, labelIds);
+        long before = w.version();
+        w.revise(next, labelIds, actor.userId(), agent(actor), clock.instant());
+        if (w.version() != before) workItemRepository.save(w);
     }
 
     @Transactional
@@ -161,7 +179,7 @@ public class WorkItemService implements WorkItemFacade, ColumnWorkItemSpi {
         var w = access(actor, workspaceId, projectId, id, true, true);
         version(w, expectedVersion);
         var existing = projectFacade.findColumn(actor, workspaceId, projectId, w.columnId());
-        var column = existing.orElse(new ProjectFacade.ColumnRef(null, false));
+        var column = existing.orElse(new ProjectFacade.ColumnRef(null, false, null));
         w.restore(existing.isPresent(), actor.userId(), agent(actor), clock.instant());
         w.move(column.id(), column.finalColumn(), w.position(), actor.userId(), agent(actor), clock.instant());
         workItemRepository.save(w);
@@ -216,6 +234,13 @@ public class WorkItemService implements WorkItemFacade, ColumnWorkItemSpi {
     private void assignee(CurrentUser actor, UUID workspaceId, UUID userId) {
         if (userId != null && !workspaceFacade.hasMember(actor, workspaceId, userId))
             throw WorkItemErrorCode.WORKITEM_ASSIGNEE_NOT_MEMBER.raise();
+    }
+
+    /** Every label must be a live label of this workspace; deleted or foreign ids are rejected as one error. */
+    private void labels(CurrentUser actor, UUID workspaceId, Set<UUID> labelIds) {
+        if (!labelIds.isEmpty()
+                && labelFacade.findAllById(actor, workspaceId, labelIds).size() != labelIds.size())
+            throw WorkItemErrorCode.WORKITEM_LABEL_INVALID.raise();
     }
 
     private static void validateDates(WorkItem.Details details) {

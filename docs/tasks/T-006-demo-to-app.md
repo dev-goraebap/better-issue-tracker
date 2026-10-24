@@ -56,3 +56,14 @@
 - `npm run check --prefix client`, 서버 `./gradlew check`, 도커 이미지 빌드·healthy가 통과한다. 1440px·390px 화면을 확인한다.
 
 ## 진행 기록
+
+### 2026-10-25 1단계 서버 기반 (커밋 전)
+
+- **스키마**: V5에 `label`·`work_item_label`과 `board_column.category`를 더했다(06-schema의 T-006 V5 계약). 기존 행 분류와 워크스페이스별 결정기록 라벨은 V5가 채운다.
+- **라벨 모듈**: `module/label`을 새로 두고 `LabelFacade`(배치 조회·접근 검사)를 공개한다. 의존은 label → workspace, workitem → label이며 순환이 없다. 새 워크스페이스의 결정기록 라벨은 workspace가 발행하는 `WorkspaceCreatedEvent`를 label이 `BEFORE_COMMIT` 리스너(`Propagation.MANDATORY`)로 받아 같은 트랜잭션에서 만든다. 기존 `TargetChangedEvent`→활동 기록과 같은 방식이다. workspace가 LabelFacade를 부르면 label → workspace와 순환이 생기고, Spi는 구현이 하나뿐인 확장점이라 이벤트를 골랐다.
+- **라벨 REST**: `GET/POST /workspaces/{id}/labels`, `GET/PATCH/DELETE /labels/{labelId}`. 쓰기는 owner/admin/member, viewer는 읽기만, 비구성원은 404. 수정·삭제는 다른 업무처럼 `expectedVersion`(삭제는 쿼리)을 받는다. 시스템 라벨은 이름 변경·삭제가 `LABEL_SYSTEM_LOCKED`(409)이고 색은 바꿀 수 있다. 같은 이름은 `LABEL_NAME_CONFLICT`(409).
+- **이슈**: 만들기는 `labelIds`(생략·null=없음), PATCH는 `labelIds` 생략=유지, 값=전체 교체, `[]`·null=비움. 라벨은 작업항목 애그리거트의 일부라 내용과 함께 바뀌면 version이 한 번 오른다. 지운 라벨·다른 공간 라벨은 `WORKITEM_LABEL_INVALID`(400). 응답에 `labels`(시스템 먼저, 이름순, 지운 라벨 제외)와 `columnCategory`(백로그는 null)를 더했다. 라벨 표시는 페이지를 정한 뒤 LabelFacade 배치 조회 한 번, 분류는 분류 필터 때문에 이미 붙인 board_column(기본 키 to-one)에서 같은 쿼리로 읽는다.
+- **목록**: 프로젝트 목록·내 작업에 `labelId`(여럿, 어느 하나), `category`(todo·doing·done·none, 여럿), `hasDates`를 더했다. 새 `GET /workspaces/{id}/work-items`는 같은 응답·커서·정렬에 `projectId`·`columnId`(여럿)를 더 받는다. 보관·삭제된 프로젝트의 이슈는 내 작업처럼 늘 뺀다. `from`/`to`는 두 목록 모두 마감일 범위가 아니라 시작~마감 기간 겹침(하나만 있으면 그날)으로 바꿨다(D-072).
+- **컬럼**: 응답에 `category`, 만들기·수정에 `category`를 받는다. 완료 컬럼에 done이 아닌 분류를 보내면 `PROJECT_COLUMN_CATEGORY_INVALID`(400)로 거절한다. 생략하면 만들 때는 완료 done·나머지 doing, 고칠 때는 유지하되 완료가 되면 done, 완료에서 풀리면 doing이다.
+- **보안 경로**: 새 경로를 Spring Security 허용 목록과 API 키 업무 경로에 더했다(라벨 읽기·쓰기, 전체 이슈 읽기).
+- **검사**: 서버 `./gradlew.bat check` 통과(단위 28, 통합 86 — 새 라벨 통합 5·V4→V5 마이그레이션 1 포함). OpenAPI와 `schema.d.ts`를 다시 만들었고 `npm run check --prefix client` 통과. MCP 도구는 아직 없어 바뀐 것이 없다.

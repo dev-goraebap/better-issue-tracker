@@ -4,6 +4,7 @@ import static io.github.goraebap.bit.jooq.tables.BoardColumn.BOARD_COLUMN;
 import static io.github.goraebap.bit.jooq.tables.Project.PROJECT;
 import static io.github.goraebap.bit.jooq.tables.ProjectKey.PROJECT_KEY;
 
+import io.github.goraebap.bit.module.project.ColumnCategory;
 import io.github.goraebap.bit.module.project.domain.BoardColumn;
 import io.github.goraebap.bit.module.project.domain.Project;
 import io.github.goraebap.bit.module.project.domain.ProjectKey;
@@ -188,6 +189,7 @@ class JooqProjectRepository implements ProjectRepository {
         r.setColor(c.color());
         r.setPosition(c.position());
         r.setIsFinal(c.finalColumn());
+        r.setCategory(c.category().name());
         r.setVersion(c.version());
         AuditRecords.write(r, c.audit());
         dslContext
@@ -222,6 +224,7 @@ class JooqProjectRepository implements ProjectRepository {
                 r.get(BOARD_COLUMN.COLOR),
                 r.get(BOARD_COLUMN.POSITION),
                 r.get(BOARD_COLUMN.IS_FINAL),
+                ColumnCategory.valueOf(r.get(BOARD_COLUMN.CATEGORY)),
                 r.get(BOARD_COLUMN.VERSION),
                 AuditRecords.read(r));
     }

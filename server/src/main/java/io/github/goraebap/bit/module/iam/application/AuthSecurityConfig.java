@@ -129,12 +129,24 @@ class AuthSecurityConfig {
                         .requestMatchers(
                                 HttpMethod.GET,
                                 "/api/v1/workspaces/*/my-tasks",
-                                "/api/v1/workspaces/*/work-items/by-ref/*")
+                                "/api/v1/workspaces/*/work-items",
+                                "/api/v1/workspaces/*/work-items/by-ref/*",
+                                "/api/v1/workspaces/*/labels",
+                                "/api/v1/workspaces/*/labels/*")
                         .authenticated()
                         .requestMatchers(
                                 HttpMethod.HEAD,
                                 "/api/v1/workspaces/*/my-tasks",
-                                "/api/v1/workspaces/*/work-items/by-ref/*")
+                                "/api/v1/workspaces/*/work-items",
+                                "/api/v1/workspaces/*/work-items/by-ref/*",
+                                "/api/v1/workspaces/*/labels",
+                                "/api/v1/workspaces/*/labels/*")
+                        .authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/workspaces/*/labels")
+                        .authenticated()
+                        .requestMatchers(HttpMethod.PATCH, "/api/v1/workspaces/*/labels/*")
+                        .authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/workspaces/*/labels/*")
                         .authenticated()
                         .requestMatchers("/api", "/api/**")
                         .denyAll()

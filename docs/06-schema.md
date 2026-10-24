@@ -70,7 +70,7 @@ erDiagram
 | `workspace` | `workspace_id`, `name varchar(64)`, `slug varchar(64)`, 감사 | `ux_workspace_slug` |
 | `workspace_member` | `workspace_member_id`, `workspace_id`, `iam_user_id`, `role varchar(16)`, `joined_at` | `ux_workspace_member_workspace_id_iam_user_id`, `ck_workspace_member_role` (owner, admin, member, viewer) |
 | `workspace_invitation` | `workspace_invitation_id`, `workspace_id`, `email`, `role`, `token_hash`, `status varchar(16)`, `expires_at`, `invited_by`, `created_at` | `ck_..._status` (pending, accepted, revoked, expired) |
-| `label` | `label_id`, `workspace_id`, `name varchar(32)`, `color varchar(7)`, 감사 | `ux_label_workspace_id_name` (deleted_at IS NULL) |
+| `label` | `label_id`, `workspace_id`, `name varchar(32)`, `color varchar(7)`, `is_system boolean`, `system_key varchar(32)?`, `version bigint`, 감사 | `ux_label_workspace_id_name` (workspace_id, lower(name), deleted_at IS NULL), `ux_label_workspace_id_system_key` (system_key IS NOT NULL) |
 
 - 역할 4개는 고정값이다. Kaneo의 워크스페이스별 사용자 정의 역할(`workspace_role`)과 멤버별 프로젝트 접근 제한은 1차에 넣지 않는다.
 - 라벨은 워크스페이스에 한 벌만 두고 작업항목과는 연결표로 잇는다. Kaneo처럼 작업마다 사본 행을 만들지 않는다 (D-009).
@@ -90,18 +90,19 @@ erDiagram
 |---|---|---|
 | `project` | `project_id`, `workspace_id`, `name varchar(64)`, `icon varchar(32)?`, `description text?`, `position integer`, `last_work_item_number bigint`, `last_decision_number bigint`, `last_session_number bigint`, `archived_at?`, `version bigint`, 감사 | `ix_project_workspace_id` |
 | `project_key` | `project_key_id`, `project_id`, `workspace_id`, `key varchar(10)`, `is_current boolean`, `created_at` | `ux_project_key_workspace_id_key` (모든 행), `ux_project_key_project_id_current` (is_current = 1), `ck_project_key_key` (대문자·숫자, 2~10자) |
-| `board_column` | `board_column_id`, `project_id`, `name varchar(32)`, `position integer`, `color varchar(7)?`, `is_final boolean`, `version bigint`, 감사 | `ix_board_column_project_id_position` |
+| `board_column` | `board_column_id`, `project_id`, `name varchar(32)`, `position integer`, `color varchar(7)?`, `is_final boolean`, `category varchar(8)`, `version bigint`, 감사 | `ix_board_column_project_id_position`, `ck_..._category` (todo, doing, done) |
 
 - **프로젝트 키(D-011)**: 현재 키와 옛 키(별칭)를 한 테이블에 둔다. 워크스페이스 안에서 `key`가 모든 행에 걸쳐 고유하므로, 별칭으로 쓰인 키를 다른 프로젝트가 가져가는 것을 DB가 막는다. 키를 바꾸면 기존 행의 `is_current`를 0으로 내리고 새 행을 넣는다.
 - **번호**: 작업항목·결정·세션 번호는 프로젝트별로 1부터 증가한다. 새 번호는 `last_*_number`를 증가시켜 받는다(쓰기 잠금 안에서 처리, SQLite `BEGIN IMMEDIATE`).
-- **보드 컬럼**: 프로젝트를 만들 때 할 일 / 진행 중 / 검토 중 / 완료(`is_final`) 4개를 넣는다 (Kaneo 기본값).
+- **보드 컬럼**: 프로젝트를 만들 때 할 일(todo) / 진행 중(doing) / 검토 중(doing) / 완료(`is_final`, done) 4개를 넣는다 (Kaneo 기본값).
+- **상태 분류(T-006)**: `category`는 프로젝트마다 다른 컬럼을 전체 칸반에서 묶는 기준이다. 완료 컬럼(`is_final`)은 언제나 done이고, 나머지 컬럼은 셋 중 아무것이나 된다. 백로그(`board_column_id` NULL)는 분류가 없다.
 
 ## 4. workitem
 
 | 테이블 | 열 | 제약·인덱스 |
 |---|---|---|
 | `work_item` | `work_item_id`, `project_id`, `number bigint`, `title varchar(200)`, `description text?`, `board_column_id uuid?`, `position real`, `priority varchar(8)?`, `trigger_type varchar(16)?`, `assignee_id uuid?`, `start_date date?`, `due_date date?`, `closed_at?`, `archived_at?`, `version bigint`, 감사 | `ux_work_item_project_id_number`, `ix_work_item_board_column_id_position`, `ck_..._priority` (low, medium, high, urgent), `ck_..._trigger_type` (request, finding, external, improvement, planned) |
-| `work_item_label` | `work_item_label_id`, `work_item_id`, `label_id`, `created_at` | `ux_work_item_label_work_item_id_label_id` |
+| `work_item_label` | `work_item_label_id`, `work_item_id`, `label_id`, `created_at`, `created_by`, `created_by_agent?` | `ux_work_item_label_work_item_id_label_id`, `ix_work_item_label_label_id_work_item_id` |
 
 - **상태는 컬럼 하나로**: `board_column_id`가 NULL이면 백로그다. Kaneo처럼 상태 문자열과 컬럼 ID를 함께 두지 않는다 (D-009).
 - **`closed_at`**: `is_final` 컬럼으로 옮길 때 채우고, 다른 컬럼으로 나오면 비운다. 결정의 "이행 2/3" 계산(D-012)이 이 값을 센다.
@@ -139,6 +140,13 @@ erDiagram
 - `comment`에 workspace_id/version과 표준 생성·수정·삭제 agent 감사 열을 추가한다. 응답의 authorAgent는 created_by_agent에서 읽으며 같은 값을 별도 열로 중복 저장하지 않는다.
 - `activity`는 payload의 JSON 유효성과 UTF-8 128KiB 상한을 검사하고 workspace/project 복합 소속 FK를 둔다. target ID에는 다형 FK를 두지 않는다. 조회의 삭제 대상 숨김과 업무 변경 원자 기록은 후속 서비스 단계에서 연결한다.
 - V4 기반 스키마와 순수 도메인은 T-005 전체 완료를 뜻하지 않는다. 공개 업무 Facade·저장소·REST·화면 및 통합 게이트는 작업 지시서에 따라 이어서 구현한다.
+
+### T-006 실제 V5 계약 (`V5__labels_column_category.sql`)
+
+- `label`: 이름은 trim 후 1~32자이고 공간 안에서 대소문자를 가리지 않고 고유하다(삭제된 행 제외, `lower(name)` 부분 인덱스). 색은 `#RRGGBB`이며 서버가 소문자로 저장한다. `is_system=1`이면 `system_key`가 있어야 하고 아니면 없어야 하며, `system_key`는 공간당 하나다. 시스템 라벨은 삭제 표시를 할 수 없다(CHECK). 결정기록 라벨은 `system_key='decision'`, 이름 `결정기록`, 색 `#5e6ad2`다.
+- V5는 기존 워크스페이스마다 결정기록 라벨을 하나씩 넣는다(만든 사람은 그 워크스페이스의 `created_by`). 새 워크스페이스는 생성 트랜잭션 안에서 같은 라벨을 받는다.
+- `work_item_label`: 작업항목·라벨 FK, `(work_item_id, label_id)` 고유. 라벨이 삭제되어도 연결 행은 남고 응답·필터에서만 빠진다. 다른 워크스페이스 라벨 연결은 서비스가 거부한다(DB는 공간 일치를 검사하지 않는다).
+- `board_column.category`: `ALTER TABLE ADD COLUMN`(기본값 doing)으로 더하고 기존 행을 채운다. 완료 컬럼은 done, 프로젝트마다 지우지 않은 비완료 컬럼 중 position이 가장 앞인 것은 todo, 나머지는 doing이다. 완료→done 규칙은 열 하나짜리 CHECK로 걸 수 없어(ADD COLUMN이 기존 행에 CHECK를 바로 검사) 도메인이 지킨다.
 
 ## 6. artifact — 문서함
 

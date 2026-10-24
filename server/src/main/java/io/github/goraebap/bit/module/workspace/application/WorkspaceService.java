@@ -1,6 +1,7 @@
 package io.github.goraebap.bit.module.workspace.application;
 
 import io.github.goraebap.bit.module.iam.IamFacade;
+import io.github.goraebap.bit.module.workspace.WorkspaceCreatedEvent;
 import io.github.goraebap.bit.module.workspace.WorkspaceFacade;
 import io.github.goraebap.bit.module.workspace.domain.Invitation;
 import io.github.goraebap.bit.module.workspace.domain.Membership;
@@ -19,6 +20,7 @@ import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,6 +30,7 @@ public class WorkspaceService implements WorkspaceFacade {
     private final WorkspaceRepository workspaceRepository;
     private final IamFacade iamFacade;
     private final SecretTokens secretTokens;
+    private final ApplicationEventPublisher applicationEventPublisher;
     private final Clock clock;
 
     @Override
@@ -94,6 +97,11 @@ public class WorkspaceService implements WorkspaceFacade {
         workspaceRepository.saveAll(
                 List.of(Membership.create(w.id(), actor.userId(), WorkspaceRole.owner, clock.instant())));
         assertOwner(w.id());
+        applicationEventPublisher.publishEvent(new WorkspaceCreatedEvent(
+                w.id(),
+                actor.userId(),
+                actor.method() == CurrentUser.Method.API_KEY ? actor.agentName() : null,
+                w.createdAt()));
         return w.id();
     }
 

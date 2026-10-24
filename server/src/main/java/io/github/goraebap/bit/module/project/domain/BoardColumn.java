@@ -1,5 +1,6 @@
 package io.github.goraebap.bit.module.project.domain;
 
+import io.github.goraebap.bit.module.project.ColumnCategory;
 import io.github.goraebap.bit.shared.domain.Audit;
 import java.time.Instant;
 import java.util.UUID;
@@ -13,6 +14,7 @@ public final class BoardColumn {
     private String color;
     private int position;
     private boolean finalColumn;
+    private ColumnCategory category;
     private long version;
     private Audit audit;
 
@@ -23,6 +25,7 @@ public final class BoardColumn {
             String color,
             int position,
             boolean finalColumn,
+            ColumnCategory category,
             long version,
             Audit audit) {
         this.id = id;
@@ -31,6 +34,7 @@ public final class BoardColumn {
         this.color = color;
         this.position = position;
         this.finalColumn = finalColumn;
+        this.category = category;
         this.version = version;
         this.audit = audit;
     }
@@ -41,6 +45,7 @@ public final class BoardColumn {
             String color,
             int position,
             boolean finalColumn,
+            ColumnCategory category,
             UUID actor,
             String agent,
             Instant now) {
@@ -51,6 +56,7 @@ public final class BoardColumn {
                 validColor(color),
                 position,
                 finalColumn,
+                validCategory(finalColumn, category),
                 0,
                 Audit.create(actor, agent, now));
     }
@@ -62,17 +68,27 @@ public final class BoardColumn {
             String color,
             int position,
             boolean finalColumn,
+            ColumnCategory category,
             long version,
             Audit audit) {
-        return new BoardColumn(id, projectId, name, color, position, finalColumn, version, audit);
+        return new BoardColumn(id, projectId, name, color, position, finalColumn, category, version, audit);
     }
 
-    public void configure(String name, String color, boolean finalColumn, UUID actor, String agent, Instant now) {
+    public void configure(
+            String name,
+            String color,
+            boolean finalColumn,
+            ColumnCategory category,
+            UUID actor,
+            String agent,
+            Instant now) {
         String nextName = validName(name);
         String nextColor = validColor(color);
+        ColumnCategory nextCategory = validCategory(finalColumn, category);
         this.name = nextName;
         this.color = nextColor;
         this.finalColumn = finalColumn;
+        this.category = nextCategory;
         audit = audit.touch(actor, agent, now);
         version++;
     }
@@ -95,6 +111,16 @@ public final class BoardColumn {
         if (value == null || value.strip().isEmpty() || value.strip().length() > 32)
             throw new IllegalArgumentException("Invalid column name");
         return value.strip();
+    }
+
+    /** A final column always counts as done; the other columns may use any category. */
+    public static boolean allows(boolean finalColumn, ColumnCategory category) {
+        return category != null && (!finalColumn || category == ColumnCategory.done);
+    }
+
+    private static ColumnCategory validCategory(boolean finalColumn, ColumnCategory category) {
+        if (!allows(finalColumn, category)) throw new IllegalArgumentException("Invalid column category");
+        return category;
     }
 
     private static String validColor(String value) {

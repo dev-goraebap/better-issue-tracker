@@ -1,5 +1,6 @@
 package io.github.goraebap.bit.module.project.application;
 
+import io.github.goraebap.bit.module.project.ColumnCategory;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.Instant;
 import java.util.List;
@@ -49,7 +50,13 @@ public final class ProjectViews {
 
     @Schema(
             name = "BoardColumn",
-            requiredProperties = {"id", "name", "color", "position", "isFinal", "version"})
+            requiredProperties = {"id", "name", "color", "position", "isFinal", "category", "version"})
     public record Column(
-            UUID id, String name, @Schema(nullable = true) String color, int position, boolean isFinal, long version) {}
+            UUID id,
+            String name,
+            @Schema(nullable = true) String color,
+            int position,
+            boolean isFinal,
+            ColumnCategory category,
+            long version) {}
 }

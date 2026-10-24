@@ -145,7 +145,8 @@ class ProjectController {
                 request.expectedVersion(),
                 request.name(),
                 request.color(),
-                request.isFinal());
+                request.isFinal(),
+                request.category());
         return ResponseEntity.created(URI.create(base(workspaceId, projectId) + "/columns/" + id))
                 .build();
     }

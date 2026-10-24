@@ -15,7 +15,8 @@ public enum ProjectErrorCode implements ErrorCode {
     PROJECT_COLUMN_NOT_FOUND(HttpStatus.NOT_FOUND, "보드 컬럼을 찾을 수 없습니다"),
     PROJECT_COLUMN_REQUIRED(HttpStatus.CONFLICT, "보드 컬럼이 하나 이상 필요합니다"),
     PROJECT_FINAL_COLUMN_REQUIRED(HttpStatus.CONFLICT, "완료 컬럼이 하나 이상 필요합니다"),
-    PROJECT_COLUMN_TARGET_INVALID(HttpStatus.BAD_REQUEST, "이동할 컬럼을 확인해 주세요");
+    PROJECT_COLUMN_TARGET_INVALID(HttpStatus.BAD_REQUEST, "이동할 컬럼을 확인해 주세요"),
+    PROJECT_COLUMN_CATEGORY_INVALID(HttpStatus.BAD_REQUEST, "완료 컬럼의 분류는 완료여야 합니다");
     private final HttpStatus status;
     private final String message;
 }

@@ -1,5 +1,6 @@
 package io.github.goraebap.bit.module.workitem.application;
 
+import io.github.goraebap.bit.module.project.ColumnCategory;
 import io.github.goraebap.bit.module.workitem.domain.WorkItem;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.Instant;
@@ -16,6 +17,11 @@ public final class WorkItemViews {
     public record ColumnCount(@Schema(nullable = true) UUID columnId, long count) {}
 
     @Schema(
+            name = "WorkItemLabel",
+            requiredProperties = {"id", "name", "color", "system"})
+    public record Label(UUID id, String name, String color, boolean system) {}
+
+    @Schema(
             name = "WorkItem",
             requiredProperties = {
                 "id",
@@ -26,6 +32,8 @@ public final class WorkItemViews {
                 "title",
                 "description",
                 "columnId",
+                "columnCategory",
+                "labels",
                 "position",
                 "priority",
                 "triggerType",
@@ -53,6 +61,13 @@ public final class WorkItemViews {
             String title,
             @Schema(nullable = true) String description,
             @Schema(nullable = true) UUID columnId,
+
+            @Schema(nullable = true, description = "Category of the column; null in the backlog")
+            ColumnCategory columnCategory,
+
+            @Schema(description = "Live labels, system labels first and then by name")
+            List<Label> labels,
+
             double position,
             @Schema(nullable = true) WorkItem.Priority priority,
             @Schema(nullable = true) WorkItem.TriggerType triggerType,
@@ -69,7 +84,11 @@ public final class WorkItemViews {
             @Schema(nullable = true) String createdByAgent,
             Instant updatedAt,
             UUID updatedBy,
-            @Schema(nullable = true) String updatedByAgent) {}
+            @Schema(nullable = true) String updatedByAgent) {
+        public Item {
+            labels = List.copyOf(labels);
+        }
+    }
 
     @Schema(requiredProperties = {"items", "nextCursor"})
     public record WorkItems(

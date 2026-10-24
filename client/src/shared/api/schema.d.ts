@@ -244,6 +244,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workspaces/{workspaceId}/labels": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_2"];
+        put?: never;
+        post: operations["create_3"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/workspaces/{id}/invitations": {
         parameters: {
             query?: never;
@@ -420,7 +436,7 @@ export interface paths {
         patch: operations["reviseColumn"];
         trace?: never;
     };
-    "/api/v1/workspaces/{id}": {
+    "/api/v1/workspaces/{workspaceId}/labels/{labelId}": {
         parameters: {
             query?: never;
             header?: never;
@@ -431,6 +447,22 @@ export interface paths {
         put?: never;
         post?: never;
         delete: operations["delete_2"];
+        options?: never;
+        head?: never;
+        patch: operations["revise_2"];
+        trace?: never;
+    };
+    "/api/v1/workspaces/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_3"];
+        put?: never;
+        post?: never;
+        delete: operations["delete_3"];
         options?: never;
         head?: never;
         patch: operations["rename"];
@@ -450,6 +482,22 @@ export interface paths {
         options?: never;
         head?: never;
         patch: operations["role"];
+        trace?: never;
+    };
+    "/api/v1/workspaces/{workspaceId}/work-items": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listWorkspace"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/workspaces/{workspaceId}/work-items/by-ref/{reference}": {
@@ -555,7 +603,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_2"];
+        get: operations["list_3"];
         put?: never;
         post?: never;
         delete?: never;
@@ -703,6 +751,8 @@ export interface components {
             dueDate?: string | null;
             /** Format: uuid */
             columnId?: string | null;
+            /** @description Workspace labels to attach; omitted or null attaches none */
+            labelIds?: string[] | null;
         };
         WorkItemVersion: {
             /** Format: int64 */
@@ -728,11 +778,21 @@ export interface components {
             name: string;
             color?: string | null;
             isFinal?: boolean;
+            /**
+             * @description Omitted: done for a final column, doing otherwise. A final column must be done
+             * @enum {string|null}
+             */
+            category?: "todo" | "doing" | "done" | null;
         };
         ReorderBoardColumns: {
             /** Format: int64 */
             expectedVersion: number;
             order: string[];
+        };
+        CreateLabel: {
+            name: string;
+            /** @example #5e6ad2 */
+            color: string;
         };
         Invite: {
             /** Format: email */
@@ -818,6 +878,8 @@ export interface components {
             startDate?: string | null;
             /** Format: date */
             dueDate?: string | null;
+            /** @description Omitted: labels are kept. Present: the whole set is replaced; [] or null clears it */
+            labelIds?: string[] | null;
         };
         UpdateBoardColumn: {
             /** Format: int64 */
@@ -825,6 +887,18 @@ export interface components {
             name?: string;
             color?: string | null;
             isFinal?: boolean;
+            /**
+             * @description Omitted: kept, except done when the column becomes final and doing when it stops being final
+             * @enum {string}
+             */
+            category?: "todo" | "doing" | "done";
+        };
+        UpdateLabel: {
+            /** Format: int64 */
+            expectedVersion: number;
+            /** @description The system label keeps its name; sending a different one is LABEL_SYSTEM_LOCKED */
+            name?: string;
+            color?: string;
         };
         Rename: {
             name?: string;
@@ -847,6 +921,13 @@ export interface components {
             description: string | null;
             /** Format: uuid */
             columnId: string | null;
+            /**
+             * @description Category of the column; null in the backlog
+             * @enum {string|null}
+             */
+            columnCategory: "todo" | "doing" | "done" | null;
+            /** @description Live labels, system labels first and then by name */
+            labels: components["schemas"]["WorkItemLabel"][];
             /** Format: double */
             position: number;
             /** @enum {string|null} */
@@ -879,6 +960,17 @@ export interface components {
             updatedBy: string;
             updatedByAgent: string | null;
         };
+        WorkItemLabel: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            color: string;
+            system: boolean;
+        };
+        WorkItems: {
+            items: components["schemas"]["WorkItem"][];
+            nextCursor: string | null;
+        };
         Project: {
             /** Format: uuid */
             id: string;
@@ -905,10 +997,6 @@ export interface components {
             items: components["schemas"]["Project"][];
             nextCursor: string | null;
         };
-        WorkItems: {
-            items: components["schemas"]["WorkItem"][];
-            nextCursor: string | null;
-        };
         WorkItemColumnCount: {
             /** Format: uuid */
             columnId: string | null;
@@ -923,8 +1011,27 @@ export interface components {
             /** Format: int32 */
             position: number;
             isFinal: boolean;
+            /** @enum {string} */
+            category: "todo" | "doing" | "done";
             /** Format: int64 */
             version: number;
+        };
+        Label: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            workspaceId: string;
+            name: string;
+            color: string;
+            system: boolean;
+            /** @description decision for the decision label (결정기록) */
+            systemKey: string | null;
+            /** Format: int64 */
+            version: number;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
         };
         Space: {
             /** Format: uuid */
@@ -1193,15 +1300,24 @@ export interface operations {
     list_1: {
         parameters: {
             query?: {
-                assigneeId?: string | null;
+                /** @description A column id of the project, or backlog */
                 column?: string;
+                assigneeId?: string | null;
+                /** @description Any of these labels (repeatable). Deleted labels match nothing */
+                labelId?: string[];
+                /** @description Any of todo, doing, done, or none for items without a status (repeatable) */
+                category?: string[];
+                /** @description true: has a start or due date. false: has neither */
+                hasDates?: boolean | null;
                 priority?: string[];
                 triggerType?: string[];
                 q?: string;
                 archived?: boolean;
                 deleted?: boolean;
                 closed?: boolean;
+                /** @description Keeps items whose start..due span (one day when only one is set) ends on or after it */
                 from?: string;
+                /** @description Keeps items whose start..due span starts on or before it */
                 to?: string;
                 size?: number;
                 cursor?: string;
@@ -1498,6 +1614,52 @@ export interface operations {
         responses: {
             /** @description OK */
             200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    list_2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Label"][];
+                };
+            };
+        };
+    };
+    create_3: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateLabel"];
+            };
+        };
+        responses: {
+            /** @description 라벨 생성 */
+            201: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -2016,6 +2178,77 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
+                workspaceId: string;
+                labelId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Label"];
+                };
+            };
+        };
+    };
+    delete_2: {
+        parameters: {
+            query: {
+                expectedVersion: number;
+            };
+            header?: never;
+            path: {
+                workspaceId: string;
+                labelId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    revise_2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+                labelId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateLabel"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_3: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
                 id: string;
             };
             cookie?: never;
@@ -2033,7 +2266,7 @@ export interface operations {
             };
         };
     };
-    delete_2: {
+    delete_3: {
         parameters: {
             query?: never;
             header?: never;
@@ -2123,6 +2356,54 @@ export interface operations {
             };
         };
     };
+    listWorkspace: {
+        parameters: {
+            query?: {
+                /** @description Any of these projects (repeatable). Archived and deleted projects are always left out */
+                projectId?: string[];
+                /** @description Any of these columns (repeatable); use category=none for items without a status */
+                columnId?: string[];
+                assigneeId?: string | null;
+                /** @description Any of these labels (repeatable). Deleted labels match nothing */
+                labelId?: string[];
+                /** @description Any of todo, doing, done, or none for items without a status (repeatable) */
+                category?: string[];
+                /** @description true: has a start or due date. false: has neither */
+                hasDates?: boolean | null;
+                priority?: string[];
+                triggerType?: string[];
+                q?: string;
+                archived?: boolean;
+                deleted?: boolean;
+                closed?: boolean;
+                /** @description Keeps items whose start..due span (one day when only one is set) ends on or after it */
+                from?: string;
+                /** @description Keeps items whose start..due span starts on or before it */
+                to?: string;
+                size?: number;
+                cursor?: string;
+                sort?: string;
+                direction?: string;
+            };
+            header?: never;
+            path: {
+                workspaceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkItems"];
+                };
+            };
+        };
+    };
     byRef: {
         parameters: {
             query?: never;
@@ -2149,15 +2430,24 @@ export interface operations {
     counts: {
         parameters: {
             query?: {
-                assigneeId?: string | null;
+                /** @description A column id of the project, or backlog */
                 column?: string;
+                assigneeId?: string | null;
+                /** @description Any of these labels (repeatable). Deleted labels match nothing */
+                labelId?: string[];
+                /** @description Any of todo, doing, done, or none for items without a status (repeatable) */
+                category?: string[];
+                /** @description true: has a start or due date. false: has neither */
+                hasDates?: boolean | null;
                 priority?: string[];
                 triggerType?: string[];
                 q?: string;
                 archived?: boolean;
                 deleted?: boolean;
                 closed?: boolean;
+                /** @description Keeps items whose start..due span (one day when only one is set) ends on or after it */
                 from?: string;
+                /** @description Keeps items whose start..due span starts on or before it */
                 to?: string;
                 size?: number;
                 cursor?: string;
@@ -2187,15 +2477,24 @@ export interface operations {
     mine: {
         parameters: {
             query?: {
-                assigneeId?: string | null;
+                /** @description A column id of the project, or backlog */
                 column?: string;
+                assigneeId?: string | null;
+                /** @description Any of these labels (repeatable). Deleted labels match nothing */
+                labelId?: string[];
+                /** @description Any of todo, doing, done, or none for items without a status (repeatable) */
+                category?: string[];
+                /** @description true: has a start or due date. false: has neither */
+                hasDates?: boolean | null;
                 priority?: string[];
                 triggerType?: string[];
                 q?: string;
                 archived?: boolean;
                 deleted?: boolean;
                 closed?: boolean;
+                /** @description Keeps items whose start..due span (one day when only one is set) ends on or after it */
                 from?: string;
+                /** @description Keeps items whose start..due span starts on or before it */
                 to?: string;
                 size?: number;
                 cursor?: string;
@@ -2312,7 +2611,7 @@ export interface operations {
             };
         };
     };
-    list_2: {
+    list_3: {
         parameters: {
             query?: {
                 cursor?: string;

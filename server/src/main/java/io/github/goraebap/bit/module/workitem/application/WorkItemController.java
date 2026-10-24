@@ -47,6 +47,14 @@ class WorkItemController {
         return workItemQueryService.counts(actor, workspaceId, projectId, request);
     }
 
+    @GetMapping("/work-items")
+    WorkItemViews.WorkItems listWorkspace(
+            @AuthenticationPrincipal CurrentUser actor,
+            @PathVariable UUID workspaceId,
+            @Valid @ModelAttribute @ParameterObject WorkItemRequests.WorkspaceListRequest request) {
+        return workItemQueryService.listWorkspace(actor, workspaceId, request);
+    }
+
     @GetMapping("/my-tasks")
     WorkItemViews.WorkItems mine(
             @AuthenticationPrincipal CurrentUser actor,
@@ -70,7 +78,8 @@ class WorkItemController {
             @PathVariable UUID workspaceId,
             @PathVariable UUID projectId,
             @Valid @RequestBody WorkItemRequests.Create request) {
-        UUID id = workItemService.create(actor, workspaceId, projectId, request.details(), request.columnId());
+        UUID id = workItemService.create(
+                actor, workspaceId, projectId, request.details(), request.columnId(), request.labels());
         return ResponseEntity.created(URI.create(base(workspaceId, projectId, id)))
                 .build();
     }

@@ -226,6 +226,15 @@
             "format" : "uuid"
           }
         }, {
+          "name" : "column",
+          "in" : "query",
+          "description" : "A column id of the project, or backlog",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "description" : "A column id of the project, or backlog"
+          }
+        }, {
           "name" : "assigneeId",
           "in" : "query",
           "required" : false,
@@ -234,11 +243,40 @@
             "format" : "uuid"
           }
         }, {
-          "name" : "column",
+          "name" : "labelId",
           "in" : "query",
+          "description" : "Any of these labels (repeatable). Deleted labels match nothing",
           "required" : false,
           "schema" : {
-            "type" : "string"
+            "type" : "array",
+            "description" : "Any of these labels (repeatable). Deleted labels match nothing",
+            "items" : {
+              "type" : "string",
+              "format" : "uuid",
+              "description" : "Any of these labels (repeatable). Deleted labels match nothing"
+            }
+          }
+        }, {
+          "name" : "category",
+          "in" : "query",
+          "description" : "Any of todo, doing, done, or none for items without a status (repeatable)",
+          "required" : false,
+          "schema" : {
+            "type" : "array",
+            "description" : "Any of todo, doing, done, or none for items without a status (repeatable)",
+            "items" : {
+              "type" : "string",
+              "description" : "Any of todo, doing, done, or none for items without a status (repeatable)"
+            }
+          }
+        }, {
+          "name" : "hasDates",
+          "in" : "query",
+          "description" : "true: has a start or due date. false: has neither",
+          "required" : false,
+          "schema" : {
+            "type" : [ "boolean", "null" ],
+            "description" : "true: has a start or due date. false: has neither"
           }
         }, {
           "name" : "priority",
@@ -293,18 +331,22 @@
         }, {
           "name" : "from",
           "in" : "query",
+          "description" : "Keeps items whose start..due span (one day when only one is set) ends on or after it",
           "required" : false,
           "schema" : {
             "type" : "string",
-            "format" : "date"
+            "format" : "date",
+            "description" : "Keeps items whose start..due span (one day when only one is set) ends on or after it"
           }
         }, {
           "name" : "to",
           "in" : "query",
+          "description" : "Keeps items whose start..due span starts on or before it",
           "required" : false,
           "schema" : {
             "type" : "string",
-            "format" : "date"
+            "format" : "date",
+            "description" : "Keeps items whose start..due span starts on or before it"
           }
         }, {
           "name" : "size",
@@ -794,6 +836,64 @@
         "responses" : {
           "200" : {
             "description" : "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/labels" : {
+      "get" : {
+        "tags" : [ "label-controller" ],
+        "operationId" : "list_2",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/Label"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post" : {
+        "tags" : [ "label-controller" ],
+        "operationId" : "create_3",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CreateLabel"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "description" : "라벨 생성"
           }
         }
       }
@@ -1529,10 +1629,116 @@
         }
       }
     },
+    "/api/v1/workspaces/{workspaceId}/labels/{labelId}" : {
+      "get" : {
+        "tags" : [ "label-controller" ],
+        "operationId" : "get_2",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "name" : "labelId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Label"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete" : {
+        "tags" : [ "label-controller" ],
+        "operationId" : "delete_2",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "name" : "labelId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "name" : "expectedVersion",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64",
+            "minimum" : 0
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        }
+      },
+      "patch" : {
+        "tags" : [ "label-controller" ],
+        "operationId" : "revise_2",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "name" : "labelId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/UpdateLabel"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        }
+      }
+    },
     "/api/v1/workspaces/{id}" : {
       "get" : {
         "tags" : [ "workspace-controller" ],
-        "operationId" : "get_2",
+        "operationId" : "get_3",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -1557,7 +1763,7 @@
       },
       "delete" : {
         "tags" : [ "workspace-controller" ],
-        "operationId" : "delete_2",
+        "operationId" : "delete_3",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -1666,6 +1872,206 @@
         }
       }
     },
+    "/api/v1/workspaces/{workspaceId}/work-items" : {
+      "get" : {
+        "tags" : [ "work-item-controller" ],
+        "operationId" : "listWorkspace",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "name" : "projectId",
+          "in" : "query",
+          "description" : "Any of these projects (repeatable). Archived and deleted projects are always left out",
+          "required" : false,
+          "schema" : {
+            "type" : "array",
+            "description" : "Any of these projects (repeatable). Archived and deleted projects are always left out",
+            "items" : {
+              "type" : "string",
+              "format" : "uuid",
+              "description" : "Any of these projects (repeatable). Archived and deleted projects are always left out"
+            }
+          }
+        }, {
+          "name" : "columnId",
+          "in" : "query",
+          "description" : "Any of these columns (repeatable); use category=none for items without a status",
+          "required" : false,
+          "schema" : {
+            "type" : "array",
+            "description" : "Any of these columns (repeatable); use category=none for items without a status",
+            "items" : {
+              "type" : "string",
+              "format" : "uuid",
+              "description" : "Any of these columns (repeatable); use category=none for items without a status"
+            }
+          }
+        }, {
+          "name" : "assigneeId",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : [ "string", "null" ],
+            "format" : "uuid"
+          }
+        }, {
+          "name" : "labelId",
+          "in" : "query",
+          "description" : "Any of these labels (repeatable). Deleted labels match nothing",
+          "required" : false,
+          "schema" : {
+            "type" : "array",
+            "description" : "Any of these labels (repeatable). Deleted labels match nothing",
+            "items" : {
+              "type" : "string",
+              "format" : "uuid",
+              "description" : "Any of these labels (repeatable). Deleted labels match nothing"
+            }
+          }
+        }, {
+          "name" : "category",
+          "in" : "query",
+          "description" : "Any of todo, doing, done, or none for items without a status (repeatable)",
+          "required" : false,
+          "schema" : {
+            "type" : "array",
+            "description" : "Any of todo, doing, done, or none for items without a status (repeatable)",
+            "items" : {
+              "type" : "string",
+              "description" : "Any of todo, doing, done, or none for items without a status (repeatable)"
+            }
+          }
+        }, {
+          "name" : "hasDates",
+          "in" : "query",
+          "description" : "true: has a start or due date. false: has neither",
+          "required" : false,
+          "schema" : {
+            "type" : [ "boolean", "null" ],
+            "description" : "true: has a start or due date. false: has neither"
+          }
+        }, {
+          "name" : "priority",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          }
+        }, {
+          "name" : "triggerType",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          }
+        }, {
+          "name" : "q",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "maxLength" : 200,
+            "minLength" : 0
+          }
+        }, {
+          "name" : "archived",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "boolean"
+          }
+        }, {
+          "name" : "deleted",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "boolean"
+          }
+        }, {
+          "name" : "closed",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "boolean"
+          }
+        }, {
+          "name" : "from",
+          "in" : "query",
+          "description" : "Keeps items whose start..due span (one day when only one is set) ends on or after it",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "format" : "date",
+            "description" : "Keeps items whose start..due span (one day when only one is set) ends on or after it"
+          }
+        }, {
+          "name" : "to",
+          "in" : "query",
+          "description" : "Keeps items whose start..due span starts on or before it",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "format" : "date",
+            "description" : "Keeps items whose start..due span starts on or before it"
+          }
+        }, {
+          "name" : "size",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "maximum" : 100,
+            "minimum" : 1
+          }
+        }, {
+          "name" : "cursor",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "sort",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "direction",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/WorkItems"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/workspaces/{workspaceId}/work-items/by-ref/{reference}" : {
       "get" : {
         "tags" : [ "work-item-controller" ],
@@ -1721,6 +2127,15 @@
             "format" : "uuid"
           }
         }, {
+          "name" : "column",
+          "in" : "query",
+          "description" : "A column id of the project, or backlog",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "description" : "A column id of the project, or backlog"
+          }
+        }, {
           "name" : "assigneeId",
           "in" : "query",
           "required" : false,
@@ -1729,11 +2144,40 @@
             "format" : "uuid"
           }
         }, {
-          "name" : "column",
+          "name" : "labelId",
           "in" : "query",
+          "description" : "Any of these labels (repeatable). Deleted labels match nothing",
           "required" : false,
           "schema" : {
-            "type" : "string"
+            "type" : "array",
+            "description" : "Any of these labels (repeatable). Deleted labels match nothing",
+            "items" : {
+              "type" : "string",
+              "format" : "uuid",
+              "description" : "Any of these labels (repeatable). Deleted labels match nothing"
+            }
+          }
+        }, {
+          "name" : "category",
+          "in" : "query",
+          "description" : "Any of todo, doing, done, or none for items without a status (repeatable)",
+          "required" : false,
+          "schema" : {
+            "type" : "array",
+            "description" : "Any of todo, doing, done, or none for items without a status (repeatable)",
+            "items" : {
+              "type" : "string",
+              "description" : "Any of todo, doing, done, or none for items without a status (repeatable)"
+            }
+          }
+        }, {
+          "name" : "hasDates",
+          "in" : "query",
+          "description" : "true: has a start or due date. false: has neither",
+          "required" : false,
+          "schema" : {
+            "type" : [ "boolean", "null" ],
+            "description" : "true: has a start or due date. false: has neither"
           }
         }, {
           "name" : "priority",
@@ -1788,18 +2232,22 @@
         }, {
           "name" : "from",
           "in" : "query",
+          "description" : "Keeps items whose start..due span (one day when only one is set) ends on or after it",
           "required" : false,
           "schema" : {
             "type" : "string",
-            "format" : "date"
+            "format" : "date",
+            "description" : "Keeps items whose start..due span (one day when only one is set) ends on or after it"
           }
         }, {
           "name" : "to",
           "in" : "query",
+          "description" : "Keeps items whose start..due span starts on or before it",
           "required" : false,
           "schema" : {
             "type" : "string",
-            "format" : "date"
+            "format" : "date",
+            "description" : "Keeps items whose start..due span starts on or before it"
           }
         }, {
           "name" : "size",
@@ -1863,6 +2311,15 @@
             "format" : "uuid"
           }
         }, {
+          "name" : "column",
+          "in" : "query",
+          "description" : "A column id of the project, or backlog",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "description" : "A column id of the project, or backlog"
+          }
+        }, {
           "name" : "assigneeId",
           "in" : "query",
           "required" : false,
@@ -1871,11 +2328,40 @@
             "format" : "uuid"
           }
         }, {
-          "name" : "column",
+          "name" : "labelId",
           "in" : "query",
+          "description" : "Any of these labels (repeatable). Deleted labels match nothing",
           "required" : false,
           "schema" : {
-            "type" : "string"
+            "type" : "array",
+            "description" : "Any of these labels (repeatable). Deleted labels match nothing",
+            "items" : {
+              "type" : "string",
+              "format" : "uuid",
+              "description" : "Any of these labels (repeatable). Deleted labels match nothing"
+            }
+          }
+        }, {
+          "name" : "category",
+          "in" : "query",
+          "description" : "Any of todo, doing, done, or none for items without a status (repeatable)",
+          "required" : false,
+          "schema" : {
+            "type" : "array",
+            "description" : "Any of todo, doing, done, or none for items without a status (repeatable)",
+            "items" : {
+              "type" : "string",
+              "description" : "Any of todo, doing, done, or none for items without a status (repeatable)"
+            }
+          }
+        }, {
+          "name" : "hasDates",
+          "in" : "query",
+          "description" : "true: has a start or due date. false: has neither",
+          "required" : false,
+          "schema" : {
+            "type" : [ "boolean", "null" ],
+            "description" : "true: has a start or due date. false: has neither"
           }
         }, {
           "name" : "priority",
@@ -1930,18 +2416,22 @@
         }, {
           "name" : "from",
           "in" : "query",
+          "description" : "Keeps items whose start..due span (one day when only one is set) ends on or after it",
           "required" : false,
           "schema" : {
             "type" : "string",
-            "format" : "date"
+            "format" : "date",
+            "description" : "Keeps items whose start..due span (one day when only one is set) ends on or after it"
           }
         }, {
           "name" : "to",
           "in" : "query",
+          "description" : "Keeps items whose start..due span starts on or before it",
           "required" : false,
           "schema" : {
             "type" : "string",
-            "format" : "date"
+            "format" : "date",
+            "description" : "Keeps items whose start..due span starts on or before it"
           }
         }, {
           "name" : "size",
@@ -2130,7 +2620,7 @@
     "/api/v1/me/workspaces" : {
       "get" : {
         "tags" : [ "workspace-controller" ],
-        "operationId" : "list_2",
+        "operationId" : "list_3",
         "parameters" : [ {
           "name" : "cursor",
           "in" : "query",
@@ -2418,6 +2908,16 @@
           "columnId" : {
             "type" : [ "string", "null" ],
             "format" : "uuid"
+          },
+          "labelIds" : {
+            "type" : [ "array", "null" ],
+            "description" : "Workspace labels to attach; omitted or null attaches none",
+            "items" : {
+              "type" : "string",
+              "format" : "uuid"
+            },
+            "maxItems" : 50,
+            "minItems" : 0
           }
         },
         "required" : [ "title" ]
@@ -2485,6 +2985,11 @@
           },
           "isFinal" : {
             "type" : "boolean"
+          },
+          "category" : {
+            "type" : [ "string", "null" ],
+            "description" : "Omitted: done for a final column, doing otherwise. A final column must be done",
+            "enum" : [ "todo", "doing", "done", null ]
           }
         },
         "required" : [ "expectedVersion", "name" ]
@@ -2506,6 +3011,22 @@
           }
         },
         "required" : [ "expectedVersion", "order" ]
+      },
+      "CreateLabel" : {
+        "type" : "object",
+        "properties" : {
+          "name" : {
+            "type" : "string",
+            "maxLength" : 32,
+            "minLength" : 0
+          },
+          "color" : {
+            "type" : "string",
+            "example" : "#5e6ad2",
+            "pattern" : "#[0-9a-fA-F]{6}"
+          }
+        },
+        "required" : [ "color", "name" ]
       },
       "Invite" : {
         "type" : "object",
@@ -2752,6 +3273,16 @@
           "dueDate" : {
             "type" : [ "string", "null" ],
             "format" : "date"
+          },
+          "labelIds" : {
+            "type" : [ "array", "null" ],
+            "description" : "Omitted: labels are kept. Present: the whole set is replaced; [] or null clears it",
+            "items" : {
+              "type" : "string",
+              "format" : "uuid"
+            },
+            "maxItems" : 50,
+            "minItems" : 0
           }
         },
         "required" : [ "expectedVersion" ]
@@ -2772,6 +3303,32 @@
           },
           "isFinal" : {
             "type" : "boolean"
+          },
+          "category" : {
+            "type" : "string",
+            "description" : "Omitted: kept, except done when the column becomes final and doing when it stops being final",
+            "enum" : [ "todo", "doing", "done" ]
+          }
+        },
+        "required" : [ "expectedVersion" ]
+      },
+      "UpdateLabel" : {
+        "type" : "object",
+        "properties" : {
+          "expectedVersion" : {
+            "type" : "integer",
+            "format" : "int64",
+            "minimum" : 0
+          },
+          "name" : {
+            "type" : "string",
+            "description" : "The system label keeps its name; sending a different one is LABEL_SYSTEM_LOCKED",
+            "maxLength" : 32,
+            "minLength" : 0
+          },
+          "color" : {
+            "type" : "string",
+            "pattern" : "#[0-9a-fA-F]{6}"
           }
         },
         "required" : [ "expectedVersion" ]
@@ -2825,6 +3382,18 @@
           "columnId" : {
             "type" : [ "string", "null" ],
             "format" : "uuid"
+          },
+          "columnCategory" : {
+            "type" : [ "string", "null" ],
+            "description" : "Category of the column; null in the backlog",
+            "enum" : [ "todo", "doing", "done", null ]
+          },
+          "labels" : {
+            "type" : "array",
+            "description" : "Live labels, system labels first and then by name",
+            "items" : {
+              "$ref" : "#/components/schemas/WorkItemLabel"
+            }
           },
           "position" : {
             "type" : "number",
@@ -2892,7 +3461,41 @@
             "type" : [ "string", "null" ]
           }
         },
-        "required" : [ "archivedAt", "assigneeId", "assigneeName", "closedAt", "columnId", "createdAt", "createdBy", "createdByAgent", "deletedAt", "description", "dueDate", "id", "key", "number", "position", "priority", "projectId", "startDate", "title", "triggerType", "updatedAt", "updatedBy", "updatedByAgent", "version", "workspaceId" ]
+        "required" : [ "archivedAt", "assigneeId", "assigneeName", "closedAt", "columnCategory", "columnId", "createdAt", "createdBy", "createdByAgent", "deletedAt", "description", "dueDate", "id", "key", "labels", "number", "position", "priority", "projectId", "startDate", "title", "triggerType", "updatedAt", "updatedBy", "updatedByAgent", "version", "workspaceId" ]
+      },
+      "WorkItemLabel" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "color" : {
+            "type" : "string"
+          },
+          "system" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "color", "id", "name", "system" ]
+      },
+      "WorkItems" : {
+        "type" : "object",
+        "properties" : {
+          "items" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/WorkItem"
+            }
+          },
+          "nextCursor" : {
+            "type" : [ "string", "null" ]
+          }
+        },
+        "required" : [ "items", "nextCursor" ]
       },
       "Project" : {
         "type" : "object",
@@ -2959,21 +3562,6 @@
         },
         "required" : [ "items", "nextCursor" ]
       },
-      "WorkItems" : {
-        "type" : "object",
-        "properties" : {
-          "items" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/WorkItem"
-            }
-          },
-          "nextCursor" : {
-            "type" : [ "string", "null" ]
-          }
-        },
-        "required" : [ "items", "nextCursor" ]
-      },
       "WorkItemColumnCount" : {
         "type" : "object",
         "properties" : {
@@ -3008,12 +3596,55 @@
           "isFinal" : {
             "type" : "boolean"
           },
+          "category" : {
+            "type" : "string",
+            "enum" : [ "todo", "doing", "done" ]
+          },
           "version" : {
             "type" : "integer",
             "format" : "int64"
           }
         },
-        "required" : [ "color", "id", "isFinal", "name", "position", "version" ]
+        "required" : [ "category", "color", "id", "isFinal", "name", "position", "version" ]
+      },
+      "Label" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "workspaceId" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "color" : {
+            "type" : "string"
+          },
+          "system" : {
+            "type" : "boolean"
+          },
+          "systemKey" : {
+            "type" : [ "string", "null" ],
+            "description" : "decision for the decision label (결정기록)"
+          },
+          "version" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "createdAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "updatedAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        },
+        "required" : [ "color", "createdAt", "id", "name", "system", "systemKey", "updatedAt", "version", "workspaceId" ]
       },
       "Space" : {
         "type" : "object",

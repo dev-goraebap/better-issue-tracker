@@ -1,6 +1,7 @@
 package io.github.goraebap.bit.module.project.application;
 
 import com.fasterxml.jackson.annotation.JsonAnySetter;
+import io.github.goraebap.bit.module.project.ColumnCategory;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -26,7 +27,12 @@ public final class ProjectRequests {
             @NotNull @Min(0) Long expectedVersion,
             @NotBlank @Size(max = 32) String name,
             @Schema(nullable = true) String color,
-            boolean isFinal) {}
+            boolean isFinal,
+
+            @Schema(
+                    nullable = true,
+                    description = "Omitted: done for a final column, doing otherwise. A final column must be done")
+            ColumnCategory category) {}
 
     @Schema(name = "UpdateBoardColumn")
     public static final class ReviseColumn {
@@ -38,7 +44,8 @@ public final class ProjectRequests {
         private String color;
 
         private Boolean isFinal;
-        private boolean hasName, hasColor, hasIsFinal;
+        private ColumnCategory category;
+        private boolean hasName, hasColor, hasIsFinal, hasCategory;
 
         public Long getExpectedVersion() {
             return expectedVersion;
@@ -85,6 +92,22 @@ public final class ProjectRequests {
 
         public boolean hasIsFinal() {
             return hasIsFinal;
+        }
+
+        @Schema(
+                description =
+                        "Omitted: kept, except done when the column becomes final and doing when it stops being final")
+        public ColumnCategory getCategory() {
+            return category;
+        }
+
+        public void setCategory(ColumnCategory value) {
+            category = value;
+            hasCategory = true;
+        }
+
+        public boolean hasCategory() {
+            return hasCategory;
         }
 
         @JsonAnySetter
