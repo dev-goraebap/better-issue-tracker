@@ -3,8 +3,7 @@ import { useMediaQuery } from '@astryxdesign/core/hooks';
 import { useId, useState, type ReactNode } from 'react';
 import { MOBILE_QUERY } from '@/shared/config';
 import { FrameBody, FrameHead, NavIcon, SheetList } from '@/shared/ui';
-import type { Project } from '@/entities/demo-sample';
-import styles from './demo-layout.module.css';
+import styles from './app-layout.module.css';
 
 const ALL = '';
 
@@ -14,7 +13,7 @@ const ALL = '';
  * 프로젝트 만들기 under a rule. A desktop opens them under the step; a phone in a bottom sheet.
  */
 export function ScopeSwitcher({ projects, current, mark, onPick, onCreate }: {
-  projects: readonly Project[];
+  projects: readonly { id: string; name: string; key: string }[];
   /** The project in view; none is 전체. */
   current?: string;
   mark: (key: string) => ReactNode;

@@ -1,7 +1,7 @@
 import {
   ArrowDownWideNarrow, ArrowLeft, ArrowLeftRight, ArrowRight, ArrowUpNarrowWide, ArrowUpDown, Bell, BookOpen, CalendarDays, Check, CheckCheck,
   ChevronDown, ChevronLeft, ChevronRight, ChevronsUpDown, CircleCheck, CircleDot, Clock, Copy, Ellipsis, File, FileText, Filter, Flag, Folder, GitBranch, GripVertical, Hash, House,
-  Inbox, KanbanSquare, LayoutGrid, LayoutList, Link, ListFilter, ListTodo, Lock, Mail, Maximize2, MessageSquare, Milestone, PanelLeft, Paperclip,
+  Inbox, KanbanSquare, LayoutGrid, LayoutList, Link, ListFilter, ListTodo, Lock, LogOut, Mail, Maximize2, MessageSquare, Milestone, PanelLeft, Paperclip,
   Pencil, Plus, RefreshCw, Repeat, Rows3, Scale, Search, Settings, Shield, SlidersHorizontal, Sparkles, Table2, Tag, Trash2, User, Users, Workflow, X,
   type LucideIcon,
 } from 'lucide-react';
@@ -26,6 +26,7 @@ const icons: Record<string, LucideIcon> = {
   back: ArrowLeft,
   forward: ChevronRight,
   previous: ChevronLeft,
+  logout: LogOut,
   next: ArrowRight,
   check: Check,
   done: CheckCheck,

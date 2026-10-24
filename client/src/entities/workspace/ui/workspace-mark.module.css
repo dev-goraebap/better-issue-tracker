@@ -1,0 +1,12 @@
+/* A rounded square (D-058's tight corners), the logo filling it or the first letter on one of six quiet tones. */
+.mark { display: inline-grid; place-items: center; flex-shrink: 0; overflow: hidden; inline-size: 1.5rem; block-size: 1.5rem; border-radius: 6px;
+  font-size: 0.75rem; font-weight: 700; color: #fff; background: #5b6474; }
+.mark[data-size="sm"] { inline-size: 1.25rem; block-size: 1.25rem; border-radius: 4px; font-size: 0.6875rem; }
+.mark[data-size="lg"] { inline-size: 4rem; block-size: 4rem; border-radius: 12px; font-size: 1.5rem; }
+.mark img { inline-size: 100%; block-size: 100%; object-fit: cover; }
+.mark[data-tone="0"] { background: #4f46e5; }
+.mark[data-tone="1"] { background: #0e7490; }
+.mark[data-tone="2"] { background: #b45309; }
+.mark[data-tone="3"] { background: #be185d; }
+.mark[data-tone="4"] { background: #15803d; }
+.mark[data-tone="5"] { background: #6d28d9; }

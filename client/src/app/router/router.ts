@@ -49,7 +49,7 @@ import { membersQuery, workspaceQuery, workspacesQuery } from '@/entities/worksp
 import { ApiError, bootstrapQueryOptions, capabilitiesQueryOptions, keyQueryOptions, resetCsrf, sessionQueryOptions, setUnauthorizedHandler } from '@/shared/api';
 import { RootLayout } from '../layout/RootLayout';
 import { RouteError } from '../layout/RouteError';
-import { WorkspaceLayout } from '../layout/WorkspaceLayout';
+import { AppLayout } from '../layout/AppLayout';
 import { queryClient } from '../model/query-client';
 import { routeRead } from '../model/route-read';
 
@@ -83,7 +83,7 @@ async function resume(suffix = '') {
 }
 const pageCursor = (search: Record<string, unknown>): { cursor?: string } => ({ cursor: typeof search.cursor === 'string' ? search.cursor : undefined });
 const rootRoute = createRootRoute({ component: RootLayout, notFoundComponent: NotFoundPage, errorComponent: RouteError, loader: () => queryClient.prefetchQuery(capabilitiesQueryOptions) });
-const workspace = createRoute({ getParentRoute: () => rootRoute, id: 'workspace', component: WorkspaceLayout,
+const workspace = createRoute({ getParentRoute: () => rootRoute, id: 'workspace', component: AppLayout,
   beforeLoad: async () => { const session = await requireSession(); if (session.mustChangePassword) throw redirect({ to: '/change-password' }); },
   loader: () => queryClient.prefetchQuery(workspacesQuery()) });
 const start = createRoute({ getParentRoute: () => workspace, path: '/', beforeLoad: () => resume() });
@@ -103,14 +103,17 @@ async function loadProject(w: string, p: string) {
 }
 const projects = createRoute({ getParentRoute: () => scoped, path: '/projects', component: ProjectsPage, validateSearch: (raw: Record<string, unknown>): { status: ProjectStatus; q: string } => ({ status: raw.status === 'archived' || raw.status === 'deleted' ? raw.status : 'active', q: typeof raw.q === 'string' ? raw.q : '' }) });
 const projectItems = createRoute({ getParentRoute: () => scoped, path: '/p/$projectId', component: WorkItemsPage, validateSearch: parseWorkSearch, loader: async ({ params }) => { await loadProject(params.workspaceId, params.projectId); await queryClient.prefetchQuery(columnsQuery(params.workspaceId, params.projectId)); } });
-const projectSettings = createRoute({ getParentRoute: () => scoped, path: '/p/$projectId/settings', component: ProjectSettingsPage, loader: ({ params }) => loadProject(params.workspaceId, params.projectId) });
+// 워크스페이스 설정 turns the menu into the workspace's settings: its pages, then each project's (D-061).
+const projectSettings = createRoute({ getParentRoute: () => scoped, path: '/settings/projects/$projectId/general', component: ProjectSettingsPage, loader: ({ params }) => loadProject(params.workspaceId, params.projectId) });
+const oldProjectSettings = createRoute({ getParentRoute: () => scoped, path: '/p/$projectId/settings', beforeLoad: ({ params }) => { throw redirect({ href: `/w/${params.workspaceId}/settings/projects/${params.projectId}/general` }); } });
 const itemDetail = createRoute({ getParentRoute: () => scoped, path: '/p/$projectId/work-items/$workItemId', component: WorkItemDetailPage, loader: ({ params }) => loadProject(params.workspaceId, params.projectId) });
 const itemReference = createRoute({ getParentRoute: () => scoped, path: '/r/$reference', loader: async ({ params }) => { const item = await routeRead(() => queryClient.fetchQuery(byRefQuery(params.workspaceId, params.reference))); throw redirect({ href: `/w/${params.workspaceId}/p/${item.projectId}/work-items/${item.id}` }); } });
 const members = createRoute({ getParentRoute: () => scoped, path: '/members', component: MembersPage,
   validateSearch: (search: Record<string, unknown>): { cursor?: string; view: 'members' | 'invitations'; status: string } => ({ ...pageCursor(search), view: search.view === 'invitations' ? 'invitations' : 'members', status: typeof search.status === 'string' && ['pending','accepted','expired','revoked'].includes(search.status) ? search.status : '' }),
   loaderDeps: ({ search }) => search, loader: async ({ params, deps }) => { const space = await routeRead(() => queryClient.fetchQuery(workspaceQuery(params.workspaceId))); if (deps.view === 'members') await queryClient.prefetchQuery(membersQuery(params.workspaceId, deps.cursor)); else if (space.myRole === 'owner' || space.myRole === 'admin') await queryClient.prefetchQuery(invitationsQuery(params.workspaceId, deps.status, deps.cursor)); } });
 const documents = createRoute({ getParentRoute: () => scoped, path: '/documents', component: DocumentsPage });
-const settings = createRoute({ getParentRoute: () => scoped, path: '/settings', component: WorkspaceSettingsPage, validateSearch: pageCursor, loaderDeps: ({ search }) => search, loader: ({ params, deps }) => queryClient.prefetchQuery(membersQuery(params.workspaceId, deps.cursor)) });
+const settingsStart = createRoute({ getParentRoute: () => scoped, path: '/settings', beforeLoad: ({ params }) => { throw redirect({ href: `/w/${params.workspaceId}/settings/general` }); } });
+const settings = createRoute({ getParentRoute: () => scoped, path: '/settings/general', component: WorkspaceSettingsPage, validateSearch: pageCursor, loaderDeps: ({ search }) => search, loader: ({ params, deps }) => queryClient.prefetchQuery(membersQuery(params.workspaceId, deps.cursor)) });
 const security = createRoute({ getParentRoute: () => workspace, path: '/settings/security', component: SecurityPage });
 const appearance = createRoute({ getParentRoute: () => workspace, path: '/settings/appearance', component: AppearancePage });
 const keys = createRoute({ getParentRoute: () => workspace, path: '/settings/api-keys', component: ApiKeysPage, validateSearch: pageCursor, loaderDeps: ({ search }) => search, loader: ({ deps }) => queryClient.prefetchQuery(keyQueryOptions(deps.cursor)) });
@@ -167,7 +170,7 @@ const demoRoutes = [
   createRoute({ getParentRoute: () => demo, path: '/patterns/dialogs', component: DemoDialogsPage }),
 ] as const;
 const demoTree = import.meta.env.DEV ? [demo.addChildren(demoRoutes)] : [];
-export const router = createRouter({ routeTree: rootRoute.addChildren([...demoTree, workspace.addChildren([start, chooser, scoped.addChildren([home, inbox, myTasks, members, documents, settings, projects, projectItems, projectSettings, itemDetail, itemReference]), security, keys, appearance, ...legacy]), login, setup, join, forcedPassword]), defaultPreload: 'intent', scrollRestoration: true,
+export const router = createRouter({ routeTree: rootRoute.addChildren([...demoTree, workspace.addChildren([start, chooser, scoped.addChildren([home, inbox, myTasks, members, documents, settingsStart, settings, projects, projectItems, projectSettings, oldProjectSettings, itemDetail, itemReference]), security, keys, appearance, ...legacy]), login, setup, join, forcedPassword]), defaultPreload: 'intent', scrollRestoration: true,
   // A panel opened over a screen shows the page's own address (a masked move); reloaded, the address is that page (D-069).
   unmaskOnReload: true });
 setUnauthorizedHandler(() => { resetCsrf(); void queryClient.cancelQueries().then(() => { queryClient.clear(); void router.navigate({ to: '/login' }); }); });

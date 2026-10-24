@@ -6,7 +6,7 @@ import { membersQuery, workspaceQuery, spacePath } from '@/entities/workspace';
 import { authError, command, sessionQueryOptions } from '@/shared/api';
 import { CompactDialog, FormMessage, PageFrame, SectionHeader } from '@/shared/ui';
 export function WorkspaceSettingsPage() {
-  const { workspaceId: id } = useParams({ from: '/workspace/w/$workspaceId' }); const { cursor } = useSearch({ from: '/workspace/w/$workspaceId/settings' });
+  const { workspaceId: id } = useParams({ from: '/workspace/w/$workspaceId' }); const { cursor } = useSearch({ from: '/workspace/w/$workspaceId/settings/general' });
   const space = useQuery(workspaceQuery(id)); const people = useQuery(membersQuery(id, cursor)); const session = useQuery(sessionQueryOptions);
   const [name, setName] = useState(''); const [userId, setUser] = useState(''); const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState<'transfer' | 'leave' | 'delete'>(); const [busy, setBusy] = useState(false); const [error, setError] = useState(''); const [notice, setNotice] = useState('');
@@ -26,7 +26,7 @@ export function WorkspaceSettingsPage() {
     {owner && <><SectionHeader title="소유권 이전" /><Text type="supporting">기존 멤버에게 소유권을 넘기면 내 역할은 admin이 됩니다.</Text>
       {people.isError && <FormMessage message={authError(people.error)} />}
       <Selector label="새 owner (현재 목록의 멤버)" placeholder="소유권을 받을 사람을 고르세요" value={userId} onChange={setUser} hasSearch options={(people.data?.items ?? []).filter(person => person.userId !== session.data?.user.id).map(person => ({ value: person.userId, label: `${person.name} · ${person.email}` }))} isDisabled={busy} />
-      <HStack gap={4}>{cursor && <Link to="/w/$workspaceId/settings" params={{ workspaceId: id }} search={{}}>처음 목록</Link>}{people.data?.nextCursor && <Link to="/w/$workspaceId/settings" params={{ workspaceId: id }} search={{ cursor: people.data.nextCursor }}>다음 멤버 목록</Link>}</HStack>
+      <HStack gap={4}>{cursor && <Link to="/w/$workspaceId/settings/general" params={{ workspaceId: id }} search={{}}>처음 목록</Link>}{people.data?.nextCursor && <Link to="/w/$workspaceId/settings/general" params={{ workspaceId: id }} search={{ cursor: people.data.nextCursor }}>다음 멤버 목록</Link>}</HStack>
       <Button label="소유권 이전" onClick={() => setConfirm('transfer')} isDisabled={!userId || busy} />
     </>}
     <SectionHeader title={owner ? '워크스페이스 삭제' : '워크스페이스 탈퇴'} /><Text type="supporting">{owner ? '공간을 삭제하면 모든 멤버가 접근할 수 없습니다. 이 화면에서는 복원할 수 없습니다.' : '탈퇴하면 이 공간에 접근할 수 없습니다. 다시 참여하려면 새 초대가 필요합니다.'}</Text>

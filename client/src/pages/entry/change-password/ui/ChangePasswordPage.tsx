@@ -1,5 +1,5 @@
 import { Text } from '@astryxdesign/core';
-import { AccountMenu } from '@/features/account-menu';
+import { AccountMenu } from './AccountMenu';
 import { PasswordChangeForm } from '@/features/password-change';
 import { AuthFrame } from '@/shared/ui';
 export function ChangePasswordPage() {
