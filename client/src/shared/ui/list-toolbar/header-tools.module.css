@@ -17,31 +17,33 @@
 
 .trigger { position: relative; display: inline-flex; }
 /* 필터 and 표시 as Linear's: round 28px buttons on a light rule, the icon alone, an accent dot while either is in force. */
-.roundButton { display: inline-grid; place-items: center; inline-size: 1.75rem; block-size: 1.75rem; padding: 0; border: 1px solid var(--color-border-control);
-  border-radius: var(--radius-full); background: var(--color-background-surface); color: var(--color-icon-secondary); cursor: pointer; }
+.roundButton { display: inline-grid; place-items: center; inline-size: 1.75rem; block-size: 1.75rem; padding: 0; border: 0;
+  border-radius: var(--radius-full); background: var(--bit-chip-bg); box-shadow: inset 0 0 0 1px var(--bit-chip-ring); color: var(--color-icon-primary); cursor: pointer; }
 .roundButton:hover, .roundButton[aria-expanded="true"] { color: var(--color-text-primary); background: var(--color-overlay-hover); }
 .roundButton:focus-visible { outline: var(--focus-outline-width) var(--focus-outline-style) var(--focus-outline-color); }
 .roundButton svg { inline-size: 0.875rem; block-size: 0.875rem; }
-.roundDot { position: absolute; inset-block-start: -1px; inset-inline-end: -1px; inline-size: 0.4375rem; block-size: 0.4375rem; border-radius: 50%;
-  background: var(--color-accent); box-shadow: 0 0 0 2px var(--color-background-surface); pointer-events: none; }
+.roundDot { position: absolute; inset-block-start: 1px; inset-inline-end: 1px; inline-size: 0.4375rem; block-size: 0.4375rem; border-radius: 50%;
+  background: var(--color-accent); pointer-events: none; }
 /* 표시's menu: the views as tiles across the top, the one in view pressed, the order under a hairline. */
 .display { display: flex; flex-direction: column; }
-.views { display: grid; grid-auto-columns: minmax(0, 1fr); grid-auto-flow: column; gap: var(--spacing-1-5, 0.375rem); padding: var(--spacing-2); }
-.view { display: flex; flex-direction: column; align-items: center; gap: var(--spacing-1); padding: var(--spacing-2) var(--spacing-1); border: 1px solid var(--color-border-control);
-  border-radius: var(--radius-element); background: var(--color-background-surface); font: inherit; font-size: 0.75rem; color: var(--color-text-secondary); cursor: pointer; }
-.view svg { inline-size: 1rem; block-size: 1rem; }
-.view:hover { color: var(--color-text-primary); background: var(--color-overlay-hover); }
-.view[aria-checked="true"] { color: var(--color-text-primary); background: var(--color-background-muted); border-color: var(--color-border-emphasized, var(--color-border)); font-weight: 600; }
+.views { display: grid; grid-auto-columns: minmax(0, 1fr); grid-auto-flow: column; gap: var(--spacing-1-5, 0.375rem); padding: var(--spacing-2) var(--spacing-2) var(--spacing-3); }
+.view { display: flex; align-items: center; justify-content: center; gap: var(--spacing-1-5, 0.375rem); block-size: 1.75rem; padding: 0 var(--spacing-2); border: 0;
+  border-radius: var(--radius-full); background: var(--bit-chip-bg); box-shadow: inset 0 0 0 1px var(--bit-chip-ring); font: inherit; font-size: 0.75rem; font-weight: 500;
+  color: var(--color-text-secondary); white-space: nowrap; cursor: pointer; }
+.view svg { inline-size: 0.875rem; block-size: 0.875rem; }
+.view:hover { color: var(--color-text-primary); }
+.view[aria-checked="true"] { color: var(--color-text-primary); background: var(--color-background-muted); box-shadow: none; }
 .view:focus-visible { outline: var(--focus-outline-width) var(--focus-outline-style) var(--focus-outline-color); }
 .displayRule { margin: 0; border: 0; border-block-start: 1px solid var(--color-border-subtle, var(--color-border)); }
 .display[data-size="lg"] .views { padding: 0 0 var(--spacing-3); }
-.display[data-size="lg"] .view { min-block-size: 4rem; justify-content: center; font-size: 0.8125rem; }
-.display[data-size="lg"] .view svg { inline-size: 1.25rem; block-size: 1.25rem; }
+.display[data-size="lg"] .views { grid-auto-flow: row; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.display[data-size="lg"] .view { block-size: 2.75rem; font-size: 0.875rem; }
+.display[data-size="lg"] .view svg { inline-size: 1.125rem; block-size: 1.125rem; }
 .display[data-size="lg"] .displayRule { margin-block-end: var(--spacing-2); }
 .menu { padding: 0; }
 /* A filter's values in the 필터 menu: a small head with the way back to the filters and the filter's name. */
-.menuHead { display: flex; align-items: center; gap: var(--spacing-1-5, 0.375rem); padding: var(--spacing-2) var(--spacing-2-5, 0.625rem) 0;
-  font-size: 0.75rem; font-weight: 500; color: var(--color-text-primary); }
+.menuHead { display: flex; align-items: center; gap: var(--spacing-1-5, 0.375rem); padding: var(--spacing-1-5, 0.375rem) var(--spacing-2) 0;
+  font-size: 0.8125rem; font-weight: 500; color: var(--color-text-primary); }
 .menuHead > svg { inline-size: 0.875rem; block-size: 0.875rem; color: var(--color-icon-secondary); }
 .menuBack { display: grid; place-items: center; inline-size: 1.5rem; block-size: 1.5rem; padding: 0; border: 0; border-radius: 4px; background: none;
   color: var(--color-text-secondary); cursor: pointer; }
@@ -49,26 +51,29 @@
 .menuBack svg { inline-size: 0.875rem; block-size: 0.875rem; }
 /* The menu is one surface, the search's sticky band included: the band takes the popover's colour, and the body keeps a
  * clear pixel inside the popover's edge, where the popover draws its rule, so the band never covers that rule. */
-.menuBody { display: flex; border: 1px solid transparent; flex-direction: column; max-block-size: 30rem; overflow-y: auto; padding: 0 var(--spacing-2-5, 0.625rem) var(--spacing-2-5, 0.625rem); }
-.menuSearch { position: sticky; top: 0; z-index: 1; display: flex; align-items: center; gap: var(--spacing-1-5, 0.375rem);
-  padding-block: var(--spacing-2-5, 0.625rem) var(--spacing-2); background: var(--color-background-popover); color: var(--color-text-secondary); }
-.menuSearch > svg { inline-size: 0.75rem; block-size: 0.75rem; position: absolute; inset-inline-start: 0.375rem; }
-.menuSearch input { flex: 1; min-width: 0; padding: 0.25rem 0.375rem 0.25rem 1.375rem; border: 1px solid var(--color-border-control); border-radius: 4px; outline: 0;
-  background: var(--color-background-muted); font: inherit; font-size: 0.6875rem; color: var(--color-text-primary); }
-.option { display: flex; align-items: center; gap: var(--spacing-2); inline-size: 100%; box-sizing: border-box; padding: var(--spacing-1-5, 0.375rem); border: 0; border-radius: 4px; background: none;
-  font: inherit; font-size: 0.6875rem; color: var(--color-text-secondary); text-align: start; cursor: pointer; }
+/* Linear's menu: a search across its top with no box of its own, a hairline under it, then rows of 32px. */
+.menuBody { display: flex; border: 1px solid transparent; flex-direction: column; max-block-size: 30rem; overflow-y: auto; padding: 0 var(--spacing-1) var(--spacing-1); }
+.menuSearch { position: sticky; top: 0; z-index: 1; display: flex; align-items: center; gap: var(--spacing-1-5, 0.375rem); margin: 0 calc(-1 * var(--spacing-1)) var(--spacing-1);
+  padding-inline: var(--spacing-3); border-block-end: 1px solid var(--bit-float-border); background: var(--color-background-popover); color: var(--color-text-secondary); }
+.menuSearch > svg { display: none; }
+.menuSearch input { flex: 1; min-width: 0; block-size: 2.25rem; padding: 0; border: 0; outline: 0; background: none; font: inherit; font-size: 0.8125rem; color: var(--color-text-primary); }
+.menuSearch input::placeholder { color: var(--color-text-disabled); }
+.option { display: flex; align-items: center; gap: var(--spacing-2); inline-size: 100%; min-block-size: 2rem; box-sizing: border-box; padding: 0 var(--spacing-2); border: 0;
+  border-radius: var(--radius-element); background: none; font: inherit; font-size: 0.8125rem; color: var(--color-text-primary); text-align: start; cursor: pointer; }
 .option:hover { background: var(--color-overlay-hover); color: var(--color-text-primary); }
 /* The design system's checkbox (20px at its smallest) drawn at the menu's 14px, its box and tick scaled together. */
 .optionCheck { display: inline-grid; place-items: center; flex-shrink: 0; inline-size: 0.875rem; block-size: 0.875rem; }
 .optionCheck > * { transform: scale(0.7); }
 .optionTick { display: inline-flex; flex-shrink: 0; color: var(--color-text-primary); }
 .optionTick svg { inline-size: 0.875rem; block-size: 0.875rem; }
-.optionIcon { display: inline-flex; }
+.optionIcon { display: inline-flex; color: var(--color-icon-secondary); }
+.optionIcon svg { inline-size: 1rem; block-size: 1rem; }
 .optionLabel { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.note { margin: 0; padding: var(--spacing-1-5, 0.375rem); font-size: 0.6875rem; color: var(--color-text-secondary); }
+.note { margin: 0; padding: var(--spacing-2); font-size: 0.75rem; color: var(--color-text-secondary); }
 
-.chip { display: inline-flex; align-items: stretch; block-size: 1.75rem; border: 1px solid var(--color-border-control); border-radius: 4px; overflow: hidden;
-  background: var(--color-background-surface); font-size: 0.75rem; }
+/* A filter in force, as Linear's: [property | condition | values | ×] in one 24px box with 8px corners, its parts ruled off. */
+.chip { display: inline-flex; align-items: stretch; block-size: 1.5rem; border: 1px solid var(--color-border-control); border-radius: var(--radius-element); overflow: hidden;
+  background: var(--bit-chip-bg); font-size: 0.75rem; }
 /* Each part of a chip is its own button, ruled off from the next. */
 .chipPart { display: inline-flex; }
 .chipPart + .chipPart, .chipPart + .chipRemove { border-inline-start: 1px solid var(--color-border-control); }
@@ -77,7 +82,7 @@
 .chipKey { font-size: 0.6875rem; }
 .chipKey:disabled { cursor: default; }
 .chipKey svg { inline-size: 0.875rem; block-size: 0.875rem; }
-.chipValue { max-inline-size: 18rem; color: var(--color-text-primary); font-size: 0.8125rem; }
+.chipValue { max-inline-size: 18rem; color: var(--color-text-primary); font-size: 0.75rem; font-weight: 500; }
 .chipName { display: inline-flex; align-items: center; gap: var(--spacing-1); min-width: 0; white-space: nowrap; }
 .chipName svg { inline-size: 0.875rem; block-size: 0.875rem; }
 .chipComma { margin-inline-end: var(--spacing-1); color: var(--color-text-secondary); }
@@ -87,20 +92,20 @@
   background: var(--color-overlay-hover); color: var(--color-text-primary); }
 .chipRemove { padding-inline: var(--spacing-1-5, 0.375rem); }
 .chipRemove svg { inline-size: 0.75rem; block-size: 0.75rem; }
-/* The + at the row's end, a chip's height. */
-.addFilter { display: grid; place-items: center; inline-size: 1.75rem; block-size: 1.75rem; padding: 0; border: 1px dashed var(--color-border-control); border-radius: 4px;
-  background: none; color: var(--color-text-secondary); cursor: pointer; }
+/* The + at the row's end, a round button a chip's height. */
+.addFilter { display: grid; place-items: center; inline-size: 1.5rem; block-size: 1.5rem; padding: 0; border: 0; border-radius: var(--radius-full);
+  background: var(--bit-chip-bg); box-shadow: inset 0 0 0 1px var(--bit-chip-ring); color: var(--color-text-secondary); cursor: pointer; }
 .addFilter:hover, .addFilter[aria-expanded="true"] { color: var(--color-text-primary); background: var(--color-overlay-hover); }
 .addFilter svg { inline-size: 0.875rem; block-size: 0.875rem; }
 .calendar { padding: var(--spacing-3); }
 /* 하루 or 기간, over the calendar: two halves of one small box, the chosen one filled. */
-.dayMode { display: inline-flex; margin-block-end: var(--spacing-2); border: 1px solid var(--color-border-control); border-radius: 4px; overflow: hidden; }
+.dayMode { display: inline-flex; margin-block-end: var(--spacing-2); border: 1px solid var(--color-border-control); border-radius: var(--radius-full); overflow: hidden; }
 .dayModeOption { padding: var(--spacing-1) var(--spacing-2-5, 0.625rem); border: 0; background: none; font: inherit; font-size: 0.75rem; color: var(--color-text-secondary); cursor: pointer; }
 .dayModeOption + .dayModeOption { border-inline-start: 1px solid var(--color-border-control); }
 .dayModeOption[aria-checked="true"] { background: var(--color-overlay-hover); color: var(--color-text-primary); font-weight: 500; }
-.clearAll { margin-inline-start: auto; block-size: 1.5rem; padding-inline: var(--spacing-2); border: 1px solid var(--color-border-control); border-radius: var(--radius-element);
-  background: var(--color-background-surface); font: inherit; font-size: 0.75rem; color: var(--color-text-secondary); cursor: pointer; }
-.clearAll:hover { color: var(--color-text-primary); border-color: var(--color-border-emphasized); }
+.clearAll { margin-inline-start: auto; block-size: 1.5rem; padding-inline: var(--spacing-2); border: 0; border-radius: var(--radius-full);
+  background: none; font: inherit; font-size: 0.75rem; font-weight: 500; color: var(--color-text-secondary); cursor: pointer; }
+.clearAll:hover { color: var(--color-text-primary); background: var(--color-overlay-hover); }
 @media (prefers-reduced-motion: reduce) { .search { animation: none; } }
 
 /* A phone's sheet (the shared frame's body gives the inset): touch rows of 44px in 14px type, the checkbox at its own

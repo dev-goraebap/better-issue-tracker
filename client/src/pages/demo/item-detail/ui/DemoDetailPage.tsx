@@ -19,7 +19,9 @@ const ACTIVITY = [
  *   phone gives the page the whole screen with '이전으로' in its foot row, and the back goes through history first.
  * - The title is the content here, so it stays visible and wraps (wrapsTitle). The page's actions end the title row:
  *   one labelled button (편집), the rest in the more menu, delete last and always behind ConfirmDialog.
- * - A desktop lays the body and a properties panel side by side; a phone stacks the panel under the body.
+ * - A desktop lays the body and a properties panel side by side; a phone stacks the panel under the body. The panel is
+ *   Linear's (D-067): under its quiet heads (속성, 라벨) a 28px line per property, its mark and value with no name column
+ *   (the name stays for assistive technology), an unset one in the quiet ink.
  * - Sections (설명, 연결, 활동) are SectionHeader over their content; a missing item is a not-found PageState.
  */
 export function DemoDetailPage() {
@@ -39,9 +41,8 @@ export function DemoDetailPage() {
     ['상태', <StatusBadge status={item.status} />],
     ['우선순위', <PriorityMark priority={item.priority} />],
     ['담당자', <span className={styles.person}><PersonCell id={item.assigneeId} /></span>],
-    ['라벨', <LabelTokens labels={item.labels} />],
-    ['기한', item.dueAt ? dateText(item.dueAt) : <span className={styles.none}>없음</span>],
-    ['만든 날', dateText(item.createdAt)],
+    ['기한', <span className={styles.dated} data-empty={!item.dueAt || undefined}><NavIcon name="calendar" />{item.dueAt ? dateText(item.dueAt) : '기한 정하기'}</span>],
+    ['만든 날', <span className={styles.dated}><NavIcon name="clock" />{dateText(item.createdAt)} 만듦</span>],
   ];
   return <PageFrame title={item.title} wrapsTitle back={back} actions={<>
     <Button label="편집" variant="secondary" icon={<NavIcon name="edit" />} onClick={() => void navigate({ to: '/demo/w/$workspaceId/p/$projectId/work-items/new', params: { workspaceId, projectId } })} />
@@ -79,16 +80,19 @@ export function DemoDetailPage() {
               </div>
             </li>;
           })}</ol>
-          <VStack gap={2} className={styles.comment}>
-            <TextArea label="댓글" isLabelHidden placeholder="댓글을 남기세요" value={comment} onChange={setComment} rows={3} />
+          <div className={styles.comment}>
+            <TextArea label="댓글" isLabelHidden placeholder="댓글을 남기세요" value={comment} onChange={setComment} rows={2} />
             <span className={styles.commentAction}><Button label="댓글 남기기" variant="primary" size="sm" isDisabled={!comment.trim()} onClick={() => setComment('')} /></span>
-          </VStack>
+          </div>
         </section>
       </VStack>
       <aside className={styles.aside} aria-label="속성">
+        <h2 className={styles.asideHead}>속성</h2>
         <dl className={styles.properties}>{properties.map(([label, value]) => <div key={label} className={styles.property}>
-          <dt>{label}</dt><dd>{value}</dd>
+          <dt className={styles.spoken}>{label}</dt><dd>{value}</dd>
         </div>)}</dl>
+        <h2 className={styles.asideHead}>라벨</h2>
+        <div className={styles.asideLabels}><LabelTokens labels={item.labels} /></div>
       </aside>
     </div>
     {isDeleting && <ConfirmDialog title="작업을 삭제할까요?" description={`${item.key} ${item.title}을(를) 삭제합니다. 연결과 댓글은 기록으로 남습니다.`}

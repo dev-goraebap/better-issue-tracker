@@ -1,7 +1,7 @@
 /*
- * Plane's spreadsheet: 44px rows edge to edge, a grey header band, hairlines between rows and between columns. Cells
- * start 16px in; the first starts 24px in, under the tabs and the trail above. The rule is the app's subtle rule
- * (--color-border-subtle), lighter than the page's in light mode and firmer in dark mode.
+ * The list on a desktop (D-064), drawn as Linear's (D-067): 44px rows edge to edge with no rule between rows or columns
+ * (the hover band parts them), a 36px header band in 12px/500 the sort uses, the first column what the row is in
+ * 13px/500. Cells start 16px in; the first starts 24px in, under the tabs and the trail above.
  */
 .sheet { inline-size: 100%; min-width: 0; }
 /* Positioned, so the hidden header labels (absolute) stay inside this scroll box rather than widening the card. */
@@ -19,17 +19,16 @@
     color-mix(in srgb, var(--color-text-primary) 5%, var(--color-background-surface)));
   inline-size: 100%; border-collapse: separate; border-spacing: 0; table-layout: fixed; font-size: 0.8125rem; color: var(--color-text-secondary);
 }
-.table th, .table td { block-size: 2.75rem; padding: 0; border-block-end: 1px solid var(--color-border-subtle); text-align: start; vertical-align: middle; }
-.table th + th, .table td + td { border-inline-start: 1px solid var(--color-border-subtle); }
-.table th { background: var(--sheet-band); font-weight: 500; white-space: nowrap; }
-/* 44px a row, its rule included. */
-.head, .cell { display: flex; align-items: center; gap: var(--spacing-2); min-width: 0; block-size: calc(2.75rem - 1px); box-sizing: border-box;
+.table th, .table td { block-size: 2.75rem; padding: 0; border: 0; text-align: start; vertical-align: middle; }
+.table th { block-size: 2.25rem; background: var(--sheet-band); font-size: 0.75rem; font-weight: 500; white-space: nowrap; }
+.head, .cell { display: flex; align-items: center; gap: var(--spacing-2); min-width: 0; block-size: 2.75rem; box-sizing: border-box;
   padding-inline: var(--spacing-4); overflow: hidden; white-space: nowrap; }
+.head { block-size: 2.25rem; }
 .table :is(th, td):first-child :is(.head, .cell, .sortHead) { padding-inline-start: var(--spacing-6); }
 /* The first column is what the row is: primary, a step larger, kept in sight when the table scrolls sideways. */
 .table :is(th, td):first-child { position: sticky; inset-inline-start: 0; z-index: 3; background: var(--color-background-surface); }
 .table th:first-child { background: var(--sheet-band); }
-.table td:first-child { font-size: 0.875rem; color: var(--color-text-primary); }
+.table td:first-child { font-size: 0.8125rem; font-weight: 500; color: var(--color-text-primary); }
 .table [data-align="end"] :is(.head, .cell) { justify-content: flex-end; font-variant-numeric: tabular-nums; }
 .table tbody tr:hover td { background-image: linear-gradient(var(--color-overlay-hover), var(--color-overlay-hover)); }
 /* A row the member must act on (data-tone="accent") lies on the accent surface, the sticky first cell included. */
@@ -48,7 +47,7 @@ button.rowLink { display: block; padding: 0; border: 0; background: none; font: 
 .table tbody tr[data-dragging] td { background: var(--color-background-surface); }
 
 /* A sortable header: the whole cell is the button, its chevron at the end. */
-.sortWrap { display: flex; block-size: calc(2.75rem - 1px); }
+.sortWrap { display: flex; block-size: 2.25rem; }
 .sortHead { display: flex; align-items: center; justify-content: space-between; gap: var(--spacing-2); inline-size: 100%; block-size: 100%;
   padding: 0 var(--spacing-4); border: 0; background: none; font: inherit; color: inherit; cursor: pointer; }
 .sortHead:hover, .sortHead[aria-expanded="true"] { color: var(--color-text-primary); background: var(--color-overlay-hover); }

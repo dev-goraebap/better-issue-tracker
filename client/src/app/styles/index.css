@@ -7,60 +7,124 @@
 
 :root {
   /*
-   * Soft rules from SandboxHr, lighter than the page's border in light mode and firmer in dark mode: between rows of a
-   * table or list and in menus (subtle), and round controls in the header's tools and chips (control, a step firmer).
+   * Soft rules between rows of a table or list and in menus (subtle), and the rule of round controls in the header's tools
+   * and chips (control, a step firmer). Linear's hairlines (D-067): light, in light mode; dark, barely lifted off the ground.
    */
-  --color-border-subtle: light-dark(color-mix(in srgb, var(--color-border) 70%, transparent), color-mix(in srgb, var(--color-text-primary) 12%, transparent));
-  --color-border-control: light-dark(color-mix(in srgb, var(--color-border) 70%, transparent), color-mix(in srgb, var(--color-text-primary) 20%, transparent));
+  --color-border-subtle: light-dark(#ebebec, #1c1d1f);
+  --color-border-control: light-dark(#dedede, #2a2b2e);
+  /* Controls stand 24 (chips), 28 (buttons, the default) and 32px (menu rows, fields), as Linear's (D-067). */
   --size-element-touch: 3rem;
-  --size-element-sm: 1.75rem;
-  --size-element-md: 2rem;
-  --size-element-lg: 2.25rem;
+  --size-element-sm: 1.5rem;
+  --size-element-md: 1.75rem;
+  --size-element-lg: 2rem;
 }
 html { font-size: 100%; }
 body { font-family: 'Pretendard Variable', Pretendard, system-ui, sans-serif; }
+/*
+ * The design language (D-067, docs/08-design-language.md): Linear's neutral greys in four steps of ink, a sparing indigo,
+ * type at 12, 13, 15 and 24px with 450 as the usual weight, 8px for what takes room, 12px for what floats, hairlines and
+ * faint layered shadows. Unlayered, it outranks the stone theme it paints over; a colour theme (color-themes.css) paints
+ * its surfaces and accent over this in turn.
+ */
 [data-astryx-theme] {
   --font-family-body: 'Pretendard Variable', Pretendard, system-ui, sans-serif;
   --font-family-heading: var(--font-family-body);
   --font-family-code: 'JetBrains Mono Variable', monospace;
   word-break: keep-all;
+
+  --color-background-body: light-dark(#efeff0, #09090a);
+  --color-background-surface: light-dark(#f9f9fa, #121213);
+  --color-background-card: light-dark(#ffffff, #18181a);
+  --color-background-popover: light-dark(#ffffff, #1c1c1f);
+  --color-background-muted: light-dark(#ececed, #232326);
+  --color-background-gray: light-dark(#e5e5e6, #2a2a2e);
+  --color-border: light-dark(#e4e4e5, #212224);
+  --color-border-emphasized: light-dark(#d3d3d3, #34353a);
+  --color-text-primary: light-dark(#1b1b1b, #f7f8f8);
+  --color-text-secondary: light-dark(#5c5c5e, #8a8f98);
+  --color-text-disabled: light-dark(#9c9d9f, #62666d);
+  --color-icon-primary: light-dark(#2f2f31, #e2e4e7);
+  --color-icon-secondary: light-dark(#6b6b6f, #8a8f98);
+  --color-accent: #5e6ad2;
+  --color-accent-muted: color-mix(in srgb, #5e6ad2 14%, transparent);
+  --color-text-accent: light-dark(#5e6ad2, #8e97e6);
+  --color-icon-accent: light-dark(#5e6ad2, #8e97e6);
+  --color-on-accent: #ffffff;
+  --color-overlay: light-dark(rgb(0 0 0 / 0.4), rgb(0 0 0 / 0.55));
+  --color-overlay-hover: light-dark(rgb(0 0 0 / 0.04), rgb(255 255 255 / 0.05));
+  --color-overlay-pressed: light-dark(rgb(0 0 0 / 0.07), rgb(255 255 255 / 0.08));
+  --color-shadow: light-dark(rgb(0 0 0 / 0.04), rgb(0 0 0 / 0.3));
+
+  --font-size-base: 0.8125rem;
+  --font-weight-normal: 450;
+  --text-body-size: 0.8125rem;
+  --text-body-leading: 1.5;
+  --text-label-size: 0.8125rem;
+  --text-supporting-size: 0.75rem;
+  --text-large-size: 0.9375rem;
+  --text-heading-1-size: 1.5rem;
+  --text-heading-2-size: 1.25rem;
+  --text-heading-3-size: 0.9375rem;
+  --text-heading-3-weight: 600;
+  --text-heading-4-size: 0.8125rem;
+  --text-heading-4-weight: 600;
+
+  --radius-inner: 0.25rem;
+  --radius-element: 0.5rem;
+  --radius-container: 0.75rem;
+  --shadow-low: light-dark(0 3px 6px -2px rgb(0 0 0 / 0.02), 0 3px 6px -2px rgb(0 0 0 / 0.2)), 0 1px 1px light-dark(rgb(0 0 0 / 0.04), rgb(0 0 0 / 0.3));
+  --shadow-med: 0 6px 18px light-dark(rgb(0 0 0 / 0.02), rgb(0 0 0 / 0.125)), 0 3px 9px light-dark(rgb(0 0 0 / 0.04), rgb(0 0 0 / 0.125)), 0 1px 1px light-dark(rgb(0 0 0 / 0.04), rgb(0 0 0 / 0.125));
+  --shadow-high: 0 4px 40px light-dark(rgb(0 0 0 / 0.04), rgb(0 0 0 / 0.1)), 0 3px 20px light-dark(rgb(0 0 0 / 0.05), rgb(0 0 0 / 0.125)), 0 3px 12px light-dark(rgb(0 0 0 / 0.05), rgb(0 0 0 / 0.125)), 0 2px 8px light-dark(rgb(0 0 0 / 0.05), rgb(0 0 0 / 0.125)), 0 1px 1px light-dark(rgb(0 0 0 / 0.05), rgb(0 0 0 / 0.125));
+  --duration-fast: 100ms;
+  --duration-medium: 250ms;
+  /* A chip or round tool at rest (white on a ring in light mode, a lifted grey in dark), and a floating surface's rule. */
+  --bit-chip-bg: light-dark(#ffffff, #1a1a1d);
+  --bit-chip-ring: light-dark(#e2e2e4, transparent);
+  --bit-float-border: light-dark(#e4e4e5, #2a2b2f);
 }
 /*
- * Menu items and avatars keep tight corners (D-058): a menu item 4px, a person's picture a rounded square rather than a
- * circle. Doubled classes outrank the design system's own single-class rules. Menu rows stand 2px apart so a chosen or
- * hovered row never touches the next.
+ * Corners (D-067): what is pressed is a pill (buttons, icon buttons, toggles); what takes room keeps 8px (menu rows);
+ * a person's picture is round. Doubled classes outrank the design system's own single-class rules. Menu rows stand 2px
+ * apart so a chosen or hovered row never touches the next.
  */
-.astryx-side-nav-item.astryx-side-nav-item { border-radius: 4px; margin-block: 1px; }
-.astryx-avatar.astryx-avatar { border-radius: 22%; }
-.astryx-avatar.astryx-avatar img { border-radius: inherit; }
-/* Buttons use the same modest corners as fields, never pill or circular shapes. */
-.astryx-button, .astryx-icon-button, .astryx-toggle-button {
-  border-radius: var(--radius-element);
-}
-/*
- * A page's own labelled buttons (새 작업, 만들기, …), as SandboxHr draws them: heavier type, corners rounded off on a
- * superellipse, and a primary one lifted by a soft glow of the accent. A browser without corner-shape keeps the modest
- * corners above rather than a pill. Icon-only boxes keep theirs.
- */
-[data-page-action] button:not([aria-label]) { font-weight: 600; }
-[data-page-action] button[data-variant="primary"]:not([aria-label]) {
-  box-shadow: 0 1px 0 rgb(255 255 255 / 0.12) inset, 0 4px 14px -6px color-mix(in srgb, var(--color-accent) 70%, transparent); }
-@supports (corner-shape: superellipse(1.6)) {
-  [data-page-action] button:not([aria-label]) { border-radius: 24px; corner-shape: superellipse(1.6); }
-}
+.astryx-side-nav-item.astryx-side-nav-item { border-radius: var(--radius-element); margin-block: 1px; }
+.astryx-avatar.astryx-avatar, .astryx-avatar.astryx-avatar img { border-radius: 50%; }
+.astryx-button.astryx-button, .astryx-icon-button.astryx-icon-button, .astryx-toggle-button.astryx-toggle-button { border-radius: var(--radius-full); }
+/* A page's own labelled buttons (새 작업, 만들기, …) at Linear's 12px/500; a primary one sits on a faint shadow, never a glow. */
+[data-page-action] button:not([aria-label]) { font-size: 0.75rem; font-weight: 500; }
+[data-page-action] button[data-variant="primary"]:not([aria-label]) { box-shadow: 0 0.5px 1px 1px light-dark(rgb(0 0 0 / 0.06), rgb(0 0 0 / 0.3)); }
 .astryx-button.bit-auth-submit {
   inline-size: 100%;
   min-block-size: var(--bit-auth-field-height, var(--size-element-lg));
   font-size: var(--bit-auth-font-size, var(--text-body-size));
 }
 .bit-nav-icon { inline-size: var(--spacing-5); block-size: var(--spacing-5); flex-shrink: 0; }
-/* Floating surfaces remain distinct from the page in both color modes. */
-.astryx-popover,
+/*
+ * Floating surfaces (D-067), as Linear's: the popover's own white (or lifted grey) on a hairline, 12px corners and a faint
+ * layered shadow; a dialog rounder (16px) on a deeper one; a bottom sheet rounded at its top. Their rows stand 32px in
+ * 13px type with 8px corners.
+ */
+.astryx-popover-surface,
 .astryx-dropdown-menu,
+.astryx-context-menu,
 .astryx-selector-popup,
-.astryx-dialog,
-.astryx-bottom-sheet {
-  border: var(--border-width) solid var(--color-border);
+.astryx-multi-selector-popup,
+.astryx-complex-selector-popup {
+  border: var(--border-width) solid var(--bit-float-border);
+  border-radius: var(--radius-container);
+  background: var(--color-background-popover);
+  box-shadow: var(--shadow-med);
+}
+.astryx-dialog, .astryx-alert-dialog {
+  border: var(--border-width) solid var(--bit-float-border);
+  border-radius: 1rem;
+  background: var(--color-background-popover);
+  box-shadow: var(--shadow-high);
+}
+.astryx-bottom-sheet { border: var(--border-width) solid var(--bit-float-border); border-block-end: 0; border-radius: 1rem 1rem 0 0; }
+:is(.astryx-dropdown-menu-item, .astryx-selector-option-row, .astryx-multi-selector-option, .astryx-typeahead-item, .astryx-command-palette-item).astryx-dropdown-menu-item,
+:is(.astryx-dropdown-menu-item, .astryx-selector-option-row, .astryx-multi-selector-option, .astryx-typeahead-item, .astryx-command-palette-item) {
+  min-block-size: 2rem; border-radius: var(--radius-element); font-size: 0.8125rem;
 }
 /* Desktop uses Astryx's matching sm/md/lg controls. Touch sizing stays local to mobile fields and form actions. */
 @media (max-width: 63.999rem) {

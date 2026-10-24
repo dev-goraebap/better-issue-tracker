@@ -10,9 +10,10 @@ const dayNumber = (day: string) => Date.parse(`${day}T00:00:00Z`) / DAY;
 const TODAY = '2026-10-23';
 
 /**
- * The 타임라인 view: each work item with a due day as a bar from the day it was made to its due day, along the days,
- * as Kaneo's gantt reads (D-064): the item's key and title in a column that stays while the days scroll sideways, the
- * weeks marked over the days and today ruled down them; it opens with today in view. Work without a due day is not drawn here.
+ * The 타임라인 view: each work item with a due day as a bar from the day it was made to its due day, along the days
+ * (D-064), drawn as Linear's (D-067): the item's key and title in a column that stays while the days scroll sideways,
+ * the months over each week's first date, today an accent pill ruled down the rows; it opens with today in view. Work
+ * without a due day is not drawn here.
  */
 export function TimelineView({ workspaceId, items, search }: { workspaceId: string; items: WorkItem[]; search: WorkSearch }) {
   const box = useRef<HTMLDivElement>(null);
@@ -37,9 +38,13 @@ export function TimelineView({ workspaceId, items, search }: { workspaceId: stri
     <div className={styles.head} role="row">
       <span className={styles.corner} role="columnheader">작업</span>
       <div className={styles.days} role="columnheader">
-        {days.map(day => <span key={day} className={styles.day} data-week={new Date(`${day}T00:00:00Z`).getUTCDay() === 0 || undefined} data-today={day === TODAY || undefined}>
-          {new Date(`${day}T00:00:00Z`).getUTCDay() === 0 || day === days[0] ? `${Number(day.slice(5, 7))}/${Number(day.slice(8))}` : ''}
-        </span>)}
+        {days.map((day, index) => (day.endsWith('-01') || index === 0) && <span key={`m${day}`} className={styles.month} style={{ gridColumn: index + 1 }}>
+          {Number(day.slice(5, 7))}월</span>)}
+        {days.map((day, index) => {
+          const isToday = day === TODAY;
+          const isWeek = new Date(`${day}T00:00:00Z`).getUTCDay() === 0;
+          return (isToday || isWeek) && <span key={day} className={styles.day} style={{ gridColumn: index + 1 }} data-today={isToday || undefined}>{Number(day.slice(8))}</span>;
+        })}
       </div>
     </div>
     {dated.map(({ item, start, end }) => <div key={item.id} className={styles.row} role="row">

@@ -1,19 +1,23 @@
-/* The columns side by side on the card's whole width, scrolling sideways in their own box. */
-.board { display: flex; gap: var(--spacing-3); align-items: flex-start; padding: var(--spacing-4) var(--spacing-6); overflow-x: auto; overscroll-behavior-x: contain; }
-.column { flex: 0 0 17.5rem; display: flex; flex-direction: column; gap: var(--spacing-2); min-inline-size: 0; padding: var(--spacing-2); border-radius: var(--radius-container);
-  background: var(--color-background-muted); }
-.columnHead { display: flex; align-items: center; gap: var(--spacing-2); min-block-size: 2rem; padding-inline: var(--spacing-2) 0; }
+/*
+ * The board as Linear's (D-067): faint lanes side by side across the card's whole width, scrolling sideways in their own
+ * box; a lane's head is the status's mark, name and count with its + at the end; a card is a lifted surface with 8px
+ * corners: the key, the title, then the priority and the assignee.
+ */
+.board { display: flex; gap: var(--spacing-2); align-items: flex-start; padding: var(--spacing-3) var(--spacing-6); overflow-x: auto; overscroll-behavior-x: contain; }
+.column { flex: 0 0 18rem; display: flex; flex-direction: column; gap: var(--spacing-1-5, 0.375rem); min-inline-size: 0; padding: 0 var(--spacing-1-5, 0.375rem) var(--spacing-1-5, 0.375rem);
+  border-radius: var(--radius-element); background: light-dark(rgb(0 0 0 / 0.025), rgb(255 255 255 / 0.02)); }
+.columnHead { display: flex; align-items: center; gap: var(--spacing-2); min-block-size: 2.5rem; padding-inline: var(--spacing-1-5, 0.375rem) 0; font-size: 0.8125rem; }
+.columnName { font-weight: 500; color: var(--color-text-primary); }
+.columnName > span > span { color: var(--color-text-primary); }
+.columnCount { color: var(--color-text-secondary); }
 .columnAdd { margin-inline-start: auto; }
-.dot { inline-size: 0.5rem; block-size: 0.5rem; border-radius: var(--radius-full); background: var(--color-icon-secondary); }
-.dot[data-status="doing"] { background: var(--color-accent); }
-.dot[data-status="review"] { background: var(--color-text-warning, #c98a1b); }
-.dot[data-status="done"] { background: var(--color-text-success, #2f9e6a); }
-.cards { display: flex; flex-direction: column; gap: var(--spacing-2); margin: 0; padding: 0; list-style: none; }
-.card { display: flex; flex-direction: column; gap: var(--spacing-1-5, 0.375rem); padding: var(--spacing-3); border: 1px solid var(--color-border); border-radius: var(--radius-element);
-  background: var(--color-background-surface); color: inherit; text-decoration: none; transition: border-color var(--duration-fast, 120ms); }
-.card:hover { border-color: var(--color-border-emphasized, var(--color-text-secondary)); }
+.cards { display: flex; flex-direction: column; gap: var(--spacing-1-5, 0.375rem); margin: 0; padding: 0; list-style: none; }
+.card { display: flex; flex-direction: column; gap: var(--spacing-1-5, 0.375rem); padding: var(--spacing-2-5, 0.625rem) var(--spacing-3); border: 1px solid var(--color-border);
+  border-radius: var(--radius-element); background: var(--color-background-card); box-shadow: var(--shadow-low); color: inherit; text-decoration: none;
+  transition: border-color var(--duration-fast, 100ms); }
+.card:hover { border-color: var(--color-border-emphasized); }
 .card:focus-visible { outline: var(--focus-outline-width) var(--focus-outline-style) var(--focus-outline-color); }
-.cardKey { font-family: var(--font-family-code); font-size: 0.75rem; color: var(--color-text-secondary); }
-.cardTitle { font-size: 0.875rem; line-height: 1.4; word-break: keep-all; overflow-wrap: anywhere; }
+.cardKey { font-size: 0.75rem; font-variant-numeric: tabular-nums; color: var(--color-text-secondary); }
+.cardTitle { font-size: 0.8125rem; font-weight: 500; line-height: 1.45; word-break: keep-all; overflow-wrap: anywhere; color: var(--color-text-primary); }
 .cardMeta { display: flex; align-items: center; justify-content: space-between; font-size: 0.75rem; color: var(--color-text-secondary); }
-@media (width < 64rem) { .board { padding: var(--spacing-4) var(--spacing-5); scroll-snap-type: x mandatory; } .column { flex-basis: 85%; scroll-snap-align: start; } }
+@media (width < 64rem) { .board { padding: var(--spacing-3) var(--spacing-5); scroll-snap-type: x mandatory; } .column { flex-basis: 85%; scroll-snap-align: start; } }

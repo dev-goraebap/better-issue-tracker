@@ -27,6 +27,7 @@ AI 네이티브 경량 ALM(Application Lifecycle Management). 제품 가칭은 b
 | `docs/05-ui.md` | Kaneo 대비 추가 화면/메뉴 |
 | `docs/06-schema.md` | 1차 DB 스키마 (`V1__schema.sql`의 기준) |
 | `docs/07-mcp.md` | 1차 MCP 도구 24개와 흐름별 사용 순서 |
+| `docs/08-design-language.md` | 디자인 언어: 리니어를 직접 재서 정리한 크기·색·부품과 BIT 적용 기준 |
 | `docs/tasks/` | 코드 작업 지시서 (Codex에게 넘기는 단위, D-033) |
 | `.agents/skills/` | 작업 방식 스킬 원본 (`bit-*` 등). `.claude/skills`는 사본 |
 | `docs/conventions.md` | 기술 스택, 코드 구조, 에이전트 스킬 관리 방법 (SandboxHr 기준) |

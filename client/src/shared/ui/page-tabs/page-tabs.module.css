@@ -3,16 +3,14 @@
 .rule [role="tablist"] { margin-block-end: -1px; }
 /* The chosen tab's line runs the tab's whole width, as far as its hover area, rather than stopping at the padding. */
 .tabs :global(.astryx-tab-indicator) { inset-inline: 0 !important; }
-/* The switch: the tabs on a muted track that hugs them, the chosen one raised on the card's colour; no underline. The
-   class lands on Astryx's wrapper and the tablist is the strip inside it. It hugs its tabs at the start of its row, as
-   tall as a row's tool buttons (28px); in the header's tab row page-chrome centres it and lines it up with the header. */
+/* The switch, as Linear's view chips (D-067): a pill each, 28px in 12px/500, a little apart; at rest white on a ring (a
+   lifted grey in dark), the chosen one filled; no track and no underline. The class lands on Astryx's wrapper and the
+   tablist is the strip inside it. In the header's tab row page-chrome centres it and lines it up with the header. */
 .switch { align-self: flex-start; block-size: auto !important; flex-shrink: 0; }
-.switch [role="tablist"] { block-size: auto !important; margin-block-end: 0 !important; gap: 2px; padding: 2px;
-  border-radius: var(--radius-element); background: var(--color-background-muted); }
-.switch [role="tab"] { block-size: 1.5rem !important; padding-inline: var(--spacing-3) !important; font-size: 0.8125rem;
-  border-radius: calc(var(--radius-element) - 2px); color: var(--color-text-secondary); }
+.switch [role="tablist"] { block-size: auto !important; margin-block-end: 0 !important; gap: var(--spacing-1-5, 6px); padding: 0; background: none; }
+.switch [role="tab"] { block-size: 1.75rem !important; padding-inline: 0.625rem !important; font-size: 0.75rem; font-weight: 500;
+  border-radius: var(--radius-full); color: var(--color-text-secondary); background: var(--bit-chip-bg); box-shadow: inset 0 0 0 1px var(--bit-chip-ring); }
 .switch [role="tab"]:hover { color: var(--color-text-primary); }
-.switch [role="tab"][aria-selected="true"] { background: var(--color-background-card, var(--color-background));
-  color: var(--color-text-primary); box-shadow: 0 0 0 1px var(--color-border), 0 1px 2px rgb(0 0 0 / 0.08); }
+.switch [role="tab"][aria-selected="true"] { background: var(--color-background-muted); color: var(--color-text-primary); box-shadow: none; }
 .switch :global(.astryx-tab-indicator) { display: none; }
-.switch [role="tab"] svg { inline-size: 1rem; block-size: 1rem; }
+.switch [role="tab"] svg { inline-size: 0.875rem; block-size: 0.875rem; }

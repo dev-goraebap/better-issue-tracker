@@ -1,7 +1,7 @@
-/* Over the tab bar (the shell's --workspace-tab-bar-height, 0 without one) and the home indicator, at the bottom right. */
+/* A round + (D-067: what is pressed is round), over the tab bar (the shell's --workspace-tab-bar-height, 0 without one) and the home indicator, at the bottom right. */
 .fab { position: fixed; inset-inline-end: var(--spacing-4);
   inset-block-end: calc(var(--workspace-tab-bar-height, 0px) + env(safe-area-inset-bottom) + var(--spacing-4)); z-index: 3;
-  display: grid; place-items: center; inline-size: 3.5rem; block-size: 3.5rem; border: 0; border-radius: 20px; corner-shape: superellipse(1.6);
-  background: var(--color-accent); color: var(--color-on-accent); box-shadow: 0 10px 24px -10px color-mix(in srgb, var(--color-accent) 90%, transparent), var(--shadow-low); cursor: pointer; }
+  display: grid; place-items: center; inline-size: 3.5rem; block-size: 3.5rem; border: 0; border-radius: 50%;
+  background: var(--color-accent); color: var(--color-on-accent); box-shadow: var(--shadow-med); cursor: pointer; }
 .fab svg { inline-size: 1.5rem; block-size: 1.5rem; }
 .fab:focus-visible { outline: var(--focus-outline-width) var(--focus-outline-style) var(--focus-outline-color); outline-offset: 3px; }

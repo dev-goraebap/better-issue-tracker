@@ -1,15 +1,25 @@
 /* Shared bits of the demo pages. */
 .clip { min-inline-size: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.key { flex-shrink: 0; white-space: nowrap; font-family: var(--font-family-code); font-size: 0.75rem; color: var(--color-text-secondary); }
+/* A work item's key, as Linear's: the body's type a step quieter, figures of one width. */
+.key { flex-shrink: 0; white-space: nowrap; font-size: 0.8125rem; font-variant-numeric: tabular-nums; color: var(--color-text-secondary); }
 .none { color: var(--color-text-secondary); opacity: 0.6; }
 .figure { display: inline-flex; align-items: center; gap: var(--spacing-1); font-variant-numeric: tabular-nums; color: var(--color-text-secondary); }
 .figure svg { inline-size: 0.875rem; block-size: 0.875rem; }
-.priority { display: inline-flex; align-items: center; gap: var(--spacing-1); }
-.priority svg { inline-size: 0.875rem; block-size: 0.875rem; }
-.priority[data-level="urgent"] { color: var(--color-text-danger, #d94848); }
-.priority[data-level="high"] { color: var(--color-text-warning, #c98a1b); }
+/* Linear's marks (D-067): a priority's bars (긴급's orange square) and a status's ring, 14px before the name. */
+.priority { display: inline-flex; align-items: center; gap: var(--spacing-1-5, 0.375rem); color: var(--color-text-secondary); white-space: nowrap; }
+.priority svg { inline-size: 0.875rem; block-size: 0.875rem; flex-shrink: 0; color: var(--color-icon-secondary); }
+.priority[data-level="urgent"] svg { color: #f2994a; }
+.status { display: inline-flex; align-items: center; gap: var(--spacing-1-5, 0.375rem); flex-shrink: 0; color: var(--color-text-secondary); white-space: nowrap; }
+.status svg { inline-size: 0.875rem; block-size: 0.875rem; flex-shrink: 0; color: var(--color-icon-secondary); }
+.status[data-status="doing"] svg { color: #f2c94c; }
+.status[data-status="review"] svg { color: #4cb782; }
+.status[data-status="done"] svg { color: #5e6ad2; }
 .unread { font-weight: 700; color: var(--color-text-primary); }
 .labels { display: flex; gap: var(--spacing-1); min-inline-size: 0; overflow: hidden; }
+/* A label as Linear's: a 20px pill on a hairline, its colour's dot before the name in 12px. */
+.label { display: inline-flex; align-items: center; gap: var(--spacing-1-5, 0.375rem); flex-shrink: 0; block-size: 1.25rem; padding-inline: 0.4375rem 0.5rem;
+  box-sizing: border-box; border: 1px solid var(--color-border-control); border-radius: var(--radius-full); font-size: 0.75rem; color: var(--color-text-secondary); white-space: nowrap; }
+.labelDot { inline-size: 0.5rem; block-size: 0.5rem; border-radius: 50%; flex-shrink: 0; }
 /* An Inbox row's title as a button that marks it read: the notice, then what it is about in the secondary ink. */
 .rowButton { display: flex; align-items: baseline; gap: var(--spacing-2); min-inline-size: 0; max-inline-size: 100%; padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: start; cursor: pointer; white-space: nowrap; overflow: hidden; }
 .rowButton:hover { text-decoration: underline; }
@@ -29,7 +39,7 @@
 /* Lists in a page's column (not edge to edge) line up with the section labels. */
 .flush ul > li { padding-inline: 0; }
 /* A card's lead when nobody is assigned: an empty dashed square the size of a picture. */
-.leadEmpty { display: block; inline-size: 2rem; block-size: 2rem; border: 1px dashed var(--color-border-emphasized, var(--color-border)); border-radius: 22%; box-sizing: border-box; }
+.leadEmpty { display: block; inline-size: 2rem; block-size: 2rem; border: 1px dashed var(--color-border-emphasized, var(--color-border)); border-radius: 50%; box-sizing: border-box; }
 /* A row's kind as a small mark (a meeting, an agent session) on a muted square. */
 .typeMark { display: inline-grid; place-items: center; inline-size: 1.75rem; block-size: 1.75rem; border-radius: 6px; background: var(--color-background-muted); color: var(--color-icon-secondary); }
 .typeMark svg { inline-size: 1rem; block-size: 1rem; }
