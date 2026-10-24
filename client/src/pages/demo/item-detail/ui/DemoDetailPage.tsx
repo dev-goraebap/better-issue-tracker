@@ -25,7 +25,7 @@ const ACTIVITY = [
 export function DemoDetailPage() {
   const { workspaceId, projectId, workItemId: id } = useParams({ from: '/demo/w/$workspaceId/p/$projectId/work-items/$workItemId' });
   const search = useSearch({ from: '/demo/w/$workspaceId/p/$projectId/work-items/$workItemId' });
-  const list = { to: '/demo/w/$workspaceId/p/$projectId', params: { workspaceId, projectId }, search } as const;
+  const list = { to: '/demo/w/$workspaceId/work', params: { workspaceId }, search: { ...search, project: search.project ?? projectId } } as const;
   const navigate = useNavigate();
   const [isDeleting, setDeleting] = useState(false);
   const [comment, setComment] = useState('');

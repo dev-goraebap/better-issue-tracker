@@ -23,17 +23,16 @@ import { ApiKeysPage } from '@/pages/settings/api-keys';
 import { WorkspaceSettingsPage } from '@/pages/settings/workspace';
 import { AppearancePage } from '@/pages/settings/appearance';
 import { DemoWorkspacesPage } from '@/pages/demo/workspaces';
-import { DemoHomePage } from '@/pages/demo/home';
+import { DemoSchedulePage } from '@/pages/demo/schedule';
 import { DemoInboxPage } from '@/pages/demo/inbox';
 import { DemoMembersPage } from '@/pages/demo/members';
 import { DemoDocumentsPage } from '@/pages/demo/documents';
 import { DemoProjectsPage } from '@/pages/demo/projects';
-import { DemoProjectWorkPage } from '@/pages/demo/project-work';
+import { DemoWorkPage } from '@/pages/demo/work';
 import { DemoDetailPage } from '@/pages/demo/item-detail';
 import { DemoFormPage } from '@/pages/demo/item-form';
 import { DemoDecisionsPage } from '@/pages/demo/decisions';
-import { DemoSessionsPage } from '@/pages/demo/sessions';
-import { DemoArtifactsPage } from '@/pages/demo/artifacts';
+import { DemoNotesPage } from '@/pages/demo/notes';
 import { DemoWorkspaceSettingsPage } from '@/pages/demo/settings/workspace';
 import { DemoProjectSettingsPage } from '@/pages/demo/settings/project';
 import { DemoAdminPage } from '@/pages/demo/settings/admin';
@@ -44,7 +43,10 @@ import { DemoAppearancePage } from '@/pages/demo/account-appearance';
 import { DemoNotificationsPage } from '@/pages/demo/account-notifications';
 import { DemoApiKeysPage } from '@/pages/demo/account-api-keys';
 import { DemoSecurityPage } from '@/pages/demo/account-security';
-import { DEFAULT_WORKSPACE, parseDecisionsSearch, parseInboxSearch, parseMembersSearch, parseProjectsSearch, parseStatesSearch, parseWorkSearch as parseDemoWorkSearch } from '@/entities/demo-sample';
+import {
+  DEFAULT_WORKSPACE, firstIssuePath, parseDecisionsSearch, parseInboxSearch, parseMembersSearch, parseNotesSearch, parseProjectsSearch, parseScope, parseStatesSearch,
+  parseWorkSearch as parseDemoWorkSearch,
+} from '@/entities/demo-sample';
 import { parseDemoCalendarSearch } from '@/widgets/demo-calendar';
 import { DemoLayout } from '../layout/DemoLayout';
 import { followHistory } from '@/shared/lib/history-trail';
@@ -133,7 +135,12 @@ const demoInboxRoutes = [
   createRoute({ getParentRoute: () => demoSpace, path: '/inbox/$noticeId', component: DemoInboxPage, validateSearch: ownSearch(parseInboxSearch) }),
 ];
 const demoSpaceRoutes = [
-  createRoute({ getParentRoute: () => demoSpace, path: '/', component: DemoHomePage, validateSearch: ownSearch(parseDemoCalendarSearch) }),
+  // A workspace opens on the member's first issue menu (D-063); each menu is the workspace's, or a project's by `?project=`.
+  createRoute({ getParentRoute: () => demoSpace, path: '/', beforeLoad: ({ params }) => { throw redirect({ href: `/demo/w/${params.workspaceId}${firstIssuePath(params.workspaceId)}` }); } }),
+  createRoute({ getParentRoute: () => demoSpace, path: '/work', component: DemoWorkPage, validateSearch: ownSearch(parseDemoWorkSearch) }),
+  createRoute({ getParentRoute: () => demoSpace, path: '/schedule', component: DemoSchedulePage, validateSearch: ownSearch((raw: Record<string, unknown>) => ({ ...parseDemoCalendarSearch(raw), ...parseScope(raw) })) }),
+  createRoute({ getParentRoute: () => demoSpace, path: '/decisions', component: DemoDecisionsPage, validateSearch: ownSearch(parseDecisionsSearch) }),
+  createRoute({ getParentRoute: () => demoSpace, path: '/notes', component: DemoNotesPage, validateSearch: ownSearch(parseNotesSearch) }),
   ...demoInboxRoutes,
   createRoute({ getParentRoute: () => demoSpace, path: '/members', component: DemoMembersPage, validateSearch: ownSearch(parseMembersSearch) }),
   createRoute({ getParentRoute: () => demoSpace, path: '/documents', component: DemoDocumentsPage }),
@@ -142,12 +149,13 @@ const demoSpaceRoutes = [
   createRoute({ getParentRoute: () => demoSpace, path: '/settings', beforeLoad: ({ params }) => { throw redirect({ href: `/demo/w/${params.workspaceId}/settings/general` }); } }),
   createRoute({ getParentRoute: () => demoSpace, path: '/settings/$section', component: DemoWorkspaceSettingsPage }),
   createRoute({ getParentRoute: () => demoSpace, path: '/settings/projects/$projectId/$section', component: DemoProjectSettingsPage }),
-  createRoute({ getParentRoute: () => demoSpace, path: '/p/$projectId', component: DemoProjectWorkPage, validateSearch: ownSearch(parseDemoWorkSearch) }),
+  // The old project pages lead to the issue menus scoped to the project (D-063).
+  createRoute({ getParentRoute: () => demoSpace, path: '/p/$projectId', beforeLoad: ({ params }) => { throw redirect({ href: `/demo/w/${params.workspaceId}/work?project=${params.projectId}` }); } }),
   createRoute({ getParentRoute: () => demoSpace, path: '/p/$projectId/work-items/new', component: DemoFormPage }),
   createRoute({ getParentRoute: () => demoSpace, path: '/p/$projectId/work-items/$workItemId', component: DemoDetailPage, validateSearch: ownSearch(parseDemoWorkSearch) }),
-  createRoute({ getParentRoute: () => demoSpace, path: '/p/$projectId/decisions', component: DemoDecisionsPage, validateSearch: ownSearch(parseDecisionsSearch) }),
-  createRoute({ getParentRoute: () => demoSpace, path: '/p/$projectId/sessions', component: DemoSessionsPage }),
-  createRoute({ getParentRoute: () => demoSpace, path: '/p/$projectId/artifacts', component: DemoArtifactsPage }),
+  createRoute({ getParentRoute: () => demoSpace, path: '/p/$projectId/decisions', beforeLoad: ({ params }) => { throw redirect({ href: `/demo/w/${params.workspaceId}/decisions?project=${params.projectId}` }); } }),
+  createRoute({ getParentRoute: () => demoSpace, path: '/p/$projectId/sessions', beforeLoad: ({ params }) => { throw redirect({ href: `/demo/w/${params.workspaceId}/notes?project=${params.projectId}` }); } }),
+  createRoute({ getParentRoute: () => demoSpace, path: '/p/$projectId/artifacts', beforeLoad: ({ params }) => { throw redirect({ href: `/demo/w/${params.workspaceId}/documents` }); } }),
   createRoute({ getParentRoute: () => demoSpace, path: '/p/$projectId/settings', beforeLoad: ({ params }) => { throw redirect({ href: `/demo/w/${params.workspaceId}/settings/projects/${params.projectId}/general` }); } }),
 ] as const;
 const demoRoutes = [

@@ -8,7 +8,7 @@ import { filterWork, isNarrowed, PEOPLE, PRIORITY_LABELS, STATUS_LABELS, TABLE_S
 const SLICE = 10;
 
 /**
- * PATTERN · 표 목록. A project's 목록 view: work items whose rows are compared by several properties.
+ * PATTERN · 표 목록. The 작업 menu's 표 view: work items whose rows are compared by several properties.
  *
  * - ListToolbar inside PageFrame chrome="header" puts the search, 필터 and the create action at the header row's end (or the
  *   tab row's end when the page has tabs); chosen filters show as chips under it. The page lays out none of it.
@@ -20,9 +20,11 @@ const SLICE = 10;
  *   Here the slices are local; a real page uses useInfiniteQuery and takes the total from the server.
  * - Empty and no-match are different states: no-match offers '조건 지우기'.
  */
-export function WorkList({ workspaceId, items, search, onChange, onCreate, lead }: {
+export function WorkList({ workspaceId, items, search, onChange, onCreate, lead, filtersBefore = [] }: {
   workspaceId: string; items: readonly WorkItem[]; search: WorkSearch;
-  onChange: (patch: Partial<TableSearch>, replace?: boolean) => void; onCreate?: () => void;
+  onChange: (patch: Partial<TableSearch> & { project?: string }, replace?: boolean) => void; onCreate?: () => void;
+  /** Filters before the list's own, such as the issue menu's 프로젝트 scope. */
+  filtersBefore?: ListFilter[];
   /** A desktop header's first tool, before the search (a view switch). */
   lead?: ReactNode;
 }) {
@@ -35,6 +37,7 @@ export function WorkList({ workspaceId, items, search, onChange, onCreate, lead 
   }), [search, onChange]);
   const rows = useMemo(() => filterWork(items, search, order), [items, search, order]);
   const filters: ListFilter[] = [
+    ...filtersBefore,
     { key: 'status', label: '상태', icon: 'status', value: search.status, isMultiple: true, options: Object.entries(STATUS_LABELS).map(([value, label]) => ({ value, label })) },
     { key: 'priority', label: '우선순위', icon: 'priority', value: search.priority, options: Object.entries(PRIORITY_LABELS).map(([value, label]) => ({ value, label })) },
     { key: 'assignee', label: '담당자', icon: 'person', value: search.assignee, isMultiple: true, isSearchable: true,

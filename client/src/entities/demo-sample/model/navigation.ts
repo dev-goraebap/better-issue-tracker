@@ -14,25 +14,24 @@ export type DemoEntry = { path: string; label: string; icon: string; pattern: st
 export const NOTICE_ENTRY: DemoEntry = { path: '/inbox', label: '알림', icon: 'bell', pattern: '데스크톱은 왼쪽 좁은 목록과 오른쪽 내용, 휴대폰은 목록에서 전체 화면 상세로' };
 
 /**
- * The workspace's menu, as the real sidebar's; 워크스페이스 설정 sits at the menu's foot, under everything else. A phone's
- * tabs are these, then 더보기.
+ * The issues' menus (D-062, D-063): one entry per type of issue, each the whole workspace unless a project is chosen as
+ * its scope (`?project=`, the sidebar's 프로젝트 list and the page's 프로젝트 filter alike). A member reorders them and
+ * hides all but 작업 (issue-menu prefs). A phone's tabs are the first three shown, then 더보기.
  */
+export type IssueMenuKey = 'work' | 'schedule' | 'decisions' | 'notes';
+export type IssueEntry = DemoEntry & { key: IssueMenuKey };
+export const ISSUE_MENU: readonly IssueEntry[] = [
+  { key: 'work', path: '/work', label: '작업', icon: 'board', pattern: '보기 탭(칸반·목록·표·간트)과 프로젝트 범위 필터' },
+  { key: 'schedule', path: '/schedule', label: '일정', icon: 'calendar', pattern: '캘린더(월·주), 만들기 메뉴와 날짜 미정 서랍' },
+  { key: 'decisions', path: '/decisions', label: '결정기록', icon: 'decision', pattern: '위에서 아래로 흐르는 타임라인, 검토 중인 것 먼저' },
+  { key: 'notes', path: '/notes', label: '노트', icon: 'session', pattern: '라벨(회의록·세션 요약)로 나눈 행 목록' },
+];
+
+/** The workspace's other menus, under the issues and the projects; 워크스페이스 설정 sits at the menu's foot. */
 export const WORKSPACE_MENU: readonly DemoEntry[] = [
-  { path: '', label: '홈', icon: 'home', pattern: '캘린더(월·주·업무 주)와 섹션 머리·요약 수치·최근 항목을 모은 홈' },
   { path: '/members', label: '구성원', icon: 'members', pattern: '탭(구성원·초대)마다 다른 표, 행 끝의 역할 선택' },
   { path: '/documents', label: '문서함', icon: 'documents', pattern: '아직 준비 중인 기능의 빈 상태와 안내' },
 ];
-export const WORKSPACE_TABS = 3;
-
-/** A project's menu, as docs/05-ui's side menu: work (its views are tabs), decisions, sessions, artifacts, settings. */
-export const PROJECT_MENU: readonly DemoEntry[] = [
-  { path: '', label: '작업', icon: 'board', pattern: '보기 탭(보드·목록·백로그·타임라인), 전체 폭 칸반과 표' },
-  { path: '/decisions', label: '결정', icon: 'decision', pattern: '상태 탭과 탭 줄 끝의 도구, 계산된 이행 진행 막대' },
-  { path: '/sessions', label: '세션·회의', icon: 'session', pattern: '종류 표시와 참석자 아바타 묶음이 있는 행 목록' },
-  { path: '/artifacts', label: '산출물', icon: 'documents', pattern: '아직 준비 중인 기능의 빈 상태' },
-  { path: '/settings', label: '설정', icon: 'settings', pattern: '워크스페이스 설정 안의 이 프로젝트 설정으로 간다' },
-];
-export const PROJECT_TABS = 3;
 
 /**
  * The workspace's settings, which 워크스페이스 설정 at the menu's foot opens: the menu turns into these, headed by
@@ -78,6 +77,8 @@ export const PATTERN_MENU: readonly DemoEntry[] = [
 ];
 
 export const workspacePath = (workspaceId: string, path = '') => `/demo/w/${workspaceId}${path}`;
+/** An issue menu's address, scoped to a project when one is given. */
+export const issuePath = (workspaceId: string, path: string, project?: string) => `/demo/w/${workspaceId}${path}${project ? `?project=${project}` : ''}`;
 export const projectPath = (workspaceId: string, projectId: string, path = '') => `/demo/w/${workspaceId}/p/${projectId}${path}`;
 export const workspaceSettingsPath = (workspaceId: string, path = '/general') => `/demo/w/${workspaceId}/settings${path}`;
 export const projectSettingsPath = (workspaceId: string, projectId: string, path = '/general') =>
@@ -130,8 +131,8 @@ export function placeNames(place: DemoPlace) {
   const workspace = workspaceOf(place.workspaceId);
   const project = projectOf(place.projectId);
   const section = place.projectId
-    ? PROJECT_MENU.find(entry => entry.path === place.projectSection)
-    : [NOTICE_ENTRY, ...WORKSPACE_MENU].find(entry => entry.path === place.workspaceSection) ?? (place.workspaceSection === '/projects' ? { label: '모든 프로젝트' } : place.workspaceSection === '/settings' ? { label: '워크스페이스 설정' } : undefined);
+    ? ISSUE_MENU[0]
+    : [NOTICE_ENTRY, ...ISSUE_MENU, ...WORKSPACE_MENU].find(entry => entry.path === place.workspaceSection) ?? (place.workspaceSection === '/projects' ? { label: '모든 프로젝트' } : undefined);
   const item = place.itemId === 'new' ? '새 작업' : itemOf(place.itemId)?.key;
   return { workspace: workspace?.name, project: project?.name, section: section?.label, item, settingsProject: projectOf(place.settingsProjectId)?.name };
 }

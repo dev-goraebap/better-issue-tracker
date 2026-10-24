@@ -30,8 +30,8 @@ export function DemoFormPage() {
   const [due, setDue] = useState<string | undefined>();
   const [isChecked, setChecked] = useState(false);
   const titleError = isChecked && !title.trim() ? '제목을 입력해 주세요.' : undefined;
-  const leave = () => void navigate({ to: '/demo/w/$workspaceId/p/$projectId', params: { workspaceId, projectId } });
-  return <PageFrame title="새 작업" width="narrow" back={<BackLink to="/demo/w/$workspaceId/p/$projectId" params={{ workspaceId, projectId }} label="작업" />}>
+  const leave = () => void navigate({ to: '/demo/w/$workspaceId/work', params: { workspaceId }, search: { project: projectId } });
+  return <PageFrame title="새 작업" width="narrow" back={<BackLink to="/demo/w/$workspaceId/work" params={{ workspaceId }} search={{ project: projectId }} label="작업" />}>
     <form id={formId} noValidate onSubmit={event => { event.preventDefault(); setChecked(true); if (title.trim()) leave(); }}>
       <VStack gap={5}>
         <TextInput label="제목" value={title} onChange={setTitle} isRequired hasAutoFocus placeholder="무엇을 해야 하나요?"

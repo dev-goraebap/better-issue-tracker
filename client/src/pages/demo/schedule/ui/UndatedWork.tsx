@@ -3,7 +3,7 @@ import { Button, IconButton } from '@astryxdesign/core';
 import { CompactDialog, DefaultAvatar, NavIcon } from '@/shared/ui';
 import { personOf, PriorityMark, type WorkItem } from '@/entities/demo-sample';
 import { WORK_DRAG_TYPE } from '@/widgets/demo-calendar';
-import styles from './home.module.css';
+import styles from './schedule.module.css';
 
 /**
  * 날짜 미정: the workspace's open work with no due day, beside the calendar. A desktop's is a drawer at the calendar's

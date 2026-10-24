@@ -18,15 +18,18 @@ type Moves = { workspaceId: string; byId: Record<string, { start: string; end: s
  * "+N개 더" opens its week. An event that may move is dragged to another day or time and stays there while the page is
  * open; nothing is saved.
  */
-export function DemoCalendar({ workspaceId, search, onPlace, onOpen, onDropWork }: {
-  workspaceId: string; search: DemoCalendarSearch; onPlace: (next: DemoCalendarSearch) => void; onOpen: (href: string) => void;
+export function DemoCalendar({ workspaceId, project, search, onPlace, onOpen, onDropWork }: {
+  workspaceId: string;
+  /** One project's events only (the issue menu's scope); the workspace's own events then step aside. */
+  project?: string;
+  search: DemoCalendarSearch; onPlace: (next: DemoCalendarSearch) => void; onOpen: (href: string) => void;
   /** Work carried in from outside (the home's 날짜 미정 drawer) and dropped on a day. */
   onDropWork?: (itemId: string, day: string) => void;
 }) {
   const { view, day, days, isWeekly } = useCalendarPlace(search);
   const schedules = useSchedules();
   const dues = useWorkDues();
-  const sample = useMemo(() => buildDemoEvents(workspaceId, schedules, dues), [workspaceId, schedules, dues]);
+  const sample = useMemo(() => buildDemoEvents(workspaceId, schedules, dues).filter(event => !project || event.projectId === project), [workspaceId, schedules, dues, project]);
   const [moves, setMoves] = useState<Moves>({ workspaceId, byId: {} });
   const moved = moves.workspaceId === workspaceId ? moves.byId : {};
   const events = useMemo(() => sample.map(event => {

@@ -27,7 +27,7 @@ export function DemoProjectsPage() {
   const rows = useMemo(() => projectsIn(workspaceId).filter(project => project.status === tab && (!search.q || project.name.includes(search.q) || project.key.includes(search.q.toUpperCase()))), [workspaceId, tab, search.q]);
   const open = (project: Project) => WORK_ITEMS.filter(item => item.projectId === project.id && item.status !== 'done').length;
   const columns = useMemo<SheetColumn<Project>[]>(() => [
-    { key: 'name', header: '프로젝트', render: row => <Link to="/demo/w/$workspaceId/p/$projectId" params={{ workspaceId, projectId: row.id }} className={SHEET_ROW_LINK}>{row.name}</Link> },
+    { key: 'name', header: '프로젝트', render: row => <Link to="/demo/w/$workspaceId/work" params={{ workspaceId }} search={{ project: row.id }} className={SHEET_ROW_LINK}>{row.name}</Link> },
     { key: 'key', header: '키', width: '6rem', render: row => <span className={demoStyles.key}>{row.key}</span> },
     { key: 'lead', header: '리드', width: '9rem', render: row => <PersonCell id={row.leadId} /> },
     { key: 'open', header: '진행 중 작업', width: '8rem', align: 'end', render: row => `${open(row)}개` },
@@ -42,7 +42,7 @@ export function DemoProjectsPage() {
         description={search.q ? '다른 이름이나 키로 찾아보세요.' : '프로젝트를 만들면 작업·결정·세션을 그 안에 모을 수 있습니다.'} />
         : isMobile
           ? <ItemList label="프로젝트">{rows.map(row => <ItemRow key={row.id} lead={<span className={demoStyles.typeMark}>{row.key.slice(0, 1)}</span>}
-            title={<Link to="/demo/w/$workspaceId/p/$projectId" params={{ workspaceId, projectId: row.id }} className={ITEM_ROW_LINK}>{row.name}</Link>}
+            title={<Link to="/demo/w/$workspaceId/work" params={{ workspaceId }} search={{ project: row.id }} className={ITEM_ROW_LINK}>{row.name}</Link>}
             meta={<><ItemMeta><span className={demoStyles.key}>{row.key}</span></ItemMeta><ItemMeta>진행 중 {open(row)}개</ItemMeta><ItemMeta>{dateText(row.updatedAt)}</ItemMeta></>} />)}</ItemList>
           : <SheetTable label="프로젝트" columns={columns} rows={rows} rowKey={row => row.id} minWidth="44rem" />}
     </div>

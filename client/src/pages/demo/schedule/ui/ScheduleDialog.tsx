@@ -3,7 +3,7 @@ import { Button, Switch, TextInput, TimeInput } from '@astryxdesign/core';
 import type { ISOTimeString } from '@astryxdesign/core/TimeInput';
 import { CompactDialog, DateField, Select } from '@/shared/ui';
 import { addSchedule, type Project } from '@/entities/demo-sample';
-import styles from './home.module.css';
+import styles from './schedule.module.css';
 
 const nextDay = (day: string) => new Date(Date.parse(`${day}T00:00:00Z`) + 86_400_000).toISOString().slice(0, 10);
 
@@ -12,11 +12,13 @@ const nextDay = (day: string) => new Date(Date.parse(`${day}T00:00:00Z`) + 86_40
  * it takes the whole day. It opens on the day the calendar shows, ten to eleven; the title is required and an end
  * after its start, both checked on submit. onCreated hands back its day so the calendar can go there.
  */
-export function ScheduleDialog({ isOpen, workspaceId, projects, day, onClose, onCreated }: {
-  isOpen: boolean; workspaceId: string; projects: readonly Project[]; day: string; onClose: () => void; onCreated: (day: string) => void;
+export function ScheduleDialog({ isOpen, workspaceId, projects, project, day, onClose, onCreated }: {
+  isOpen: boolean; workspaceId: string; projects: readonly Project[];
+  /** The project in scope, chosen to begin with. */
+  project?: string; day: string; onClose: () => void; onCreated: (day: string) => void;
 }) {
   const [title, setTitle] = useState('');
-  const [projectId, setProjectId] = useState<string | undefined>();
+  const [projectId, setProjectId] = useState<string | undefined>(project);
   const [date, setDate] = useState<string | undefined>(day);
   const [allDay, setAllDay] = useState(false);
   const [start, setStart] = useState('10:00');
@@ -25,7 +27,7 @@ export function ScheduleDialog({ isOpen, workspaceId, projects, day, onClose, on
   const titleError = isChecked && !title.trim() ? '일정 이름을 입력해 주세요.' : undefined;
   const dateError = isChecked && !date ? '날짜를 골라 주세요.' : undefined;
   const timeError = isChecked && !allDay && end <= start ? '끝나는 시각은 시작 뒤여야 합니다.' : undefined;
-  const reset = () => { setTitle(''); setProjectId(undefined); setDate(day); setAllDay(false); setStart('10:00'); setEnd('11:00'); setChecked(false); };
+  const reset = () => { setTitle(''); setProjectId(project); setDate(day); setAllDay(false); setStart('10:00'); setEnd('11:00'); setChecked(false); };
   const close = () => { reset(); onClose(); };
   const submit = () => {
     setChecked(true);

@@ -1,7 +1,7 @@
 import { Button } from '@astryxdesign/core';
 import { CompactDialog, NavIcon } from '@/shared/ui';
 import type { Project } from '@/entities/demo-sample';
-import styles from './home.module.css';
+import styles from './schedule.module.css';
 
 /**
  * A phone's 만들기, opened by the floating +: the desktop menu's choices laid out at once, 일정 first, then a work item

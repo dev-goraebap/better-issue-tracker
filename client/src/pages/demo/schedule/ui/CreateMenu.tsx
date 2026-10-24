@@ -1,7 +1,7 @@
 import { DropdownMenu } from '@astryxdesign/core';
 import { NavIcon } from '@/shared/ui';
 import type { Project } from '@/entities/demo-sample';
-import styles from './home.module.css';
+import styles from './schedule.module.css';
 
 /**
  * The desktop's 만들기 at the end of the home's header row, as SandboxHr's calendar has its 새로 만들기: a schedule of

@@ -17,6 +17,8 @@ export type DemoEvent = {
   changed?: boolean;
   /** The demo page it opens, if any. */
   href?: string;
+  /** The project it belongs to; the workspace's own events have none. */
+  projectId?: string;
 };
 
 export const KIND_NAMES: Record<DemoEventKind, string> = { team: '일정', session: '세션', work: '작업 마감', decision: '결정' };
@@ -78,13 +80,13 @@ export function buildDemoEvents(workspaceId: string, schedules: readonly DemoSch
   const made: DemoEvent[] = schedules.filter(schedule => schedule.workspaceId === workspaceId).map(schedule => {
     const key = all.find(project => project.id === schedule.projectId)?.key;
     return { id: schedule.id, kind: 'team', title: key ? `${key} · ${schedule.title}` : schedule.title, allDay: schedule.allDay,
-      start: schedule.start, end: schedule.end, recurring: false };
+      start: schedule.start, end: schedule.end, recurring: false, projectId: schedule.projectId };
   });
   const base = `/demo/w/${workspaceId}/p`;
   const sessions: DemoEvent[] = SESSIONS.filter(session => projects.has(session.projectId)).map(session => {
     const start = seoul(session.occurredAt);
     return { id: `session-${session.id}`, kind: 'session', title: `${session.key} ${session.title}`, allDay: false, start, end: hourAfter(start), recurring: false,
-      href: `${base}/${session.projectId}/sessions` };
+      href: `/demo/w/${workspaceId}/notes?project=${session.projectId}`, projectId: session.projectId };
   });
   // The first few due items show the stretch before their due day (from when they were made, four days at most).
   const due = WORK_ITEMS.filter(item => projects.has(item.projectId) && (item.dueAt || dues[item.id]));
@@ -94,12 +96,12 @@ export function buildDemoEvents(workspaceId: string, schedules: readonly DemoSch
     const made = seoul(item.createdAt).slice(0, 10);
     const first = stretched.has(item.id) ? (made > shiftDay(last, -4) ? made : shiftDay(last, -4)) : last;
     return { id: `work-${item.id}`, kind: 'work', title: `${item.key} ${item.title}`, ...allDay(first, last), recurring: false,
-      href: `${base}/${item.projectId}/work-items/${item.id}` };
+      href: `${base}/${item.projectId}/work-items/${item.id}`, projectId: item.projectId };
   });
   const decisions: DemoEvent[] = DECISIONS.filter(decision => projects.has(decision.projectId) && decision.decidedAt).map(decision => {
     const day = seoul(decision.decidedAt!).slice(0, 10);
     return { id: `decision-${decision.id}`, kind: 'decision', title: `${decision.key} ${decision.title}`, ...allDay(day, day), recurring: false,
-      href: `${base}/${decision.projectId}/decisions` };
+      href: `/demo/w/${workspaceId}/decisions?project=${decision.projectId}`, projectId: decision.projectId };
   });
   return [...teamEvents(), ...made, ...sessions, ...work, ...decisions];
 }
