@@ -78,6 +78,8 @@ export type ListSearch = { label: string; placeholder: string; value?: string; o
 export type ListAction = { label: string; icon?: string; onClick: () => void; isCreate?: boolean };
 /** A list's orders as one choice each (최신순, 오래된순), for a page without the header chrome. */
 export type ListOrder = { value: string; options: ListOption[]; onChange: (value: string) => void };
+/** The ways a list can be seen (리스트, 캘린더, 칸반), each its name and NavIcon, the one in view, and where a pick goes. */
+export type ListViews = { label: string; value: string; options: { value: string; label: string; icon: string }[]; onChange: (value: string) => void };
 
 
 /**
@@ -95,7 +97,7 @@ export type ListOrder = { value: string; options: ListOption[]; onChange: (value
  * Search applies once typing pauses. A list with nothing worth searching by text leaves search out; the bar then starts
  * with its filters, and label names the bar for assistive technology instead.
  */
-export function ListToolbar({ search, opener, label, filters = [], onFiltersChange, onFiltersOpenChange, sort, order, action, lead, end }: {
+export function ListToolbar({ search, opener, label, filters = [], onFiltersChange, onFiltersOpenChange, sort, order, views, action, end }: {
   search?: ListSearch;
   /** In place of a search field, an opener for the page's own search (a palette on a desktop, a page on a phone). */
   opener?: { label: string; onOpen: () => void };
@@ -111,8 +113,13 @@ export function ListToolbar({ search, opener, label, filters = [], onFiltersChan
   onFiltersOpenChange?: (isOpen: boolean) => void;
   /** The list's orders as one choice each, for a page without the header chrome. */
   sort?: ListOrder;
-  /** The list's order as a key and a way apart, for a page with the header chrome: its header and phone sheet choose them. */
+  /** The list's order as a key and a way apart, for a page with the header chrome: its 표시 menu and phone sheet choose them. */
   order?: ListSort;
+  /**
+   * The ways the list can be seen, for a page with the header chrome: they head its 표시 menu (Linear's display options)
+   * on a desktop and its 표시 sheet on a phone, never a row of tabs of their own.
+   */
+  views?: ListViews;
   /**
    * The page's own action, at the far end of the bar as a labelled button on a desktop. On a phone an action that makes
    * something new (isCreate) floats as the + over the tab bar (FloatingAction); any other ends the row as an icon.
@@ -120,8 +127,6 @@ export function ListToolbar({ search, opener, label, filters = [], onFiltersChan
   action?: ListAction;
   /** A desktop's other page buttons (설정으로, a 관리 menu), just before the action. */
   end?: ReactNode;
-  /** A desktop header's first tool, before the search and the filters (a layout switcher, as Plane leads with its layouts). */
-  lead?: ReactNode;
 }) {
   const isMobile = useMediaQuery(MOBILE_QUERY);
   const isStuck = useStuck();
@@ -134,10 +139,10 @@ export function ListToolbar({ search, opener, label, filters = [], onFiltersChan
   // Inline filters are in sight at once, so options read only when shown (writers, say) load now.
   useEffect(() => { if (inline) onFiltersOpenChange?.(true); }, [inline, onFiltersOpenChange]);
   if (inHeader) return <HeaderTools target={pageTools} search={search} filters={filters} onFiltersChange={onFiltersChange}
-    onFiltersOpenChange={onFiltersOpenChange} sort={order} action={action} lead={lead} end={end} />;
+    onFiltersOpenChange={onFiltersOpenChange} sort={order} views={views} action={action} end={end} />;
   // A phone's page in the header chrome takes the tools into the toolbar; its create action floats as the +, another ends it.
   if (pageTools && isMobile) return <MobileTools target={pageTools} search={search} filters={filters} onFiltersChange={onFiltersChange}
-    onFiltersOpenChange={onFiltersOpenChange} sort={order} action={action} />;
+    onFiltersOpenChange={onFiltersOpenChange} sort={order} views={views} action={action} />;
   const active = filters.filter(filter => filter.value !== undefined);
   const clear = () => onFiltersChange?.(clearedValues(filters));
   const tokens = active.map(filter => <Token key={filter.key} size="sm" label={`${filter.label}: ${filterValueText(filter)}`}

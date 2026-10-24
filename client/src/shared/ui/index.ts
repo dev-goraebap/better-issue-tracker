@@ -22,7 +22,7 @@ export { ListMore } from './ListMore';
 export { ListSummary } from './list-summary';
 export { FloatingAction } from './floating-action';
 export { joinValues, ListToolbar, rangeOf, rangeValue, valuesOf, type ListFilter, type ListFilterValues, type ListOption } from './list-toolbar';
-export type { ListAction, ListSearch } from './list-toolbar/ListToolbar';
+export type { ListAction, ListSearch, ListViews } from './list-toolbar/ListToolbar';
 export { BackLink } from './BackLink';
 export { PageState } from './page-state';
 export { StatusToken } from './StatusToken';

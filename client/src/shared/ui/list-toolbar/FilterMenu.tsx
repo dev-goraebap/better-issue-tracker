@@ -38,10 +38,11 @@ export function FilterMenu({ filters, onChange, onOpenChange }: {
       : <OptionList label="필터 찾기" options={filterChoices(filters)} chosen={filters.filter(each => each.value !== undefined).map(each => each.key)}
         onPick={setKey} />}>
     {({ ref, onClick }) => <span ref={ref} className={styles.trigger}>
-      <Tooltip content="필터 추가">
-        <button type="button" className={styles.filterButton} aria-expanded={isOpen} onClick={onClick}
-          aria-label={hasActive ? '필터, 적용 중' : undefined}><NavIcon name="filter" />필터</button>
+      <Tooltip content="필터">
+        <button type="button" className={styles.roundButton} aria-expanded={isOpen} onClick={onClick}
+          aria-label={hasActive ? '필터, 적용 중' : '필터'}><NavIcon name="filter" /></button>
       </Tooltip>
+      {hasActive && <span className={styles.roundDot} aria-hidden="true" />}
     </span>}
   </Popover>;
 }

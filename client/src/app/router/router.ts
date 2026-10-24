@@ -23,7 +23,6 @@ import { ApiKeysPage } from '@/pages/settings/api-keys';
 import { WorkspaceSettingsPage } from '@/pages/settings/workspace';
 import { AppearancePage } from '@/pages/settings/appearance';
 import { DemoWorkspacesPage } from '@/pages/demo/workspaces';
-import { DemoHomePage } from '@/pages/demo/home';
 import { DemoInboxPage } from '@/pages/demo/inbox';
 import { DemoMembersPage } from '@/pages/demo/members';
 import { DemoDocumentsPage } from '@/pages/demo/documents';
@@ -129,8 +128,8 @@ const demoInboxRoutes = [
   createRoute({ getParentRoute: () => demoSpace, path: '/inbox/$noticeId', component: DemoInboxPage, validateSearch: ownSearch(parseInboxSearch) }),
 ];
 const demoSpaceRoutes = [
-  // A workspace opens on its home, the member's widgets (D-064).
-  createRoute({ getParentRoute: () => demoSpace, path: '/', component: DemoHomePage }),
+  // A workspace opens on its home, 전체: the project page over every project (D-065).
+  createRoute({ getParentRoute: () => demoSpace, path: '/', component: DemoProjectPage, validateSearch: ownSearch(parseDemoWorkSearch) }),
   ...demoInboxRoutes,
   createRoute({ getParentRoute: () => demoSpace, path: '/members', component: DemoMembersPage, validateSearch: ownSearch(parseMembersSearch) }),
   createRoute({ getParentRoute: () => demoSpace, path: '/documents', component: DemoDocumentsPage }),

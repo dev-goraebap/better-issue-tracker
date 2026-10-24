@@ -11,7 +11,7 @@ const COLUMNS: Status[] = ['todo', 'doing', 'review', 'done'];
  * never shakes (bit-frontend 04 §5). A column's head names it with its count and its own + to add there; a card is a
  * link to the item's page with its key, title, priority and the assignee's picture.
  */
-export function BoardView({ workspaceId, items, search, onCreate }: { workspaceId: string; items: WorkItem[]; search: WorkSearch; onCreate: () => void }) {
+export function BoardView({ workspaceId, items, search, onCreate }: { workspaceId: string; items: WorkItem[]; search: WorkSearch; onCreate?: () => void }) {
   return <div className={styles.board} role="list" aria-label="상태별 작업">
     {COLUMNS.map(status => {
       const cards = items.filter(item => item.status === status);
@@ -19,7 +19,7 @@ export function BoardView({ workspaceId, items, search, onCreate }: { workspaceI
         <header className={styles.columnHead}>
           <span className={styles.dot} data-status={status} aria-hidden="true" />
           <Text weight="semibold">{STATUS_LABELS[status]}</Text><Text type="supporting" color="secondary">{cards.length}</Text>
-          <span className={styles.columnAdd}><IconButton label={`${STATUS_LABELS[status]}에 작업 추가`} icon={<NavIcon name="plus" />} variant="ghost" size="sm" onClick={onCreate} /></span>
+          {onCreate && <span className={styles.columnAdd}><IconButton label={`${STATUS_LABELS[status]}에 작업 추가`} icon={<NavIcon name="plus" />} variant="ghost" size="sm" onClick={onCreate} /></span>}
         </header>
         <ul className={styles.cards}>{cards.map(item => {
           const person = personOf(item.assigneeId);

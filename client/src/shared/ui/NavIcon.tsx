@@ -1,6 +1,6 @@
 import {
   ArrowDownWideNarrow, ArrowLeft, ArrowLeftRight, ArrowRight, ArrowUpNarrowWide, ArrowUpDown, Bell, BookOpen, CalendarDays, Check, CheckCheck,
-  ChevronDown, ChevronLeft, ChevronRight, CircleCheck, CircleDot, Clock, Copy, Ellipsis, File, FileText, Filter, Flag, Folder, GitBranch, GripVertical, Hash, House,
+  ChevronDown, ChevronLeft, ChevronRight, ChevronsUpDown, CircleCheck, CircleDot, Clock, Copy, Ellipsis, File, FileText, Filter, Flag, Folder, GitBranch, GripVertical, Hash, House,
   Inbox, KanbanSquare, LayoutGrid, LayoutList, Link, ListFilter, ListTodo, Lock, Mail, MessageSquare, Milestone, PanelLeft, Paperclip,
   Pencil, Plus, RefreshCw, Repeat, Rows3, Scale, Search, Settings, Shield, SlidersHorizontal, Sparkles, Table2, Tag, Trash2, User, Users, Workflow, X,
   type LucideIcon,
@@ -30,7 +30,10 @@ const icons: Record<string, LucideIcon> = {
   check: Check,
   done: CheckCheck,
   'chevron-down': ChevronDown,
-  filter: SlidersHorizontal,
+  'chevrons-up-down': ChevronsUpDown,
+  // 필터 and 표시 as Linear draws them: lines narrowing down, and sliders.
+  filter: ListFilter,
+  display: SlidersHorizontal,
   grip: GripVertical,
   'list-filter': ListFilter,
   plus: Plus,

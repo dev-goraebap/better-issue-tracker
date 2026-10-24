@@ -8,33 +8,34 @@ import type { PageTools } from '../page-chrome';
 import { isUsualSort, type ListSort } from '../sort-menu';
 import { FilterChips } from './FilterChips';
 import { FilterSheet } from './FilterSheet';
-import type { ListAction, ListFilter, ListFilterValues, ListSearch } from './ListToolbar';
+import type { ListAction, ListFilter, ListFilterValues, ListSearch, ListViews } from './ListToolbar';
 import { SearchScreenBar } from './SearchScreenBar';
-import { SortSheet } from './SortSheet';
+import { DisplaySheet } from './DisplaySheet';
 import styles from './mobile-tools.module.css';
 
-type Sheet = { kind: 'filter'; view: 'list' | string } | { kind: 'sort' };
+type Sheet = { kind: 'filter'; view: 'list' | string } | { kind: 'display' };
 
 /**
- * A list's toolbar on a phone whose page uses the header chrome: the filter, sort and search icons at the toolbar's end
+ * A list's toolbar on a phone whose page uses the header chrome: the 필터, 표시 and search icons at the toolbar's end
  * (the page's create action floats as the +; any other action, 모두 읽음 say, ends the row as an accent icon), and the
  * conditions in force as chips under it.
- * The filters open in a two-step sheet (FilterSheet), the orders in a short one; both apply at once. Search opens the
+ * The filters open in a two-step sheet (FilterSheet), the views and orders in a short one (DisplaySheet); both apply at once. Search opens the
  * search screen (useSearchScreen): the shell puts away its bars, the toolbar becomes the search bar over the list, and
  * the + steps aside.
  */
-export function MobileTools({ target, search, filters, onFiltersChange, onFiltersOpenChange, sort, action }: {
+export function MobileTools({ target, search, filters, onFiltersChange, onFiltersOpenChange, sort, views, action }: {
   target: PageTools;
   search?: ListSearch;
   filters: ListFilter[]; onFiltersChange?: (values: ListFilterValues) => void; onFiltersOpenChange?: (isOpen: boolean) => void;
   sort?: ListSort;
+  views?: ListViews;
   action?: ListAction;
 }) {
   const [sheet, setSheet] = useState<Sheet | null>(null);
   const searchScreen = useSearchScreen();
   const change = (values: ListFilterValues) => onFiltersChange?.(values);
   const active = filters.filter(filter => filter.value !== undefined).length;
-  const isSorted = !!sort && !isUsualSort(sort);
+  const isChanged = (!!sort && !isUsualSort(sort)) || (!!views && views.value !== views.options[0]?.value);
   // The sheet lists the options, so options read only when shown (writers, say) load once it opens.
   const isFilterSheet = sheet?.kind === 'filter';
   useEffect(() => { if (isFilterSheet) onFiltersOpenChange?.(true); }, [isFilterSheet, onFiltersOpenChange]);
@@ -49,9 +50,9 @@ export function MobileTools({ target, search, filters, onFiltersChange, onFilter
           onClick={() => setSheet({ kind: 'filter', view: 'list' })} />
         {active > 0 && <span className={styles.toolCount} aria-hidden="true">{active}</span>}
       </span>}
-      {sort && <span className={styles.toolWrap}>
-        <IconButton label="정렬" icon={<NavIcon name="sort" />} variant="ghost" onClick={() => setSheet({ kind: 'sort' })} />
-        {isSorted && <span className={styles.toolDot} aria-hidden="true" />}
+      {(sort || views) && <span className={styles.toolWrap}>
+        <IconButton label="표시" icon={<NavIcon name="display" />} variant="ghost" onClick={() => setSheet({ kind: 'display' })} />
+        {isChanged && <span className={styles.toolDot} aria-hidden="true" />}
       </span>}
       {search && <IconButton label={search.label} icon={<NavIcon name="search" />} variant="ghost" onClick={searchScreen.open} />}
       {action && !action.isCreate && <IconButton label={action.label} icon={<NavIcon name={action.icon ?? 'done'} />} variant="primary" onClick={action.onClick} />}
@@ -62,6 +63,6 @@ export function MobileTools({ target, search, filters, onFiltersChange, onFilter
     {sheet?.kind === 'filter' && <FilterSheet filters={filters} view={sheet.view} onViewChange={view => setSheet({ kind: 'filter', view })}
       onChange={change} onClose={() => setSheet(null)} />}
     {action?.isCreate && <FloatingAction label={action.label} icon={action.icon} onClick={action.onClick} />}
-    {sheet?.kind === 'sort' && sort && <SortSheet sort={sort} onClose={() => setSheet(null)} />}
+    {sheet?.kind === 'display' && <DisplaySheet views={views} sort={sort} onClose={() => setSheet(null)} />}
   </>;
 }

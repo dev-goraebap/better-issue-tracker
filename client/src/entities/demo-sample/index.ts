@@ -7,8 +7,6 @@ export { filterWork } from './model/work';
 export { addWorkspace, useWorkspaces } from './model/workspaces';
 export { addProject, useProjects } from './model/projects';
 export { addSchedule, useSchedules, type DemoSchedule } from './model/schedules';
-export { activityOf, contributionsOf, type Activity, type Contribution } from './model/activity';
-export { HOME_WIDGETS, setHomeLayout, USUAL_HOME, useHomeLayout, type HomeLayout, type HomeWidget } from './model/home-layout';
 export { markAllRead, markRead, markUnread, useReadNotices } from './model/read-notices';
 export { WorkspaceMark } from './ui/WorkspaceMark';
 export { PersonCell } from './ui/PersonCell';

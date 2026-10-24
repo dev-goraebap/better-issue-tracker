@@ -7,26 +7,27 @@ import type { PageTools } from '../page-chrome';
 import { FilterBar, type Opened } from './FilterBar';
 import { FilterMenu } from './FilterMenu';
 import type { ListSort } from '../sort-menu';
-import type { ListAction, ListFilter, ListFilterValues, ListSearch } from './ListToolbar';
+import type { ListAction, ListFilter, ListFilterValues, ListSearch, ListViews } from './ListToolbar';
 import { SearchToggle } from './SearchToggle';
-import { SortButton } from './SortButton';
+import { DisplayButton } from './DisplayButton';
 
 /**
- * A list's toolbar in a page that uses the header chrome (a desktop): the search as a magnifier, the order, the 필터
- * button and the page's other buttons where the page keeps its tools (the tab row's end, or the header row's), the main
- * action last in the header row (filled when it makes something new), and the filters row (FilterBar) under the header.
+ * A list's toolbar in a page that uses the header chrome (a desktop): the search as a magnifier, then 필터 and 표시 as
+ * Linear draws them (round icon buttons), and the page's other buttons where the page keeps its tools (the tab row's end,
+ * or the header row's), the main action last in the header row (filled when it makes something new), and the filters row
+ * (FilterBar) under the header. 표시 (DisplayButton) holds the list's views and its order.
  *
  * 필터 opens a menu of the filters first (FilterMenu), as Plane's does; a filter shows in the row only once a value is
  * chosen for it, so the row is there only while filters are in force (or one was just added from the row's +), and
  * 모두 지우기 puts it away.
  */
-export function HeaderTools({ target, search, filters, onFiltersChange, onFiltersOpenChange, sort, action, lead, end }: {
+export function HeaderTools({ target, search, filters, onFiltersChange, onFiltersOpenChange, sort, views, action, end }: {
   target: PageTools;
   search?: ListSearch;
   filters: ListFilter[]; onFiltersChange?: (values: ListFilterValues) => void; onFiltersOpenChange?: (isOpen: boolean) => void;
   sort?: ListSort;
+  views?: ListViews;
   action?: ListAction;
-  lead?: ReactNode;
   end?: ReactNode;
 }) {
   const hasActive = filters.some(filter => filter.value !== undefined);
@@ -41,10 +42,9 @@ export function HeaderTools({ target, search, filters, onFiltersChange, onFilter
   const change = (values: ListFilterValues) => onFiltersChange?.(values);
   return <>
     {createPortal(<>
-      {lead}
       {search && <SearchToggle {...search} />}
-      {sort && <SortButton sort={sort} />}
       {filters.length > 0 && <FilterMenu filters={filters} onChange={change} onOpenChange={onFiltersOpenChange} />}
+      {(sort || views) && <DisplayButton views={views} sort={sort} />}
       {end}
     </>, target.tools)}
     {action && target.actions && createPortal(<Button label={action.label} variant={action.isCreate ? 'primary' : 'secondary'} size="sm" icon={<NavIcon name={action.icon ?? 'plus'} />} onClick={action.onClick} />, target.actions)}

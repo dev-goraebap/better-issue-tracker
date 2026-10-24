@@ -9,6 +9,8 @@
 .card:hover { border-color: var(--color-border-emphasized, var(--color-border)); box-shadow: var(--shadow-low, 0 2px 6px rgb(0 0 0 / 0.08)); }
 .label { display: inline-flex; align-items: center; gap: var(--spacing-1); font-size: 0.6875rem; font-weight: 600; color: var(--color-text-secondary); }
 .label svg { inline-size: 0.875rem; block-size: 0.875rem; }
+/* In 전체, the note's project after its label, quieter. */
+.project { margin-inline-start: var(--spacing-1); padding-inline-start: var(--spacing-2); border-inline-start: 1px solid currentColor; font-weight: 400; }
 .title { margin: 0; font-size: 0.9375rem; font-weight: 600; line-height: 1.35; }
 .summary { margin: 0; font-size: 0.8125rem; line-height: 1.55; color: var(--color-text-secondary); display: -webkit-box; -webkit-line-clamp: 8; -webkit-box-orient: vertical; overflow: hidden; }
 .foot { display: flex; align-items: center; gap: var(--spacing-3); margin-block-start: var(--spacing-1); font-size: 0.75rem; color: var(--color-text-secondary); }

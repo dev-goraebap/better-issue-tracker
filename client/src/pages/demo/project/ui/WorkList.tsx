@@ -1,8 +1,8 @@
-import { useMemo, useState, type ReactNode } from 'react';
+import { useMemo, useState } from 'react';
 import { Button } from '@astryxdesign/core';
 import { useMediaQuery } from '@astryxdesign/core/hooks';
 import { MOBILE_QUERY } from '@/shared/config';
-import { DefaultAvatar, ListSummary, ListToolbar, PageState, sortOf, sortSearch, type ListFilter, type ListFilterValues, type ListSort } from '@/shared/ui';
+import { DefaultAvatar, ListSummary, ListToolbar, PageState, sortOf, sortSearch, type ListFilter, type ListFilterValues, type ListSort, type ListViews } from '@/shared/ui';
 import { filterWork, isNarrowed, PEOPLE, PRIORITY_LABELS, STATUS_LABELS, TABLE_SORT_KEYS, WorkRows, WorkTable, type TableSearch, type WorkItem, type WorkSearch } from '@/entities/demo-sample';
 
 const SLICE = 10;
@@ -10,21 +10,23 @@ const SLICE = 10;
 /**
  * PATTERN · 리스트. The 작업 tab's 리스트 view (on a desktop a table, there is no other table view, D-064): work items whose rows are compared by several properties.
  *
- * - ListToolbar inside PageFrame chrome="header" puts the search, 필터 and the create action at the header row's end (or the
- *   tab row's end when the page has tabs); chosen filters show as chips under it. The page lays out none of it.
- * - A desktop shows SheetTable (WorkTable): the first column links the row, sortable headers set the order. A phone shows
- *   the rows as cards (WorkRows), the order moves into the filter sheet, and the create action floats as the +.
+ * - ListToolbar inside PageFrame chrome="header" puts the search, 필터, 표시 and the create action at the header row's end (or
+ *   the tab row's end when the page has tabs); chosen filters show as chips under it. The page lays out none of it.
+ * - 표시 holds the page's views and the order (Linear's display options); on a desktop the table's sortable headers set
+ *   the same order.
+ * - A desktop shows SheetTable (WorkTable): the first column links the row. A phone shows the rows as cards (WorkRows),
+ *   표시 opens as a sheet, and the create action floats as the +.
  * - The conditions live in the URL: the page parses them on its route and hands every change to onChange (search
  *   replaces history, filters and order push it).
  * - The list ends with ListSummary under its last row ('24개 중 10개 · 10개 더 보기'), SheetTable's foot on a desktop.
  *   Here the slices are local; a real page uses useInfiniteQuery and takes the total from the server.
  * - Empty and no-match are different states: no-match offers '조건 지우기'.
  */
-export function WorkList({ workspaceId, items, search, onChange, onCreate, lead }: {
+export function WorkList({ workspaceId, items, search, onChange, onCreate, views }: {
   workspaceId: string; items: readonly WorkItem[]; search: WorkSearch;
   onChange: (patch: Partial<TableSearch>, replace?: boolean) => void; onCreate?: () => void;
-  /** A desktop header's first tool, before the search (a view switch). */
-  lead?: ReactNode;
+  /** The page's views, heading the 표시 menu over the order. */
+  views?: ListViews;
 }) {
   const isMobile = useMediaQuery(MOBILE_QUERY);
   const [shown, setShown] = useState(SLICE);
@@ -44,7 +46,7 @@ export function WorkList({ workspaceId, items, search, onChange, onCreate, lead 
   const summary = <ListSummary shown={visible.length} total={rows.length} step={SLICE} hasMore={shown < rows.length} onMore={() => setShown(shown + SLICE)} />;
   return <>
     <ListToolbar search={{ label: '작업 검색', placeholder: '제목이나 키로 찾기', value: search.q, onChange: q => change({ q }, true) }}
-      filters={filters} onFiltersChange={(values: ListFilterValues) => change(values)} order={isMobile ? order : undefined} lead={lead}
+      filters={filters} onFiltersChange={(values: ListFilterValues) => change(values)} order={order} views={views}
       action={onCreate ? { label: '새 작업', icon: 'plus', onClick: onCreate, isCreate: true } : undefined} />
     {visible.length > 0 && (isMobile
       ? <><WorkRows workspaceId={workspaceId} rows={visible} search={search} />{summary}</>

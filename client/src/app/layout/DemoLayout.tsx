@@ -8,16 +8,17 @@ import { DefaultAvatar, NavIcon, NotificationBell } from '@/shared/ui';
 import { WorkspaceSwitcher } from '@/features/demo-workspace-switcher';
 import { CreateProjectDialog } from '@/features/demo-project-create';
 import {
-  ACCOUNT_MENU, ADMIN_MENU, DEFAULT_WORKSPACE, demoPlace, NOTICES, PATTERN_MENU, useReadNotices, placeNames, PROJECT_SETTINGS_MENU, PROJECT_TABS, projectPath,
+  ACCOUNT_MENU, ADMIN_MENU, DEFAULT_WORKSPACE, demoPlace, NOTICES, PATTERN_MENU, useReadNotices, placeNames, PROJECT_SETTINGS_MENU, projectPath,
   projectSettingsPath, useProjects, workspaceOf, workspacePath, WORKSPACE_MENU, WORKSPACE_SETTINGS_MENU, workspaceSettingsPath,
 } from '@/entities/demo-sample';
+import { ScopeSwitcher } from './ScopeSwitcher';
 import styles from './demo-layout.module.css';
 
 /**
  * The demo's frame: the same ShellFrame the workspace draws, with the real app's menus at the real addresses under /demo
  * (the workspace switcher and the bell at its head; 워크스페이스 with 홈, 구성원 and 문서함; 프로젝트 with its + to make
  * one and the projects, each one page whose parts are its tabs, D-064; and 워크스페이스 설정 and the member's card at
- * its foot). The profile card's gear turns the menu into the member's own settings
+ * its foot). On the home (전체) and a project's page the trail's second step switches between them (D-065). The profile card's gear turns the menu into the member's own settings
  * (/demo/settings/…), and 워크스페이스 설정 into the workspace's (its pages, each project's, then the instance's, D-061):
  * either way 돌아가기 or Esc goes back to the page of work left. It reads nothing from the server, so it opens without
  * signing in; the account box is a stand-in.
@@ -59,8 +60,6 @@ export function DemoLayout() {
   const workspace = workspaceOf(workspaceId || undefined);
   const projects = useProjects(workspaceId || undefined).filter(project => project.status === 'active');
   const [isCreatingProject, setCreatingProject] = useState(false);
-  // The project page's tab in view, for the trail.
-  const projectTab = PROJECT_TABS.find(entry => entry.value === (new URLSearchParams(searchStr).get('tab') ?? 'work')) ?? PROJECT_TABS[0]!;
   const go = (href: string) => (event: MouseEvent) => {
     if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
     event.preventDefault(); void navigate({ href });
@@ -71,7 +70,17 @@ export function DemoLayout() {
   const inbox = workspacePath(workspaceId, '/inbox');
   const bell = workspace && <NotificationBell count={unread} href={inbox} onOpen={go(inbox)} />;
 
-  // The trail: the workspace (to its home), the project (to its work), the menu entry, then the item in view.
+  const projectMark = (key: string) => <span className={styles.projectMark} aria-hidden="true">{key.slice(0, 1)}</span>;
+  // The scope's step on the home and a project's pages: 전체 or the project, switching among them with the same tab and
+  // view kept (전체 has no 결정기록, so that tab falls back to 작업).
+  const scopeStep = (label: string): TrailStep => ({ label, content: <ScopeSwitcher projects={projects} current={place.projectId} mark={projectMark}
+    onCreate={() => setCreatingProject(true)}
+    onPick={projectId => {
+      const from = new URLSearchParams(searchStr);
+      const keep = new URLSearchParams([...from].filter(([key, value]) => ['view', 'cal', 'date'].includes(key) || (key === 'tab' && (value !== 'decisions' || projectId))));
+      void navigate({ href: `${projectId ? projectPath(workspaceId, projectId) : workspacePath(workspaceId)}${keep.size ? `?${keep}` : ''}` });
+    }} /> });
+  // The trail: the workspace (to its home), the scope (전체 or the project, a switcher), then the item in view.
   const steps: TrailStep[] = [];
   if (isAccount) steps.push({ label: '계정' }, { label: ACCOUNT_MENU.find(entry => entry.path === place.account)?.label ?? '설정' });
   else if (place.admin) steps.push({ label: '인스턴스 관리' }, { label: ADMIN_MENU.find(entry => entry.path === place.admin)?.label ?? '설정' });
@@ -85,13 +94,15 @@ export function DemoLayout() {
   else if (place.isWorkspaces) steps.push({ label: PRODUCT_NAME, href: '/demo', onClick: go('/demo') }, { label: '워크스페이스' });
   else if (place.pattern) steps.push({ label: 'UI 패턴' }, { label: PATTERN_MENU.find(entry => entry.path === place.pattern)?.label ?? '패턴' });
   else if (workspace) {
-    // The workspace (to its home), the project (to its page), then its tab or the item in view.
+    // The workspace (to its home), then the scope as a switcher on the home and a project's pages (the item in view after
+    // it, a project's tab never), or the menu entry.
     const home = workspacePath(workspaceId);
     steps.push({ label: workspace.name, href: home, onClick: go(home) });
     if (place.projectId) {
-      const page = projectPath(workspaceId, place.projectId);
-      steps.push({ label: names.project ?? '프로젝트', href: page, onClick: go(page) }, { label: names.item ?? projectTab.label });
-    } else steps.push({ label: names.section ?? '페이지 찾기' });
+      steps.push(scopeStep(names.project ?? '프로젝트'));
+      if (names.item) steps.push({ label: names.item });
+    } else if (place.workspaceSection === '') steps.push(scopeStep('전체'));
+    else steps.push({ label: names.section ?? '페이지 찾기' });
   } else steps.push({ label: PRODUCT_NAME }, { label: '페이지 찾기' });
 
   const item = (label: string, icon: string, href: string, isSelected: boolean, extra?: object) =>
@@ -103,7 +114,6 @@ export function DemoLayout() {
   const backHead = <button type="button" className={styles.backHead} data-folded={folded || undefined} onClick={leaveSettings} aria-label="돌아가기 (Esc)">
     <NavIcon name="previous" />{!folded && <><span className={styles.backLabel}>돌아가기</span><kbd className={styles.kbd}>Esc</kbd></>}
   </button>;
-  const projectMark = (key: string) => <span className={styles.projectMark} aria-hidden="true">{key.slice(0, 1)}</span>;
   // The member's card at the menu's foot, under 워크스페이스 설정: their picture, name and the gear to their own settings.
   const account = folded
     ? <div className={styles.accountFolded}><button type="button" className={styles.avatarButton} aria-label="고재범 · 내 설정" onClick={openSettings}><DefaultAvatar seed="u1" name="고재범" /></button></div>
