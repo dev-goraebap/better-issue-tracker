@@ -26,6 +26,8 @@
 .backdrop { position: fixed; z-index: 30; inset: 0; background: var(--color-overlay); }
 .modalPlace { position: fixed; z-index: 31; inset: 0; display: grid; place-items: center; }
 .modalPlace .modal { position: static; margin: 0; }
+/* A quick form's copy keeps to where the form stood, near the top, rather than the centre (BIT, D-070). */
+.modalPlace .modal[data-size="form"] { align-self: start; margin-block-start: 12dvh; }
 .closing { pointer-events: none; }
 .closing.backdrop { animation: modal-fade-out var(--duration-fast, 175ms) ease-in both; }
 .closing .modal { animation: modal-sink var(--duration-fast, 175ms) ease-in both; transition: none; }

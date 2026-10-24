@@ -4,9 +4,6 @@
  * with 계속 만들기 and the create button at its end.
  */
 .dialog { display: flex; flex-direction: column; }
-/* On its own page the same form sits on a card of the page's width. */
-.dialog[data-page] { margin-block-start: var(--spacing-4); border: 1px solid var(--color-border); border-radius: var(--radius-container); background: var(--color-background-card); box-shadow: var(--shadow-low); }
-.dialog[data-page] .head { padding-block-start: var(--spacing-4); }
 .head { display: flex; align-items: center; gap: var(--spacing-1-5, 0.375rem); padding: var(--spacing-3) var(--spacing-3) 0 var(--spacing-4); font-size: 0.8125rem;
   color: var(--color-text-secondary); }
 .head > svg { inline-size: 0.75rem; block-size: 0.75rem; flex-shrink: 0; }
@@ -24,6 +21,11 @@
 .pills { display: flex; flex-wrap: wrap; gap: var(--spacing-1-5, 0.375rem); padding: var(--spacing-2) var(--spacing-4); }
 .foot { display: flex; align-items: center; justify-content: flex-end; gap: var(--spacing-4); padding: var(--spacing-2) var(--spacing-3) var(--spacing-3) var(--spacing-4);
   font-size: 0.75rem; color: var(--color-text-secondary); }
+/* On its own page the form is the page's body, not a card: a larger title, room to write, the pills under a hairline. */
+.page { display: flex; flex-direction: column; gap: var(--spacing-2); padding-block-start: var(--spacing-2); }
+.page .title { font-size: 1.25rem; }
+.page .description { min-block-size: 12rem; max-block-size: none; }
+.page .pills { margin-block-start: var(--spacing-2); padding: var(--spacing-4) 0 0; border-block-start: 1px solid var(--color-border-subtle); }
 .labelDot { display: inline-block; inline-size: 0.5rem; block-size: 0.5rem; border-radius: 50%; }
 
 /* The 기한 pill and its menu, drawn as the other properties' (PropertyPicker): orange calendar once a day is set. */
