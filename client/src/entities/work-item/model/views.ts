@@ -40,7 +40,6 @@ export const VIEW_SORT_KEYS = [
   { value: 'title', label: '제목', kind: 'text' as const },
 ];
 export const VIEW_ICONS = ['list', 'rows', 'board', 'calendar', 'milestone', 'decision', 'session', 'members', 'person', 'priority', 'label', 'agent'];
-export const VIEW_COLORS = ['#95959f', '#5e6ad2', '#26b5ce', '#4cb782', '#f2c94c', '#f2994a', '#eb5757', '#bb87fc'];
 
 /** 전체 이슈, the one view every workspace has and nobody stores. */
 const allView = (workspaceId: string): IssueView => ({

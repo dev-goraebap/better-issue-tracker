@@ -2,7 +2,7 @@ import './back-close';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { AppearanceProvider } from './appearance/AppearanceProvider';
-import { LayerProvider } from '@astryxdesign/core/Layer';
+import { AppLayers } from './layer/AppLayers';
 import { InternationalizationProvider } from '@astryxdesign/core/i18n';
 import koKR from '@astryxdesign/core/locales/ko-KR.json';
 import { QueryClientProvider } from '@tanstack/react-query';
@@ -18,11 +18,11 @@ createRoot(root).render(
   <StrictMode>
     <AppearanceProvider>
       <InternationalizationProvider locale="ko-KR" messages={{ 'ko-KR': koKR }}>
-        <LayerProvider toast={{ position: 'bottomEnd' }}>
+        <AppLayers>
           <QueryClientProvider client={queryClient}>
             <RouterProvider router={router} />
           </QueryClientProvider>
-        </LayerProvider>
+        </AppLayers>
       </InternationalizationProvider>
     </AppearanceProvider>
   </StrictMode>,

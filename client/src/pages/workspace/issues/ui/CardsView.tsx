@@ -1,6 +1,6 @@
-import type { CSSProperties } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import { Link } from '@tanstack/react-router';
-import { DefaultAvatar, PageState } from '@/shared/ui';
+import { DefaultAvatar } from '@/shared/ui';
 import { dateText, type IssueSearch, type WorkItem } from '@/entities/work-item';
 import styles from './cards.module.css';
 
@@ -9,8 +9,8 @@ import styles from './cards.module.css';
  * columns, each tinted by its first label's colour: the label, the title, a few lines of its description, then who it is
  * for and when it was made. A card opens its issue's page.
  */
-export function CardsView({ workspaceId, items, search }: { workspaceId: string; items: readonly WorkItem[]; search: IssueSearch }) {
-  if (items.length === 0) return <PageState title="보일 이슈가 없습니다" description="검색어나 필터를 바꿔 보세요." />;
+export function CardsView({ workspaceId, items, search, empty }: { workspaceId: string; items: readonly WorkItem[]; search: IssueSearch; empty: ReactNode }) {
+  if (items.length === 0) return empty;
   return <ul className={styles.keep} aria-label="카드">{items.map(issue => {
     const label = issue.labels[0];
     return <li key={issue.id} className={styles.cell}>

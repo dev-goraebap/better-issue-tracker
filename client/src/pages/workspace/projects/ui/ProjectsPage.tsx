@@ -6,11 +6,12 @@ import { Link, useNavigate, useParams, useSearch } from '@tanstack/react-router'
 import { MOBILE_QUERY } from '@/shared/config';
 import { authError } from '@/shared/api';
 import {
-  FormMessage, ITEM_ROW_LINK, ItemList, ItemMeta, ItemRow, ListToolbar, PageFrame, PageState, PageTabs, QueryMessage, SHEET_ROW_LINK, SheetTable, type PageTab, type SheetColumn,
+  FormMessage, ITEM_ROW_LINK, ItemList, ItemMeta, ItemRow, ListMore, ListToolbar, PageFrame, PageState, PageTabs, QueryMessage, SHEET_ROW_LINK, SheetTable, type PageTab, type SheetColumn,
 } from '@/shared/ui';
 import { projectsQuery, refreshProjects, restoreProject, type Project, type ProjectStatus } from '@/entities/project';
 import { canManage as canManageIn, canWrite as canWriteIn, workspaceQuery } from '@/entities/workspace';
 import { CreateProjectDialog } from '@/features/project-create';
+import type { ProjectsSearch } from '../model/search';
 import styles from './projects.module.css';
 
 const dayText = (iso: string) => new Date(iso).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' });
@@ -22,7 +23,7 @@ const dayText = (iso: string) => new Date(iso).toLocaleDateString('ko-KR', { mon
  */
 export function ProjectsPage() {
   const { workspaceId } = useParams({ strict: false }) as { workspaceId: string };
-  const search = useSearch({ strict: false }) as { status: ProjectStatus; q: string };
+  const search = useSearch({ strict: false }) as ProjectsSearch;
   const isMobile = useMediaQuery(MOBILE_QUERY);
   const navigate = useNavigate();
   const client = useQueryClient();
@@ -30,14 +31,15 @@ export function ProjectsPage() {
   const role = useQuery(workspaceQuery(workspaceId)).data?.myRole;
   const canManage = canManageIn(role);
   const canWrite = canWriteIn(role);
-  const tab = search.status;
-  const result = useInfiniteQuery(projectsQuery(workspaceId, tab, search.q));
+  const tab: ProjectStatus = search.status ?? 'active';
+  const result = useInfiniteQuery(projectsQuery(workspaceId, tab, search.q ?? ''));
   const rows = useMemo(() => result.data?.pages.flatMap(page => page.items) ?? [], [result.data]);
   const [isCreating, setCreating] = useState(false);
   const [restoring, setRestoring] = useState('');
   const [error, setError] = useState('');
-  const go = useCallback((patch: Partial<{ status: ProjectStatus; q: string }>, replace = false) => void navigate({
-    to: '/w/$workspaceId/projects', params: { workspaceId }, replace, search: { ...search, ...patch },
+  const go = useCallback((patch: Partial<ProjectsSearch>, replace = false) => void navigate({
+    to: '/w/$workspaceId/projects', params: { workspaceId }, replace,
+    search: Object.fromEntries(Object.entries({ ...search, ...patch }).filter(([, value]) => value !== undefined && value !== '')),
   }), [navigate, workspaceId, search]);
   const restore = async (project: Project) => {
     setRestoring(project.id); setError('');
@@ -58,7 +60,7 @@ export function ProjectsPage() {
   const tabs: PageTab<ProjectStatus>[] = [{ value: 'active', label: '진행 중', icon: 'board' }, { value: 'archived', label: '보관됨', icon: 'lock' },
     ...(canManage ? [{ value: 'deleted' as const, label: '삭제됨', icon: 'delete' }] : [])];
   return <PageFrame title="모든 프로젝트" icon="board" chrome="header"
-    tabs={<PageTabs value={tab} items={tabs} panelId={panelId} onChange={next => go({ status: next })} />}>
+    tabs={<PageTabs value={tab} items={tabs} panelId={panelId} onChange={next => go({ status: next === 'active' ? undefined : next })} />}>
     <ListToolbar search={{ label: '프로젝트 검색', placeholder: '이름이나 키로 찾기', value: search.q, onChange: q => go({ q }, true) }}
       action={canWrite ? { label: '프로젝트 만들기', icon: 'plus', onClick: () => setCreating(true), isCreate: true } : undefined} />
     <div role="tabpanel" id={panelId}>
@@ -70,7 +72,7 @@ export function ProjectsPage() {
           ? <ItemList label="프로젝트">{rows.map(row => <ItemRow key={row.id} lead={<span className={styles.mark}>{row.key.slice(0, 1)}</span>}
             title={name(row, ITEM_ROW_LINK)} meta={<><ItemMeta><span className={styles.key}>{row.key}</span></ItemMeta><ItemMeta>{dayText(row.updatedAt)}</ItemMeta></>} />)}</ItemList>
           : <SheetTable label="프로젝트" columns={columns} rows={rows} rowKey={row => row.id} minWidth="44rem" />}
-      {result.hasNextPage && <Button label="더 불러오기" variant="secondary" onClick={() => { void result.fetchNextPage(); }} isLoading={result.isFetchingNextPage} />}
+      <ListMore hasMore={!!result.hasNextPage} isLoading={result.isFetchingNextPage} onMore={() => { void result.fetchNextPage(); }} />
     </div>
     <CreateProjectDialog workspaceId={workspaceId} isOpen={isCreating} onClose={() => setCreating(false)}
       onCreated={id => { setCreating(false); void navigate({ to: '/w/$workspaceId/p/$projectId', params: { workspaceId, projectId: id } }); }} />

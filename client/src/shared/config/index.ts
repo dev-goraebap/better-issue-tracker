@@ -5,3 +5,4 @@ export {
   type AppPlace, type MenuEntry,
 } from './navigation';
 export { LOOK_CHOICES, lookOf, type LookChoice } from './color-themes';
+export { PALETTE } from './palette';

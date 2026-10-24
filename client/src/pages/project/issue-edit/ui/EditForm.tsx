@@ -1,7 +1,7 @@
 import { useId, useState, type ReactNode } from 'react';
 import { Button, TextArea, TextInput, VStack } from '@astryxdesign/core';
 import { useQueryClient } from '@tanstack/react-query';
-import { useNavigate } from '@tanstack/react-router';
+import { useReturnTo } from '@/shared/lib/history-trail';
 import { authError } from '@/shared/api';
 import { FormMessage, PageFoot, PageFrame } from '@/shared/ui';
 import { refreshItems, updateItem, type WorkItem } from '@/entities/work-item';
@@ -11,7 +11,7 @@ import { refreshItems, updateItem, type WorkItem } from '@/entities/work-item';
  * version it opened with, so a save someone made since is a conflict (409) said under the form, never overwritten.
  */
 export function EditForm({ item, back }: { item: WorkItem; back: ReactNode }) {
-  const navigate = useNavigate();
+  const returnTo = useReturnTo();
   const client = useQueryClient();
   const formId = useId();
   const [openedVersion] = useState(item.version);
@@ -21,7 +21,8 @@ export function EditForm({ item, back }: { item: WorkItem; back: ReactNode }) {
   const [isBusy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const titleError = isChecked && !title.trim() ? '제목을 입력해 주세요.' : undefined;
-  const leave = () => void navigate({ to: '/w/$workspaceId/p/$projectId/work-items/$workItemId', params: { workspaceId: item.workspaceId, projectId: item.projectId, workItemId: item.id } });
+  // Back to the issue through history when it is the page before, so back from there does not return to the form.
+  const leave = () => returnTo({ to: '/w/$workspaceId/p/$projectId/work-items/$workItemId', params: { workspaceId: item.workspaceId, projectId: item.projectId, workItemId: item.id } });
   const save = async () => {
     setChecked(true);
     if (!title.trim() || isBusy) return;

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useId, useMemo, useRef, useState, type MouseEve
 import { useToast } from '@astryxdesign/core';
 import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useParams, useRouterState, useSearch } from '@tanstack/react-router';
+import { PALETTE } from '@/shared/config';
 import { authError, isNotFound, sessionQueryOptions } from '@/shared/api';
 import { isForOther } from '@/shared/lib/key-target';
 import { PanelHostContext, useScreenPanel, withoutPanel } from '@/shared/lib/routed-panel';
@@ -10,7 +11,7 @@ import { labelsQuery } from '@/entities/label';
 import { columnsQuery, projectQuery, projectsQuery } from '@/entities/project';
 import { canWrite as canWriteIn, useMembers, workspaceQuery } from '@/entities/workspace';
 import {
-  ALL_VIEW, addView, effectiveView, removeView, updateView, useScopeItems, useViews, useViewTweak, VIEW_COLORS, type IssueSearch,
+  ALL_VIEW, addView, effectiveView, removeView, updateView, useScopeItems, useViews, useViewTweak, type IssueSearch,
 } from '@/entities/work-item';
 import type { Scope } from '../model/scope';
 import { IssuePanel, ISSUE_PATH, NEW_PATH } from './IssuePanel';
@@ -98,7 +99,7 @@ export function IssuesPage() {
   if (projectId && isNotFound(project.error)) return <PageFrame title="프로젝트를 찾을 수 없습니다">
     <PageState kind="not-found" title="프로젝트를 찾을 수 없습니다" description="지워졌거나 이 워크스페이스의 프로젝트가 아닙니다." />
   </PageFrame>;
-  const startCreate = () => setEditing({ mode: 'create', initial: { name: '', description: '', icon: 'list', color: VIEW_COLORS[1]!, isPersonal: false } });
+  const startCreate = () => setEditing({ mode: 'create', initial: { name: '', description: '', icon: 'list', color: PALETTE[1]!.value, isPersonal: false } });
   const saveView = (draft: ViewDraft) => {
     if (editing?.mode === 'edit') {
       void updateView(client, view, draft).then(() => setEditing(null)).catch(failure => toast({ body: authError(failure) }));

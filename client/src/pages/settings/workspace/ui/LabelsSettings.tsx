@@ -1,13 +1,12 @@
 import { useState } from 'react';
 import { Button, IconButton, TextInput, VStack } from '@astryxdesign/core';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { PALETTE } from '@/shared/config';
 import { ApiError, authError } from '@/shared/api';
 import { CompactDialog, ConfirmDialog, FormMessage, NavIcon, QueryMessage, SettingsCard, SettingsHead, SettingsRow } from '@/shared/ui';
 import { createLabel, deleteLabel, labelsQuery, refreshLabels, updateLabel, type Label } from '@/entities/label';
 import styles from './workspace-settings.module.css';
 
-/** The colours a label may take, as Linear's: a few clear hues and a grey. */
-const COLORS = ['#5e6ad2', '#26b5ce', '#4cb782', '#f2c94c', '#f2994a', '#eb5757', '#bb87fc', '#95959f'] as const;
 type Draft = { from?: Label; name: string; color: string };
 
 /**
@@ -54,7 +53,7 @@ export function LabelsSettings({ workspaceId, canWrite }: { workspaceId: string;
     <SettingsHead title="라벨" description="이 워크스페이스의 모든 프로젝트가 같은 라벨을 씁니다." />
     {!labels.data ? <QueryMessage pending={labels.isPending} error={labels.error} retry={() => { void labels.refetch(); }} />
       : <SettingsCard title={`라벨 ${list.length}개`} id="labels-list"
-        actions={canWrite ? <Button label="새 라벨" variant="secondary" size="sm" icon={<NavIcon name="plus" />} onClick={() => setDraft({ name: '', color: COLORS[0] })} /> : undefined}>
+        actions={canWrite ? <Button label="새 라벨" variant="secondary" size="sm" icon={<NavIcon name="plus" />} onClick={() => setDraft({ name: '', color: PALETTE[1]!.value })} /> : undefined}>
         {list.map(label => <SettingsRow key={label.id} lead={<span className={styles.swatch} style={{ background: label.color }} aria-hidden="true" />}
           label={<>{label.name}{label.system && <span className={styles.system}>시스템</span>}</>}
           description={label.system ? '결정의 상태와 기각한 대안을 갖는 라벨입니다. 이름을 바꾸거나 지울 수 없습니다.' : undefined}>
@@ -71,8 +70,8 @@ export function LabelsSettings({ workspaceId, canWrite }: { workspaceId: string;
         isDisabled={isBusy || !!draft?.from?.system} placeholder="예: 성능" status={nameError ? { type: 'error', message: nameError } : undefined} />
       <fieldset className={styles.colors}>
         <legend className={styles.colorsLegend}>색</legend>
-        {COLORS.map(color => <button key={color} type="button" className={styles.colorChoice} style={{ background: color }} aria-label={color}
-          aria-pressed={draft?.color === color} onClick={() => draft && setDraft({ ...draft, color })} />)}
+        {PALETTE.map(color => <button key={color.value} type="button" className={styles.colorChoice} style={{ background: color.value }} aria-label={color.name}
+          aria-pressed={draft?.color === color.value} onClick={() => draft && setDraft({ ...draft, color: color.value })} />)}
       </fieldset>
       <FormMessage message={error} />
     </CompactDialog>

@@ -1,4 +1,4 @@
-import { queryOptions } from '@tanstack/react-query';
+import { infiniteQueryOptions, queryOptions } from '@tanstack/react-query';
 import type { components } from './schema';
 import { ApiError, command, notifySessionExpired, readJson, resetCsrf } from './http';
 type Schemas = components['schemas'];
@@ -17,9 +17,11 @@ export async function login(body: Schemas['Login']) { await command('POST', '/ap
 export async function bootstrap(body: Schemas['Bootstrap']) { await command('POST', '/api/v1/auth/bootstrap', body); }
 export async function logout(all = false) { await command('DELETE', all ? '/api/v1/auth/sessions' : '/api/v1/auth/sessions/current'); hadSession = false; resetCsrf(); }
 export async function changePassword(body: Schemas['Password']) { await command('PUT', '/api/v1/me/password', body); resetCsrf(); }
-export const keyQueryOptions = (cursor?: string) => queryOptions({
-  queryKey: ['api-keys', cursor ?? ''],
-  queryFn: ({ signal }) => readJson<Schemas['Keys']>(`/api/v1/me/api-keys${cursor ? `?cursor=${encodeURIComponent(cursor)}` : ''}`, signal),
+/** The member's API keys, a page after another (the newest first). */
+export const keyQueryOptions = infiniteQueryOptions({
+  queryKey: ['api-keys'], initialPageParam: undefined as string | undefined,
+  queryFn: ({ pageParam, signal }) => readJson<Schemas['Keys']>(`/api/v1/me/api-keys${pageParam ? `?cursor=${encodeURIComponent(pageParam)}` : ''}`, signal),
+  getNextPageParam: page => page.nextCursor ?? undefined,
 });
 export const createKey = (body: Schemas['CreateKey']) => command<Schemas['CreatedKey']>('POST', '/api/v1/me/api-keys', body);
 export const revokeKey = (id: string) => command('DELETE', `/api/v1/me/api-keys/${encodeURIComponent(id)}`);

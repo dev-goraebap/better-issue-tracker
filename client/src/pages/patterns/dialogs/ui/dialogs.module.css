@@ -1,7 +1,0 @@
-/* Lists in a page's column (not edge to edge) line up with the section labels. */
-.flush ul > li { padding-inline: 0; }
-.clip { min-inline-size: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-/* A row's title as a button that opens its dialog. */
-.rowButton { display: flex; align-items: baseline; gap: var(--spacing-2); min-inline-size: 0; max-inline-size: 100%; padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: start; cursor: pointer; white-space: nowrap; overflow: hidden; }
-.rowButton:hover { text-decoration: underline; }
-.rowButton:focus-visible { outline: var(--focus-outline-width) var(--focus-outline-style) var(--focus-outline-color); }

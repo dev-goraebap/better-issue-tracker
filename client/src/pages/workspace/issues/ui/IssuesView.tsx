@@ -135,8 +135,8 @@ export function IssuesView({ scope, view, tweak, effective, issues, labels, memb
       <IssueCalendar workspaceId={workspaceId} items={rows} anchor={search.date ?? currentDay()} onOpen={href => openPage(href)}
         onMove={scope.canWrite ? (item, by) => { void moveDays(item, by); } : undefined} />
     </div>}
-    {effective.layout === 'timeline' && <TimelineView workspaceId={workspaceId} items={rows} search={search} />}
-    {effective.layout === 'cards' && <CardsView workspaceId={workspaceId} items={rows} search={search} />}
-    {effective.layout === 'history' && <HistoryView workspaceId={workspaceId} items={rows} search={search} />}
+    {effective.layout === 'timeline' && <TimelineView workspaceId={workspaceId} items={rows} search={search} empty={empty('날짜가 있는 이슈', '시작일이나 기한을 정하면 여기에서 기간 막대로 보입니다.')} />}
+    {effective.layout === 'cards' && <CardsView workspaceId={workspaceId} items={rows} search={search} empty={empty('이슈', '첫 이슈를 만들면 여기에 카드로 보입니다.')} />}
+    {effective.layout === 'history' && <HistoryView workspaceId={workspaceId} items={rows} search={search} empty={empty('이슈', '이슈가 생기면 달마다 여기에 쌓입니다.')} />}
   </>;
 }

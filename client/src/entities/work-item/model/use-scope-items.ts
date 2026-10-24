@@ -11,8 +11,12 @@ const MOST_PAGES = 20;
  * order and group them on the page as the demo did (T-006 stage 3). Past 2,000 the rest is not loaded and isCapped says
  * so; a scope that large needs the server to filter and order instead.
  */
+/** The pages useScopeItems reads, for a route to read the first one before the page shows. */
+export const scopeItemsQuery = (workspaceId: string, projectId?: string) =>
+  (projectId ? itemsQuery(workspaceId, projectId, { size: PAGE }) : workspaceItemsQuery(workspaceId, { size: PAGE }));
+
 export function useScopeItems(workspaceId: string, projectId?: string) {
-  const query = useInfiniteQuery(projectId ? itemsQuery(workspaceId, projectId, { size: PAGE }) : workspaceItemsQuery(workspaceId, { size: PAGE }));
+  const query = useInfiniteQuery(scopeItemsQuery(workspaceId, projectId));
   const pages = query.data?.pages.length ?? 0;
   const { hasNextPage, isFetchingNextPage, fetchNextPage } = query;
   useEffect(() => {

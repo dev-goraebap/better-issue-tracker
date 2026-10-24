@@ -1,6 +1,5 @@
-import { useLayoutEffect, useRef, type CSSProperties } from 'react';
+import { useLayoutEffect, useRef, type CSSProperties, type ReactNode } from 'react';
 import { Link } from '@tanstack/react-router';
-import { PageState } from '@/shared/ui';
 import { spanOf, StatusBadge, type IssueSearch, type WorkItem } from '@/entities/work-item';
 import { currentDay } from '../model/dates';
 import styles from './timeline.module.css';
@@ -14,7 +13,7 @@ const dayNumber = (day: string) => Date.parse(`${day}T00:00:00Z`) / DAY;
  * sideways, the months over each week's first date, today an accent pill ruled down the rows; it opens with today in
  * view. An issue without a day is not drawn here.
  */
-export function TimelineView({ workspaceId, items, search }: { workspaceId: string; items: readonly WorkItem[]; search: IssueSearch }) {
+export function TimelineView({ workspaceId, items, search, empty }: { workspaceId: string; items: readonly WorkItem[]; search: IssueSearch; empty: ReactNode }) {
   const box = useRef<HTMLDivElement>(null);
   const today = currentDay();
   // Opens on today: its column a third of the way across the days in view. Only on opening: a later read (labels,
@@ -29,7 +28,7 @@ export function TimelineView({ workspaceId, items, search }: { workspaceId: stri
     const span = spanOf(item);
     return span ? [{ item, ...span }] : [];
   }).sort((a, b) => a.start.localeCompare(b.start));
-  if (dated.length === 0) return <PageState title="날짜가 있는 이슈가 없습니다" description="시작일이나 기한을 정하면 여기에서 기간 막대로 보입니다." />;
+  if (dated.length === 0) return empty;
   const first = Math.min(...dated.map(row => dayNumber(row.start)), dayNumber(today)) - 2;
   const last = Math.max(...dated.map(row => dayNumber(row.end)), dayNumber(today)) + 5;
   const days = Array.from({ length: last - first + 1 }, (_, index) => new Date((first + index) * DAY).toISOString().slice(0, 10));

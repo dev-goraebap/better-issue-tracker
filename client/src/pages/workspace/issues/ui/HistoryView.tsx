@@ -1,6 +1,5 @@
-import { Fragment } from 'react';
+import { Fragment, type ReactNode } from 'react';
 import { Link } from '@tanstack/react-router';
-import { PageState } from '@/shared/ui';
 import { LabelTokens, PersonCell, StatusBadge, type IssueSearch, type WorkItem } from '@/entities/work-item';
 import styles from './history.module.css';
 
@@ -16,8 +15,8 @@ const dayOf = (issue: WorkItem) => issue.startDate ?? issue.createdAt;
  * is a ring on the line with its name and count, each record a dot in its status's colour with its day before the line
  * and its card after: key and title, its status, who it is for and its labels.
  */
-export function HistoryView({ workspaceId, items, search }: { workspaceId: string; items: readonly WorkItem[]; search: IssueSearch }) {
-  if (items.length === 0) return <PageState title="보일 이슈가 없습니다" description="검색어나 필터를 바꿔 보세요." />;
+export function HistoryView({ workspaceId, items, search, empty }: { workspaceId: string; items: readonly WorkItem[]; search: IssueSearch; empty: ReactNode }) {
+  if (items.length === 0) return empty;
   const sorted = [...items].sort((a, b) => dayOf(b).localeCompare(dayOf(a)));
   const groups = [...new Set(sorted.map(issue => monthLabel(dayOf(issue))))].map(name => ({ name, issues: sorted.filter(issue => monthLabel(dayOf(issue)) === name) }));
   return <ol className={styles.timeline} aria-label="히스토리">

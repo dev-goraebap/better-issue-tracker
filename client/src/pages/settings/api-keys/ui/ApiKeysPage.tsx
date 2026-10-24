@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Button, MoreMenu, Text, TextInput, VStack } from '@astryxdesign/core';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
 import { authError, createKey, keyQueryOptions, revokeKey } from '@/shared/api';
-import { CompactDialog, ConfirmDialog, FormMessage, NavIcon, PageFrame, QueryMessage, Select, SettingsCard, SettingsHead, SettingsRow, StatusToken } from '@/shared/ui';
+import { CompactDialog, ConfirmDialog, FormMessage, ListMore, NavIcon, PageFrame, QueryMessage, Select, SettingsCard, SettingsHead, SettingsRow, StatusToken } from '@/shared/ui';
 import styles from './keys.module.css';
 
 const EXPIRY = [{ value: '7', label: '7일' }, { value: '30', label: '30일 (권장)' }, { value: '90', label: '90일' }, { value: '0', label: '만료 없음' }];
@@ -16,7 +16,7 @@ const dayText = (iso: string) => new Date(iso).toLocaleDateString('ko-KR', { mon
  */
 export function ApiKeysPage() {
   const client = useQueryClient();
-  const keys = useQuery(keyQueryOptions());
+  const keys = useInfiniteQuery(keyQueryOptions);
   const [isCreating, setCreating] = useState(false);
   const [name, setName] = useState('');
   const [agentName, setAgentName] = useState('');
@@ -48,7 +48,7 @@ export function ApiKeysPage() {
     catch (failure) { setRevokeError(new Error(authError(failure))); }
     finally { setBusy(false); }
   };
-  const list = keys.data?.items ?? [];
+  const list = keys.data?.pages.flatMap(page => page.items) ?? [];
   return <PageFrame title="API 키" icon="key" width="narrow">
     <VStack gap={8}>
       <SettingsHead title="API 키" description="에이전트와 스크립트가 내 업무 권한으로 BIT에 접근할 키입니다. 비밀번호와 계정 보안 설정에는 쓸 수 없습니다." />
@@ -62,6 +62,7 @@ export function ApiKeysPage() {
               items={[{ label: '폐기', icon: <NavIcon name="delete" />, onClick: () => setRevoking({ id: key.id, name: key.name }) }]} />}
           </SettingsRow>)}
         </SettingsCard>}
+      <ListMore hasMore={!!keys.hasNextPage} isLoading={keys.isFetchingNextPage} onMore={() => { void keys.fetchNextPage(); }} />
     </VStack>
     <CompactDialog isOpen={isCreating} title="새 API 키" subtitle="어디에 쓰는 키인지 알아볼 이름을 붙이세요." width={460} isBusy={isBusy} onClose={closeCreate} onSubmit={() => { void create(); }}
       footer={<><Button label="취소" variant="ghost" onClick={closeCreate} isDisabled={isBusy} /><Button type="submit" label="만들기" variant="primary" isLoading={isBusy} isDisabled={!name.trim() || !password} /></>}>

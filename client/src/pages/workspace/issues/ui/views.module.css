@@ -30,10 +30,10 @@
 .picker { display: flex; flex-direction: column; gap: var(--spacing-2); padding: var(--spacing-2); }
 .colors { display: flex; gap: var(--spacing-1-5, 0.375rem); padding: var(--spacing-1); }
 .color { inline-size: 1.25rem; block-size: 1.25rem; padding: 0; border: 0; border-radius: 50%; cursor: pointer; }
-.color[aria-checked="true"] { box-shadow: 0 0 0 2px var(--color-background-popover), 0 0 0 3.5px var(--color-text-primary); }
+.color[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--color-background-popover), 0 0 0 3.5px var(--color-text-primary); }
 .icons { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 2px; padding-block-start: var(--spacing-2); border-block-start: 1px solid var(--bit-float-border); }
 .icon { display: grid; place-items: center; block-size: 2rem; padding: 0; border: 0; border-radius: var(--radius-element); background: none; cursor: pointer; }
-.icon:hover, .icon[aria-checked="true"] { background: var(--color-overlay-hover); }
+.icon:hover, .icon[aria-pressed="true"] { background: var(--color-overlay-hover); }
 .icon svg { inline-size: 1rem; block-size: 1rem; }
 
 /* The calendar: its controls in a row over it, then the calendar filling the window's height less the rows above it. */
@@ -43,5 +43,7 @@
 @media (width < 64rem) {
   .editor { flex-wrap: wrap; padding: var(--spacing-4) var(--spacing-5); }
   .editorEnd { inline-size: 100%; justify-content: flex-end; block-size: auto; }
+  /* 16px at least, so a phone does not zoom in on the field. */
+  .name, .description { font-size: 1rem; }
   .calendarBar { padding-inline: var(--spacing-4); }
 }

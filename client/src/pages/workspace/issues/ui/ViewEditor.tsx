@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Button, Popover, Switch } from '@astryxdesign/core';
 import { NavIcon } from '@/shared/ui';
-import { VIEW_COLORS, VIEW_ICONS } from '@/entities/work-item';
+import { PALETTE } from '@/shared/config';
+import { VIEW_ICONS } from '@/entities/work-item';
 import styles from './views.module.css';
 
 export type ViewDraft = { name: string; description: string; icon: string; color: string; isPersonal: boolean };
@@ -22,12 +23,12 @@ export function ViewEditor({ initial, mode, onCancel, onSave }: {
     onKeyDown={event => { if (event.key === 'Escape') { event.stopPropagation(); onCancel(); } }}>
     <Popover isOpen={isPicking} onOpenChange={setPicking} placement="below" alignment="start" width={248} label="뷰 아이콘" className={styles.pickerPopover}
       content={<div className={styles.picker}>
-        <div className={styles.colors} role="radiogroup" aria-label="색">
-          {VIEW_COLORS.map(color => <button key={color} type="button" role="radio" aria-checked={draft.color === color} aria-label={color}
-            className={styles.color} style={{ background: color }} onClick={() => set({ color })} />)}
+        <div className={styles.colors} role="group" aria-label="색">
+          {PALETTE.map(color => <button key={color.value} type="button" aria-pressed={draft.color === color.value} aria-label={color.name}
+            className={styles.color} style={{ background: color.value }} onClick={() => set({ color: color.value })} />)}
         </div>
-        <div className={styles.icons} role="radiogroup" aria-label="아이콘">
-          {VIEW_ICONS.map(icon => <button key={icon} type="button" role="radio" aria-checked={draft.icon === icon} aria-label={icon}
+        <div className={styles.icons} role="group" aria-label="아이콘">
+          {VIEW_ICONS.map(icon => <button key={icon} type="button" aria-pressed={draft.icon === icon} aria-label={icon}
             className={styles.icon} style={{ color: draft.color }} onClick={() => { set({ icon }); setPicking(false); }}><NavIcon name={icon} /></button>)}
         </div>
       </div>}>

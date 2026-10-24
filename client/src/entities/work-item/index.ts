@@ -7,10 +7,10 @@ export { CATEGORIES, CATEGORY_LABELS, categoryOf, dateText, PRIORITY_RANK, spanO
 export { parseIssueSearch, parseNewIssueSearch, type IssueSearch, type NewIssueSearch } from './model/search';
 export {
   ALL_VIEW, addView, effectiveView, FILTER_KEYS, filterIssues, NO_FILTER, removeView, setViewTweak, updateView, useViews, useViewTweak,
-  VIEW_COLORS, VIEW_COLUMNS, VIEW_ICONS, VIEW_LAYOUTS, VIEW_SORT_KEYS, type IssueView, type ViewColumn, type ViewFilters, type ViewLayout, type ViewSearch,
+  VIEW_COLUMNS, VIEW_ICONS, VIEW_LAYOUTS, VIEW_SORT_KEYS, type IssueView, type ViewColumn, type ViewFilters, type ViewLayout, type ViewSearch,
   type ViewSort, type ViewTweak,
 } from './model/views';
-export { useScopeItems } from './model/use-scope-items';
+export { scopeItemsQuery, useScopeItems } from './model/use-scope-items';
 export { tweaksQuery, viewsQuery } from './api/view';
 export { StatusBadge } from './ui/StatusBadge';
 export { PriorityMark } from './ui/PriorityMark';
