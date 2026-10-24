@@ -1,9 +1,11 @@
-import { useCallback, useId } from 'react';
+import { useCallback, useEffect, useId, useState } from 'react';
+import { Button, useToast } from '@astryxdesign/core';
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import { PageFrame, PageState, PageTabs, type PageTab } from '@/shared/ui';
-import { PROJECT_TABS, projectOf, useProjects, type ProjectTab, type WorkSearch } from '@/entities/demo-sample';
+import { PROJECT_TABS, projectOf, useProjects, useWorkItems, type ProjectTab, type Status, type WorkSearch } from '@/entities/demo-sample';
 import type { Scope } from '../model/scope';
 import { BacklogTab } from './BacklogTab';
+import { CreateIssueDialog } from './CreateIssueDialog';
 import { DecisionsTab } from './DecisionsTab';
 import { NotesTab } from './NotesTab';
 import { WorkTab } from './WorkTab';
@@ -21,6 +23,8 @@ const TABS: PageTab<ProjectTab>[] = PROJECT_TABS.map(tab => ({ value: tab.value,
  * - 작업 is seen as a list (a table on a desktop, cards on a phone), a calendar, a kanban or a timeline, picked in its
  *   표시 menu (a phone's 표시 sheet); 백로그 only as rows; 노트 as Keep-like cards; 결정기록 as a history down the page.
  * - Switching tabs starts the new tab afresh; within a tab, its view and conditions are the address's.
+ * - 새 작업 (the toolbar's action, a board column's +, or the C key) opens the dialog over the page (CreateIssueDialog),
+ *   in the project in view (in 전체, a project picked in it); what it makes shows at once, with a toast to open it.
  * - A project the address does not name is a not-found state, never a blank page.
  */
 export function DemoProjectPage() {
@@ -30,6 +34,20 @@ export function DemoProjectPage() {
   const panelId = useId();
   const projects = useProjects(workspaceId).filter(each => each.status === 'active');
   const project = projectId ? projectOf(projectId) : undefined;
+  useWorkItems();
+  const toast = useToast();
+  const [creating, setCreating] = useState<{ status?: Status } | null>(null);
+  // C opens 새 작업, as Linear's, unless the member is typing or something is already open.
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key.toLowerCase() !== 'c' || event.ctrlKey || event.metaKey || event.altKey || event.defaultPrevented) return;
+      if ((event.target instanceof Element && event.target.closest('input, textarea, select, [contenteditable="true"]')) || document.querySelector('dialog[open]')) return;
+      event.preventDefault();
+      setCreating({});
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
   const scope: Scope = { workspaceId, project, projectIds: project ? [project.id] : projects.map(each => each.id), firstProject: project ?? projects[0] };
   const tabs = project ? TABS : TABS.filter(each => each.value !== 'decisions');
   const tab: ProjectTab = tabs.some(each => each.value === search.tab) ? search.tab! : 'work';
@@ -46,10 +64,15 @@ export function DemoProjectPage() {
   return <PageFrame title={project?.name ?? '홈'} icon={project ? 'board' : 'home'} chrome="header"
     tabs={<PageTabs value={tab} items={tabs} panelId={panelId} onChange={next => place(() => (next === 'work' ? {} : { tab: next as WorkSearch['tab'] }))} />}>
     <div role="tabpanel" id={panelId}>
-      {tab === 'work' && <WorkTab scope={scope} search={search} go={go} />}
-      {tab === 'backlog' && <BacklogTab scope={scope} search={search} go={go} />}
+      {tab === 'work' && <WorkTab scope={scope} search={search} go={go} onCreate={status => setCreating({ status })} />}
+      {tab === 'backlog' && <BacklogTab scope={scope} search={search} go={go} onCreate={() => setCreating({ status: 'todo' })} />}
       {tab === 'notes' && <NotesTab scope={scope} search={search} go={go} />}
       {tab === 'decisions' && project && <DecisionsTab workspaceId={workspaceId} project={project} search={search} go={go} />}
     </div>
+    <CreateIssueDialog isOpen={!!creating} projects={projects} project={project} status={creating?.status} onClose={() => setCreating(null)}
+      onCreated={item => toast({ body: `${item.key} ${item.title}을(를) 만들었습니다.`,
+        // The toast lives in a layer above the router, so its way to the item navigates rather than linking.
+        endContent: <Button label="보기" variant="ghost" size="sm" onClick={() => void navigate({ to: '/demo/w/$workspaceId/p/$projectId/work-items/$workItemId',
+          params: { workspaceId, projectId: item.projectId, workItemId: item.id } })} /> })} />
   </PageFrame>;
 }

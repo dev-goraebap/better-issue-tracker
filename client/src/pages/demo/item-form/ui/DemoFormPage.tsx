@@ -9,7 +9,8 @@ const priorityOptions = Object.entries(PRIORITY_LABELS).map(([value, label]) => 
 const peopleOptions = PEOPLE.map(person => ({ value: person.id, label: person.name }));
 
 /**
- * PATTERN · 작성 양식, /demo/w/$workspaceId/p/$projectId/work-items/new. Copy this page for creating or editing one item on its own address (not in a dialog).
+ * PATTERN · 작성 양식, /demo/w/$workspaceId/p/$projectId/work-items/new. Copy this page for editing one item on its own address
+ * (not in a dialog). Making a new work item is the 새 작업 dialog on the project page instead (CreateIssueDialog, D-067).
  *
  * - PageFrame width="narrow" with back: a phone gives the form the whole screen, no tab bar.
  * - The foot row is PageFoot: 취소 at its start, the submit at its end. The shell draws it at the card's bottom, outside

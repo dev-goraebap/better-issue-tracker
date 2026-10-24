@@ -32,3 +32,4 @@ export { SearchSelect, Select, SheetList, type SheetChoice, type SheetGroup } fr
 export { useFillRoom } from './use-fill-room';
 export { NotificationBell } from './notification-bell';
 export { SettingsCard, SettingsHead, SettingsRow } from './settings-card';
+export { PropertyPicker, type PropertyOption } from './property-picker';

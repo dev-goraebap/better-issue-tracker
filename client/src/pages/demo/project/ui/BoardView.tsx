@@ -11,14 +11,14 @@ const COLUMNS: Status[] = ['todo', 'doing', 'review', 'done'];
  * never shakes (bit-frontend 04 §5). A lane's head is the status's mark and name with its count and its own + to add
  * there; a card is a link to the item's page with its key, title, priority and the assignee's picture (D-067).
  */
-export function BoardView({ workspaceId, items, search, onCreate }: { workspaceId: string; items: WorkItem[]; search: WorkSearch; onCreate?: () => void }) {
+export function BoardView({ workspaceId, items, search, onCreate }: { workspaceId: string; items: WorkItem[]; search: WorkSearch; onCreate?: (status: Status) => void }) {
   return <div className={styles.board} role="list" aria-label="상태별 작업">
     {COLUMNS.map(status => {
       const cards = items.filter(item => item.status === status);
       return <section key={status} className={styles.column} role="listitem" aria-label={`${STATUS_LABELS[status]} ${cards.length}개`}>
         <header className={styles.columnHead}>
           <span className={styles.columnName}><StatusBadge status={status} /></span><span className={styles.columnCount}>{cards.length}</span>
-          {onCreate && <span className={styles.columnAdd}><IconButton label={`${STATUS_LABELS[status]}에 작업 추가`} icon={<NavIcon name="plus" />} variant="ghost" size="sm" onClick={onCreate} /></span>}
+          {onCreate && <span className={styles.columnAdd}><IconButton label={`${STATUS_LABELS[status]}에 작업 추가`} icon={<NavIcon name="plus" />} variant="ghost" size="sm" onClick={() => onCreate(status)} /></span>}
         </header>
         <ul className={styles.cards}>{cards.map(item => {
           const person = personOf(item.assigneeId);

@@ -6,6 +6,7 @@ export * from './model/navigation';
 export { filterWork } from './model/work';
 export { addWorkspace, useWorkspaces } from './model/workspaces';
 export { addProject, useProjects } from './model/projects';
+export { addWorkItem, useWorkItems } from './model/work-items';
 export { addSchedule, useSchedules, type DemoSchedule } from './model/schedules';
 export { markAllRead, markRead, markUnread, useReadNotices } from './model/read-notices';
 export { WorkspaceMark } from './ui/WorkspaceMark';

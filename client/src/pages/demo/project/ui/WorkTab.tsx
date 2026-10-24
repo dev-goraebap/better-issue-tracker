@@ -1,6 +1,6 @@
 import { useNavigate } from '@tanstack/react-router';
 import { DefaultAvatar, ListToolbar, valuesOf, type ListFilter, type ListViews } from '@/shared/ui';
-import { PEOPLE, WORK_ITEMS, type TableSearch, type WorkSearch, type WorkView } from '@/entities/demo-sample';
+import { PEOPLE, WORK_ITEMS, type Status, type TableSearch, type WorkSearch, type WorkView } from '@/entities/demo-sample';
 import type { DemoCalendarSearch } from '../model/month';
 import type { Scope } from '../model/scope';
 import { BoardView } from './BoardView';
@@ -23,14 +23,16 @@ const VIEWS: ListViews['options'] = [
  * due day and the schedules on SandboxHr's calendar; 칸반 is a column per status across the card's width; 타임라인 lays
  * dated work along the days. The view is picked in the toolbar's 표시 menu, as Linear's display options (D-065).
  */
-export function WorkTab({ scope, search, go }: { scope: Scope; search: WorkSearch; go: (patch: Partial<WorkSearch>, replace?: boolean) => void }) {
+export function WorkTab({ scope, search, go, onCreate }: {
+  scope: Scope; search: WorkSearch; go: (patch: Partial<WorkSearch>, replace?: boolean) => void;
+  /** Opens 새 작업, starting in a status when a board column's + asks. */
+  onCreate?: (status?: Status) => void;
+}) {
   const navigate = useNavigate();
-  const { workspaceId, project, projectIds, firstProject } = scope;
+  const { workspaceId, project, projectIds } = scope;
   const view: WorkView = search.view ?? 'list';
   const items = WORK_ITEMS.filter(item => projectIds.includes(item.projectId));
-  const create = firstProject
-    ? () => void navigate({ to: '/demo/w/$workspaceId/p/$projectId/work-items/new', params: { workspaceId, projectId: firstProject.id } })
-    : undefined;
+  const create = onCreate && (() => onCreate());
   const views: ListViews = { label: '작업 보기', value: view, options: VIEWS, onChange: next => go({ view: next === 'list' ? undefined : next as WorkSearch['view'] }) };
   const chosen = valuesOf(search.assignee);
   const assigned = items.filter(item => chosen.length === 0 || (item.assigneeId !== undefined && chosen.includes(item.assigneeId)));
@@ -49,7 +51,7 @@ export function WorkTab({ scope, search, go }: { scope: Scope; search: WorkSearc
       <div className={styles.calendarBar}><DemoCalendarBar search={calendarSearch} onPlace={placeCalendar} /></div>
       <DemoCalendar workspaceId={workspaceId} project={project?.id} kinds={CALENDAR_KINDS} search={calendarSearch} onPlace={placeCalendar} onOpen={href => void navigate({ href })} />
     </div>}
-    {view === 'board' && <BoardView workspaceId={workspaceId} items={assigned} search={search} onCreate={create} />}
+    {view === 'board' && <BoardView workspaceId={workspaceId} items={assigned} search={search} onCreate={onCreate} />}
     {view === 'timeline' && <TimelineView workspaceId={workspaceId} items={assigned} search={search} />}
   </>;
 }

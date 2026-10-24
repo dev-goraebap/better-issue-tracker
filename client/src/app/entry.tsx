@@ -18,7 +18,7 @@ createRoot(root).render(
   <StrictMode>
     <AppearanceProvider>
       <InternationalizationProvider locale="ko-KR" messages={{ 'ko-KR': koKR }}>
-        <LayerProvider>
+        <LayerProvider toast={{ position: 'bottomEnd' }}>
           <QueryClientProvider client={queryClient}>
             <RouterProvider router={router} />
           </QueryClientProvider>

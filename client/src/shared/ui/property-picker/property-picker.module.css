@@ -1,0 +1,43 @@
+/*
+ * A property's pill and its menu, as Linear's (D-067): the pill 24px in 12px/500 on the chip's grey (white on a ring in
+ * light mode), unset in the quiet ink; the menu a search across its top on a hairline, then 32px rows with the mark, the
+ * name, the tick and the number key at the end.
+ */
+.wrap { display: inline-flex; flex-shrink: 0; }
+.pill { display: inline-flex; align-items: center; gap: var(--spacing-1-5, 0.375rem); block-size: 1.5rem; padding: 0 var(--spacing-2) 0 0.375rem; border: 0;
+  border-radius: var(--radius-full); background: var(--color-background-muted); box-shadow: inset 0 0 0 1px var(--bit-chip-ring);
+  font: inherit; font-size: 0.75rem; font-weight: 500; color: var(--color-text-primary); white-space: nowrap; cursor: pointer; }
+.pill[data-empty] { color: var(--color-text-secondary); }
+.pill:hover, .pill[aria-expanded="true"] { background: var(--color-background-gray); }
+.pill:focus-visible { outline: var(--focus-outline-width) var(--focus-outline-style) var(--focus-outline-color); }
+.mark { display: inline-grid; place-items: center; flex-shrink: 0; color: var(--color-icon-secondary); }
+.mark svg { inline-size: 0.875rem; block-size: 0.875rem; }
+.dots { display: inline-flex; }
+.dots .mark + .mark { margin-inline-start: -0.25rem; }
+
+.popover { padding: 0; }
+.menu { display: flex; flex-direction: column; }
+.search { block-size: 2.25rem; padding: 0 var(--spacing-3); border: 0; border-block-end: 1px solid var(--bit-float-border); outline: 0; background: none;
+  font: inherit; font-size: 0.8125rem; color: var(--color-text-primary); }
+.search::placeholder { color: var(--color-text-disabled); }
+.list { display: flex; flex-direction: column; max-block-size: 18rem; overflow-y: auto; padding: var(--spacing-1); }
+.option { display: flex; align-items: center; gap: var(--spacing-2); min-block-size: 2rem; padding: 0 var(--spacing-2); border-radius: var(--radius-element);
+  font-size: 0.8125rem; color: var(--color-text-primary); cursor: pointer; }
+.option[data-active] { background: var(--color-overlay-hover); }
+.option .mark svg { inline-size: 1rem; block-size: 1rem; }
+.optionLabel { flex: 1; min-inline-size: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tick { display: inline-flex; color: var(--color-text-primary); }
+.tick svg { inline-size: 0.875rem; block-size: 0.875rem; }
+.kbd { min-inline-size: 1.125rem; padding: 0 0.25rem; border-radius: var(--radius-inner); font-family: inherit; font-size: 0.6875rem; text-align: center; color: var(--color-text-secondary); }
+.empty { margin: 0; padding: var(--spacing-2); font-size: 0.75rem; color: var(--color-text-secondary); }
+
+/* A phone's sheet (the frame's body gives the inset): a search box to type in, touch rows of 48px in 15px type. */
+.menu[data-size="lg"] .search { block-size: 2.75rem; margin-block-end: var(--spacing-2); padding: 0 var(--spacing-3); border: 1px solid var(--color-border);
+  border-radius: var(--radius-element); background: var(--color-background-muted); font-size: 1rem; }
+.menu[data-size="lg"] .list { max-block-size: none; padding: 0; margin-inline: calc(-1 * var(--spacing-2)); }
+.menu[data-size="lg"] .option { min-block-size: 3rem; gap: var(--spacing-3); font-size: 0.9375rem; }
+.menu[data-size="lg"] .option[data-active] { background: none; }
+.menu[data-size="lg"] .option:active { background: var(--color-overlay-hover); }
+.menu[data-size="lg"] .option .mark svg { inline-size: 1.125rem; block-size: 1.125rem; }
+/* A phone's pill stands 32px in 13px type, to be pressed with a thumb. */
+@media (width < 64rem) { .pill { block-size: 2rem; padding-inline: var(--spacing-2) var(--spacing-3); font-size: 0.8125rem; } }
