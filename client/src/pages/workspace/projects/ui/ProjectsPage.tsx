@@ -1,4 +1,3 @@
-import { emptyTaskSearch } from '@/features/work-item-filters';
 import { useState } from 'react';
 import { Button, Selector, Text, VStack } from '@astryxdesign/core';
 import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -21,7 +20,7 @@ export function ProjectsPage() {
     <QueryMessage pending={result.isPending} error={result.error} retry={() => { void result.refetch(); }} /><FormMessage message={error} />
     {!result.isPending && !result.error && !items.length && <Text color="secondary">{search.q ? '검색한 프로젝트가 없습니다.' : '아직 이 목록에 프로젝트가 없습니다.'}</Text>}
     <VStack gap={0} className={styles.list}>{items.map(project => <article key={project.id} className={styles.row}><VStack gap={1} className={styles.info}>
-      {search.status !== 'deleted' ? <Link to="/w/$workspaceId/p/$projectId" params={{ workspaceId, projectId: project.id }} search={{ ...emptyTaskSearch(), view: 'board' }}>{project.name}</Link> : <Text weight="semibold">{project.name}</Text>}
+      {search.status !== 'deleted' ? <Link to="/w/$workspaceId/p/$projectId" params={{ workspaceId, projectId: project.id }}>{project.name}</Link> : <Text weight="semibold">{project.name}</Text>}
       <Text type="supporting" color="secondary">{project.key}{project.description ? ` · ${project.description.slice(0, 120)}` : ''}</Text>
     </VStack>{search.status === 'deleted' && canManage ? <Button label="복원" isLoading={busy === project.id} isDisabled={!!busy} onClick={async () => { setBusy(project.id); setError(''); try { await command('POST', `${projectPath(workspaceId, project.id)}/restore`, { expectedVersion: project.version }); } catch (failure) { setError(authError(failure)); } setBusy(''); await refreshProjects(client, workspaceId); }} /> : <Link to="/w/$workspaceId/settings/projects/$projectId/general" params={{ workspaceId, projectId: project.id }}>설정</Link>}</article>)}</VStack>
     {result.hasNextPage && <Button label="프로젝트 더 불러오기" onClick={() => { void result.fetchNextPage(); }} isLoading={result.isFetchingNextPage} />}

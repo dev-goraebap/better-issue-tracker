@@ -1,0 +1,56 @@
+/*
+ * The history in Linear's look (D-067): one list in a column centred in the card, three tracks per row (the day, the
+ * line, the card). The line is the list's own, so it runs unbroken from the first ring to the last dot, groups and all:
+ * a group is a hollow ring on it with its name and count; a record a dot in its state's colour beside its card (the card
+ * surface, a hairline, 8px corners and the faint shadow). Each row draws its stretch of the line through itself and the
+ * gap under it, so the stretches meet: the first starts at its ring, the last ends at its dot.
+ */
+.timeline { --day: 5.5rem; --rail: 1.75rem; position: relative; display: flex; flex-direction: column; gap: var(--spacing-2);
+  inline-size: 100%; max-inline-size: 52rem; box-sizing: border-box; margin: 0 auto; padding: var(--spacing-6) var(--spacing-6) var(--spacing-10); list-style: none; }
+.group, .entry { position: relative; display: grid; grid-template-columns: var(--day) var(--rail) minmax(0, 1fr); align-items: start; }
+.group::before, .entry::before { content: ''; position: absolute; inset-block: 0 calc(-1 * var(--spacing-2)); inset-inline-start: calc(var(--day) + var(--rail) / 2);
+  border-inline-start: 1px solid color-mix(in srgb, var(--color-text-secondary) 35%, transparent); }
+.timeline > :first-child::before { inset-block-start: 0.75rem; }
+.timeline > :last-child::before { inset-block-end: auto; block-size: 1.375rem; }
+.group { align-items: center; min-block-size: 1.5rem; }
+/* A later group stands apart; its padding (not a margin) keeps the line running through the room above it. */
+.group:not(:first-child) { padding-block-start: var(--spacing-5); }
+.group:not(:first-child) > * { align-self: end; }
+.group:not(:first-child) .ring { margin-block-end: 0.40625rem; }
+.ring { position: relative; z-index: 1; grid-column: 2; justify-self: center; inline-size: 0.6875rem; block-size: 0.6875rem; box-sizing: border-box; border: 1.5px solid var(--color-icon-secondary);
+  border-radius: 50%; background: var(--color-background-surface); }
+.groupName { grid-column: 3; display: flex; align-items: baseline; gap: var(--spacing-2); margin: 0; font-size: 0.8125rem; font-weight: 600; color: var(--color-text-primary); }
+.count { font-size: 0.75rem; font-weight: 450; font-variant-numeric: tabular-nums; color: var(--color-text-secondary); }
+.entry { --state: var(--color-icon-secondary); }
+.entry[data-state='proposed'] { --state: #f2994a; }
+.entry[data-state='accepted'] { --state: #4cb782; }
+.entry[data-state='doing'] { --state: #f2c94c; }
+.entry[data-state='review'] { --state: #4cb782; }
+.entry[data-state='done'] { --state: #5e6ad2; }
+/* The day and the dot sit on the card's first line. */
+.when { grid-column: 1; padding-inline-end: var(--spacing-3); line-height: 2.75rem; font-size: 0.75rem; color: var(--color-text-secondary); text-align: end; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.dot { position: relative; z-index: 1; grid-column: 2; justify-self: center; margin-block-start: calc(1.375rem - 0.28rem); inline-size: 0.5625rem; block-size: 0.5625rem; border-radius: 50%;
+  background: var(--state); box-shadow: 0 0 0 3px var(--color-background-surface); }
+.card { grid-column: 3; display: flex; flex-direction: column; gap: var(--spacing-2); min-inline-size: 0; padding: var(--spacing-2-5, 0.625rem) var(--spacing-3);
+  border: 1px solid var(--color-border); border-radius: var(--radius-element); background: var(--color-background-card); box-shadow: var(--shadow-low);
+  color: inherit; text-decoration: none; transition: border-color var(--duration-fast, 100ms); }
+.card:hover { border-color: var(--color-border-emphasized); }
+.card:focus-visible { outline: var(--focus-outline-width) var(--focus-outline-style) var(--focus-outline-color); }
+.entry[data-state='superseded'] .card { opacity: 0.6; }
+.cardHead { display: flex; align-items: center; gap: var(--spacing-2); min-block-size: 1.5rem; min-inline-size: 0; }
+.key { flex-shrink: 0; font-size: 0.8125rem; font-variant-numeric: tabular-nums; color: var(--color-text-secondary); }
+.title { flex: 1; min-inline-size: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.8125rem; font-weight: 500; color: var(--color-text-primary); }
+.meta { display: flex; flex-wrap: wrap; align-items: center; gap: var(--spacing-2) var(--spacing-4); font-size: 0.75rem; color: var(--color-text-secondary); }
+.person { display: inline-flex; align-items: center; gap: var(--spacing-1-5, 0.375rem); }
+.progress { display: inline-flex; align-items: center; gap: var(--spacing-2); min-inline-size: 9rem; }
+.metaLabel { flex-shrink: 0; }
+/* A phone: no day track; the day sits over the card, the line hugging the left inset. */
+@media (width < 64rem) {
+  .timeline { --day: 0rem; --rail: 1.5rem; padding: var(--spacing-4) var(--spacing-4) var(--spacing-8); }
+  .timeline > :last-child::before { block-size: 0.65rem; }
+  .when { grid-column: 3; grid-row: 1; padding: 0 0 var(--spacing-1); line-height: 1.25rem; text-align: start; }
+  .when:empty { display: none; }
+  .dot { grid-row: 1; margin-block-start: 0.375rem; }
+  .entry:has(.when:not(:empty)) .card { grid-row: 2; }
+  .title { white-space: normal; }
+}

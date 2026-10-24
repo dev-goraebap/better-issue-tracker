@@ -1,3 +1,0 @@
-.facts { display: grid; grid-template-columns: 6rem minmax(0, 1fr); gap: var(--spacing-3) var(--spacing-5); margin: 0; padding: var(--spacing-5); border: var(--border-width) solid var(--color-border); border-radius: var(--radius-container); }
-.facts dt { color: var(--color-text-secondary); } .facts dd { margin: 0; overflow-wrap: anywhere; }
-.description { white-space: pre-wrap; overflow-wrap: anywhere; }

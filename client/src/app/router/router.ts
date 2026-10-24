@@ -1,14 +1,13 @@
 import { ProjectsPage } from '@/pages/workspace/projects';
-import { WorkItemsPage, parseWorkSearch } from '@/pages/project/work-items';
-import { WorkItemDetailPage } from '@/pages/project/work-item-detail';
+import { IssuesPage } from '@/pages/workspace/issues';
+import { NewIssuePage } from '@/pages/workspace/issue-new';
+import { IssuePage } from '@/pages/project/issue';
+import { IssueEditPage } from '@/pages/project/issue-edit';
 import { ProjectSettingsPage } from '@/pages/settings/project';
 import { projectQuery, columnsQuery, type ProjectStatus } from '@/entities/project';
-import { byRefQuery } from '@/entities/work-item';
-import { parseTaskSearch } from '@/features/work-item-filters';
+import { byRefQuery, parseIssueSearch as parseRealIssueSearch, parseNewIssueSearch as parseRealNewIssueSearch } from '@/entities/work-item';
 import { createRootRoute, createRoute, createRouter, redirect } from '@tanstack/react-router';
-import { HomePage } from '@/pages/workspace/home';
 import { InboxPage } from '@/pages/workspace/inbox';
-import { MyTasksPage } from '@/pages/workspace/my-tasks';
 import { MembersPage } from '@/pages/workspace/members';
 import { invitationsQuery } from '@/pages/workspace/members';
 import { DocumentsPage } from '@/pages/workspace/documents';
@@ -94,19 +93,25 @@ const scoped = createRoute({ getParentRoute: () => workspace, path: '/w/$workspa
   try { await routeRead(() => queryClient.fetchQuery(workspaceQuery(id))); }
   catch (error) { if (error instanceof ApiError && error.status === 404) { queryClient.removeQueries({ queryKey: ['workspace', id] }); throw redirect({ to: '/workspaces' }); } throw error; }
 } });
-const home = createRoute({ getParentRoute: () => scoped, path: '/', component: HomePage });
+// A workspace opens on its home, 전체: the issues of every project through the workspace's views (D-065, D-066).
+const home = createRoute({ getParentRoute: () => scoped, path: '/', component: IssuesPage, validateSearch: ownSearch(parseRealIssueSearch) });
+// 새 이슈 at its own address, which the issue pages open in a modal (D-070).
+const issuesNew = createRoute({ getParentRoute: () => scoped, path: '/issues/new', component: NewIssuePage, validateSearch: ownSearch(parseRealNewIssueSearch) });
 const inbox = createRoute({ getParentRoute: () => scoped, path: '/inbox', component: InboxPage });
-const myTasks = createRoute({ getParentRoute: () => scoped, path: '/my-tasks', component: MyTasksPage, validateSearch: (raw: Record<string, unknown>) => { const value = parseTaskSearch(raw); return { ...value, assigneeId: '', column: '', order: value.order === 'position_asc' ? 'createdAt_desc' as const : value.order }; } });
+// 내 작업 is a view now (담당자 filter, D-066); its old address leads home.
+const myTasks = createRoute({ getParentRoute: () => scoped, path: '/my-tasks', beforeLoad: ({ params }) => { throw redirect({ href: `/w/${params.workspaceId}` }); } });
 async function loadProject(w: string, p: string) {
   try { await routeRead(() => queryClient.fetchQuery(projectQuery(w, p))); }
   catch (error) { if (error instanceof ApiError && error.status === 404) { queryClient.removeQueries({ queryKey: ['workspace', w, 'project', p] }); throw redirect({ href: `/w/${w}/projects` }); } throw error; }
 }
 const projects = createRoute({ getParentRoute: () => scoped, path: '/projects', component: ProjectsPage, validateSearch: (raw: Record<string, unknown>): { status: ProjectStatus; q: string } => ({ status: raw.status === 'archived' || raw.status === 'deleted' ? raw.status : 'active', q: typeof raw.q === 'string' ? raw.q : '' }) });
-const projectItems = createRoute({ getParentRoute: () => scoped, path: '/p/$projectId', component: WorkItemsPage, validateSearch: parseWorkSearch, loader: async ({ params }) => { await loadProject(params.workspaceId, params.projectId); await queryClient.prefetchQuery(columnsQuery(params.workspaceId, params.projectId)); } });
+const projectItems = createRoute({ getParentRoute: () => scoped, path: '/p/$projectId', component: IssuesPage, validateSearch: ownSearch(parseRealIssueSearch), loader: async ({ params }) => { await loadProject(params.workspaceId, params.projectId); await queryClient.prefetchQuery(columnsQuery(params.workspaceId, params.projectId)); } });
 // 워크스페이스 설정 turns the menu into the workspace's settings: its pages, then each project's (D-061).
 const projectSettings = createRoute({ getParentRoute: () => scoped, path: '/settings/projects/$projectId/general', component: ProjectSettingsPage, loader: ({ params }) => loadProject(params.workspaceId, params.projectId) });
 const oldProjectSettings = createRoute({ getParentRoute: () => scoped, path: '/p/$projectId/settings', beforeLoad: ({ params }) => { throw redirect({ href: `/w/${params.workspaceId}/settings/projects/${params.projectId}/general` }); } });
-const itemDetail = createRoute({ getParentRoute: () => scoped, path: '/p/$projectId/work-items/$workItemId', component: WorkItemDetailPage, loader: ({ params }) => loadProject(params.workspaceId, params.projectId) });
+const itemNew = createRoute({ getParentRoute: () => scoped, path: '/p/$projectId/work-items/new', component: NewIssuePage, validateSearch: ownSearch(parseRealNewIssueSearch), loader: ({ params }) => loadProject(params.workspaceId, params.projectId) });
+const itemDetail = createRoute({ getParentRoute: () => scoped, path: '/p/$projectId/work-items/$workItemId', component: IssuePage, validateSearch: ownSearch(parseRealIssueSearch), loader: ({ params }) => loadProject(params.workspaceId, params.projectId) });
+const itemEdit = createRoute({ getParentRoute: () => scoped, path: '/p/$projectId/work-items/$workItemId/edit', component: IssueEditPage, loader: ({ params }) => loadProject(params.workspaceId, params.projectId) });
 const itemReference = createRoute({ getParentRoute: () => scoped, path: '/r/$reference', loader: async ({ params }) => { const item = await routeRead(() => queryClient.fetchQuery(byRefQuery(params.workspaceId, params.reference))); throw redirect({ href: `/w/${params.workspaceId}/p/${item.projectId}/work-items/${item.id}` }); } });
 const members = createRoute({ getParentRoute: () => scoped, path: '/members', component: MembersPage,
   validateSearch: (search: Record<string, unknown>): { cursor?: string; view: 'members' | 'invitations'; status: string } => ({ ...pageCursor(search), view: search.view === 'invitations' ? 'invitations' : 'members', status: typeof search.status === 'string' && ['pending','accepted','expired','revoked'].includes(search.status) ? search.status : '' }),
@@ -170,7 +175,7 @@ const demoRoutes = [
   createRoute({ getParentRoute: () => demo, path: '/patterns/dialogs', component: DemoDialogsPage }),
 ] as const;
 const demoTree = import.meta.env.DEV ? [demo.addChildren(demoRoutes)] : [];
-export const router = createRouter({ routeTree: rootRoute.addChildren([...demoTree, workspace.addChildren([start, chooser, scoped.addChildren([home, inbox, myTasks, members, documents, settingsStart, settings, projects, projectItems, projectSettings, oldProjectSettings, itemDetail, itemReference]), security, keys, appearance, ...legacy]), login, setup, join, forcedPassword]), defaultPreload: 'intent', scrollRestoration: true,
+export const router = createRouter({ routeTree: rootRoute.addChildren([...demoTree, workspace.addChildren([start, chooser, scoped.addChildren([home, issuesNew, inbox, myTasks, members, documents, settingsStart, settings, projects, projectItems, projectSettings, oldProjectSettings, itemNew, itemDetail, itemEdit, itemReference]), security, keys, appearance, ...legacy]), login, setup, join, forcedPassword]), defaultPreload: 'intent', scrollRestoration: true,
   // A panel opened over a screen shows the page's own address (a masked move); reloaded, the address is that page (D-069).
   unmaskOnReload: true });
 setUnauthorizedHandler(() => { resetCsrf(); void queryClient.cancelQueries().then(() => { queryClient.clear(); void router.navigate({ to: '/login' }); }); });

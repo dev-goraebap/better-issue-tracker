@@ -33,4 +33,5 @@ export { useFillRoom } from './use-fill-room';
 export { NotificationBell } from './notification-bell';
 export { SettingsCard, SettingsHead, SettingsRow } from './settings-card';
 export { PropertyPicker, type PropertyOption } from './property-picker';
+export { DuePicker } from './due-picker';
 export { PanelDialog, RoutedPanel, SidePanel, Surface, SurfaceContext, usePanelSurface, type PanelSurface } from './side-panel';

@@ -1,9 +1,0 @@
-import { PRIORITIES, TRIGGERS, type TaskFilters } from '@/entities/work-item';
-export type TaskSearch = { q: string; priority: string; triggerType: string; assigneeId: string; column: string; mode: 'active' | 'archived' | 'deleted'; closed: string; from: string; to: string; order: 'createdAt_desc' | 'createdAt_asc' | 'position_asc' };
-export const emptyTaskSearch = (): TaskSearch => ({ q: '', priority: '', triggerType: '', assigneeId: '', column: '', mode: 'active', closed: '', from: '', to: '', order: 'createdAt_desc' });
-export function parseTaskSearch(value: Record<string, unknown>): TaskSearch {
-  const text = (key: string) => typeof value[key] === 'string' ? value[key] as string : '';
-  return { q: text('q'), priority: Object.hasOwn(PRIORITIES, text('priority')) ? text('priority') : '', triggerType: Object.hasOwn(TRIGGERS, text('triggerType')) ? text('triggerType') : '', assigneeId: text('assigneeId'), column: text('column'), mode: value.mode === 'archived' || value.mode === 'deleted' ? value.mode : 'active', closed: ['true', 'false'].includes(text('closed')) ? text('closed') : '', from: text('from'), to: text('to'), order: value.order === 'createdAt_asc' || value.order === 'position_asc' ? value.order : 'createdAt_desc' };
-}
-export function filterParams(search: TaskSearch): TaskFilters { return { q: search.q, priority: search.priority, triggerType: search.triggerType, assigneeId: search.assigneeId, column: search.column, archived: search.mode === 'archived', deleted: search.mode === 'deleted', closed: search.closed, from: search.from, to: search.to, sort: search.order === 'position_asc' ? 'position' : 'createdAt', direction: search.order === 'createdAt_desc' ? 'DESC' : 'ASC' }; }
-export const activeFilterKeys = (search: TaskSearch) => (Object.keys(emptyTaskSearch()) as (keyof TaskSearch)[]).filter(key => key === 'mode' ? search.mode !== 'active' : key === 'order' ? search.order !== 'createdAt_desc' : !!search[key]);

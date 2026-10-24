@@ -1,0 +1,64 @@
+/* The body and the properties panel side by side; a phone stacks the panel under the body. */
+.layout { display: grid; grid-template-columns: minmax(0, 1fr) 15rem; gap: var(--spacing-10); align-items: start; }
+.main { min-inline-size: 0; }
+/* Linear's panel (D-067): quiet heads in 12px/500, a 28px line per property, its mark and value, no name column. */
+.aside { position: sticky; inset-block-start: calc(var(--workspace-topbar-height, 2.75rem) + var(--spacing-6)); display: flex; flex-direction: column; gap: var(--spacing-1); }
+/* In the modal the body scrolls on its own, under no header row: the panel sticks just under the body's top, the body a little roomier. */
+.layout[data-panel] { gap: var(--spacing-8); padding-block: var(--spacing-4) var(--spacing-6); }
+.layout[data-panel] .aside { inset-block-start: var(--spacing-4); }
+.asideHead { margin: 0; padding: var(--spacing-2) var(--spacing-2) var(--spacing-1); font-size: 0.75rem; font-weight: 500; color: var(--color-text-secondary); }
+.asideHead:not(:first-child) { margin-block-start: var(--spacing-4); }
+.properties { display: flex; flex-direction: column; gap: 2px; margin: 0; }
+.property { display: flex; align-items: center; min-block-size: 1.75rem; padding-inline: var(--spacing-2); border-radius: var(--radius-full); font-size: 0.8125rem; }
+.property:hover { background: var(--color-overlay-hover); }
+.property dd { display: flex; align-items: center; gap: var(--spacing-1-5, 0.375rem); min-inline-size: 0; margin: 0; color: var(--color-text-primary); }
+.property dd > span { color: var(--color-text-primary); }
+.spoken { position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.dated { display: inline-flex; align-items: center; gap: var(--spacing-1-5, 0.375rem); }
+.dated svg { inline-size: 0.875rem; block-size: 0.875rem; color: var(--color-icon-secondary); }
+.dated[data-empty] { color: var(--color-text-secondary) !important; }
+.asideLabels { padding-inline: var(--spacing-2); }
+.labelDot { display: inline-block; inline-size: 0.5rem; block-size: 0.5rem; border-radius: 50%; }
+/* Under the panel, quietly: the key and when it was made and last changed. */
+.made { margin: var(--spacing-5) 0 0; padding-inline: var(--spacing-2); font-size: 0.75rem; color: var(--color-text-secondary); }
+.asideLabels > span { flex-wrap: wrap; }
+.person { display: inline-flex; align-items: center; gap: var(--spacing-1-5, 0.375rem); min-inline-size: 0; }
+.none { color: var(--color-text-secondary); }
+.key { font-family: var(--font-family-code); font-size: 0.75rem; color: var(--color-text-secondary); }
+/* Sections' lists keep the page's column, not the card's edges. */
+.main ul[aria-label] > li { padding-inline: 0; }
+.prose { font-size: 0.9375rem; line-height: 1.7; word-break: keep-all; }
+.prose p, .prose li { font-size: 0.9375rem; line-height: 1.7; }
+.prose p { margin: 0 0 var(--spacing-3); }
+.prose ul { margin: 0; padding-inline-start: var(--spacing-5); }
+.prose code { padding: 0.0625rem 0.3125rem; border-radius: 4px; background: var(--color-background-muted); font-family: var(--font-family-code); font-size: 0.8125rem; }
+/* A 결정기록's state and progress on one line, the alternatives it rejected under them; a note's participants. */
+.decision { display: flex; align-items: center; gap: var(--spacing-3); }
+.decisionProgress { font-size: 0.8125rem; color: var(--color-text-secondary); font-variant-numeric: tabular-nums; }
+.subhead { margin: var(--spacing-4) 0 var(--spacing-1); font-size: 0.75rem; font-weight: 500; color: var(--color-text-secondary); }
+.rejected { margin: 0; padding-inline-start: var(--spacing-5); font-size: 0.875rem; line-height: 1.7; color: var(--color-text-secondary); text-decoration: line-through; text-decoration-color: color-mix(in srgb, currentColor 40%, transparent); }
+.people { display: flex; flex-wrap: wrap; gap: var(--spacing-2) var(--spacing-4); margin: 0; padding: 0; list-style: none; font-size: 0.8125rem; }
+.people li { display: inline-flex; align-items: center; gap: var(--spacing-1-5, 0.375rem); }
+.activity { display: flex; flex-direction: column; gap: var(--spacing-4); margin: 0; padding: 0; list-style: none; }
+.event { display: flex; gap: var(--spacing-3); align-items: flex-start; }
+.eventBody { display: flex; flex-direction: column; gap: var(--spacing-1); min-inline-size: 0; flex: 1; word-break: keep-all; overflow-wrap: anywhere; }
+.event:not([data-comment]) .eventBody > :last-child { font-size: 0.8125rem; color: var(--color-text-secondary); }
+.event[data-comment] .eventBody > :last-child { padding: var(--spacing-3); border: 1px solid var(--color-border); border-radius: var(--radius-container); background: var(--color-background-card); }
+.agent { margin-inline-start: var(--spacing-1); padding: 0 var(--spacing-1); border-radius: 4px; background: var(--color-accent-muted); color: var(--color-text-accent, var(--color-accent)); font-size: 0.6875rem; }
+/* The composer as Linear's: one card holding a borderless box and the send button at its foot. */
+.comment { display: flex; flex-direction: column; gap: var(--spacing-1); margin-block-start: var(--spacing-4); padding: var(--spacing-2) var(--spacing-3);
+  border: 1px solid var(--color-border); border-radius: var(--radius-container); background: var(--color-background-card); box-shadow: var(--shadow-low); }
+.comment :global(.astryx-text-area) { border: 0; background: none; box-shadow: none; padding-inline: 0; }
+.comment:focus-within { border-color: var(--color-border-emphasized); }
+.commentAction { display: flex; justify-content: flex-end; }
+@media (width < 64rem) {
+  .layout { grid-template-columns: minmax(0, 1fr); gap: var(--spacing-6); }
+  /* A phone reads the properties as Linear's row of pills under the title: each a 32px pill on the muted grey, wrapping,
+     the heads kept for assistive technology alone. */
+  .aside { position: static; order: -1; flex-direction: row; flex-wrap: wrap; gap: var(--spacing-1-5, 0.375rem); padding: 0 0 var(--spacing-5);
+    border-block-end: 1px solid var(--color-border); }
+  .asideHead { position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden; clip-path: inset(50%); }
+  .properties { display: contents; }
+  .property { min-block-size: 2rem; padding-inline: var(--spacing-3); background: var(--color-background-muted); }
+  .asideLabels { display: flex; align-items: center; padding-inline: 0; }
+}

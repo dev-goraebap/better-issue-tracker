@@ -18,7 +18,7 @@ import { itemQuery } from '@/entities/work-item';
 import { ScopeSwitcher } from './ScopeSwitcher';
 import styles from './app-layout.module.css';
 
-const SECTION_NAMES: Record<string, string> = { '/inbox': '알림', '/projects': '모든 프로젝트', '/issues/new': '새 이슈', '/my-tasks': '내 작업' };
+const SECTION_NAMES: Record<string, string> = { '/inbox': '알림', '/projects': '모든 프로젝트', '/issues/new': '새 이슈' };
 
 /**
  * The signed-in app's frame (D-058's demo, made real): ShellFrame with the workspace switcher and the bell at the menu's

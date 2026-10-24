@@ -1,4 +1,3 @@
-import { emptyTaskSearch } from '@/features/work-item-filters';
 import { useState } from 'react';
 import { Button, Heading, HStack, Text, VStack } from '@astryxdesign/core';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -13,7 +12,7 @@ export function ProjectSettingsPage() {
   const { workspaceId = '', projectId = '' } = useParams({ strict: false }); const result = useQuery(projectQuery(workspaceId, projectId)); const space = useQuery(workspaceQuery(workspaceId)); const client = useQueryClient(); const navigate = useNavigate();
   const [editing, setEditing] = useState(false); const [removing, setRemoving] = useState(false); const [busy, setBusy] = useState(false); const [error, setError] = useState('');
   const project = result.error ? undefined : result.data; const canManage = !space.error && (space.data?.myRole === 'owner' || space.data?.myRole === 'admin');
-  return <PageFrame title="프로젝트 설정" width="narrow"><Link to="/w/$workspaceId/p/$projectId" params={{ workspaceId, projectId }} search={{ ...emptyTaskSearch(), view: 'board' }}>프로젝트로 돌아가기</Link><QueryMessage pending={result.isPending} error={result.error} retry={() => { void result.refetch(); }} /><FormMessage message={error} />
+  return <PageFrame title="프로젝트 설정" width="narrow"><Link to="/w/$workspaceId/p/$projectId" params={{ workspaceId, projectId }}>프로젝트로 돌아가기</Link><QueryMessage pending={result.isPending} error={result.error} retry={() => { void result.refetch(); }} /><FormMessage message={error} />
     {project && <><VStack gap={4}>{editing && canManage && !project.archivedAt ? <ProjectEditor project={project} onClose={() => setEditing(false)} /> : <><Heading level={2}>{project.name}</Heading><Text type="supporting">{project.key}{project.archivedAt ? ' · 보관됨' : ''}</Text><Text>{project.description || '설명이 없습니다.'}</Text>{canManage && !project.archivedAt && <Button label="프로젝트 정보 편집" onClick={() => setEditing(true)} />}</>}</VStack>
       <ProjectColumns project={project} canManage={canManage} />
       {canManage && <VStack gap={4}><SectionHeader title="보관과 삭제" /><Text type="supporting">보관하면 조회만 가능합니다. 삭제하면 작업을 포함한 프로젝트가 숨겨지며 프로젝트의 삭제 목록에서 복원할 수 있습니다.</Text><HStack gap={3} wrap="wrap" data-action-row>

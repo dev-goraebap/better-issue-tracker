@@ -1,6 +1,0 @@
-.scroll { overflow-x: auto; max-inline-size: 100%; border: var(--border-width) solid var(--color-border); border-radius: var(--radius-container); }
-.table { inline-size: 100%; min-inline-size: 42rem; border-collapse: collapse; text-align: start; font-size: var(--text-supporting-size); }
-.table th { text-align: start; color: var(--color-text-secondary); background: var(--color-background-muted); font-weight: 500; white-space: nowrap; }
-.table th, .table td { padding: var(--spacing-3) var(--spacing-4); border-block-end: var(--border-width) solid var(--color-border); vertical-align: middle; }
-.table tr:last-child td { border-block-end: 0; }
-.table td:first-child { inline-size: 48%; } .table a { color: var(--color-text-primary); text-decoration: none; } .table a:hover { text-decoration: underline; }
