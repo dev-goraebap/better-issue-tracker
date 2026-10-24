@@ -1,0 +1,23 @@
+/* The roles' table: a role per column, an ability per row, a mark where the role may do it. */
+.tableWrap { overflow-x: auto; }
+.matrix { inline-size: 100%; border-collapse: collapse; font-size: 0.8125rem; }
+.matrix th, .matrix td { padding: var(--spacing-3) var(--spacing-4); border-block-end: 1px solid var(--color-border-subtle, var(--color-border)); text-align: center; }
+.matrix tbody tr:last-child :is(th, td) { border-block-end: 0; }
+.matrix thead th { font-weight: 600; white-space: nowrap; }
+.matrix tbody th { font-weight: 400; text-align: start; }
+.matrix td svg { inline-size: 1rem; block-size: 1rem; color: var(--color-icon-accent); vertical-align: middle; }
+.holders { display: block; font-size: 0.6875rem; font-weight: 400; color: var(--color-text-secondary); }
+.no { color: var(--color-text-secondary); }
+.quiet { position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden; clip-path: inset(50%); }
+
+/* A label's colour: a dot before its name, and the choices in its dialog. */
+.swatch { display: inline-block; inline-size: 0.75rem; block-size: 0.75rem; border-radius: var(--radius-full); }
+.colors { display: flex; flex-wrap: wrap; gap: var(--spacing-2); margin: 0; padding: 0; border: 0; }
+.colorsLegend { inline-size: 100%; margin-block-end: var(--spacing-1); padding: 0; font-size: var(--text-label-size, 0.875rem); font-weight: 500; }
+.colorChoice { inline-size: 1.75rem; block-size: 1.75rem; border: 0; border-radius: var(--radius-full); cursor: pointer; }
+.colorChoice[aria-pressed='true'] { outline: 2px solid var(--color-text-primary); outline-offset: 2px; }
+.colorChoice:focus-visible { outline: var(--focus-outline-width) var(--focus-outline-style) var(--focus-outline-color); outline-offset: 2px; }
+.rowActions { display: flex; gap: var(--spacing-1); }
+.system { margin-inline-start: var(--spacing-2); font-size: 0.6875rem; font-weight: 500; color: var(--color-text-secondary); }
+/* The name saved on its own: the field and its 저장 side by side. */
+.nameForm { display: flex; align-items: flex-start; gap: var(--spacing-2); }

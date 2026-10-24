@@ -1,6 +1,11 @@
-import { Text } from '@astryxdesign/core';
-import { PageFrame } from '@/shared/ui';
+import { PageFrame, PageState } from '@/shared/ui';
 
+/**
+ * 알림, /w/$workspaceId/inbox (the bell at the menu's head, D-059). Notices are not made yet (T-006 leaves them out), so it
+ * says what will arrive here.
+ */
 export function InboxPage() {
-  return <PageFrame title="Inbox"><Text color="secondary">확인할 알림과 요청이 여기에 모입니다.</Text></PageFrame>;
+  return <PageFrame title="알림" icon="bell" chrome="header">
+    <PageState title="새 알림이 없습니다" description="나를 담당자로 지정하거나, 내 이슈의 상태가 바뀌면 여기에 모입니다." />
+  </PageFrame>;
 }

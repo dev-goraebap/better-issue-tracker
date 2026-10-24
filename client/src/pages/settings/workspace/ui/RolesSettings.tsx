@@ -1,0 +1,53 @@
+import { Button, VStack } from '@astryxdesign/core';
+import { useInfiniteQuery } from '@tanstack/react-query';
+import { useNavigate } from '@tanstack/react-router';
+import { workspacePath } from '@/shared/config';
+import { NavIcon, SettingsCard, SettingsHead, SettingsRow } from '@/shared/ui';
+import { memberOptionsQuery, type Member } from '@/entities/workspace';
+import styles from './workspace-settings.module.css';
+
+type Role = Member['role'];
+const ROLES: readonly Role[] = ['viewer', 'member', 'admin', 'owner'];
+const ROLE_LABELS: Record<Role, string> = { owner: '소유자', admin: '관리자', member: '멤버', viewer: '보기 전용' };
+/** What each role may do, the least first; a role may do all that the roles before it may (D-040, D-048, D-049). */
+const ABILITIES: readonly { label: string; from: Role }[] = [
+  { label: '이슈·결정·문서 보기', from: 'viewer' },
+  { label: '이슈와 라벨을 만들고 고치기', from: 'member' },
+  { label: '프로젝트 설정과 보드 칸', from: 'admin' },
+  { label: '구성원 초대와 역할 변경', from: 'admin' },
+  { label: '워크스페이스 이름 바꾸기', from: 'admin' },
+  { label: '워크스페이스 삭제와 소유권 이전', from: 'owner' },
+];
+
+/**
+ * 역할: the four roles and what each may do, read as a table of marks; how many members hold each, and the way to 구성원,
+ * where roles are given.
+ */
+export function RolesSettings({ workspaceId }: { workspaceId: string }) {
+  const navigate = useNavigate();
+  const members = useInfiniteQuery(memberOptionsQuery(workspaceId)).data?.pages.flatMap(page => page.items) ?? [];
+  const holders = (role: Role) => members.filter(member => member.role === role).length;
+  return <VStack gap={8}>
+    <SettingsHead title="역할" description="역할은 네 가지이고, 오른쪽 역할은 왼쪽 역할이 하는 일을 모두 합니다." />
+    <SettingsCard title="할 수 있는 일" id="roles-abilities">
+      <div className={styles.tableWrap}>
+        <table className={styles.matrix}>
+          <thead><tr><th scope="col"><span className={styles.quiet}>할 일</span></th>
+            {ROLES.map(role => <th key={role} scope="col">{ROLE_LABELS[role]}<span className={styles.holders}>{holders(role)}명</span></th>)}</tr></thead>
+          <tbody>{ABILITIES.map(ability => <tr key={ability.label}>
+            <th scope="row">{ability.label}</th>
+            {ROLES.map(role => {
+              const can = ROLES.indexOf(role) >= ROLES.indexOf(ability.from);
+              return <td key={role} aria-label={can ? '할 수 있음' : '할 수 없음'}>{can ? <NavIcon name="check" /> : <span className={styles.no}>—</span>}</td>;
+            })}
+          </tr>)}</tbody>
+        </table>
+      </div>
+    </SettingsCard>
+    <SettingsCard title="역할 주기" id="roles-members">
+      <SettingsRow label="구성원" description={`${members.length}명`}>
+        <Button label="구성원으로" variant="secondary" size="sm" onClick={() => void navigate({ href: workspacePath(workspaceId, '/members') })} />
+      </SettingsRow>
+    </SettingsCard>
+  </VStack>;
+}

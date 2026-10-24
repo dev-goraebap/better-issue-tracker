@@ -1,0 +1,5 @@
+/* A tab's state fills what the page leaves; the loading state's skeleton rows. */
+.statePanel { display: flex; flex-direction: column; flex: 1; }
+.skeletonRow { display: flex; align-items: center; gap: var(--spacing-3); block-size: 2.75rem; padding-inline: var(--spacing-6); border-block-end: 1px solid var(--color-border-subtle, var(--color-border)); }
+.skeletonEnd { margin-inline-start: auto; }
+@media (width < 64rem) { .skeletonRow { padding-inline: var(--spacing-5); } }

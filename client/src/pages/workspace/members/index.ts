@@ -1,2 +1,2 @@
 export { MembersPage } from './ui/MembersPage';
-export { invitationsQuery } from './api/members';
+export { parseMembersSearch } from './model/search';

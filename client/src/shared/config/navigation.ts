@@ -19,13 +19,17 @@ export const WORKSPACE_MENU: readonly MenuEntry[] = [
  */
 export const WORKSPACE_SETTINGS_MENU: readonly MenuEntry[] = [
   { path: '/general', label: '일반', icon: 'settings' },
+  { path: '/roles', label: '역할', icon: 'shield' },
+  { path: '/labels', label: '라벨', icon: 'label' },
 ];
 export const PROJECT_SETTINGS_MENU: readonly MenuEntry[] = [
   { path: '/general', label: '일반', icon: 'settings' },
+  { path: '/board', label: '보드 칸', icon: 'board' },
 ];
 
 /** The member's own settings, which the profile card's gear opens, outside any workspace (/settings/…). */
 export const ACCOUNT_MENU: readonly MenuEntry[] = [
+  { path: '/settings/profile', label: '프로필', icon: 'person' },
   { path: '/settings/appearance', label: '디스플레이', icon: 'grid' },
   { path: '/settings/api-keys', label: 'API 키', icon: 'key' },
   { path: '/settings/security', label: '시큐리티', icon: 'lock' },
