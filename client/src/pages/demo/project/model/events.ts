@@ -1,10 +1,11 @@
-import { DECISIONS, projectsIn, SESSIONS, WORK_ITEMS, type DemoSchedule } from '@/entities/demo-sample';
+import { DECISION_LABEL, issueDays, type Issue } from '@/entities/demo-sample';
 import { shiftDay, weekdayOf } from './dates';
 
 /**
- * What the demo's calendar shows, in place of SandboxHr's company and personal events, leave and overtime: the
- * workspace's own schedules (a sprint review, a release week, and those made from the home's 만들기), sessions at their time, work items on their due day (the last stretch
- * before it for a few) and decisions on the day they were made. Each opens its demo page when it has one.
+ * What the demo's calendar shows, in place of SandboxHr's company and personal events, leave and overtime: the issues of
+ * the view in sight that have a day (D-066), at their time when they have one (a meeting), else across their days (a
+ * release week) or on their due day. An event's kind only picks its colour: a plan (일정), a note, a decision or work.
+ * Each opens its issue's page.
  */
 export type DemoEventKind = 'team' | 'session' | 'work' | 'decision';
 export type DemoEvent = {
@@ -21,7 +22,7 @@ export type DemoEvent = {
   projectId?: string;
 };
 
-export const KIND_NAMES: Record<DemoEventKind, string> = { team: '일정', session: '세션', work: '작업 마감', decision: '결정' };
+export const KIND_NAMES: Record<DemoEventKind, string> = { team: '일정', session: '노트', work: '마감', decision: '결정기록' };
 
 export const eventKey = (event: Pick<DemoEvent, 'id'>) => event.id;
 
@@ -37,8 +38,6 @@ export const HOLIDAYS: ReadonlyMap<string, string> = new Map([
   ['2026-10-03', '개천절'], ['2026-10-05', '대체공휴일'], ['2026-10-09', '한글날'], ['2026-12-25', '성탄절'],
 ]);
 
-/** A sample moment (UTC ISO) as the wall clock in Seoul. */
-const seoul = (iso: string) => new Date(Date.parse(iso) + 9 * 3_600_000).toISOString().slice(0, 19);
 const at = (day: string, time: string) => `${day}T${time}:00`;
 const allDay = (first: string, last: string) => ({ allDay: true, start: at(first, '00:00'), end: at(shiftDay(last, 1), '00:00') });
 /** An hour after the moment, kept within its day. */
@@ -47,61 +46,18 @@ const hourAfter = (moment: string) => {
   return minutes === 24 * 60 ? at(shiftDay(moment.slice(0, 10), 1), '00:00') : at(moment.slice(0, 10), `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`);
 };
 
-/** Every day from the first to the last on the given weekday. */
-const weekly = (first: string, last: string, weekday: number) => {
-  const days: string[] = [];
-  for (let day = first; day <= last; day = shiftDay(day, 1)) if (weekdayOf(day) === weekday) days.push(day);
-  return days;
-};
 
-/** The team's own events, made by hand so the month around the demo's today looks lived in. */
-function teamEvents(): DemoEvent[] {
-  const reviews = weekly('2026-09-01', '2026-12-31', 5).map(day => ({
-    id: `team-review-${day}`, kind: 'team' as const, title: '스프린트 리뷰', allDay: false, start: at(day, '16:00'), end: at(day, '17:00'), recurring: true,
-  }));
-  const plannings = weekly('2026-09-01', '2026-12-31', 1).filter((_, index) => index % 2 === 0).map(day => ({
-    id: `team-planning-${day}`, kind: 'team' as const, title: '스프린트 계획', allDay: false, start: at(day, '10:00'), end: at(day, '11:00'), recurring: true,
-  }));
-  return [
-    ...reviews, ...plannings,
-    { id: 'team-release', kind: 'team', title: '릴리스 주간 · v0.4', ...allDay('2026-10-27', '2026-10-29'), recurring: false },
-    { id: 'team-retro', kind: 'team', title: '분기 회고', allDay: false, start: at('2026-10-23', '14:00'), end: at('2026-10-23', '15:30'), recurring: false },
-    { id: 'team-offsite', kind: 'team', title: '팀 워크숍', ...allDay('2026-11-05', '2026-11-06'), recurring: false },
-  ];
-}
-
-/**
- * The calendar's events for a workspace: the team's own, those made on the visit (a project's key before the title of
- * one tied to it), then those its projects' sample data gives.
- */
-export function buildDemoEvents(workspaceId: string, schedules: readonly DemoSchedule[]): DemoEvent[] {
-  const all = projectsIn(workspaceId);
-  const projects = new Set(all.map(project => project.id));
-  const made: DemoEvent[] = schedules.filter(schedule => schedule.workspaceId === workspaceId).map(schedule => {
-    const key = all.find(project => project.id === schedule.projectId)?.key;
-    return { id: schedule.id, kind: 'team', title: key ? `${key} · ${schedule.title}` : schedule.title, allDay: schedule.allDay,
-      start: schedule.start, end: schedule.end, recurring: false, projectId: schedule.projectId };
+/** An issue's events, each opening its page: at its time, across its days, or on its due day. */
+export function buildIssueEvents(workspaceId: string, issues: readonly Issue[]): DemoEvent[] {
+  return issues.flatMap(issue => {
+    const days = issueDays(issue);
+    if (!days) return [];
+    const kind: DemoEventKind = issue.labels.includes(DECISION_LABEL) ? 'decision'
+      : issue.labels.some(label => label === '회의록' || label === '세션 요약') ? 'session' : issue.labels.includes('일정') ? 'team' : 'work';
+    const when = issue.startAt && !issue.allDay && issue.startAt.length > 10
+      ? { allDay: false, start: `${issue.startAt}:00`, end: issue.endAt ? `${issue.endAt}:00` : hourAfter(`${issue.startAt}:00`) }
+      : allDay(days.first, days.last);
+    return [{ id: issue.id, kind, title: `${issue.key} ${issue.title}`, ...when, recurring: false,
+      href: `/demo/w/${workspaceId}/p/${issue.projectId}/work-items/${issue.id}`, projectId: issue.projectId }];
   });
-  const base = `/demo/w/${workspaceId}/p`;
-  const sessions: DemoEvent[] = SESSIONS.filter(session => projects.has(session.projectId)).map(session => {
-    const start = seoul(session.occurredAt);
-    return { id: `session-${session.id}`, kind: 'session', title: `${session.key} ${session.title}`, allDay: false, start, end: hourAfter(start), recurring: false,
-      href: `/demo/w/${workspaceId}/notes?project=${session.projectId}`, projectId: session.projectId };
-  });
-  // The first few due items show the stretch before their due day (from when they were made, four days at most).
-  const due = WORK_ITEMS.filter(item => projects.has(item.projectId) && item.dueAt);
-  const stretched = new Set(due.slice(0, 3).map(item => item.id));
-  const work: DemoEvent[] = due.map(item => {
-    const last = seoul(item.dueAt!).slice(0, 10);
-    const made = seoul(item.createdAt).slice(0, 10);
-    const first = stretched.has(item.id) ? (made > shiftDay(last, -4) ? made : shiftDay(last, -4)) : last;
-    return { id: `work-${item.id}`, kind: 'work', title: `${item.key} ${item.title}`, ...allDay(first, last), recurring: false,
-      href: `${base}/${item.projectId}/work-items/${item.id}`, projectId: item.projectId };
-  });
-  const decisions: DemoEvent[] = DECISIONS.filter(decision => projects.has(decision.projectId) && decision.decidedAt).map(decision => {
-    const day = seoul(decision.decidedAt!).slice(0, 10);
-    return { id: `decision-${decision.id}`, kind: 'decision', title: `${decision.key} ${decision.title}`, ...allDay(day, day), recurring: false,
-      href: `/demo/w/${workspaceId}/decisions?project=${decision.projectId}`, projectId: decision.projectId };
-  });
-  return [...teamEvents(), ...made, ...sessions, ...work, ...decisions];
 }

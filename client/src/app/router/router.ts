@@ -40,7 +40,7 @@ import { DemoAppearancePage } from '@/pages/demo/account-appearance';
 import { DemoNotificationsPage } from '@/pages/demo/account-notifications';
 import { DemoApiKeysPage } from '@/pages/demo/account-api-keys';
 import { DemoSecurityPage } from '@/pages/demo/account-security';
-import { DEFAULT_WORKSPACE, parseInboxSearch, parseMembersSearch, parseProjectsSearch, parseStatesSearch, parseWorkSearch as parseDemoWorkSearch } from '@/entities/demo-sample';
+import { DEFAULT_WORKSPACE, parseInboxSearch, parseMembersSearch, parseProjectsSearch, parseStatesSearch, parseIssueSearch } from '@/entities/demo-sample';
 import { DemoLayout } from '../layout/DemoLayout';
 import { followHistory } from '@/shared/lib/history-trail';
 import { ownSearch } from '@/shared/lib/route-search';
@@ -129,7 +129,7 @@ const demoInboxRoutes = [
 ];
 const demoSpaceRoutes = [
   // A workspace opens on its home, 전체: the project page over every project (D-065).
-  createRoute({ getParentRoute: () => demoSpace, path: '/', component: DemoProjectPage, validateSearch: ownSearch(parseDemoWorkSearch) }),
+  createRoute({ getParentRoute: () => demoSpace, path: '/', component: DemoProjectPage, validateSearch: ownSearch(parseIssueSearch) }),
   ...demoInboxRoutes,
   createRoute({ getParentRoute: () => demoSpace, path: '/members', component: DemoMembersPage, validateSearch: ownSearch(parseMembersSearch) }),
   createRoute({ getParentRoute: () => demoSpace, path: '/documents', component: DemoDocumentsPage }),
@@ -139,11 +139,11 @@ const demoSpaceRoutes = [
   createRoute({ getParentRoute: () => demoSpace, path: '/settings/$section', component: DemoWorkspaceSettingsPage }),
   createRoute({ getParentRoute: () => demoSpace, path: '/settings/projects/$projectId/$section', component: DemoProjectSettingsPage }),
   // A project is one page whose parts are tabs (작업, 백로그, 노트, 결정기록, D-064); its old pages lead to the tabs.
-  createRoute({ getParentRoute: () => demoSpace, path: '/p/$projectId', component: DemoProjectPage, validateSearch: ownSearch(parseDemoWorkSearch) }),
+  createRoute({ getParentRoute: () => demoSpace, path: '/p/$projectId', component: DemoProjectPage, validateSearch: ownSearch(parseIssueSearch) }),
   createRoute({ getParentRoute: () => demoSpace, path: '/p/$projectId/work-items/new', component: DemoFormPage }),
-  createRoute({ getParentRoute: () => demoSpace, path: '/p/$projectId/work-items/$workItemId', component: DemoDetailPage, validateSearch: ownSearch(parseDemoWorkSearch) }),
-  createRoute({ getParentRoute: () => demoSpace, path: '/p/$projectId/decisions', beforeLoad: ({ params }) => { throw redirect({ href: `/demo/w/${params.workspaceId}/p/${params.projectId}?tab=decisions` }); } }),
-  createRoute({ getParentRoute: () => demoSpace, path: '/p/$projectId/sessions', beforeLoad: ({ params }) => { throw redirect({ href: `/demo/w/${params.workspaceId}/p/${params.projectId}?tab=notes` }); } }),
+  createRoute({ getParentRoute: () => demoSpace, path: '/p/$projectId/work-items/$workItemId', component: DemoDetailPage, validateSearch: ownSearch(parseIssueSearch) }),
+  createRoute({ getParentRoute: () => demoSpace, path: '/p/$projectId/decisions', beforeLoad: ({ params }) => { throw redirect({ href: `/demo/w/${params.workspaceId}/p/${params.projectId}?v=${params.workspaceId}-decisions` }); } }),
+  createRoute({ getParentRoute: () => demoSpace, path: '/p/$projectId/sessions', beforeLoad: ({ params }) => { throw redirect({ href: `/demo/w/${params.workspaceId}/p/${params.projectId}?v=${params.workspaceId}-notes` }); } }),
   createRoute({ getParentRoute: () => demoSpace, path: '/p/$projectId/artifacts', beforeLoad: ({ params }) => { throw redirect({ href: `/demo/w/${params.workspaceId}/documents` }); } }),
   createRoute({ getParentRoute: () => demoSpace, path: '/p/$projectId/settings', beforeLoad: ({ params }) => { throw redirect({ href: `/demo/w/${params.workspaceId}/settings/projects/${params.projectId}/general` }); } }),
 ] as const;

@@ -35,6 +35,20 @@
 .view[aria-checked="true"] { color: var(--color-text-primary); background: var(--color-background-muted); box-shadow: none; }
 .view:focus-visible { outline: var(--focus-outline-width) var(--focus-outline-style) var(--focus-outline-color); }
 .displayRule { margin: 0; border: 0; border-block-start: 1px solid var(--color-border-subtle, var(--color-border)); }
+/* The columns shown, as Linear's display properties: a chip each, filled while shown, a ring while hidden. */
+.displayHeading { margin: 0; padding: var(--spacing-1-5, 0.375rem) var(--spacing-3) var(--spacing-1); font-size: 0.75rem; font-weight: 500; color: var(--color-text-secondary); }
+.columns { display: flex; flex-wrap: wrap; gap: var(--spacing-1-5, 0.375rem); padding: var(--spacing-1) var(--spacing-3) var(--spacing-3); }
+.column { block-size: 1.5rem; padding: 0 var(--spacing-2); border: 0; border-radius: var(--radius-full); background: none; box-shadow: inset 0 0 0 1px var(--color-border-control);
+  font: inherit; font-size: 0.75rem; font-weight: 500; color: var(--color-text-secondary); cursor: pointer; }
+.column[aria-pressed="true"] { background: var(--color-background-muted); box-shadow: none; color: var(--color-text-primary); }
+.column:focus-visible { outline: var(--focus-outline-width) var(--focus-outline-style) var(--focus-outline-color); }
+/* The page's own foot (초기화, 모두의 기본값으로 저장) at the menu's end, on a hairline. */
+.displayFoot { display: flex; align-items: center; justify-content: flex-end; gap: var(--spacing-2); padding: var(--spacing-2) var(--spacing-3);
+  border-block-start: 1px solid var(--bit-float-border); }
+.display[data-size="lg"] .columns { padding-inline: 0; }
+.display[data-size="lg"] .column { block-size: 2rem; padding-inline: var(--spacing-3); font-size: 0.8125rem; }
+.display[data-size="lg"] .displayHeading { padding-inline: 0; }
+.display[data-size="lg"] .displayFoot { margin-block-start: var(--spacing-2); padding-inline: 0; }
 .display[data-size="lg"] .views { padding: 0 0 var(--spacing-3); }
 .display[data-size="lg"] .views { grid-auto-flow: row; grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .display[data-size="lg"] .view { block-size: 2.75rem; font-size: 0.875rem; }
@@ -103,7 +117,10 @@
 .dayModeOption { padding: var(--spacing-1) var(--spacing-2-5, 0.625rem); border: 0; background: none; font: inherit; font-size: 0.75rem; color: var(--color-text-secondary); cursor: pointer; }
 .dayModeOption + .dayModeOption { border-inline-start: 1px solid var(--color-border-control); }
 .dayModeOption[aria-checked="true"] { background: var(--color-overlay-hover); color: var(--color-text-primary); font-weight: 500; }
-.clearAll { margin-inline-start: auto; block-size: 1.5rem; padding-inline: var(--spacing-2); border: 0; border-radius: var(--radius-full);
+/* The row's end: 모두 지우기, then the page's own controls. */
+.rowEnd { display: inline-flex; align-items: center; gap: var(--spacing-1-5, 0.375rem); margin-inline-start: auto; }
+.rowEnd:empty { display: none; }
+.clearAll { block-size: 1.5rem; padding-inline: var(--spacing-2); border: 0; border-radius: var(--radius-full);
   background: none; font: inherit; font-size: 0.75rem; font-weight: 500; color: var(--color-text-secondary); cursor: pointer; }
 .clearAll:hover { color: var(--color-text-primary); background: var(--color-overlay-hover); }
 @media (prefers-reduced-motion: reduce) { .search { animation: none; } }

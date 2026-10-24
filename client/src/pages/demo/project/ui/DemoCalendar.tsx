@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
-import { useSchedules } from '@/entities/demo-sample';
+import type { Issue } from '@/entities/demo-sample';
 import { atMinutes, shifted } from '../model/drag';
-import { buildDemoEvents, HOLIDAYS, type DemoEvent, type DemoEventKind } from '../model/events';
+import { buildIssueEvents, HOLIDAYS, type DemoEvent } from '../model/events';
 import { timedByDay } from '../model/layout';
 import { placedSearch, type DemoCalendarSearch } from '../model/month';
 import { useCalendarPlace } from '../model/place';
@@ -18,18 +18,14 @@ type Moves = { workspaceId: string; byId: Record<string, { start: string; end: s
  * "+N개 더" opens its week. An event that may move is dragged to another day or time and stays there while the page is
  * open; nothing is saved.
  */
-export function DemoCalendar({ workspaceId, project, kinds, search, onPlace, onOpen }: {
+export function DemoCalendar({ workspaceId, issues, search, onPlace, onOpen }: {
   workspaceId: string;
-  /** One project's events only (the issue menu's scope); the workspace's own events then step aside. */
-  project?: string;
-  /** Only these kinds of event (a project's 작업 calendar: its work and schedules); every kind when left out. */
-  kinds?: readonly DemoEventKind[];
+  /** The view's issues; those with a day show. */
+  issues: readonly Issue[];
   search: DemoCalendarSearch; onPlace: (next: DemoCalendarSearch) => void; onOpen: (href: string) => void;
 }) {
   const { view, day, days, isWeekly } = useCalendarPlace(search);
-  const schedules = useSchedules();
-  const sample = useMemo(() => buildDemoEvents(workspaceId, schedules)
-    .filter(event => (!project || event.projectId === project) && (!kinds || kinds.includes(event.kind))), [workspaceId, schedules, project, kinds]);
+  const sample = useMemo(() => buildIssueEvents(workspaceId, issues), [workspaceId, issues]);
   const [moves, setMoves] = useState<Moves>({ workspaceId, byId: {} });
   const moved = moves.workspaceId === workspaceId ? moves.byId : {};
   const events = useMemo(() => sample.map(event => {

@@ -1,4 +1,5 @@
 import { Popover, Tooltip } from '@astryxdesign/core';
+import type { ReactNode } from 'react';
 import { NavIcon } from '../NavIcon';
 import { FilterChip } from './FilterChip';
 import { clearedValues, filterChoices, type ListFilter, type ListFilterValues } from './ListToolbar';
@@ -13,12 +14,14 @@ export type Opened = { key: '+' } | { key: string; part: 'property' | 'value' };
  * adding one of the filters not yet in the row (its values open at once), and 모두 지우기 last, which takes every filter
  * off, which puts the row away. A chip (FilterChip) reads [property][values][×].
  */
-export function FilterBar({ filters, shown, onShownChange, opened, onOpenedChange, onChange }: {
+export function FilterBar({ filters, shown, onShownChange, opened, onOpenedChange, onChange, trailing }: {
   filters: ListFilter[];
   /** The filters the viewer added to the row, kept there while still empty. */
   shown: readonly string[]; onShownChange: (keys: string[]) => void;
   opened?: Opened; onOpenedChange: (opened?: Opened) => void;
   onChange: (values: ListFilterValues) => void;
+  /** The page's own controls at the row's end, after 모두 지우기 (되돌리기, 저장 over a view, D-068). */
+  trailing?: ReactNode;
 }) {
   const inRow = filters.filter(filter => filter.value !== undefined || shown.includes(filter.key));
   const unused = filters.filter(filter => !inRow.includes(filter));
@@ -43,6 +46,9 @@ export function FilterBar({ filters, shown, onShownChange, opened, onOpenedChang
           onClick={onClick}><NavIcon name="plus" /></button></Tooltip>
       </span>}
     </Popover>}
-    {inRow.some(filter => filter.value !== undefined) && <button type="button" className={styles.clearAll} onClick={clearAll}>모두 지우기</button>}
+    <span className={styles.rowEnd}>
+      {inRow.some(filter => filter.value !== undefined) && <button type="button" className={styles.clearAll} onClick={clearAll}>모두 지우기</button>}
+      {trailing}
+    </span>
   </>;
 }

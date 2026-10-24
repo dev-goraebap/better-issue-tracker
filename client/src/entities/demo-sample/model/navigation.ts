@@ -1,4 +1,5 @@
-import { itemOf, projectOf, workspaceOf } from './mock';
+import { projectOf, workspaceOf } from './mock';
+import { issueOf } from './issues';
 
 /**
  * The demo's menus and addresses: the real app's (shared/config WORKSPACE_NAVIGATION, the router's /w/$workspaceId/…
@@ -14,26 +15,13 @@ export type DemoEntry = { path: string; label: string; icon: string; pattern: st
 export const NOTICE_ENTRY: DemoEntry = { path: '/inbox', label: '알림', icon: 'bell', pattern: '데스크톱은 왼쪽 좁은 목록과 오른쪽 내용, 휴대폰은 목록에서 전체 화면 상세로' };
 
 /**
- * The workspace's menu (D-064): 홈 (its widgets the member arranges), 구성원 and 문서함; the projects follow under
+ * The workspace's menu (D-064): 홈 (전체's issues and views, D-065), 구성원 and 문서함; the projects follow under
  * 프로젝트, and 워크스페이스 설정 sits at the menu's foot. A phone's tabs are these, then 더보기.
  */
 export const WORKSPACE_MENU: readonly DemoEntry[] = [
-  { path: '', label: '홈', icon: 'home', pattern: '활동 잔디·최근 활동 등 위젯, 순서와 보이기를 고르는 홈 구성 창' },
+  { path: '', label: '홈', icon: 'home', pattern: '전체 범위의 이슈와 뷰(전체 이슈·백로그·일정 등, D-066)' },
   { path: '/members', label: '구성원', icon: 'members', pattern: '구성원 목록(데스크톱은 표, 휴대폰은 카드)과 초대 탭' },
   { path: '/documents', label: '문서함', icon: 'documents', pattern: '아직 준비 중인 기능의 빈 상태와 안내' },
-];
-
-/**
- * A project's page (D-064): no menu under it in the sidebar, its parts are the tabs in the tab row. 작업 is seen as a
- * list (a table on a desktop), a calendar, a kanban or a timeline; 백로그 only as a list of rows; 노트 as Keep-like
- * cards; 결정기록 as a history running down the page.
- */
-export type ProjectTab = 'work' | 'backlog' | 'notes' | 'decisions';
-export const PROJECT_TABS: readonly (DemoEntry & { value: ProjectTab })[] = [
-  { value: 'work', path: '', label: '작업', icon: 'board', pattern: '리스트·캘린더·칸반·타임라인 보기' },
-  { value: 'backlog', path: '?tab=backlog', label: '백로그', icon: 'rows', pattern: '시작하지 않은 작업의 행 목록(표가 아닌 유일한 목록)' },
-  { value: 'notes', path: '?tab=notes', label: '노트', icon: 'session', pattern: '구글 Keep처럼 크기대로 쌓이는 카드' },
-  { value: 'decisions', path: '?tab=decisions', label: '결정기록', icon: 'decision', pattern: '위에서 아래로 흐르는 히스토리 타임라인' },
 ];
 
 /**
@@ -128,13 +116,13 @@ export function demoPlace(pathname: string): DemoPlace {
   return { workspaceId, projectId, projectSection: item ? '' : inner, itemId: item?.[1] };
 }
 
-/** The trail's names for a place: the workspace, the project, then the page (a work item by its key). */
+/** The trail's names for a place: the workspace, the project, then the page (an issue by its key). */
 export function placeNames(place: DemoPlace) {
   const workspace = workspaceOf(place.workspaceId);
   const project = projectOf(place.projectId);
   const section = place.projectId
-    ? PROJECT_TABS[0]
+    ? { label: '이슈' }
     : [NOTICE_ENTRY, ...WORKSPACE_MENU].find(entry => entry.path === place.workspaceSection) ?? (place.workspaceSection === '/projects' ? { label: '모든 프로젝트' } : undefined);
-  const item = place.itemId === 'new' ? '새 작업' : itemOf(place.itemId)?.key;
+  const item = place.itemId === 'new' ? '편집' : issueOf(place.itemId)?.key;
   return { workspace: workspace?.name, project: project?.name, section: section?.label, item, settingsProject: projectOf(place.settingsProjectId)?.name };
 }

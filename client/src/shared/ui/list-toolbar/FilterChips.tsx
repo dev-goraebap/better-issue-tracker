@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { NavIcon } from '../NavIcon';
 import { filterValueText, type ListFilter } from './ListToolbar';
 import styles from './mobile-tools.module.css';
@@ -7,13 +8,15 @@ import styles from './mobile-tools.module.css';
  * set, a chip each ([name] what it is set to, ×). Pressing a filter's chip opens its values; the search's opens the search
  * screen. Nothing shows while nothing is in force.
  */
-export function FilterChips({ filters, query, onOpenFilter, onRemove, onOpenSearch, onClearSearch }: {
+export function FilterChips({ filters, query, onOpenFilter, onRemove, onOpenSearch, onClearSearch, trailing }: {
   filters: ListFilter[]; query?: string;
   onOpenFilter: (key: string) => void; onRemove: (key: string) => void;
   onOpenSearch: () => void; onClearSearch: () => void;
+  /** The page's own controls at the row's end (되돌리기, 저장 over a view, D-068); the row shows while there are any. */
+  trailing?: ReactNode;
 }) {
   const active = filters.filter(filter => filter.value !== undefined);
-  if (active.length === 0 && !query) return null;
+  if (active.length === 0 && !query && !trailing) return null;
   return <div className={styles.chips} role="list" aria-label="걸린 조건">
     {query && <span role="listitem" className={styles.chip}>
       <button type="button" className={styles.chipOpen} onClick={onOpenSearch}><NavIcon name="search" /><span className={styles.chipValue}>{query}</span></button>
@@ -25,5 +28,6 @@ export function FilterChips({ filters, query, onOpenFilter, onRemove, onOpenSear
       </button>
       <button type="button" className={styles.chipRemove} aria-label={`${filter.label} 필터 지우기`} onClick={() => onRemove(filter.key)}><NavIcon name="close" /></button>
     </span>)}
+    {trailing && <span className={styles.chipsEnd}>{trailing}</span>}
   </div>;
 }

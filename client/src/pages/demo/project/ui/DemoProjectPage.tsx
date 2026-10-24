@@ -1,43 +1,56 @@
 import { useCallback, useEffect, useId, useState } from 'react';
 import { Button, useToast } from '@astryxdesign/core';
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
-import { PageFrame, PageState, PageTabs, type PageTab } from '@/shared/ui';
-import { PROJECT_TABS, projectOf, useProjects, useWorkItems, type ProjectTab, type Status, type WorkSearch } from '@/entities/demo-sample';
+import { ConfirmDialog, PageFrame, PageState } from '@/shared/ui';
+import {
+  ALL_VIEW, addView, effectiveView, projectOf, removeView, updateView, useIssues, useProjects, useViews, useViewTweak, VIEW_COLORS, type IssueSearch, type Status,
+} from '@/entities/demo-sample';
 import type { Scope } from '../model/scope';
-import { BacklogTab } from './BacklogTab';
 import { CreateIssueDialog } from './CreateIssueDialog';
-import { DecisionsTab } from './DecisionsTab';
-import { NotesTab } from './NotesTab';
-import { WorkTab } from './WorkTab';
+import { IssuesView } from './IssuesView';
+import { ViewEditor, type ViewDraft } from './ViewEditor';
+import { ViewTabs } from './ViewTabs';
 
-const TABS: PageTab<ProjectTab>[] = PROJECT_TABS.map(tab => ({ value: tab.value, label: tab.label, icon: tab.icon }));
+type Editing = { mode: 'create' | 'edit'; initial: ViewDraft };
 
 /**
- * PATTERN · 프로젝트, /demo/w/$workspaceId/p/$projectId, and 전체 at /demo/w/$workspaceId (the home, D-065). Copy this
- * page for one thing seen through tabs of different kinds.
+ * PATTERN · 이슈와 뷰, /demo/w/$workspaceId/p/$projectId, and 전체 at /demo/w/$workspaceId (the home, D-065). Copy this
+ * page for one kind of thing seen through views the members make (D-066, D-068).
  *
- * - The scope is the trail's switcher (전체 or a project); the home is 전체, the same page over every active project.
- * - The sidebar holds no menu under a project: its parts are PageTabs in the tab row (작업, 백로그, 노트, and 결정기록
- *   only for a project), the tab the URL's (작업 left out). Each tab brings its own toolbar, whose tools sit at the tab
- *   row's end.
- * - 작업 is seen as a list (a table on a desktop, cards on a phone), a calendar, a kanban or a timeline, picked in its
- *   표시 menu (a phone's 표시 sheet); 백로그 only as rows; 노트 as Keep-like cards; 결정기록 as a history down the page.
- * - Switching tabs starts the new tab afresh; within a tab, its view and conditions are the address's.
- * - 새 작업 (the toolbar's action, a board column's +, or the C key) opens the dialog over the page (CreateIssueDialog),
- *   in the project in view (in 전체, a project picked in it); what it makes shows at once, with a toast to open it.
+ * - The scope is the trail's switcher (전체 or a project); the views are the workspace's, the same in either scope,
+ *   their chips in the tab row (ViewTabs) with 전체 이슈 first, the + to make one and the view's menu to change, copy or
+ *   remove it. The view in sight is the address's (v; 전체 이슈 when left out).
+ * - A new view takes the list's conditions as they stand; its card (ViewEditor) opens over the list, as Linear's.
+ * - 새 이슈 (the toolbar's action, a board column's +, or the C key) opens the dialog over the page (CreateIssueDialog);
+ *   what it makes shows at once, with a toast to open it.
  * - A project the address does not name is a not-found state, never a blank page.
  */
 export function DemoProjectPage() {
   const { workspaceId, projectId } = useParams({ strict: false }) as { workspaceId: string; projectId?: string };
-  const search = useSearch({ strict: false }) as WorkSearch;
+  const search = useSearch({ strict: false }) as IssueSearch;
   const navigate = useNavigate();
   const panelId = useId();
+  const toast = useToast();
   const projects = useProjects(workspaceId).filter(each => each.status === 'active');
   const project = projectId ? projectOf(projectId) : undefined;
-  useWorkItems();
-  const toast = useToast();
+  const issues = useIssues();
+  const views = useViews(workspaceId);
+  const view = views.find(each => each.id === (search.v ?? ALL_VIEW)) ?? views[0]!;
+  const tweak = useViewTweak(view.id);
+  const effective = effectiveView(view, tweak, search);
+  const scope: Scope = { workspaceId, project, projectIds: project ? [project.id] : projects.map(each => each.id), firstProject: project ?? projects[0] };
   const [creating, setCreating] = useState<{ status?: Status } | null>(null);
-  // C opens 새 작업, as Linear's, unless the member is typing or something is already open.
+  const [editing, setEditing] = useState<Editing | null>(null);
+  const [isRemoving, setRemoving] = useState(false);
+  // The page in view (전체 or the project) with its address's conditions changed, or a view's fresh start.
+  const place = useCallback((next: IssueSearch, replace = false) => {
+    if (projectId) void navigate({ to: '/demo/w/$workspaceId/p/$projectId', params: { workspaceId, projectId }, search: next, replace });
+    else void navigate({ to: '/demo/w/$workspaceId', params: { workspaceId }, search: next, replace });
+  }, [navigate, workspaceId, projectId]);
+  const go = useCallback((patch: Partial<IssueSearch>, replace = false) => place(
+    Object.fromEntries(Object.entries({ ...search, ...patch }).filter(([, value]) => value !== undefined)) as IssueSearch, replace), [place, search]);
+  const pick = (id: string) => { setEditing(null); place(id === ALL_VIEW ? {} : { v: id }); };
+  // C opens 새 이슈, as Linear's, unless the member is typing or something is already open.
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if (event.key.toLowerCase() !== 'c' || event.ctrlKey || event.metaKey || event.altKey || event.defaultPrevented) return;
@@ -48,31 +61,35 @@ export function DemoProjectPage() {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, []);
-  const scope: Scope = { workspaceId, project, projectIds: project ? [project.id] : projects.map(each => each.id), firstProject: project ?? projects[0] };
-  const tabs = project ? TABS : TABS.filter(each => each.value !== 'decisions');
-  const tab: ProjectTab = tabs.some(each => each.value === search.tab) ? search.tab! : 'work';
-  // The page in view (전체 or the project) with its address's conditions changed, or a tab's fresh start.
-  const place = useCallback((next: (previous: WorkSearch) => WorkSearch, replace = false) => {
-    if (projectId) void navigate({ to: '/demo/w/$workspaceId/p/$projectId', params: { workspaceId, projectId }, search: next(search), replace });
-    else void navigate({ to: '/demo/w/$workspaceId', params: { workspaceId }, search: next(search), replace });
-  }, [navigate, workspaceId, projectId, search]);
-  const go = useCallback((patch: Partial<WorkSearch>, replace = false) => place(previous =>
-    Object.fromEntries(Object.entries({ ...previous, ...patch }).filter(([, value]) => value !== undefined)), replace), [place]);
   if (projectId && !project) return <PageFrame title="프로젝트를 찾을 수 없습니다">
     <PageState kind="not-found" title="프로젝트를 찾을 수 없습니다" description="지워졌거나 이 워크스페이스의 프로젝트가 아닙니다." />
   </PageFrame>;
+  const startCreate = () => setEditing({ mode: 'create', initial: { name: '', description: '', icon: 'list', color: VIEW_COLORS[1]!, isPersonal: false } });
+  const saveView = (draft: ViewDraft) => {
+    if (editing?.mode === 'edit') { updateView(workspaceId, view.id, draft); setEditing(null); return; }
+    const id = addView({ workspaceId, ...draft, layout: effective.layout, filters: effective.filters, sort: effective.sort, columns: effective.columns });
+    setEditing(null);
+    place({ v: id });
+  };
+  const copy = () => {
+    const id = addView({ ...view, name: `${view.name} 사본`, isBuiltIn: undefined });
+    place({ v: id });
+  };
   return <PageFrame title={project?.name ?? '홈'} icon={project ? 'board' : 'home'} chrome="header"
-    tabs={<PageTabs value={tab} items={tabs} panelId={panelId} onChange={next => place(() => (next === 'work' ? {} : { tab: next as WorkSearch['tab'] }))} />}>
+    tabs={<ViewTabs views={views} value={view.id} panelId={panelId} onPick={pick} onCreate={startCreate} onCopy={copy} onRemove={() => setRemoving(true)}
+      onEdit={() => setEditing({ mode: 'edit', initial: { name: view.name, description: view.description ?? '', icon: view.icon, color: view.color, isPersonal: view.isPersonal } })} />}>
     <div role="tabpanel" id={panelId}>
-      {tab === 'work' && <WorkTab scope={scope} search={search} go={go} onCreate={status => setCreating({ status })} />}
-      {tab === 'backlog' && <BacklogTab scope={scope} search={search} go={go} onCreate={() => setCreating({ status: 'todo' })} />}
-      {tab === 'notes' && <NotesTab scope={scope} search={search} go={go} />}
-      {tab === 'decisions' && project && <DecisionsTab workspaceId={workspaceId} project={project} search={search} go={go} />}
+      {editing && <ViewEditor key={`${editing.mode}-${view.id}`} initial={editing.initial} mode={editing.mode} onCancel={() => setEditing(null)} onSave={saveView} />}
+      <IssuesView scope={scope} view={view} tweak={tweak} effective={effective} issues={issues} search={search} go={go}
+        onCreate={status => setCreating({ status })} onSaveAsView={startCreate} />
     </div>
     <CreateIssueDialog isOpen={!!creating} projects={projects} project={project} status={creating?.status} onClose={() => setCreating(null)}
-      onCreated={item => toast({ body: `${item.key} ${item.title}을(를) 만들었습니다.`,
-        // The toast lives in a layer above the router, so its way to the item navigates rather than linking.
+      onCreated={issue => toast({ body: `${issue.key} ${issue.title}을(를) 만들었습니다.`,
+        // The toast lives in a layer above the router, so its way to the issue navigates rather than linking.
         endContent: <Button label="보기" variant="ghost" size="sm" onClick={() => void navigate({ to: '/demo/w/$workspaceId/p/$projectId/work-items/$workItemId',
-          params: { workspaceId, projectId: item.projectId, workItemId: item.id } })} /> })} />
+          params: { workspaceId, projectId: issue.projectId, workItemId: issue.id } })} /> })} />
+    {isRemoving && <ConfirmDialog title={`'${view.name}' 뷰를 지울까요?`} description={view.isPersonal ? '나만 보던 뷰가 사라집니다. 이슈는 그대로 남습니다.' : '워크스페이스의 모두에게서 이 뷰가 사라집니다. 이슈는 그대로 남습니다.'}
+      confirmLabel="지우기" variant="destructive" onClose={() => setRemoving(false)}
+      onConfirm={() => { setRemoving(false); removeView(workspaceId, view.id); place({}); }} />}
   </PageFrame>;
 }

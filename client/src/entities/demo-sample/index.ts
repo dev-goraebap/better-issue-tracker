@@ -3,17 +3,21 @@
 export * from './model/mock';
 export * from './model/search';
 export * from './model/navigation';
-export { filterWork } from './model/work';
 export { addWorkspace, useWorkspaces } from './model/workspaces';
 export { addProject, useProjects } from './model/projects';
-export { addWorkItem, useWorkItems } from './model/work-items';
-export { addSchedule, useSchedules, type DemoSchedule } from './model/schedules';
+export {
+  addIssue, DECISION_LABEL, DECISION_STATES, ISSUE_LABELS, issueDays, issueOf, ISSUES, LABEL_COLORS, useIssues, type DecisionState, type Issue,
+} from './model/issues';
+export {
+  ALL_VIEW, addView, canEditView, effectiveView, FILTER_KEYS, filterIssues, NO_FILTER, removeView, setViewTweak, updateView, useViews, useViewTweak,
+  VIEW_COLORS, VIEW_COLUMNS, VIEW_ICONS, VIEW_LAYOUTS, type IssueView, type ViewColumn, type ViewFilters, type ViewLayout, type ViewSearch, type ViewSort, type ViewTweak,
+} from './model/views';
 export { markAllRead, markRead, markUnread, useReadNotices } from './model/read-notices';
 export { WorkspaceMark } from './ui/WorkspaceMark';
 export { PersonCell } from './ui/PersonCell';
 export { StatusBadge } from './ui/StatusBadge';
 export { PriorityMark } from './ui/PriorityMark';
 export { LabelTokens } from './ui/LabelTokens';
-export { WorkTable } from './ui/WorkTable';
-export { WorkRows } from './ui/WorkRows';
+export { IssueTable } from './ui/IssueTable';
+export { IssueRows } from './ui/IssueRows';
 export { default as demoStyles } from './ui/demo.module.css';

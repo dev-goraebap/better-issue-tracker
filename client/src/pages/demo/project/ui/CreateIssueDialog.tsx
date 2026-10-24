@@ -4,25 +4,27 @@ import { useMediaQuery } from '@astryxdesign/core/hooks';
 import { MOBILE_QUERY } from '@/shared/config';
 import { DefaultAvatar, NavIcon, PropertyPicker, type PropertyOption } from '@/shared/ui';
 import {
-  addWorkItem, LABELS, PEOPLE, PRIORITY_LABELS, PriorityMark, STATUS_LABELS, StatusBadge, type Priority, type Project, type Status, type WorkItem,
+  addIssue, ISSUE_LABELS, LABEL_COLORS, PEOPLE, PRIORITY_LABELS, PriorityMark, STATUS_LABELS, StatusBadge, type Issue, type Priority, type Project, type Status,
 } from '@/entities/demo-sample';
 import { DuePicker } from './DuePicker';
 import styles from './create-issue.module.css';
 
-const LABEL_COLORS: Record<string, string> = { 서버: '#5e6ad2', 화면: '#4cb782', MCP: '#bb87fc', 문서: '#4ea7fc', 배포: '#f2994a', 버그: '#eb5757' };
-const STATUS_OPTIONS: PropertyOption[] = (Object.keys(STATUS_LABELS) as Status[]).map(status => ({ value: status, label: STATUS_LABELS[status], icon: <StatusBadge status={status} isLabelHidden /> }));
+const NONE = 'none';
+/** A status, or none: a note or a plan need not move along the workflow (D-066). */
+const STATUS_OPTIONS: PropertyOption[] = [...(Object.keys(STATUS_LABELS) as Status[]).map(status => ({ value: status, label: STATUS_LABELS[status], icon: <StatusBadge status={status} isLabelHidden /> })),
+  { value: NONE, label: '상태 없음' }];
 const PRIORITY_OPTIONS: PropertyOption[] = (Object.keys(PRIORITY_LABELS) as Priority[]).map(priority => ({ value: priority, label: PRIORITY_LABELS[priority], icon: <PriorityMark priority={priority} isLabelHidden /> }));
 const PEOPLE_OPTIONS: PropertyOption[] = PEOPLE.map(person => ({ value: person.id, label: person.name, icon: <DefaultAvatar seed={person.id} name={person.name} size={16} /> }));
-const LABEL_OPTIONS: PropertyOption[] = LABELS.map(label => ({ value: label, label, icon: <span className={styles.labelDot} style={{ background: LABEL_COLORS[label] ?? '#95959f' }} /> }));
+const LABEL_OPTIONS: PropertyOption[] = ISSUE_LABELS.map(label => ({ value: label, label, icon: <span className={styles.labelDot} style={{ background: LABEL_COLORS[label] ?? '#95959f' }} /> }));
 const mark = (project: Project) => <span className={styles.projectMark}>{project.key.slice(0, 1)}</span>;
 
-type Draft = { projectId?: string; title: string; body: string; status: Status; priority: Priority; assigneeId?: string; labels: string[]; dueAt?: string };
+type Draft = { projectId?: string; title: string; body: string; status?: Status; priority: Priority; assigneeId?: string; labels: string[]; dueAt?: string };
 
 /**
- * 새 작업 as Linear's new issue (D-067): a dialog standing near the top of the screen rather than its middle, its head
- * the project (a pill to pick another in 전체) over '새 작업', a borderless title and description, the properties as a
- * row of pills (상태, 우선순위, 담당자, 라벨, 기한) each opening its searchable menu, and at its foot '계속 만들기' beside
- * '작업 만들기'. Ctrl/⌘+Enter makes it; with 계속 만들기 on, the dialog stays and starts a fresh title keeping the
+ * 새 이슈 as Linear's new issue (D-067): a dialog standing near the top of the screen rather than its middle, its head
+ * the project (a pill to pick another in 전체) over '새 이슈', a borderless title and description, the properties as a
+ * row of pills (상태 or 상태 없음, 우선순위, 담당자, 라벨 with 결정기록 among them, 기한) each opening its searchable
+ * menu, and at its foot '계속 만들기' beside '이슈 만들기'. Ctrl/⌘+Enter makes it; with 계속 만들기 on, the dialog stays and starts a fresh title keeping the
  * properties. A phone opens it as a tall sheet whose pills scroll sideways.
  */
 export function CreateIssueDialog({ isOpen, projects, project, status = 'todo', onClose, onCreated }: {
@@ -34,7 +36,7 @@ export function CreateIssueDialog({ isOpen, projects, project, status = 'todo', 
   /** Where it starts (a board column's + passes its status). */
   status?: Status;
   onClose: () => void;
-  onCreated: (item: WorkItem) => void;
+  onCreated: (issue: Issue) => void;
 }) {
   const isMobile = useMediaQuery(MOBILE_QUERY);
   const titleId = useId();
@@ -49,8 +51,9 @@ export function CreateIssueDialog({ isOpen, projects, project, status = 'todo', 
   const canCreate = !!draft.title.trim() && !!target;
   const create = () => {
     if (!canCreate || !target) return;
-    const item = addWorkItem({ projectId: target.id, title: draft.title.trim(), status: draft.status, priority: draft.priority, assigneeId: draft.assigneeId, labels: draft.labels, dueAt: draft.dueAt });
-    onCreated(item);
+    const issue = addIssue({ projectId: target.id, title: draft.title.trim(), summary: draft.body.trim() || undefined, status: draft.status, priority: draft.priority,
+      assigneeId: draft.assigneeId, labels: draft.labels, dueAt: draft.dueAt });
+    onCreated(issue);
     if (isMore) { set({ title: '', body: '' }); titleBox.current?.focus(); } else onClose();
   };
   const keys = (event: KeyboardEvent) => { if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) { event.preventDefault(); create(); } };
@@ -61,17 +64,17 @@ export function CreateIssueDialog({ isOpen, projects, project, status = 'todo', 
         : <PropertyPicker label="프로젝트" icon="board" value={draft.projectId} onChange={value => set({ projectId: value as string })}
           options={projects.map(each => ({ value: each.id, label: each.name, icon: mark(each) }))} />}
       <NavIcon name="forward" />
-      <h2 id={titleId} className={styles.headTitle}>새 작업</h2>
+      <h2 id={titleId} className={styles.headTitle}>새 이슈</h2>
       <span className={styles.headEnd}><IconButton label="닫기" tooltip="닫기 (Esc)" variant="ghost" size="sm" icon={<NavIcon name="close" />} onClick={onClose} /></span>
     </header>
     <div className={styles.body}>
-      <input ref={titleBox} className={styles.title} value={draft.title} placeholder="작업 제목" aria-label="작업 제목" autoFocus data-autofocus
+      <input ref={titleBox} className={styles.title} value={draft.title} placeholder="이슈 제목" aria-label="이슈 제목" autoFocus data-autofocus
         onChange={event => set({ title: event.target.value })} />
       <textarea className={styles.description} value={draft.body} placeholder="설명을 덧붙이세요…" aria-label="설명" rows={isMobile ? 6 : 3}
         onChange={event => set({ body: event.target.value })} />
     </div>
     <div className={styles.pills} role="group" aria-label="속성">
-      <PropertyPicker label="상태" icon="status" options={STATUS_OPTIONS} value={draft.status} onChange={value => set({ status: value as Status })} />
+      <PropertyPicker label="상태" icon="status" options={STATUS_OPTIONS} value={draft.status ?? NONE} onChange={value => set({ status: value === NONE ? undefined : value as Status })} />
       <PropertyPicker label="우선순위" icon="priority" options={PRIORITY_OPTIONS} value={draft.priority} onChange={value => set({ priority: value as Priority })} />
       <PropertyPicker label="담당자" icon="person" options={PEOPLE_OPTIONS} value={draft.assigneeId} onChange={value => set({ assigneeId: value as string })} />
       <PropertyPicker label="라벨" icon="label" options={LABEL_OPTIONS} value={draft.labels} isMultiple onChange={value => set({ labels: (value as string[] | undefined) ?? [] })} />
@@ -79,11 +82,11 @@ export function CreateIssueDialog({ isOpen, projects, project, status = 'todo', 
     </div>
     <footer className={styles.foot}>
       <Switch label="계속 만들기" size="sm" value={isMore} onChange={setMore} />
-      <Button label="작업 만들기" variant="primary" size="sm" isDisabled={!canCreate} onClick={create} tooltip={isMobile ? undefined : 'Ctrl + Enter'} />
+      <Button label="이슈 만들기" variant="primary" size="sm" isDisabled={!canCreate} onClick={create} tooltip={isMobile ? undefined : 'Ctrl + Enter'} />
     </footer>
   </div>;
   return isMobile
-    ? <BottomSheet isOpen={isOpen} onOpenChange={open => { if (!open) onClose(); }} label="새 작업" height="tall" className={styles.sheet}>{content}</BottomSheet>
+    ? <BottomSheet isOpen={isOpen} onOpenChange={open => { if (!open) onClose(); }} label="새 이슈" height="tall" className={styles.sheet}>{content}</BottomSheet>
     : <Dialog isOpen={isOpen} onOpenChange={open => { if (!open) onClose(); }} purpose="form" width={720} padding={0} position={{ top: '12vh' }} aria-labelledby={titleId}
       className={styles.frame}>{content}</Dialog>;
 }

@@ -7,7 +7,7 @@ import type { PageTools } from '../page-chrome';
 import { FilterBar, type Opened } from './FilterBar';
 import { FilterMenu } from './FilterMenu';
 import type { ListSort } from '../sort-menu';
-import type { ListAction, ListFilter, ListFilterValues, ListSearch, ListViews } from './ListToolbar';
+import type { ListAction, ListDisplay, ListFilter, ListFilterValues, ListSearch, ListViews } from './ListToolbar';
 import { SearchToggle } from './SearchToggle';
 import { DisplayButton } from './DisplayButton';
 
@@ -21,12 +21,14 @@ import { DisplayButton } from './DisplayButton';
  * chosen for it, so the row is there only while filters are in force (or one was just added from the row's +), and
  * 모두 지우기 puts it away.
  */
-export function HeaderTools({ target, search, filters, onFiltersChange, onFiltersOpenChange, sort, views, action, end }: {
+export function HeaderTools({ target, search, filters, onFiltersChange, onFiltersOpenChange, sort, views, display, applied, action, end }: {
   target: PageTools;
   search?: ListSearch;
   filters: ListFilter[]; onFiltersChange?: (values: ListFilterValues) => void; onFiltersOpenChange?: (isOpen: boolean) => void;
   sort?: ListSort;
   views?: ListViews;
+  display?: ListDisplay;
+  applied?: ReactNode;
   action?: ListAction;
   end?: ReactNode;
 }) {
@@ -36,7 +38,7 @@ export function HeaderTools({ target, search, filters, onFiltersChange, onFilter
   // A desktop has no search screen; an address asking for one (left by a phone) drops it.
   const { isOpen: isFinding, close: closeFinding } = useSearchScreen();
   useEffect(() => { if (isFinding) closeFinding(); }, [isFinding, closeFinding]);
-  const isRowShown = hasActive || shown.length > 0;
+  const isRowShown = hasActive || shown.length > 0 || !!applied;
   // The row lists the options, so options read only when shown (writers, say) load once it shows.
   useEffect(() => { if (isRowShown) onFiltersOpenChange?.(true); }, [isRowShown, onFiltersOpenChange]);
   const change = (values: ListFilterValues) => onFiltersChange?.(values);
@@ -44,11 +46,11 @@ export function HeaderTools({ target, search, filters, onFiltersChange, onFilter
     {createPortal(<>
       {search && <SearchToggle {...search} />}
       {filters.length > 0 && <FilterMenu filters={filters} onChange={change} onOpenChange={onFiltersOpenChange} />}
-      {(sort || views) && <DisplayButton views={views} sort={sort} />}
+      {(sort || views || display) && <DisplayButton views={views} sort={sort} display={display} />}
       {end}
     </>, target.tools)}
     {action && target.actions && createPortal(<Button label={action.label} variant={action.isCreate ? 'primary' : 'secondary'} size="sm" icon={<NavIcon name={action.icon ?? 'plus'} />} onClick={action.onClick} />, target.actions)}
     {filters.length > 0 && isRowShown && createPortal(<FilterBar filters={filters} shown={shown} onShownChange={setShown}
-      opened={opened} onOpenedChange={setOpened} onChange={change} />, target.applied)}
+      opened={opened} onOpenedChange={setOpened} onChange={change} trailing={applied} />, target.applied)}
   </>;
 }

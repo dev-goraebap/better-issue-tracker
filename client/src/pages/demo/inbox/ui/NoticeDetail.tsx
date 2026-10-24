@@ -25,9 +25,8 @@ export function NoticeDetail({ workspaceId, notice, isTitleShown = true }: {
   const decision = target.type === 'decision' ? DECISIONS.find(each => each.id === target.id) : undefined;
   const session = target.type === 'session' ? SESSIONS.find(each => each.id === target.id) : undefined;
   const open = () => {
-    if (item) void navigate({ to: '/demo/w/$workspaceId/p/$projectId/work-items/$workItemId', params: { workspaceId, projectId: item.projectId, workItemId: item.id } });
-    else if (decision) void navigate({ to: '/demo/w/$workspaceId/p/$projectId/decisions', params: { workspaceId, projectId: decision.projectId } });
-    else void navigate({ to: '/demo/w/$workspaceId/p/$projectId/sessions', params: { workspaceId, projectId: target.projectId } });
+    // Every target is an issue now (D-066): a work item, a note and a decision open the same page.
+    void navigate({ to: '/demo/w/$workspaceId/p/$projectId/work-items/$workItemId', params: { workspaceId, projectId: target.projectId, workItemId: target.id } });
   };
   return <article className={styles.detail} aria-label={notice.title}>
     <header className={styles.detailHead}>

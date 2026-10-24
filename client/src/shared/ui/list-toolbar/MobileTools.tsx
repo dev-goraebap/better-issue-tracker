@@ -1,5 +1,5 @@
 import { IconButton } from '@astryxdesign/core';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { useSearchScreen } from '@/shared/lib/route-search';
 import { FloatingAction } from '../floating-action';
@@ -8,7 +8,7 @@ import type { PageTools } from '../page-chrome';
 import { isUsualSort, type ListSort } from '../sort-menu';
 import { FilterChips } from './FilterChips';
 import { FilterSheet } from './FilterSheet';
-import type { ListAction, ListFilter, ListFilterValues, ListSearch, ListViews } from './ListToolbar';
+import type { ListAction, ListDisplay, ListFilter, ListFilterValues, ListSearch, ListViews } from './ListToolbar';
 import { SearchScreenBar } from './SearchScreenBar';
 import { DisplaySheet } from './DisplaySheet';
 import styles from './mobile-tools.module.css';
@@ -23,19 +23,21 @@ type Sheet = { kind: 'filter'; view: 'list' | string } | { kind: 'display' };
  * search screen (useSearchScreen): the shell puts away its bars, the toolbar becomes the search bar over the list, and
  * the + steps aside.
  */
-export function MobileTools({ target, search, filters, onFiltersChange, onFiltersOpenChange, sort, views, action }: {
+export function MobileTools({ target, search, filters, onFiltersChange, onFiltersOpenChange, sort, views, display, applied, action }: {
   target: PageTools;
   search?: ListSearch;
   filters: ListFilter[]; onFiltersChange?: (values: ListFilterValues) => void; onFiltersOpenChange?: (isOpen: boolean) => void;
   sort?: ListSort;
   views?: ListViews;
+  display?: ListDisplay;
+  applied?: ReactNode;
   action?: ListAction;
 }) {
   const [sheet, setSheet] = useState<Sheet | null>(null);
   const searchScreen = useSearchScreen();
   const change = (values: ListFilterValues) => onFiltersChange?.(values);
   const active = filters.filter(filter => filter.value !== undefined).length;
-  const isChanged = (!!sort && !isUsualSort(sort)) || (!!views && views.value !== views.options[0]?.value);
+  const isChanged = display?.isChanged ?? ((!!sort && !isUsualSort(sort)) || (!!views && views.value !== views.options[0]?.value));
   // The sheet lists the options, so options read only when shown (writers, say) load once it opens.
   const isFilterSheet = sheet?.kind === 'filter';
   useEffect(() => { if (isFilterSheet) onFiltersOpenChange?.(true); }, [isFilterSheet, onFiltersOpenChange]);
@@ -50,7 +52,7 @@ export function MobileTools({ target, search, filters, onFiltersChange, onFilter
           onClick={() => setSheet({ kind: 'filter', view: 'list' })} />
         {active > 0 && <span className={styles.toolCount} aria-hidden="true">{active}</span>}
       </span>}
-      {(sort || views) && <span className={styles.toolWrap}>
+      {(sort || views || display) && <span className={styles.toolWrap}>
         <IconButton label="표시" icon={<NavIcon name="display" />} variant="ghost" onClick={() => setSheet({ kind: 'display' })} />
         {isChanged && <span className={styles.toolDot} aria-hidden="true" />}
       </span>}
@@ -59,10 +61,10 @@ export function MobileTools({ target, search, filters, onFiltersChange, onFilter
     </>, target.tools)}
     {createPortal(<FilterChips filters={filters} query={search?.value}
       onOpenFilter={key => setSheet({ kind: 'filter', view: key })} onRemove={key => change({ [key]: undefined })}
-      onOpenSearch={searchScreen.open} onClearSearch={() => search?.onChange(undefined)} />, target.applied)}
+      onOpenSearch={searchScreen.open} onClearSearch={() => search?.onChange(undefined)} trailing={applied} />, target.applied)}
     {sheet?.kind === 'filter' && <FilterSheet filters={filters} view={sheet.view} onViewChange={view => setSheet({ kind: 'filter', view })}
       onChange={change} onClose={() => setSheet(null)} />}
     {action?.isCreate && <FloatingAction label={action.label} icon={action.icon} onClick={action.onClick} />}
-    {sheet?.kind === 'display' && <DisplaySheet views={views} sort={sort} onClose={() => setSheet(null)} />}
+    {sheet?.kind === 'display' && <DisplaySheet views={views} sort={sort} display={display} onClose={() => setSheet(null)} />}
   </>;
 }

@@ -14,6 +14,7 @@
 .switch [role="tab"][aria-selected="true"] { background: var(--color-background-muted); color: var(--color-text-primary); box-shadow: none; }
 .switch :global(.astryx-tab-indicator) { display: none; }
 .switch [role="tab"] svg { inline-size: 0.875rem; block-size: 0.875rem; }
+.tone { display: inline-flex; }
 /* A phone's chips: 32px to be pressed with a thumb, in 13px type, in a row that scrolls sideways when they do not fit. */
 @media (width < 64rem) {
   .switch [role="tablist"] { overflow-x: auto; scrollbar-width: none; }
