@@ -14,7 +14,7 @@ const PARTS = { panel: styles.panel!, body: styles.body! };
  * marks pages with their own addresses, whose back the router keeps.
  */
 export function ContentModal({ label, size, isRouted, onClose, children }: {
-  label: string; size: 'content' | 'compact'; isRouted: boolean; onClose: () => void; children: ReactNode;
+  label: string; size: 'content' | 'compact' | 'form'; isRouted: boolean; onClose: () => void; children: ReactNode;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
   useModalHeight(dialog, size, PARTS);
@@ -26,6 +26,8 @@ export function ContentModal({ label, size, isRouted, onClose, children }: {
     if (!element) return;
     const before = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     if (!element.open) element.showModal();
+    // The browser's modal focuses its first control; a page that names its own first field (data-autofocus) gets it (BIT).
+    element.querySelector<HTMLElement>('[data-autofocus]')?.focus();
     const cancel = (event: Event) => { event.preventDefault(); close.current(); };
     element.addEventListener('cancel', cancel);
     return () => {

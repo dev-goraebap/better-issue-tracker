@@ -14,6 +14,8 @@ export type TableSearch = { q?: string; status?: string; priority?: string; assi
  * in the modal over them (panel, depth: the address bar shows the issue's own, D-069).
  */
 export type IssueSearch = PanelPlace & { v?: string; q?: string; status?: string; priority?: string; assignee?: string; label?: string; cal?: 'week' | 'workweek'; date?: string; finding?: 1 };
+/** 새 이슈's address: where it starts (a board column's + passes its status, or none). */
+export type NewIssueSearch = { status?: 'todo' | 'doing' | 'review' | 'done' | 'none' };
 export type InboxSearch = { read?: 'unread' | 'read'; kind?: string };
 export type MembersSearch = { view?: 'invitations'; q?: string };
 export type ProjectsSearch = { status?: 'archived'; q?: string };
@@ -40,6 +42,7 @@ export const parseIssueSearch = (raw: Record<string, unknown>): IssueSearch => (
   cal: oneOf(raw.cal, ['week', 'workweek'] as const), date: typeof raw.date === 'string' && DAY.test(raw.date) ? raw.date : undefined, finding: findingOf(raw),
   ...parsePanelPlace(raw),
 });
+export const parseNewIssueSearch = (raw: Record<string, unknown>): NewIssueSearch => ({ status: oneOf(raw.status, ['todo', 'doing', 'review', 'done', 'none'] as const) });
 export const parseInboxSearch = (raw: Record<string, unknown>): InboxSearch => ({ read: oneOf(raw.read, ['unread', 'read'] as const), kind: text(raw.kind) });
 export const parseMembersSearch = (raw: Record<string, unknown>): MembersSearch => ({ view: oneOf(raw.view, ['invitations'] as const), q: text(raw.q) });
 export const parseProjectsSearch = (raw: Record<string, unknown>): ProjectsSearch => ({ status: oneOf(raw.status, ['archived'] as const), q: text(raw.q) });

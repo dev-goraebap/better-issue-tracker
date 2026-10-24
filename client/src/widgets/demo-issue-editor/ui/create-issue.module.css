@@ -1,11 +1,12 @@
 /*
- * 새 작업 as Linear's new issue (D-067): no rules inside, the head a small breadcrumb (the project, 새 작업) with the close
+ * 새 이슈 as Linear's new issue (D-067): no rules inside, the head a small breadcrumb (the project, 새 작업) with the close
  * at its end, the title in 18px/600 and the description in 15px with no boxes, a row of 24px property pills, and the foot
  * with 계속 만들기 and the create button at its end.
  */
-/* Near the top, centred across: the design system's position sets the top and leaves the sides to us. */
-.frame.frame { overflow: visible; inset-inline: 0; margin-inline: auto; }
 .dialog { display: flex; flex-direction: column; }
+/* On its own page the same form sits on a card of the page's width. */
+.dialog[data-page] { margin-block-start: var(--spacing-4); border: 1px solid var(--color-border); border-radius: var(--radius-container); background: var(--color-background-card); box-shadow: var(--shadow-low); }
+.dialog[data-page] .head { padding-block-start: var(--spacing-4); }
 .head { display: flex; align-items: center; gap: var(--spacing-1-5, 0.375rem); padding: var(--spacing-3) var(--spacing-3) 0 var(--spacing-4); font-size: 0.8125rem;
   color: var(--color-text-secondary); }
 .head > svg { inline-size: 0.75rem; block-size: 0.75rem; flex-shrink: 0; }
@@ -62,6 +63,4 @@
   .pills::-webkit-scrollbar { display: none; }
   .duePill { block-size: 2rem; padding-inline: var(--spacing-2) var(--spacing-3); font-size: 0.8125rem; }
   .foot { padding: var(--spacing-3) var(--spacing-5) max(var(--spacing-3), env(safe-area-inset-bottom)); border-block-start: 1px solid var(--color-border); }
-  /* The sheet's visible height (92dvh): the foot rests on its bottom edge. */
-  .sheet .dialog { min-block-size: 92dvh; }
 }

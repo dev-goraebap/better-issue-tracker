@@ -1,5 +1,5 @@
 /** The least a content modal is tall even when it holds little, by its size; never more than the window allows. */
-export const MODAL_MIN_HEIGHT = { content: 560, compact: 440 } as const;
+export const MODAL_MIN_HEIGHT = { content: 560, compact: 440, form: 0 } as const;
 /** The most a content modal is tall, as a share of the window's height (90dvh). */
 const MAX_SHARE = 0.9;
 

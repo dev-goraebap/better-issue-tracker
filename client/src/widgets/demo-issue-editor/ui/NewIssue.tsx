@@ -1,10 +1,11 @@
-import { useEffect, useId, useRef, useState, type KeyboardEvent } from 'react';
-import { BottomSheet, Button, Dialog, IconButton, Switch } from '@astryxdesign/core';
+import { useRef, useState, type KeyboardEvent } from 'react';
+import { Button, IconButton, Switch, useToast } from '@astryxdesign/core';
 import { useMediaQuery } from '@astryxdesign/core/hooks';
+import { useRouter } from '@tanstack/react-router';
 import { MOBILE_QUERY } from '@/shared/config';
-import { DefaultAvatar, NavIcon, PropertyPicker, type PropertyOption } from '@/shared/ui';
+import { BackLink, DefaultAvatar, NavIcon, PageFrame, PropertyPicker, usePanelSurface, type PropertyOption } from '@/shared/ui';
 import {
-  addIssue, ISSUE_LABELS, LABEL_COLORS, PEOPLE, PRIORITY_LABELS, PriorityMark, STATUS_LABELS, StatusBadge, type Issue, type Priority, type Project, type Status,
+  addIssue, ISSUE_LABELS, LABEL_COLORS, PEOPLE, PRIORITY_LABELS, PriorityMark, projectOf, STATUS_LABELS, StatusBadge, useProjects, type Priority, type Project, type Status,
 } from '@/entities/demo-sample';
 import { DuePicker } from './DuePicker';
 import styles from './create-issue.module.css';
@@ -21,31 +22,26 @@ const mark = (project: Project) => <span className={styles.projectMark}>{project
 type Draft = { projectId?: string; title: string; body: string; status?: Status; priority: Priority; assigneeId?: string; labels: string[]; dueAt?: string };
 
 /**
- * 새 이슈 as Linear's new issue (D-067): a dialog standing near the top of the screen rather than its middle, its head
- * the project (a pill to pick another in 전체) over '새 이슈', a borderless title and description, the properties as a
- * row of pills (상태 or 상태 없음, 우선순위, 담당자, 라벨 with 결정기록 among them, 기한) each opening its searchable
- * menu, and at its foot '계속 만들기' beside '이슈 만들기'. Ctrl/⌘+Enter makes it; with 계속 만들기 on, the dialog stays and starts a fresh title keeping the
- * properties. A phone opens it as a tall sheet whose pills scroll sideways.
+ * 새 이슈 as Linear's new issue (D-067), at its own address (D-070): /demo/w/$workspaceId/p/$projectId/work-items/new in a
+ * project, /demo/w/$workspaceId/issues/new in 전체 (a project picked in it), ?status= where it starts (a board column's +).
+ * The issue pages open it in a modal near the top of the window over them (RoutedPanel, a masked move), its head the
+ * project over '새 이슈' with 크게 보기 and close; reloaded, linked, 크게 보기 or on a phone it is the page itself. A
+ * borderless title and description, the properties as a row of pills (상태 or 상태 없음, 우선순위, 담당자, 라벨 with
+ * 결정기록 among them, 기한) each opening its searchable menu, and at its foot '계속 만들기' beside '이슈 만들기'.
+ * Ctrl/⌘+Enter makes it; with 계속 만들기 on it stays and starts a fresh title keeping the properties, else it closes (the
+ * modal) or opens the issue made (the page). A toast names what was made, with 보기 to its page.
  */
-export function CreateIssueDialog({ isOpen, projects, project, status = 'todo', onClose, onCreated }: {
-  isOpen: boolean;
-  /** The projects one can make it in (전체's), when no project is fixed. */
-  projects: readonly Project[];
-  /** The project in view, which the item goes into. */
-  project?: Project;
-  /** Where it starts (a board column's + passes its status). */
-  status?: Status;
-  onClose: () => void;
-  onCreated: (issue: Issue) => void;
-}) {
+export function NewIssue({ workspaceId, projectId, status = 'todo' }: { workspaceId: string; projectId?: string; status?: Status | 'none' }) {
+  const panel = usePanelSurface();
+  const router = useRouter();
+  const toast = useToast();
   const isMobile = useMediaQuery(MOBILE_QUERY);
-  const titleId = useId();
+  const projects = useProjects(workspaceId).filter(each => each.status === 'active');
+  const project = projectId ? projectOf(projectId) : undefined;
   const titleBox = useRef<HTMLInputElement>(null);
-  const fresh = (): Draft => ({ projectId: project?.id ?? projects[0]?.id, title: '', body: '', status, priority: 'medium', assigneeId: undefined, labels: [] });
-  const [draft, setDraft] = useState<Draft>(fresh);
+  const [draft, setDraft] = useState<Draft>(() => ({ projectId: project?.id ?? projects[0]?.id, title: '', body: '', status: status === NONE ? undefined : status,
+    priority: 'medium', labels: [] }));
   const [isMore, setMore] = useState(false);
-  // Each opening starts afresh in the project and status it was opened for.
-  useEffect(() => { if (isOpen) setDraft(fresh()); }, [isOpen]); // eslint-disable-line react-hooks/exhaustive-deps
   const set = (patch: Partial<Draft>) => setDraft(previous => ({ ...previous, ...patch }));
   const target = projects.find(each => each.id === draft.projectId) ?? project;
   const canCreate = !!draft.title.trim() && !!target;
@@ -53,24 +49,31 @@ export function CreateIssueDialog({ isOpen, projects, project, status = 'todo', 
     if (!canCreate || !target) return;
     const issue = addIssue({ projectId: target.id, title: draft.title.trim(), summary: draft.body.trim() || undefined, status: draft.status, priority: draft.priority,
       assigneeId: draft.assigneeId, labels: draft.labels, dueAt: draft.dueAt });
-    onCreated(issue);
-    if (isMore) { set({ title: '', body: '' }); titleBox.current?.focus(); } else onClose();
+    const issueHref = `/demo/w/${workspaceId}/p/${issue.projectId}/work-items/${issue.id}`;
+    // The toast lives in a layer above the router, so its way to the issue navigates rather than linking.
+    toast({ body: `${issue.key} ${issue.title}을(를) 만들었습니다.`, endContent: <Button label="보기" variant="ghost" size="sm" onClick={() => void router.navigate({ href: issueHref })} /> });
+    if (isMore) { set({ title: '', body: '' }); titleBox.current?.focus(); return; }
+    if (panel) panel.onClose();
+    else void router.navigate({ href: issueHref, replace: true });
   };
   const keys = (event: KeyboardEvent) => { if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) { event.preventDefault(); create(); } };
-  const content = <div className={styles.dialog} onKeyDown={keys}>
+  const form = <div className={styles.dialog} data-page={panel ? undefined : ''} onKeyDown={keys}>
     <header className={styles.head}>
       {project
         ? <span className={styles.projectChip}>{mark(project)}{project.key}</span>
         : <PropertyPicker label="프로젝트" icon="board" value={draft.projectId} onChange={value => set({ projectId: value as string })}
           options={projects.map(each => ({ value: each.id, label: each.name, icon: mark(each) }))} />}
       <NavIcon name="forward" />
-      <h2 id={titleId} className={styles.headTitle}>새 이슈</h2>
-      <span className={styles.headEnd}><IconButton label="닫기" tooltip="닫기 (Esc)" variant="ghost" size="sm" icon={<NavIcon name="close" />} onClick={onClose} /></span>
+      <h2 className={styles.headTitle}>새 이슈</h2>
+      {panel && <span className={styles.headEnd}>
+        <IconButton label="크게 보기" tooltip="크게 보기" variant="ghost" size="sm" icon={<NavIcon name="expand-page" />} onClick={() => void router.navigate({ href: panel.pageHref })} />
+        <IconButton label="닫기" tooltip="닫기 (Esc)" variant="ghost" size="sm" icon={<NavIcon name="close" />} onClick={panel.onClose} />
+      </span>}
     </header>
     <div className={styles.body}>
       <input ref={titleBox} className={styles.title} value={draft.title} placeholder="이슈 제목" aria-label="이슈 제목" autoFocus data-autofocus
         onChange={event => set({ title: event.target.value })} />
-      <textarea className={styles.description} value={draft.body} placeholder="설명을 덧붙이세요…" aria-label="설명" rows={isMobile ? 6 : 3}
+      <textarea className={styles.description} value={draft.body} placeholder="설명을 덧붙이세요…" aria-label="설명" rows={panel ? 3 : 8}
         onChange={event => set({ body: event.target.value })} />
     </div>
     <div className={styles.pills} role="group" aria-label="속성">
@@ -85,8 +88,9 @@ export function CreateIssueDialog({ isOpen, projects, project, status = 'todo', 
       <Button label="이슈 만들기" variant="primary" size="sm" isDisabled={!canCreate} onClick={create} tooltip={isMobile ? undefined : 'Ctrl + Enter'} />
     </footer>
   </div>;
-  return isMobile
-    ? <BottomSheet isOpen={isOpen} onOpenChange={open => { if (!open) onClose(); }} label="새 이슈" height="tall" className={styles.sheet}>{content}</BottomSheet>
-    : <Dialog isOpen={isOpen} onOpenChange={open => { if (!open) onClose(); }} purpose="form" width={720} padding={0} position={{ top: '12vh' }} aria-labelledby={titleId}
-      className={styles.frame}>{content}</Dialog>;
+  if (panel) return form;
+  const back = project
+    ? <BackLink to="/demo/w/$workspaceId/p/$projectId" params={{ workspaceId, projectId: project.id }} label="이슈" />
+    : <BackLink to="/demo/w/$workspaceId" params={{ workspaceId }} label="이슈" />;
+  return <PageFrame title="새 이슈" width="narrow" back={back}>{form}</PageFrame>;
 }

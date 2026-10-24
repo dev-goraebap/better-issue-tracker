@@ -10,7 +10,7 @@ import { SurfaceContext } from './surface-context';
  * address names a panel. (SandboxHr's side peek is not brought over yet.)
  */
 export function RoutedPanel({ label, href, depth, host, size = 'content', children }: {
-  label: string; href: string; depth: number; host: PanelHost; size?: 'content' | 'compact'; children: ReactNode;
+  label: string; href: string; depth: number; host: PanelHost; size?: 'content' | 'compact' | 'form'; children: ReactNode;
 }) {
   return <SurfaceContext.Provider value={{ pageHref: href, onClose: host.close, onBack: depth > 1 ? host.back : undefined }}>
     <PanelDialog label={label} size={size} isRouted onClose={host.close}>{children}</PanelDialog>

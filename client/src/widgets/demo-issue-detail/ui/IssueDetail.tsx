@@ -56,7 +56,7 @@ export function IssueDetail({ workspaceId, projectId, id, search }: { workspaceI
     ['만든 날', <span className={styles.dated}><NavIcon name="clock" />{dateText(item.createdAt)} 만듦</span>],
   ];
   return <Surface title={item.title} wrapsTitle back={back} width="default" actions={<>
-    <Button label="편집" variant="secondary" size={panel ? 'sm' : undefined} icon={<NavIcon name="edit" />} onClick={() => void navigate({ to: '/demo/w/$workspaceId/p/$projectId/work-items/new', params: { workspaceId, projectId } })} />
+    <Button label="편집" variant="secondary" size={panel ? 'sm' : undefined} icon={<NavIcon name="edit" />} onClick={() => void navigate({ to: '/demo/w/$workspaceId/p/$projectId/work-items/$workItemId/edit', params: { workspaceId, projectId, workItemId: id } })} />
     <MoreMenu label="이슈 메뉴" variant="ghost" size={panel ? 'sm' : undefined} placement="end" items={[
       { label: '링크 복사', icon: <NavIcon name="link" />, onClick: () => void navigator.clipboard?.writeText(window.location.href) },
       { label: '삭제', icon: <NavIcon name="delete" />, onClick: () => setDeleting(true) },

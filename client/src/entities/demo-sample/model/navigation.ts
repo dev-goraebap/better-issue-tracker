@@ -83,6 +83,8 @@ export type DemoPlace = {
   projectSection?: string;
   /** A work item's page, or 'new' for the form. */
   itemId?: string;
+  /** The item's page is its 편집 form. */
+  isEditing?: boolean;
   noticeId?: string;
   isWorkspaces?: boolean; pattern?: string;
   /** An account settings page's address, when the menu is the member's own settings. */
@@ -112,8 +114,8 @@ export function demoPlace(pathname: string): DemoPlace {
     return { workspaceId, workspaceSection: notice ? '/inbox' : rest, noticeId: notice?.[1] };
   }
   const [, projectId, inner = ''] = project;
-  const item = /^\/work-items\/([^/]+)$/.exec(inner);
-  return { workspaceId, projectId, projectSection: item ? '' : inner, itemId: item?.[1] };
+  const item = /^\/work-items\/([^/]+)(\/edit)?$/.exec(inner);
+  return { workspaceId, projectId, projectSection: item ? '' : inner, itemId: item?.[1], isEditing: !!item?.[2] };
 }
 
 /** The trail's names for a place: the workspace, the project, then the page (an issue by its key). */
@@ -122,7 +124,9 @@ export function placeNames(place: DemoPlace) {
   const project = projectOf(place.projectId);
   const section = place.projectId
     ? { label: '이슈' }
-    : [NOTICE_ENTRY, ...WORKSPACE_MENU].find(entry => entry.path === place.workspaceSection) ?? (place.workspaceSection === '/projects' ? { label: '모든 프로젝트' } : undefined);
-  const item = place.itemId === 'new' ? '편집' : issueOf(place.itemId)?.key;
+    : [NOTICE_ENTRY, ...WORKSPACE_MENU].find(entry => entry.path === place.workspaceSection)
+      ?? (place.workspaceSection === '/projects' ? { label: '모든 프로젝트' } : place.workspaceSection === '/issues/new' ? { label: '새 이슈' } : undefined);
+  const key = issueOf(place.itemId)?.key;
+  const item = place.itemId === 'new' ? '새 이슈' : key && place.isEditing ? `${key} 편집` : key;
   return { workspace: workspace?.name, project: project?.name, section: section?.label, item, settingsProject: projectOf(place.settingsProjectId)?.name };
 }

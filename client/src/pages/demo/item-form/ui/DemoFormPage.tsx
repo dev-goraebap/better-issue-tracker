@@ -2,15 +2,15 @@ import { useId, useState } from 'react';
 import { Button, TextArea, TextInput, VStack } from '@astryxdesign/core';
 import { useNavigate, useParams } from '@tanstack/react-router';
 import { BackLink, DateField, PageFoot, PageFrame, Select } from '@/shared/ui';
-import { demoStyles, PEOPLE, type Priority, PRIORITY_LABELS, type Status, STATUS_LABELS } from '@/entities/demo-sample';
+import { demoStyles, issueOf, PEOPLE, type Priority, PRIORITY_LABELS, type Status, STATUS_LABELS } from '@/entities/demo-sample';
 
 const statusOptions = Object.entries(STATUS_LABELS).map(([value, label]) => ({ value, label }));
 const priorityOptions = Object.entries(PRIORITY_LABELS).map(([value, label]) => ({ value, label }));
 const peopleOptions = PEOPLE.map(person => ({ value: person.id, label: person.name }));
 
 /**
- * PATTERN · 작성 양식, /demo/w/$workspaceId/p/$projectId/work-items/new. Copy this page for editing one item on its own address
- * (not in a dialog). Making a new work item is the 새 작업 dialog on the project page instead (CreateIssueDialog, D-067).
+ * PATTERN · 작성 양식, /demo/w/$workspaceId/p/$projectId/work-items/$workItemId/edit. Copy this page for editing one item on
+ * its own address (not in a dialog). Making one is 새 이슈 at its own address instead (NewIssue, D-070).
  *
  * - PageFrame width="narrow" with back: a phone gives the form the whole screen, no tab bar.
  * - The foot row is PageFoot: 취소 at its start, the submit at its end. The shell draws it at the card's bottom, outside
@@ -20,19 +20,21 @@ const peopleOptions = PEOPLE.map(person => ({ value: person.id, label: person.na
  * - The route sets staticData form in a real app so a phone keeps the action row above the keyboard.
  */
 export function DemoFormPage() {
-  const { workspaceId, projectId } = useParams({ from: '/demo/w/$workspaceId/p/$projectId/work-items/new' });
+  const { workspaceId, projectId, workItemId } = useParams({ from: '/demo/w/$workspaceId/p/$projectId/work-items/$workItemId/edit' });
+  const issue = issueOf(workItemId);
   const navigate = useNavigate();
   const formId = useId();
-  const [title, setTitle] = useState('');
-  const [body, setBody] = useState('');
-  const [status, setStatus] = useState<Status>('todo');
-  const [priority, setPriority] = useState<Priority>('medium');
-  const [assignee, setAssignee] = useState<string | undefined>('u1');
-  const [due, setDue] = useState<string | undefined>();
+  const [title, setTitle] = useState(issue?.title ?? '');
+  const [body, setBody] = useState(issue?.summary ?? '');
+  const [status, setStatus] = useState<Status>(issue?.status ?? 'todo');
+  const [priority, setPriority] = useState<Priority>(issue?.priority ?? 'medium');
+  const [assignee, setAssignee] = useState<string | undefined>(issue?.assigneeId);
+  const [due, setDue] = useState<string | undefined>(issue?.dueAt?.slice(0, 10));
   const [isChecked, setChecked] = useState(false);
   const titleError = isChecked && !title.trim() ? '제목을 입력해 주세요.' : undefined;
-  const leave = () => void navigate({ to: '/demo/w/$workspaceId/p/$projectId', params: { workspaceId, projectId } });
-  return <PageFrame title="새 작업" width="narrow" back={<BackLink to="/demo/w/$workspaceId/p/$projectId" params={{ workspaceId, projectId }} label="작업" />}>
+  const leave = () => void navigate({ to: '/demo/w/$workspaceId/p/$projectId/work-items/$workItemId', params: { workspaceId, projectId, workItemId } });
+  return <PageFrame title={issue ? `${issue.key} 편집` : '이슈 편집'} width="narrow"
+    back={<BackLink to="/demo/w/$workspaceId/p/$projectId/work-items/$workItemId" params={{ workspaceId, projectId, workItemId }} label="이슈" />}>
     <form id={formId} noValidate onSubmit={event => { event.preventDefault(); setChecked(true); if (title.trim()) leave(); }}>
       <VStack gap={5}>
         <TextInput label="제목" value={title} onChange={setTitle} isRequired hasAutoFocus placeholder="무엇을 해야 하나요?"
@@ -47,7 +49,7 @@ export function DemoFormPage() {
       </VStack>
     </form>
     <PageFoot start={<Button label="취소" variant="ghost" onClick={leave} />}>
-      <Button type="submit" form={formId} label="작업 만들기" variant="primary" />
+      <Button type="submit" form={formId} label="저장" variant="primary" />
     </PageFoot>
   </PageFrame>;
 }

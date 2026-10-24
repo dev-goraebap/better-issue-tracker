@@ -30,6 +30,7 @@ import { DemoProjectsPage } from '@/pages/demo/projects';
 import { DemoProjectPage } from '@/pages/demo/project';
 import { DemoDetailPage } from '@/pages/demo/item-detail';
 import { DemoFormPage } from '@/pages/demo/item-form';
+import { DemoNewIssuePage } from '@/pages/demo/issue-new';
 import { DemoWorkspaceSettingsPage } from '@/pages/demo/settings/workspace';
 import { DemoProjectSettingsPage } from '@/pages/demo/settings/project';
 import { DemoAdminPage } from '@/pages/demo/settings/admin';
@@ -40,7 +41,7 @@ import { DemoAppearancePage } from '@/pages/demo/account-appearance';
 import { DemoNotificationsPage } from '@/pages/demo/account-notifications';
 import { DemoApiKeysPage } from '@/pages/demo/account-api-keys';
 import { DemoSecurityPage } from '@/pages/demo/account-security';
-import { DEFAULT_WORKSPACE, parseInboxSearch, parseMembersSearch, parseProjectsSearch, parseStatesSearch, parseIssueSearch } from '@/entities/demo-sample';
+import { DEFAULT_WORKSPACE, parseInboxSearch, parseMembersSearch, parseProjectsSearch, parseStatesSearch, parseIssueSearch, parseNewIssueSearch } from '@/entities/demo-sample';
 import { DemoLayout } from '../layout/DemoLayout';
 import { followHistory } from '@/shared/lib/history-trail';
 import { ownSearch } from '@/shared/lib/route-search';
@@ -140,7 +141,10 @@ const demoSpaceRoutes = [
   createRoute({ getParentRoute: () => demoSpace, path: '/settings/projects/$projectId/$section', component: DemoProjectSettingsPage }),
   // A project is one page whose parts are tabs (작업, 백로그, 노트, 결정기록, D-064); its old pages lead to the tabs.
   createRoute({ getParentRoute: () => demoSpace, path: '/p/$projectId', component: DemoProjectPage, validateSearch: ownSearch(parseIssueSearch) }),
-  createRoute({ getParentRoute: () => demoSpace, path: '/p/$projectId/work-items/new', component: DemoFormPage }),
+  // 새 이슈 at its own address, which the issue pages open in a modal (D-070); 편집 is the form page.
+  createRoute({ getParentRoute: () => demoSpace, path: '/issues/new', component: DemoNewIssuePage, validateSearch: ownSearch(parseNewIssueSearch) }),
+  createRoute({ getParentRoute: () => demoSpace, path: '/p/$projectId/work-items/new', component: DemoNewIssuePage, validateSearch: ownSearch(parseNewIssueSearch) }),
+  createRoute({ getParentRoute: () => demoSpace, path: '/p/$projectId/work-items/$workItemId/edit', component: DemoFormPage }),
   createRoute({ getParentRoute: () => demoSpace, path: '/p/$projectId/work-items/$workItemId', component: DemoDetailPage, validateSearch: ownSearch(parseIssueSearch) }),
   createRoute({ getParentRoute: () => demoSpace, path: '/p/$projectId/decisions', beforeLoad: ({ params }) => { throw redirect({ href: `/demo/w/${params.workspaceId}/p/${params.projectId}?v=${params.workspaceId}-decisions` }); } }),
   createRoute({ getParentRoute: () => demoSpace, path: '/p/$projectId/sessions', beforeLoad: ({ params }) => { throw redirect({ href: `/demo/w/${params.workspaceId}/p/${params.projectId}?v=${params.workspaceId}-notes` }); } }),
