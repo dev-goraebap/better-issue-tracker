@@ -1,4 +1,4 @@
-import { IconButton } from '@astryxdesign/core';
+import { Tooltip } from '@astryxdesign/core';
 import { useEffect, useRef, useState } from 'react';
 import { NavIcon } from '../NavIcon';
 import type { ListSearch } from './ListToolbar';
@@ -6,7 +6,8 @@ import { useSearchDraft } from './use-search-draft';
 import styles from './header-tools.module.css';
 
 /**
- * Search as the header's tools offer it: a magnifier that opens into a box of 16rem, typed words applied after a pause.
+ * Search as the header's tools offer it: a magnifier in the round button 필터 and 표시 wear (D-067) that opens into a
+ * pill-shaped box of 16rem, typed words applied after a pause.
  * Esc clears the words, then closes; a click elsewhere closes an empty box; the box stays open while it holds words, and a
  * change of the URL elsewhere (a reset, going back) wins over what is typed.
  */
@@ -34,7 +35,7 @@ export function SearchToggle({ label, placeholder, value, onChange }: ListSearch
     return () => document.removeEventListener('pointerdown', away);
   }, [isOpen]);
   const close = () => { setDraft(''); onChange(undefined); setOpen(false); };
-  if (!isOpen) return <IconButton label={label} tooltip={label} icon={<NavIcon name="search" />} variant="ghost" size="sm" onClick={openBox} />;
+  if (!isOpen) return <Tooltip content={label}><button type="button" className={styles.roundButton} aria-label={label} onClick={openBox}><NavIcon name="search" /></button></Tooltip>;
   return <label ref={box} className={styles.search}>
     <NavIcon name="search" />
     <input ref={input} aria-label={label} placeholder={placeholder} value={draft} onChange={event => setDraft(event.target.value)}

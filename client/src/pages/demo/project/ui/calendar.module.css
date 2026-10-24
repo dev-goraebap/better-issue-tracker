@@ -8,7 +8,7 @@
 /* The calendar's colours, SandboxHr's app tokens kept to the calendar here (BIT's app has no calendar of its own). */
 .calendar, .nav {
   --calendar-off: light-dark(#d1242f, #ff7b72); --calendar-saturday: light-dark(#0969da, #6cb6ff);
-  --kind-team: var(--color-accent, #2f6fde); --kind-session: var(--color-icon-purple, #8250df);
+  --kind-team: #5e6ad2; --kind-session: var(--color-icon-purple, #8250df);
   --kind-work: var(--color-icon-orange, #bc4c00); --kind-decision: var(--color-icon-green, #1a7f37);
 }
 /*

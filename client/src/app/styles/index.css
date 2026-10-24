@@ -6,12 +6,6 @@
 @import './color-themes.css';
 
 :root {
-  /*
-   * Soft rules between rows of a table or list and in menus (subtle), and the rule of round controls in the header's tools
-   * and chips (control, a step firmer). Linear's hairlines (D-067): light, in light mode; dark, barely lifted off the ground.
-   */
-  --color-border-subtle: light-dark(#ebebec, #1c1d1f);
-  --color-border-control: light-dark(#dedede, #2a2b2e);
   /* Controls stand 24 (chips), 28 (buttons, the default) and 32px (menu rows, fields), as Linear's (D-067). */
   --size-element-touch: 3rem;
   --size-element-sm: 1.5rem;
@@ -25,10 +19,12 @@
 html { font-size: 100%; }
 body { font-family: 'Pretendard Variable', Pretendard, system-ui, sans-serif; }
 /*
- * The design language (D-067, docs/08-design-language.md): Linear's neutral greys in four steps of ink, a sparing indigo,
- * type at 12, 13, 15 and 24px with 450 as the usual weight, 8px for what takes room, 12px for what floats, hairlines and
- * faint layered shadows. Unlayered, it outranks the stone theme it paints over; a colour theme (color-themes.css) paints
- * its surfaces and accent over this in turn.
+ * The design language (D-067, docs/08-design-language.md): Linear's neutral greys in four steps of ink, a primary as stone's
+ * (near-black in light mode, near-white in dark), type at 12, 13, 15 and 24px with 450 as the usual weight, 8px for what
+ * takes room, 12px for what floats, hairlines and faint layered shadows. Unlayered, it outranks the stone theme it paints
+ * over. It comes in two parts: the palette a colour theme (color-themes.css) paints over (ground, surface, ink, rules,
+ * accent), and the tokens drawn from that palette (cards, popovers, chips, the finer rules, hover), so every theme gets
+ * them in its own colours rather than this one's greys.
  */
 [data-astryx-theme] {
   --font-family-body: 'Pretendard Variable', Pretendard, system-ui, sans-serif;
@@ -36,27 +32,31 @@ body { font-family: 'Pretendard Variable', Pretendard, system-ui, sans-serif; }
   --font-family-code: 'JetBrains Mono Variable', monospace;
   word-break: keep-all;
 
+  /* The palette: what a colour theme paints over. */
   --color-background-body: light-dark(#efeff0, #09090a);
   --color-background-surface: light-dark(#f9f9fa, #121213);
-  --color-background-card: light-dark(#ffffff, #18181a);
-  --color-background-popover: light-dark(#ffffff, #1c1c1f);
   --color-background-muted: light-dark(#ececed, #232326);
-  --color-background-gray: light-dark(#e5e5e6, #2a2a2e);
   --color-border: light-dark(#e4e4e5, #212224);
-  --color-border-emphasized: light-dark(#d3d3d3, #34353a);
+  --color-border-subtle: color-mix(in srgb, var(--color-text-primary) light-dark(7%, 6%), var(--color-background-surface));
   --color-text-primary: light-dark(#1b1b1b, #f7f8f8);
   --color-text-secondary: light-dark(#5c5c5e, #8a8f98);
-  --color-text-disabled: light-dark(#9c9d9f, #62666d);
-  --color-icon-primary: light-dark(#2f2f31, #e2e4e7);
   --color-icon-secondary: light-dark(#6b6b6f, #8a8f98);
-  --color-accent: #5e6ad2;
-  --color-accent-muted: color-mix(in srgb, #5e6ad2 14%, transparent);
-  --color-text-accent: light-dark(#5e6ad2, #8e97e6);
-  --color-icon-accent: light-dark(#5e6ad2, #8e97e6);
-  --color-on-accent: #ffffff;
+  --color-accent: light-dark(#1b1b1b, #f7f8f8);
+  --color-accent-muted: color-mix(in srgb, var(--color-accent) light-dark(8%, 12%), transparent);
+  --color-icon-accent: var(--color-accent);
+  /* Drawn from the palette, so a colour theme carries them in its own colours. */
+  --color-background-card: light-dark(color-mix(in srgb, var(--color-background-surface) 25%, #ffffff), color-mix(in srgb, var(--color-text-primary) 3%, var(--color-background-surface)));
+  --color-background-popover: light-dark(color-mix(in srgb, var(--color-background-surface) 15%, #ffffff), color-mix(in srgb, var(--color-text-primary) 6%, var(--color-background-surface)));
+  --color-background-gray: color-mix(in srgb, var(--color-text-primary) light-dark(10%, 13%), var(--color-background-surface));
+  --color-border-control: color-mix(in srgb, var(--color-text-primary) light-dark(13%, 12%), var(--color-background-surface));
+  --color-border-emphasized: color-mix(in srgb, var(--color-text-primary) light-dark(18%, 16%), var(--color-background-surface));
+  --color-text-disabled: color-mix(in srgb, var(--color-text-secondary) 62%, var(--color-background-surface));
+  --color-icon-primary: color-mix(in srgb, var(--color-text-primary) 88%, var(--color-background-surface));
+  --color-text-accent: var(--color-accent);
+  --color-on-accent: light-dark(#ffffff, color-mix(in srgb, var(--color-background-surface) 85%, #000000));
   --color-overlay: light-dark(rgb(0 0 0 / 0.4), rgb(0 0 0 / 0.55));
-  --color-overlay-hover: light-dark(rgb(0 0 0 / 0.04), rgb(255 255 255 / 0.05));
-  --color-overlay-pressed: light-dark(rgb(0 0 0 / 0.07), rgb(255 255 255 / 0.08));
+  --color-overlay-hover: color-mix(in srgb, var(--color-text-primary) light-dark(4%, 5%), transparent);
+  --color-overlay-pressed: color-mix(in srgb, var(--color-text-primary) light-dark(7%, 8%), transparent);
   --color-shadow: light-dark(rgb(0 0 0 / 0.04), rgb(0 0 0 / 0.3));
 
   --font-size-base: 0.8125rem;
@@ -81,10 +81,10 @@ body { font-family: 'Pretendard Variable', Pretendard, system-ui, sans-serif; }
   --shadow-high: 0 4px 40px light-dark(rgb(0 0 0 / 0.04), rgb(0 0 0 / 0.1)), 0 3px 20px light-dark(rgb(0 0 0 / 0.05), rgb(0 0 0 / 0.125)), 0 3px 12px light-dark(rgb(0 0 0 / 0.05), rgb(0 0 0 / 0.125)), 0 2px 8px light-dark(rgb(0 0 0 / 0.05), rgb(0 0 0 / 0.125)), 0 1px 1px light-dark(rgb(0 0 0 / 0.05), rgb(0 0 0 / 0.125));
   --duration-fast: 100ms;
   --duration-medium: 250ms;
-  /* A chip or round tool at rest (white on a ring in light mode, a lifted grey in dark), and a floating surface's rule. */
-  --bit-chip-bg: light-dark(#ffffff, #1a1a1d);
-  --bit-chip-ring: light-dark(#e2e2e4, transparent);
-  --bit-float-border: light-dark(#e4e4e5, #2a2b2f);
+  /* A chip or round tool at rest (the card on a ring in light mode, a lifted surface in dark), and a floating surface's rule. */
+  --bit-chip-bg: light-dark(var(--color-background-card), color-mix(in srgb, var(--color-text-primary) 4%, var(--color-background-surface)));
+  --bit-chip-ring: light-dark(color-mix(in srgb, var(--color-text-primary) 11%, transparent), transparent);
+  --bit-float-border: color-mix(in srgb, var(--color-text-primary) light-dark(10%, 12%), transparent);
 }
 /*
  * Corners (D-067): what is pressed is a pill (buttons, icon buttons, toggles); what takes room keeps 8px (menu rows);

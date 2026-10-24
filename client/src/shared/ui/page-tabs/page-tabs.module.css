@@ -13,6 +13,8 @@
 .switch [role="tab"]:hover { color: var(--color-text-primary); }
 .switch [role="tab"][aria-selected="true"] { background: var(--color-background-muted); color: var(--color-text-primary); box-shadow: none; }
 .switch :global(.astryx-tab-indicator) { display: none; }
+/* The design system's hover layer inside a tab keeps its own 8px corners; here it follows the pill. */
+.switch [role="tab"] > span:first-child { border-radius: inherit; }
 .switch [role="tab"] svg { inline-size: 0.875rem; block-size: 0.875rem; }
 .tone { display: inline-flex; }
 /* A phone's chips: 32px to be pressed with a thumb, in 13px type, in a row that scrolls sideways when they do not fit. */
