@@ -72,9 +72,9 @@ function teamEvents(): DemoEvent[] {
 
 /**
  * The calendar's events for a workspace: the team's own, those made on the visit (a project's key before the title of
- * one tied to it), then those its projects' sample data gives; work given a day on the visit (dues) shows on that day.
+ * one tied to it), then those its projects' sample data gives.
  */
-export function buildDemoEvents(workspaceId: string, schedules: readonly DemoSchedule[], dues: Readonly<Record<string, string>>): DemoEvent[] {
+export function buildDemoEvents(workspaceId: string, schedules: readonly DemoSchedule[]): DemoEvent[] {
   const all = projectsIn(workspaceId);
   const projects = new Set(all.map(project => project.id));
   const made: DemoEvent[] = schedules.filter(schedule => schedule.workspaceId === workspaceId).map(schedule => {
@@ -89,10 +89,10 @@ export function buildDemoEvents(workspaceId: string, schedules: readonly DemoSch
       href: `/demo/w/${workspaceId}/notes?project=${session.projectId}`, projectId: session.projectId };
   });
   // The first few due items show the stretch before their due day (from when they were made, four days at most).
-  const due = WORK_ITEMS.filter(item => projects.has(item.projectId) && (item.dueAt || dues[item.id]));
-  const stretched = new Set(due.filter(item => item.dueAt).slice(0, 3).map(item => item.id));
+  const due = WORK_ITEMS.filter(item => projects.has(item.projectId) && item.dueAt);
+  const stretched = new Set(due.slice(0, 3).map(item => item.id));
   const work: DemoEvent[] = due.map(item => {
-    const last = dues[item.id] ?? seoul(item.dueAt!).slice(0, 10);
+    const last = seoul(item.dueAt!).slice(0, 10);
     const made = seoul(item.createdAt).slice(0, 10);
     const first = stretched.has(item.id) ? (made > shiftDay(last, -4) ? made : shiftDay(last, -4)) : last;
     return { id: `work-${item.id}`, kind: 'work', title: `${item.key} ${item.title}`, ...allDay(first, last), recurring: false,
@@ -105,6 +105,3 @@ export function buildDemoEvents(workspaceId: string, schedules: readonly DemoSch
   });
   return [...teamEvents(), ...made, ...sessions, ...work, ...decisions];
 }
-
-/** What the home's 날짜 미정 drawer carries in a drag: a work item's id, dropped on a calendar day to give it that day. */
-export const WORK_DRAG_TYPE = 'application/x-bit-work';

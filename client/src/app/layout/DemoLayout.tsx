@@ -6,7 +6,7 @@ import { PRODUCT_NAME } from '@/shared/config';
 import { isJustBefore } from '@/shared/lib/history-trail';
 import { DefaultAvatar, NavIcon, NotificationBell } from '@/shared/ui';
 import { WorkspaceSwitcher } from '@/features/demo-workspace-switcher';
-import { IssueMenuButton } from '@/features/demo-issue-menu';
+import { IssueMenuButton, ScopePicker } from '@/features/demo-issue-menu';
 import {
   ACCOUNT_MENU, ADMIN_MENU, DEFAULT_WORKSPACE, demoPlace, ISSUE_MENU, issuePath, NOTICES, PATTERN_MENU, useReadNotices, placeNames, PROJECT_SETTINGS_MENU, projectSettingsPath,
   projectsIn, shownIssueMenu, useIssueMenu, workspaceOf, workspacePath, WORKSPACE_MENU, WORKSPACE_SETTINGS_MENU, workspaceSettingsPath,
@@ -15,9 +15,9 @@ import styles from './demo-layout.module.css';
 
 /**
  * The demo's frame: the same ShellFrame the workspace draws, with the real app's menus at the real addresses under /demo
- * (the workspace switcher and the bell at its head; 이슈 with the member's issue menus in their order and its control to
- * change that; 프로젝트, choosing the scope those menus show, D-063; the workspace's other pages; the pattern pages; and
- * 워크스페이스 설정 at its foot). The profile card's gear turns the menu into the member's own settings
+ * (the workspace switcher and the bell at its head; 이슈, headed by the scope picker (전체 or a project) over the
+ * member's issue menus held under it by a line, with its control to reorder or hide them, D-063; the workspace's other
+ * pages; the pattern pages; and 워크스페이스 설정 at its foot). The profile card's gear turns the menu into the member's own settings
  * (/demo/settings/…), and 워크스페이스 설정 into the workspace's (its pages, each project's, then the instance's, D-061):
  * either way 돌아가기 or Esc goes back to the page of work left. It reads nothing from the server, so it opens without
  * signing in; the account box is a stand-in.
@@ -149,18 +149,16 @@ export function DemoLayout() {
           <IconButton label="내 설정" tooltip="내 설정" icon={<NavIcon name="settings" />} variant="ghost" size="sm" onClick={openSettings} />
         </div>}
       footer={<div className={styles.foot}>{workspace && item('워크스페이스 설정', 'settings', workspaceSettingsPath(workspaceId), false)}{version}</div>}>
+      {/* The issue menus read as the chosen scope's: the picker heads them and a line holds them under it (D-063). */}
       <SideNavSection title="이슈" endContent={workspace && !folded ? <IssueMenuButton workspaceId={workspaceId} /> : undefined}>
-        {workspace && issueMenu.map(entry => item(entry.label, entry.icon, issuePath(workspaceId, entry.path, scope), issueEntry?.key === entry.key))}
+        {workspace && <div className={styles.scopeHead}>
+          <ScopePicker projects={projects} scope={scope} isFolded={folded} onPick={project => void navigate({ href: issuePath(workspaceId, scopeBase, project) })}
+            onManage={() => void navigate({ href: workspacePath(workspaceId, '/projects') })} />
+        </div>}
+        {workspace && <div className={styles.scoped} data-folded={folded || undefined} data-scoped={scope ? true : undefined}>
+          {issueMenu.map(entry => item(entry.label, entry.icon, issuePath(workspaceId, entry.path, scope), issueEntry?.key === entry.key))}
+        </div>}
       </SideNavSection>
-      {/* The scope of the issue menus: choosing a project keeps the menu in view and shows that project's (D-063). */}
-      {workspace && !folded && <SideNavSection title="프로젝트" endContent={<IconButton label="프로젝트 만들기·관리" tooltip="프로젝트 만들기·관리" variant="ghost" size="sm"
-        icon={<NavIcon name="plus" />} onClick={() => void navigate({ href: workspacePath(workspaceId, '/projects') })} />}>
-        {item('전체', 'grid', issuePath(workspaceId, scopeBase), !!issueEntry && !scope)}
-        {projects.map(project => {
-          const href = issuePath(workspaceId, scopeBase, project.id);
-          return <SideNavItem key={project.id} label={project.name} href={href} icon={projectMark(project.key)} isSelected={!!issueEntry && scope === project.id} onClick={go(href)} />;
-        })}
-      </SideNavSection>}
       <SideNavSection title="워크스페이스">
         {workspace && WORKSPACE_MENU.map(entry => item(entry.label, entry.icon, workspacePath(workspaceId, entry.path), place.workspaceSection === entry.path))}
       </SideNavSection>

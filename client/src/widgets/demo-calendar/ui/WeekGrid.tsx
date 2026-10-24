@@ -8,7 +8,6 @@ import { hiddenBars, stackedWeek } from '../model/stack';
 import { BarButton } from './BarButton';
 import { RepeatMark } from './RepeatMark';
 import { useTimeDrag } from './useTimeDrag';
-import { useWorkDrop } from './useWorkDrop';
 import styles from './calendar.module.css';
 
 /** One hour's height; the day runs 24 of them and opens two hours before the working day. */
@@ -28,14 +27,11 @@ const MORE_LANE = 22;
  * most); the rest of a crowded cluster is counted in a "+N". Today's column shows the time now. An event that may move
  * goes to another time or day by its body and stretches by its lower edge.
  */
-export function WeekGrid({ days, events, timed, holidays, onDay, onEvent, onMove, onDropWork }: {
+export function WeekGrid({ days, events, timed, holidays, onDay, onEvent, onMove }: {
   days: readonly string[]; events: readonly DemoEvent[]; timed: Map<string, DemoEvent[]>; holidays: ReadonlyMap<string, string>;
   onDay: (day: string) => void; onEvent: (event: DemoEvent) => void; onMove: (event: DemoEvent, day: string, start: number, end: number) => void;
-  /** Work dropped on a day from outside the calendar (useWorkDrop). */
-  onDropWork?: (itemId: string, day: string) => void;
 }) {
   const today = currentDay();
-  const workDrop = useWorkDrop(onDropWork);
   const [expanded, setExpanded] = useState(false);
   const stack = stackedWeek(barsOf(events), days);
   const lanes = expanded ? stack.eventLanes : Math.min(stack.eventLanes, LANES);
@@ -79,14 +75,14 @@ export function WeekGrid({ days, events, timed, holidays, onDay, onEvent, onMove
     onMove: (event, column, start, end) => onMove(event, days[column]!, start, end),
   });
   const drag = timeDrag.drag;
-  return <div className={styles.main} style={{ '--days': days.length, '--gutter': `${gutter}px` } as CSSProperties} {...workDrop.props}>
+  return <div className={styles.main} style={{ '--days': days.length, '--gutter': `${gutter}px` } as CSSProperties}>
     <div className={styles.weekHead} role="row">
       <span />
       {days.map(day => {
         const weekday = weekdayOf(day);
         const holiday = holidays.get(day);
         // The date and its weekday on one line, centred on it, so neither sits off the other.
-        return <button key={day} type="button" className={styles.weekHeadDay} onClick={() => onDay(day)} data-day={day} data-drop={workDrop.day === day || undefined}
+        return <button key={day} type="button" className={styles.weekHeadDay} onClick={() => onDay(day)}
           data-today={day === today || undefined}
           data-past={day < today || undefined} data-off={holiday || weekday === 0 ? true : undefined} data-saturday={!holiday && weekday === 6 ? true : undefined}
           aria-label={`${dayTitle(day)}${holiday ? ` ${holiday}` : ''}`}>
@@ -104,7 +100,7 @@ export function WeekGrid({ days, events, timed, holidays, onDay, onEvent, onMove
           onClick={() => setExpanded(!expanded)} />}
       </div>
       {/* Each day's cell under its bars, ruled as the hours below are so the columns run from the head to the hours. */}
-      {days.map((day, column) => <span key={day} className={styles.allDayCell} aria-hidden="true" data-day={day} data-today={day === today || undefined}
+      {days.map((day, column) => <span key={day} className={styles.allDayCell} aria-hidden="true" data-today={day === today || undefined}
         style={{ gridColumn: column + 2, gridRow: '1 / -1' }} />)}
       {shown.map(placed => <BarButton key={placed.bar.key} bar={placed.bar} fromBefore={placed.fromBefore} toAfter={placed.toAfter}
         style={{ gridColumn: `${placed.column + 2} / span ${placed.span}`, gridRow: placed.lane + 1, blockSize: '1.375rem' }} onEvent={onEvent} />)}
@@ -127,8 +123,7 @@ export function WeekGrid({ days, events, timed, holidays, onDay, onEvent, onMove
             return { item: event, start, end: Math.max(Math.min(24 * 60, endMinute(event)), Math.min(24 * 60, start + 30)) };
           });
           const { shown: placedEvents, more } = capBlocks(blocks, cap);
-          return <div key={day} className={styles.column} data-column={columnIndex} data-day={day} data-drop={workDrop.day === day || undefined}
-            data-today={day === today || undefined}>
+          return <div key={day} className={styles.column} data-column={columnIndex} data-today={day === today || undefined}>
             {placedEvents.map(placed => {
               const event = placed.item;
               const end = Math.min(24 * 60, endMinute(event));

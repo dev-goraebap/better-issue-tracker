@@ -6,7 +6,6 @@ import { layoutMonthWeeks } from '../model/stack';
 import { BarButton } from './BarButton';
 import { RepeatMark } from './RepeatMark';
 import { useDayDrag } from './useDayDrag';
-import { useWorkDrop } from './useWorkDrop';
 import styles from './calendar.module.css';
 
 /** Lines a day shows under its date, as the narrow cell of a six-week month holds them; one goes to the foot when needed. */
@@ -20,21 +19,18 @@ const shortClock = (start: string) => (start.slice(14, 16) === '00' ? `${Number(
  * events, then a foot with what did not fit ("+N개 더", opening the day's week). An event that may move is carried to
  * another day by its label or bar, keeping its times.
  */
-export function MonthView({ anchor, days, events, timed, holidays, selected, onDay, onMore, onEvent, onMoveDays, onDropWork }: {
+export function MonthView({ anchor, days, events, timed, holidays, selected, onDay, onMore, onEvent, onMoveDays }: {
   anchor: string; days: readonly string[]; events: readonly DemoEvent[]; timed: Map<string, DemoEvent[]>; holidays: ReadonlyMap<string, string>;
   selected: string | null;
   onDay: (day: string) => void; onMore: (day: string) => void; onEvent: (event: DemoEvent) => void; onMoveDays: (event: DemoEvent, days: number) => void;
-  /** Work dropped on a day from outside the calendar (useWorkDrop). */
-  onDropWork?: (itemId: string, day: string) => void;
 }) {
   const today = currentDay();
   const dayDrag = useDayDrag(onMoveDays);
-  const workDrop = useWorkDrop(onDropWork);
   const carried = dayDrag.drag;
   const press = (pointer: PointerEvent, event: DemoEvent) => { if (canDrag(event)) dayDrag.press(pointer, event); };
   const isCarried = (event: DemoEvent) => !!carried && eventKey(carried.event) === eventKey(event);
   const weeks = layoutMonthWeeks(barsOf(events), days, timed, LINES);
-  return <div className={styles.main} role="grid" aria-label="월 달력" data-dragging={carried ? 'day' : undefined} {...workDrop.props}>
+  return <div className={styles.main} role="grid" aria-label="월 달력" data-dragging={carried ? 'day' : undefined}>
     <div className={styles.weekdays} role="row">
       {WEEKDAYS.map((name, index) => <div key={name} role="columnheader" className={styles.weekday} data-weekday={index}>{name}</div>)}
     </div>
@@ -50,7 +46,7 @@ export function MonthView({ anchor, days, events, timed, holidays, selected, onD
             const holiday = holidays.get(day);
             const weekday = weekdayOf(day);
             return <button key={day} type="button" role="gridcell" className={styles.day} style={{ gridColumn: column + 1 }} data-day={day}
-              data-drop={(carried && carried.to === day && carried.to !== carried.from) || workDrop.day === day ? true : undefined}
+              data-drop={carried && carried.to === day && carried.to !== carried.from ? true : undefined}
               data-outside={day.slice(0, 7) !== anchor.slice(0, 7) || undefined} data-today={day === today || undefined}
               data-selected={day === selected || undefined} data-off={holiday || weekday === 0 ? true : undefined}
               data-saturday={!holiday && weekday === 6 ? true : undefined} aria-pressed={day === selected}

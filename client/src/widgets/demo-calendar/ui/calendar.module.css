@@ -175,4 +175,4 @@
 .item[data-draggable], .bar[data-draggable] { cursor: grab; user-select: none; }
 .main[data-dragging="day"] { cursor: grabbing; user-select: none; }
 .item[data-moving], .bar[data-moving] { opacity: 0.4; }
-:is(.day, .weekHeadDay, .column)[data-drop] { outline: 2px dashed var(--color-accent); outline-offset: -2px; background: color-mix(in srgb, var(--color-accent) 10%, transparent); }
+.day[data-drop] { outline: 2px dashed var(--color-accent); outline-offset: -2px; background: color-mix(in srgb, var(--color-accent) 10%, transparent); }

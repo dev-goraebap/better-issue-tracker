@@ -1,16 +1,26 @@
-/* The issue menus' popover: its name, then a row per menu with its moves and its switch at the end. */
-.panel { display: flex; flex-direction: column; gap: var(--spacing-1); padding: var(--spacing-2); }
-.panelTitle { padding: var(--spacing-1) var(--spacing-2); font-size: 0.75rem; font-weight: 600; color: var(--color-text-secondary); }
-.rows { display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none; }
-.row { display: flex; align-items: center; gap: var(--spacing-1); min-block-size: 2.25rem; padding-inline: var(--spacing-2) var(--spacing-1); border-radius: 6px; }
-.row:hover { background: var(--color-overlay-hover); }
+/* The issue menus' rows: a handle to drag, the menu's icon and name, its switch at the end. */
+.rows { display: flex; flex-direction: column; gap: var(--spacing-1); margin: 0; padding: 0; list-style: none; }
+.row { display: flex; align-items: center; gap: var(--spacing-2); min-block-size: 2.75rem; padding-inline: var(--spacing-1) var(--spacing-2);
+  border: 1px solid var(--color-border); border-radius: 8px; background: var(--color-background-surface); }
+/* The row being dragged lifts off the others. */
+.row[data-dragging] { position: relative; z-index: 1; border-color: var(--color-border-emphasized, var(--color-border)); box-shadow: var(--shadow-mid, 0 6px 16px rgb(0 0 0 / 0.18)); }
+.handle { display: inline-grid; place-items: center; inline-size: 1.75rem; block-size: 2rem; padding: 0; border: 0; border-radius: 6px; background: none;
+  color: var(--color-icon-secondary); cursor: grab; touch-action: none; }
+.handle:hover { background: var(--color-overlay-hover); }
+.row[data-dragging] .handle { cursor: grabbing; }
+.handle:focus-visible { outline: var(--focus-outline-width) var(--focus-outline-style) var(--focus-outline-color); }
+.handle svg { inline-size: 1rem; block-size: 1rem; }
 .icon { display: inline-grid; place-items: center; color: var(--color-icon-secondary); }
 .icon svg { inline-size: 1rem; block-size: 1rem; }
-.label { flex: 1; min-inline-size: 0; padding-inline-start: var(--spacing-1); font-size: 0.875rem; }
+.label { flex: 1; min-inline-size: 0; font-size: 0.875rem; }
 .row[data-hidden] :is(.icon, .label) { opacity: 0.5; }
-/* The forward arrow turned to point up or down. */
-.up, .down { display: inline-flex; }
-.up { rotate: -90deg; }
-.down { rotate: 90deg; }
 /* 작업 cannot be hidden: the switch's room stays empty so the rows line up. */
 .switchRoom { inline-size: 2.25rem; flex-shrink: 0; }
+
+/* The scope picker's marks: a project's key letter on the accent's wash, 전체 and 프로젝트 관리 as icons; folded, the
+   chosen mark alone, centred. */
+.scopeMark { display: inline-grid; place-items: center; flex-shrink: 0; inline-size: 1.25rem; block-size: 1.25rem; border-radius: 4px;
+  background: var(--color-accent-muted); color: var(--color-text-accent, var(--color-text-primary)); font-size: 0.6875rem; font-weight: 700; }
+.scopeAll { display: inline-grid; place-items: center; flex-shrink: 0; inline-size: 1.25rem; block-size: 1.25rem; color: var(--color-icon-secondary); }
+.scopeAll svg { inline-size: 1rem; block-size: 1rem; }
+.scopeFolded { display: grid; place-items: center; inline-size: 2.25rem; block-size: 2.25rem; margin-inline: auto; }

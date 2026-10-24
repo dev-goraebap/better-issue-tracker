@@ -3,4 +3,3 @@ export { DemoCalendar } from './ui/DemoCalendar';
 export { DemoCalendarBar } from './ui/DemoCalendarBar';
 export { parseDemoCalendarSearch, type DemoCalendarSearch } from './model/month';
 export { DEMO_TODAY } from './model/dates';
-export { WORK_DRAG_TYPE } from './model/events';
