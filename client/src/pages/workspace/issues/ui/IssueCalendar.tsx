@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Popover } from '@astryxdesign/core';
-import type { WorkItem } from '@/entities/work-item';
+import { issueHref, type WorkItem } from '@/entities/work-item';
 import { currentDay, dayTitle, monthDays, weekdayOf, WEEKDAYS } from '../model/dates';
 import { barsOf, layoutMonth } from '../model/month';
 import { useDayDrag } from './useDayDrag';
@@ -8,7 +8,6 @@ import styles from './calendar.module.css';
 
 /** Lanes a day shows under its date, as the narrow cell of a six-week month holds them; one goes to the foot when needed. */
 const LINES = 4;
-const hrefOf = (workspaceId: string, item: WorkItem) => `/w/${workspaceId}/p/${item.projectId}/work-items/${item.id}`;
 const kindOf = (item: WorkItem) => (item.labels.some(label => label.system) ? 'decision' : 'work');
 
 /**
@@ -28,7 +27,7 @@ export function IssueCalendar({ workspaceId, items, anchor, onOpen, onMove }: {
   const [moreDay, setMoreDay] = useState<string | null>(null);
   const bars = barsOf(items);
   const weeks = layoutMonth(bars, days, LINES);
-  const open = (item: WorkItem) => { if (!dayDrag.wasDragged()) onOpen(hrefOf(workspaceId, item)); };
+  const open = (item: WorkItem) => { if (!dayDrag.wasDragged()) onOpen(issueHref(workspaceId, item)); };
   return <div className={styles.calendar}><div className={styles.main} role="grid" aria-label="월 달력" data-dragging={carried ? 'day' : undefined}>
     <div className={styles.weekdays} role="row">
       {WEEKDAYS.map((name, index) => <div key={name} role="columnheader" className={styles.weekday} data-weekday={index}>{name}</div>)}
@@ -68,7 +67,7 @@ export function IssueCalendar({ workspaceId, items, anchor, onOpen, onMove }: {
                 label={`${dayTitle(day)} 이슈`} content={<div className={styles.dayList}>
                   <span className={styles.dayListTitle}>{dayTitle(day)}</span>
                   {onDay.map(bar => <button key={bar.item.id} type="button" className={styles.dayListItem} data-kind={kindOf(bar.item)}
-                    onClick={() => { setMoreDay(null); onOpen(hrefOf(workspaceId, bar.item)); }}>
+                    onClick={() => { setMoreDay(null); onOpen(issueHref(workspaceId, bar.item)); }}>
                     <span className={styles.dayListDot} aria-hidden="true" />{bar.item.key} {bar.item.title}
                   </button>)}
                 </div>}>

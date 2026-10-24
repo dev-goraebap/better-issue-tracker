@@ -8,7 +8,7 @@ const MOST_PAGES = 20;
 
 /**
  * Every live issue of a scope (전체, or one project) at once, a page of 100 after another, so the views can filter,
- * order and group them on the page as the demo did (T-006 stage 3). Past 2,000 the rest is not loaded and isCapped says
+ * order and group them on the page (T-006 stage 3). Past 2,000 the rest is not loaded and isCapped says
  * so; a scope that large needs the server to filter and order instead.
  */
 /** The pages useScopeItems reads, for a route to read the first one before the page shows. */

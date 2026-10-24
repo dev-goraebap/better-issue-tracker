@@ -5,6 +5,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import { MOBILE_QUERY } from '@/shared/config';
 import { authError, sessionQueryOptions } from '@/shared/api';
+import { dateText } from '@/shared/lib/date-text';
 import {
   ConfirmDialog, DefaultAvatar, ItemList, ItemMeta, ItemRow, ListToolbar, NavIcon, PageFrame, PageState, PageTabs, QueryMessage, Select, SheetTable, StatusToken, type PageTab,
   type SheetColumn,
@@ -21,7 +22,6 @@ type Tab = 'members' | 'invitations';
 const STATUS_TOKENS: Record<string, { label: string; color: 'blue' | 'green' | 'gray' | 'red' }> = {
   pending: { label: '대기', color: 'blue' }, accepted: { label: '수락', color: 'green' }, expired: { label: '만료', color: 'gray' }, revoked: { label: '폐기', color: 'red' },
 };
-const dayText = (iso: string) => new Date(iso).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' });
 type Pending = { kind: 'role'; member: Member; role: Role } | { kind: 'remove'; member: Member } | { kind: 'revoke'; invite: Invitation };
 
 /**
@@ -68,7 +68,7 @@ export function MembersPage() {
       ? <Select label={`${row.name} 역할`} isLabelHidden size="sm" options={roleOptions} value={row.role}
         onChange={value => { if (value && value !== row.role) setPending({ kind: 'role', member: row, role: value as Role }); }} />
       : ROLE_LABELS[row.role]) },
-    { key: 'joined', header: '참여한 날', width: '8rem', render: row => dayText(row.joinedAt) },
+    { key: 'joined', header: '참여한 날', width: '8rem', render: row => dateText(row.joinedAt) },
     { key: 'menu', header: '', width: '3.5rem', align: 'end', render: row => (canChange(row)
       ? <MoreMenu label={`${row.name} 메뉴`} variant="ghost" size="sm" placement="end" items={[{ label: '구성원에서 제거', icon: <NavIcon name="delete" />, onClick: () => setPending({ kind: 'remove', member: row }) }]} />
       : null) },
@@ -79,7 +79,7 @@ export function MembersPage() {
     { key: 'role', header: '역할', width: '7rem', render: row => ROLE_LABELS[row.role] },
     { key: 'by', header: '보낸 사람', width: '8rem', render: row => row.inviterName },
     { key: 'status', header: '상태', width: '6rem', render: row => { const token = STATUS_TOKENS[row.status] ?? STATUS_TOKENS.expired!; return <StatusToken label={token.label} color={token.color} />; } },
-    { key: 'expires', header: '만료일', width: '7rem', render: row => dayText(row.expiresAt) },
+    { key: 'expires', header: '만료일', width: '7rem', render: row => dateText(row.expiresAt) },
     { key: 'menu', header: '', width: '3.5rem', align: 'end', render: row => (row.status === 'pending'
       ? <MoreMenu label={`${row.email} 초대 메뉴`} variant="ghost" size="sm" placement="end" items={[{ label: '초대 폐기', icon: <NavIcon name="delete" />, onClick: () => setPending({ kind: 'revoke', invite: row }) }]} />
       : null) },
@@ -114,7 +114,7 @@ export function MembersPage() {
         ? <PageState title="보낸 초대가 없습니다" description="구성원 초대로 초대 링크를 만들어 전달하세요." />
         : isMobile
           ? <ItemList label="초대">{invites.map(invite => { const token = STATUS_TOKENS[invite.status] ?? STATUS_TOKENS.expired!; return <ItemRow key={invite.id} title={invite.email}
-            meta={<><ItemMeta>{ROLE_LABELS[invite.role]}</ItemMeta><ItemMeta><StatusToken label={token.label} color={token.color} /></ItemMeta><ItemMeta>{dayText(invite.expiresAt)}</ItemMeta></>} />; })}</ItemList>
+            meta={<><ItemMeta>{ROLE_LABELS[invite.role]}</ItemMeta><ItemMeta><StatusToken label={token.label} color={token.color} /></ItemMeta><ItemMeta>{dateText(invite.expiresAt)}</ItemMeta></>} />; })}</ItemList>
           : <SheetTable label="초대" columns={inviteColumns} rows={invites} rowKey={row => row.id} minWidth="44rem" />)}
     </div>
     {isManager && <InvitationDialog isOpen={isInviting} workspaceId={workspaceId} myRole={myRole} onClose={() => setInviting(false)} onChanged={changed} />}

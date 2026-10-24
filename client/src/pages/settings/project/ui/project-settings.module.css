@@ -4,5 +4,3 @@
 .up, .down { display: inline-flex; }
 .up { rotate: -90deg; }
 .down { rotate: 90deg; }
-/* A field saved on its own: the field and its 저장 side by side. */
-.inline { display: flex; align-items: flex-start; gap: var(--spacing-2); }

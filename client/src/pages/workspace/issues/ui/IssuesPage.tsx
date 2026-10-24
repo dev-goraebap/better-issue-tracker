@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useId, useMemo, useRef, useState, type MouseEvent } from 'react';
+import { useCallback, useEffect, useEffectEvent, useId, useMemo, useState, type MouseEvent } from 'react';
 import { useToast } from '@astryxdesign/core';
 import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useParams, useRouterState, useSearch } from '@tanstack/react-router';
 import { PALETTE } from '@/shared/config';
 import { authError, isNotFound, sessionQueryOptions } from '@/shared/api';
+import { isPlainClick } from '@/shared/lib/history-trail';
 import { isForOther } from '@/shared/lib/key-target';
 import { PanelHostContext, useScreenPanel, withoutPanel } from '@/shared/lib/routed-panel';
 import { ConfirmDialog, PageFrame, PageState, RequestBoundary, RoutedPanel } from '@/shared/ui';
@@ -78,21 +79,19 @@ export function IssuesPage() {
   };
   // An issue's link pressed (a plain click) opens the modal instead of leaving the list.
   const peek = (event: MouseEvent) => {
-    if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.defaultPrevented) return;
+    if (!isPlainClick(event) || event.defaultPrevented) return;
     const href = (event.target as HTMLElement).closest<HTMLAnchorElement>('a[href]')?.getAttribute('href');
     if (!href || !ISSUE_PATH.test(href.split(/[?#]/)[0]!)) return;
     event.preventDefault();
     host.open(href);
   };
-  const openRef = useRef(openNew);
-  openRef.current = openNew;
   // C opens 새 이슈, as Linear's, unless the member is typing or something is already open.
+  const onKey = useEffectEvent((event: KeyboardEvent) => {
+    if (event.key.toLowerCase() !== 'c' || isForOther(event)) return;
+    event.preventDefault();
+    openNew();
+  });
   useEffect(() => {
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key.toLowerCase() !== 'c' || isForOther(event)) return;
-      event.preventDefault();
-      openRef.current();
-    };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, []);

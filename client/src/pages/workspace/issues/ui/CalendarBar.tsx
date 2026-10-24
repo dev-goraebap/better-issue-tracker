@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useEffectEvent } from 'react';
 import { Button, IconButton } from '@astryxdesign/core';
 import { useMediaQuery } from '@astryxdesign/core/hooks';
 import { MOBILE_QUERY } from '@/shared/config';
@@ -13,19 +13,17 @@ import styles from './calendar.module.css';
  */
 export function CalendarBar({ day, onPlace }: { day: string; onPlace: (date: string) => void }) {
   const isMobile = useMediaQuery(MOBILE_QUERY);
-  const keys = useRef<(event: KeyboardEvent) => void>(() => undefined);
-  keys.current = event => {
+  const onKey = useEffectEvent((event: KeyboardEvent) => {
     if (isMobile || isForOther(event)) return;
     const key = event.key.length === 1 ? event.key.toLowerCase() : event.key;
     if (key === 'ArrowLeft' || key === 'ArrowRight') onPlace(shiftMonth(day, key === 'ArrowLeft' ? -1 : 1));
     else if (key === 't') onPlace(currentDay());
     else return;
     event.preventDefault();
-  };
+  });
   useEffect(() => {
-    const listen = (event: KeyboardEvent) => keys.current(event);
-    window.addEventListener('keydown', listen);
-    return () => window.removeEventListener('keydown', listen);
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
   }, []);
   return <div className={styles.nav}>
     <Button label="오늘" variant="secondary" size="sm" tooltip="오늘 (T)" onClick={() => onPlace(currentDay())} />

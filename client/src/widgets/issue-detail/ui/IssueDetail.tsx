@@ -3,19 +3,18 @@ import { Button, MoreMenu, useToast, VStack } from '@astryxdesign/core';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { authError, isNotFound, type components } from '@/shared/api';
+import { dateText } from '@/shared/lib/date-text';
 import {
-  BackLink, ConfirmDialog, DefaultAvatar, DuePicker, NavIcon, PageState, PropertyPicker, QueryMessage, SectionHeader, Surface, usePanelSurface, type PropertyOption,
+  BackLink, ConfirmDialog, DuePicker, NavIcon, PageState, PropertyPicker, QueryMessage, SectionHeader, Surface, usePanelSurface,
 } from '@/shared/ui';
 import { labelsQuery } from '@/entities/label';
 import { columnsQuery } from '@/entities/project';
 import { canWrite as canWriteIn, useMembers, workspaceQuery } from '@/entities/workspace';
 import {
-  archiveItem, dateText, deleteItem, itemQuery, LabelTokens, moveItem, PersonCell, PRIORITIES, PriorityMark, refreshItems, StatusBadge, updateItem, type IssueSearch,
-  type Priority, type WorkItem,
+  archiveItem, deleteItem, itemQuery, labelOptions, LabelTokens, moveItem, NO_STATUS, peopleOptions, PersonCell, priorityOptions, PriorityMark, refreshItems,
+  StatusBadge, statusOptions, updateItem, type IssueSearch, type Priority, type WorkItem,
 } from '@/entities/work-item';
 import styles from './detail.module.css';
-
-const NONE = 'none';
 
 /**
  * An issue read in full, wherever it is shown (D-069): on its own page (/w/$workspaceId/p/$projectId/work-items/
@@ -67,18 +66,13 @@ export function IssueDetail({ workspaceId, projectId, id, search }: { workspaceI
     return run;
   };
   const patch = (body: Omit<components['schemas']['UpdateWorkItem'], 'expectedVersion'>) => save(version => updateItem(workspaceId, projectId, id, { expectedVersion: version, ...body }));
-  const statusOptions: PropertyOption[] = [...[...columns].sort((a, b) => a.position - b.position).map(column => ({ value: column.id, label: column.name, icon: <StatusBadge category={column.category} isLabelHidden /> })),
-    { value: NONE, label: '상태 없음' }];
-  const priorityOptions: PropertyOption[] = (Object.keys(PRIORITIES) as Priority[]).map(priority => ({ value: priority, label: PRIORITIES[priority], icon: <PriorityMark priority={priority} isLabelHidden /> }));
-  const peopleOptions: PropertyOption[] = members.map(member => ({ value: member.userId, label: member.name, icon: <DefaultAvatar seed={member.userId} name={member.name} size={16} /> }));
-  const labelOptions: PropertyOption[] = labels.map(label => ({ value: label.id, label: label.name, icon: <span className={styles.labelDot} style={{ background: label.color }} /> }));
   const column = columns.find(each => each.id === item.columnId);
   // A viewer reads each property as a mark; a member changes it with its pill.
   const properties: [string, ReactNode][] = canWrite ? [
-    ['상태', <PropertyPicker label="상태" icon="status" options={statusOptions} value={item.columnId ?? NONE}
-      onChange={value => { void save(version => moveItem(workspaceId, projectId, id, { expectedVersion: version, targetColumnId: value === NONE ? null : value as string })); }} />],
+    ['상태', <PropertyPicker label="상태" icon="status" options={statusOptions(columns)} value={item.columnId ?? NO_STATUS}
+      onChange={value => { void save(version => moveItem(workspaceId, projectId, id, { expectedVersion: version, targetColumnId: value === NO_STATUS ? null : value as string })); }} />],
     ['우선순위', <PropertyPicker label="우선순위" icon="priority" options={priorityOptions} value={item.priority ?? undefined} onChange={value => { void patch({ priority: (value as Priority | undefined) ?? null }); }} />],
-    ['담당자', <PropertyPicker label="담당자" icon="person" options={peopleOptions} value={item.assigneeId ?? undefined} onChange={value => { void patch({ assigneeId: (value as string | undefined) ?? null }); }} />],
+    ['담당자', <PropertyPicker label="담당자" icon="person" options={peopleOptions(members)} value={item.assigneeId ?? undefined} onChange={value => { void patch({ assigneeId: (value as string | undefined) ?? null }); }} />],
     ['시작일', <DuePicker label="시작일" value={item.startDate} onChange={day => { void patch({ startDate: day ?? null }); }} />],
     ['기한', <DuePicker value={item.dueDate} onChange={day => { void patch({ dueDate: day ?? null }); }} />],
   ] : [
@@ -116,7 +110,7 @@ export function IssueDetail({ workspaceId, projectId, id, search }: { workspaceI
         </div>)}</dl>
         <h2 className={styles.asideHead}>라벨</h2>
         <div className={styles.asideLabels}>{canWrite
-          ? <PropertyPicker label="라벨" icon="label" options={labelOptions} value={item.labels.map(label => label.id)} isMultiple
+          ? <PropertyPicker label="라벨" icon="label" options={labelOptions(labels)} value={item.labels.map(label => label.id)} isMultiple
             onChange={value => { void patch({ labelIds: (value as string[] | undefined) ?? [] }); }} />
           : <LabelTokens labels={item.labels} />}</div>
         <p className={styles.made}>{item.key} · {dateText(item.createdAt)} 만듦{item.updatedAt !== item.createdAt ? ` · ${dateText(item.updatedAt)} 고침` : ''}</p>

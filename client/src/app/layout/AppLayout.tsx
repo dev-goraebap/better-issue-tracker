@@ -1,4 +1,4 @@
-import { useEffect, useState, type MouseEvent } from 'react';
+import { useEffect, useEffectEvent, useState, type MouseEvent } from 'react';
 import { Button, IconButton, SideNav, SideNavItem, SideNavSection, Text } from '@astryxdesign/core';
 import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Outlet, useNavigate, useRouter, useRouterState } from '@tanstack/react-router';
@@ -22,7 +22,7 @@ import styles from './app-layout.module.css';
 const SECTION_NAMES: Record<string, string> = { '/inbox': '알림', '/projects': '모든 프로젝트', '/issues/new': '새 이슈' };
 
 /**
- * The signed-in app's frame (D-058's demo, made real): ShellFrame with the workspace switcher and the bell at the menu's
+ * The signed-in app's frame: ShellFrame with the workspace switcher and the bell at the menu's
  * head; 홈, 문서함 and 구성원 (D-071); 프로젝트 with its + and the active projects, each one page of issues (D-066); and
  * 워크스페이스 설정 and the member's card at its foot. On the home (전체) and a project's page the trail's second step
  * switches between them (D-065). The card's gear turns the menu into the member's own settings (/settings/…), and
@@ -30,9 +30,6 @@ const SECTION_NAMES: Record<string, string> = { '/inbox': '알림', '/projects':
  * to the page of work left. A workspace the member lost (404) sends them to choose another.
  */
 
-/** The last page of work in view, where the settings' 돌아가기 returns, and the last workspace, whose settings show. */
-let lastWork = '';
-let lastSpace = '';
 export function AppLayout() {
   const pathname = useRouterState({ select: state => (state.resolvedLocation ?? state.location).pathname });
   const searchStr = useRouterState({ select: state => (state.resolvedLocation ?? state.location).searchStr });
@@ -40,11 +37,14 @@ export function AppLayout() {
   const router = useRouter();
   const client = useQueryClient();
   const [folded, setFolded] = useSidebarFold();
+  // The last page of work in view, where the settings' 돌아가기 returns, and the last workspace, whose menu the member's
+  // own settings keep beside them.
+  const [lastWork, setLastWork] = useState('');
+  const [lastSpace, setLastSpace] = useState('');
   const place = appPlace(pathname);
   const isAccount = !!place.account;
   const isSpaceSettings = !!place.settings;
   const isSettings = isAccount || isSpaceSettings;
-  if (place.workspaceId) lastSpace = place.workspaceId;
   const workspaceId = place.workspaceId ?? (isAccount ? lastSpace : '');
   const me = useQuery(sessionQueryOptions).data?.user;
   const space = useQuery({ ...workspaceQuery(workspaceId), enabled: !!workspaceId });
@@ -59,22 +59,20 @@ export function AppLayout() {
     if (!workspaceId || !(space.error instanceof ApiError) || space.error.status !== 404) return;
     void navigate({ to: '/workspaces', replace: true }).then(() => forgetWorkspace(client, workspaceId));
   }, [space.error, workspaceId, client, navigate]);
-  useEffect(() => { if (!isSettings) lastWork = `${pathname}${searchStr}`; }, [isSettings, pathname, searchStr]);
+  useEffect(() => { if (!isSettings) setLastWork(`${pathname}${searchStr}`); }, [isSettings, pathname, searchStr]);
+  useEffect(() => { if (place.workspaceId) setLastSpace(place.workspaceId); }, [place.workspaceId]);
   // 돌아가기: back through history when the page of work is just before, else to it (or the start).
   const leaveSettings = () => {
     if (lastWork && isJustBefore(lastWork)) router.history.back();
     else void navigate({ href: lastWork || '/' });
   };
   // Esc leaves the settings too, unless it is closing something or the member is typing.
+  const onEscape = useEffectEvent((event: KeyboardEvent) => { if (event.key === 'Escape' && !isForOther(event)) leaveSettings(); });
   useEffect(() => {
     if (!isSettings) return undefined;
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key !== 'Escape' || isForOther(event)) return;
-      leaveSettings();
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  });
+    window.addEventListener('keydown', onEscape);
+    return () => window.removeEventListener('keydown', onEscape);
+  }, [isSettings]);
   const go = (href: string) => (event: MouseEvent) => {
     if (!isPlainClick(event)) return;
     event.preventDefault(); void navigate({ href });

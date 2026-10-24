@@ -27,7 +27,6 @@
 .page .description { min-block-size: 12rem; max-block-size: none; }
 .page .pills { margin-block-start: var(--spacing-2); padding: var(--spacing-4) 0 0; border-block-start: 1px solid var(--color-border-subtle); }
 .error { padding: 0 var(--spacing-4); }
-.labelDot { display: inline-block; inline-size: 0.5rem; block-size: 0.5rem; border-radius: 50%; }
 
 /* A phone: the sheet's own head gives way to the dialog's; the pills scroll sideways in one row; the foot keeps above the keyboard. */
 @media (width < 64rem) {

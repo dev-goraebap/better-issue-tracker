@@ -19,9 +19,5 @@ export function spanOf(item: Pick<WorkItem, 'startDate' | 'dueDate'>): { start: 
   return start && end ? { start, end } : undefined;
 }
 
-/** A day or a moment as people read it: 10월 25일, with the year when it is not this year's. */
-export function dateText(iso: string) {
-  const date = new Date(iso.length === 10 ? `${iso}T00:00:00` : iso);
-  const sameYear = date.getFullYear() === new Date().getFullYear();
-  return date.toLocaleDateString('ko-KR', { ...(sameYear ? {} : { year: 'numeric' }), month: 'long', day: 'numeric' });
-}
+/** An issue's page, for what navigates rather than links (a calendar's bar, a toast's 보기). */
+export const issueHref = (workspaceId: string, item: Pick<WorkItem, 'id' | 'projectId'>) => `/w/${workspaceId}/p/${item.projectId}/work-items/${item.id}`;

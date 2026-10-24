@@ -5,6 +5,7 @@ import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-quer
 import { Link, useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import { MOBILE_QUERY } from '@/shared/config';
 import { authError } from '@/shared/api';
+import { dateText } from '@/shared/lib/date-text';
 import {
   FormMessage, ITEM_ROW_LINK, ItemList, ItemMeta, ItemRow, ListMore, ListToolbar, PageFrame, PageState, PageTabs, QueryMessage, SHEET_ROW_LINK, SheetTable, type PageTab, type SheetColumn,
 } from '@/shared/ui';
@@ -14,7 +15,6 @@ import { CreateProjectDialog } from '@/features/project-create';
 import type { ProjectsSearch } from '../model/search';
 import styles from './projects.module.css';
 
-const dayText = (iso: string) => new Date(iso).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' });
 
 /**
  * PATTERN · 탭 목록 (모든 프로젝트), /w/$workspaceId/projects (?status=archived|deleted). Projects as a table: the name
@@ -53,7 +53,7 @@ export function ProjectsPage() {
     { key: 'name', header: '프로젝트', render: row => name(row, SHEET_ROW_LINK) },
     { key: 'key', header: '키', width: '6rem', render: row => <span className={styles.key}>{row.key}</span> },
     { key: 'description', header: '설명', render: row => <span className={styles.clip}>{row.description}</span> },
-    { key: 'updated', header: '최근 변경', width: '8rem', render: row => dayText(row.updatedAt) },
+    { key: 'updated', header: '최근 변경', width: '8rem', render: row => dateText(row.updatedAt) },
     ...(tab === 'deleted' && canManage ? [{ key: 'restore', header: '', width: '6rem', align: 'end' as const,
       render: (row: Project) => <Button label="복원" variant="secondary" size="sm" isLoading={restoring === row.id} isDisabled={!!restoring} onClick={() => { void restore(row); }} /> }] : []),
   ];
@@ -70,7 +70,7 @@ export function ProjectsPage() {
           description={search.q ? '다른 이름이나 키로 찾아보세요.' : '프로젝트를 만들면 이슈를 그 안에 모을 수 있습니다.'} />
         : isMobile
           ? <ItemList label="프로젝트">{rows.map(row => <ItemRow key={row.id} lead={<span className={styles.mark}>{row.key.slice(0, 1)}</span>}
-            title={name(row, ITEM_ROW_LINK)} meta={<><ItemMeta><span className={styles.key}>{row.key}</span></ItemMeta><ItemMeta>{dayText(row.updatedAt)}</ItemMeta></>} />)}</ItemList>
+            title={name(row, ITEM_ROW_LINK)} meta={<><ItemMeta><span className={styles.key}>{row.key}</span></ItemMeta><ItemMeta>{dateText(row.updatedAt)}</ItemMeta></>} />)}</ItemList>
           : <SheetTable label="프로젝트" columns={columns} rows={rows} rowKey={row => row.id} minWidth="44rem" />}
       <ListMore hasMore={!!result.hasNextPage} isLoading={result.isFetchingNextPage} onMore={() => { void result.fetchNextPage(); }} />
     </div>

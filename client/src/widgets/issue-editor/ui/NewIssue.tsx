@@ -5,15 +5,13 @@ import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-quer
 import { useRouter } from '@tanstack/react-router';
 import { MOBILE_QUERY } from '@/shared/config';
 import { authError } from '@/shared/api';
-import { BackLink, DefaultAvatar, DuePicker, FormMessage, NavIcon, PageFoot, PageFrame, PropertyPicker, usePanelSurface, type PropertyOption } from '@/shared/ui';
+import { BackLink, DuePicker, FormMessage, NavIcon, PageFoot, PageFrame, PropertyPicker, usePanelSurface } from '@/shared/ui';
 import { labelsQuery } from '@/entities/label';
 import { columnsQuery, projectsQuery, type BoardColumn, type Project } from '@/entities/project';
 import { useMembers } from '@/entities/workspace';
-import { createItem, PRIORITIES, PriorityMark, refreshItems, StatusBadge, type Priority } from '@/entities/work-item';
+import { createItem, issueHref, labelOptions, NO_STATUS, peopleOptions, priorityOptions, refreshItems, statusOptions, type Priority } from '@/entities/work-item';
 import styles from './create-issue.module.css';
 
-const NONE = 'none';
-const PRIORITY_OPTIONS: PropertyOption[] = (Object.keys(PRIORITIES) as Priority[]).map(priority => ({ value: priority, label: PRIORITIES[priority], icon: <PriorityMark priority={priority} isLabelHidden /> }));
 const mark = (project: Pick<Project, 'key'>) => <span className={styles.projectMark}>{project.key.slice(0, 1)}</span>;
 
 type Draft = { projectId?: string; title: string; body: string; status?: string; priority: Priority; assigneeId?: string; labelIds: string[]; dueDate?: string };
@@ -23,9 +21,9 @@ type Draft = { projectId?: string; title: string; body: string; status?: string;
  * named, none for 상태 없음 (D-066), else the project's first 할 일 column.
  */
 function startColumn(columns: readonly BoardColumn[], status?: string): string {
-  if (status === NONE) return NONE;
+  if (status === NO_STATUS) return NO_STATUS;
   const sorted = [...columns].sort((a, b) => a.position - b.position);
-  return sorted.find(column => column.id === status)?.id ?? sorted.find(column => column.category === (status ?? 'todo'))?.id ?? sorted[0]?.id ?? NONE;
+  return sorted.find(column => column.id === status)?.id ?? sorted.find(column => column.category === (status ?? 'todo'))?.id ?? sorted[0]?.id ?? NO_STATUS;
 }
 
 /**
@@ -58,29 +56,25 @@ export function NewIssue({ workspaceId, projectId, status }: { workspaceId: stri
   const target = projects.find(each => each.id === (draft.projectId ?? projects[0]?.id));
   const columns = useQuery({ ...columnsQuery(workspaceId, target?.id ?? ''), enabled: !!target }).data ?? [];
   // The status stays where the member put it; until then, where the address said to start, in the project picked.
-  const shownStatus = draft.status && (draft.status === NONE || columns.some(column => column.id === draft.status)) ? draft.status : startColumn(columns, status);
+  const shownStatus = draft.status && (draft.status === NO_STATUS || columns.some(column => column.id === draft.status)) ? draft.status : startColumn(columns, status);
   const canCreate = !!draft.title.trim() && !!target && !isBusy;
   const create = async () => {
     if (!canCreate || !target) return;
     setBusy(true); setError('');
     try {
       const id = await createItem(workspaceId, target.id, { title: draft.title.trim(), description: draft.body.trim() || null, priority: draft.priority,
-        assigneeId: draft.assigneeId ?? null, dueDate: draft.dueDate ?? null, columnId: shownStatus === NONE ? null : shownStatus, labelIds: draft.labelIds });
+        assigneeId: draft.assigneeId ?? null, dueDate: draft.dueDate ?? null, columnId: shownStatus === NO_STATUS ? null : shownStatus, labelIds: draft.labelIds });
       await refreshItems(client, workspaceId, target.id);
-      const issueHref = `/w/${workspaceId}/p/${target.id}/work-items/${id}`;
+      const href = issueHref(workspaceId, { id, projectId: target.id });
       // The toast lives in a layer above the router, so its way to the issue navigates rather than linking.
-      toast({ body: `${draft.title.trim()}을(를) 만들었습니다.`, endContent: <Button label="보기" variant="ghost" size="sm" onClick={() => void router.navigate({ href: issueHref })} /> });
+      toast({ body: `${draft.title.trim()}을(를) 만들었습니다.`, endContent: <Button label="보기" variant="ghost" size="sm" onClick={() => void router.navigate({ href })} /> });
       if (isMore) { set({ title: '', body: '' }); titleBox.current?.focus(); return; }
       if (panel) panel.onClose();
-      else void router.navigate({ href: issueHref, replace: true });
+      else void router.navigate({ href, replace: true });
     } catch (failure) { setError(authError(failure)); }
     finally { setBusy(false); }
   };
   const keys = (event: KeyboardEvent) => { if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) { event.preventDefault(); void create(); } };
-  const statusOptions: PropertyOption[] = [...[...columns].sort((a, b) => a.position - b.position).map(column => ({ value: column.id, label: column.name, icon: <StatusBadge category={column.category} isLabelHidden /> })),
-    { value: NONE, label: '상태 없음' }];
-  const peopleOptions: PropertyOption[] = members.map(member => ({ value: member.userId, label: member.name, icon: <DefaultAvatar seed={member.userId} name={member.name} size={16} /> }));
-  const labelOptions: PropertyOption[] = labels.map(label => ({ value: label.id, label: label.name, icon: <span className={styles.labelDot} style={{ background: label.color }} /> }));
   const projectPill = project
     ? <span className={styles.projectChip}>{mark(project)}{project.key}</span>
     : <PropertyPicker label="프로젝트" icon="board" value={target?.id} onChange={value => set({ projectId: value as string, status: undefined })}
@@ -92,10 +86,10 @@ export function NewIssue({ workspaceId, projectId, status }: { workspaceId: stri
   // On the page the project leads the pills, the head being the page's own title.
   const properties = (lead?: ReactNode) => <div className={styles.pills} role="group" aria-label="속성">
     {lead}
-    <PropertyPicker label="상태" icon="status" options={statusOptions} value={shownStatus} onChange={value => set({ status: (value as string | undefined) ?? NONE })} />
-    <PropertyPicker label="우선순위" icon="priority" options={PRIORITY_OPTIONS} value={draft.priority} onChange={value => set({ priority: (value as Priority | undefined) ?? 'medium' })} />
-    <PropertyPicker label="담당자" icon="person" options={peopleOptions} value={draft.assigneeId} onChange={value => set({ assigneeId: value as string | undefined })} />
-    <PropertyPicker label="라벨" icon="label" options={labelOptions} value={draft.labelIds} isMultiple onChange={value => set({ labelIds: (value as string[] | undefined) ?? [] })} />
+    <PropertyPicker label="상태" icon="status" options={statusOptions(columns)} value={shownStatus} onChange={value => set({ status: (value as string | undefined) ?? NO_STATUS })} />
+    <PropertyPicker label="우선순위" icon="priority" options={priorityOptions} value={draft.priority} onChange={value => set({ priority: (value as Priority | undefined) ?? 'medium' })} />
+    <PropertyPicker label="담당자" icon="person" options={peopleOptions(members)} value={draft.assigneeId} onChange={value => set({ assigneeId: value as string | undefined })} />
+    <PropertyPicker label="라벨" icon="label" options={labelOptions(labels)} value={draft.labelIds} isMultiple onChange={value => set({ labelIds: (value as string[] | undefined) ?? [] })} />
     <DuePicker value={draft.dueDate} onChange={dueDate => set({ dueDate })} />
   </div>;
   const more = <Switch label="계속 만들기" size="sm" value={isMore} onChange={setMore} />;

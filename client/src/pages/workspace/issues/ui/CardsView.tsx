@@ -1,7 +1,7 @@
 import type { CSSProperties, ReactNode } from 'react';
-import { Link } from '@tanstack/react-router';
 import { DefaultAvatar } from '@/shared/ui';
-import { dateText, type IssueSearch, type WorkItem } from '@/entities/work-item';
+import { dateText } from '@/shared/lib/date-text';
+import { IssueLink, type IssueSearch, type WorkItem } from '@/entities/work-item';
 import styles from './cards.module.css';
 
 /**
@@ -14,8 +14,7 @@ export function CardsView({ workspaceId, items, search, empty }: { workspaceId: 
   return <ul className={styles.keep} aria-label="카드">{items.map(issue => {
     const label = issue.labels[0];
     return <li key={issue.id} className={styles.cell}>
-      <Link to="/w/$workspaceId/p/$projectId/work-items/$workItemId" params={{ workspaceId, projectId: issue.projectId, workItemId: issue.id }} search={search}
-        className={styles.card} style={{ '--tone': label?.color ?? '#95959f' } as CSSProperties}>
+      <IssueLink workspaceId={workspaceId} item={issue} search={search} className={styles.card} style={{ '--tone': label?.color ?? '#95959f' } as CSSProperties}>
         {label && <span className={styles.label}><span className={styles.dot} aria-hidden="true" />{label.name}{issue.labels.length > 1 && <span className={styles.more}>+{issue.labels.length - 1}</span>}</span>}
         <h3 className={styles.title}><span className={styles.key}>{issue.key}</span>{issue.title}</h3>
         {issue.description && <p className={styles.summary}>{issue.description}</p>}
@@ -23,7 +22,7 @@ export function CardsView({ workspaceId, items, search, empty }: { workspaceId: 
           {issue.assigneeId && <DefaultAvatar seed={issue.assigneeId} name={issue.assigneeName ?? ''} size={20} />}
           <span className={styles.date}>{dateText(issue.startDate ?? issue.createdAt)}</span>
         </span>
-      </Link>
+      </IssueLink>
     </li>;
   })}</ul>;
 }

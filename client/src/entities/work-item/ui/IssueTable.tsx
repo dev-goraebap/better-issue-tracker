@@ -1,10 +1,10 @@
 import { useMemo, type ReactNode } from 'react';
-import { Link } from '@tanstack/react-router';
 import { SHEET_ROW_LINK, SheetTable, type ListSort, type SheetColumn } from '@/shared/ui';
+import { dateText } from '@/shared/lib/date-text';
 import type { WorkItem } from '../api/work-item';
-import { dateText } from '../model/issue';
 import type { IssueSearch } from '../model/search';
 import type { ViewColumn } from '../model/views';
+import { IssueLink } from './IssueLink';
 import { LabelTokens } from './LabelTokens';
 import { PersonCell } from './PersonCell';
 import { PriorityMark } from './PriorityMark';
@@ -33,7 +33,7 @@ export function IssueTable({ workspaceId, rows, search, columns, columnNames, or
     return [
       { key: 'title', header: '제목', sortKey: 'title', render: row => <>
         <span className={styles.key}>{row.key}</span>
-        <Link to="/w/$workspaceId/p/$projectId/work-items/$workItemId" params={{ workspaceId, projectId: row.projectId, workItemId: row.id }} search={search} className={SHEET_ROW_LINK}>{row.title}</Link>
+        <IssueLink workspaceId={workspaceId} item={row} search={search} className={SHEET_ROW_LINK}>{row.title}</IssueLink>
       </> },
       ...columns.map(column => ({ key: column, ...cells[column] })),
     ];

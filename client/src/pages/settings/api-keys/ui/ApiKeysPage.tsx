@@ -2,11 +2,11 @@ import { useEffect, useState } from 'react';
 import { Button, MoreMenu, Text, TextInput, VStack } from '@astryxdesign/core';
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
 import { authError, createKey, keyQueryOptions, revokeKey } from '@/shared/api';
+import { dateText } from '@/shared/lib/date-text';
 import { CompactDialog, ConfirmDialog, FormMessage, ListMore, NavIcon, PageFrame, QueryMessage, Select, SettingsCard, SettingsHead, SettingsRow, StatusToken } from '@/shared/ui';
 import styles from './keys.module.css';
 
 const EXPIRY = [{ value: '7', label: '7일' }, { value: '30', label: '30일 (권장)' }, { value: '90', label: '90일' }, { value: '0', label: '만료 없음' }];
-const dayText = (iso: string) => new Date(iso).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' });
 
 /**
  * PATTERN · 목록이 있는 설정, /settings/api-keys. Keys an agent uses to act as the member (D-021): one row each with its
@@ -56,8 +56,8 @@ export function ApiKeysPage() {
         : <SettingsCard title="내 키" id="api-keys" actions={<Button label="새 키" variant="secondary" size="sm" icon={<NavIcon name="plus" />} onClick={() => setCreating(true)} />}>
           {list.length === 0 && <SettingsRow label="키가 없습니다" description="에이전트나 스크립트가 내 권한으로 일하게 하려면 키를 만드세요." />}
           {list.map(key => <SettingsRow key={key.id} label={<>{key.name}{key.revokedAt && <> <StatusToken label="폐기됨" color="gray" /></>}</>}
-            description={<><span className={styles.code}>{key.prefix}…</span>{key.agentName ? ` · ${key.agentName}` : ''} · 만든 날 {dayText(key.createdAt)}
-              {' · '}{key.lastUsedAt ? `마지막 사용 ${dayText(key.lastUsedAt)}` : '아직 쓰지 않음'}{key.expiresAt && !key.revokedAt ? ` · ${dayText(key.expiresAt)}까지` : ''}</>}>
+            description={<><span className={styles.code}>{key.prefix}…</span>{key.agentName ? ` · ${key.agentName}` : ''} · 만든 날 {dateText(key.createdAt)}
+              {' · '}{key.lastUsedAt ? `마지막 사용 ${dateText(key.lastUsedAt)}` : '아직 쓰지 않음'}{key.expiresAt && !key.revokedAt ? ` · ${dateText(key.expiresAt)}까지` : ''}</>}>
             {!key.revokedAt && <MoreMenu label={`${key.name} 메뉴`} variant="ghost" size="sm" placement="end"
               items={[{ label: '폐기', icon: <NavIcon name="delete" />, onClick: () => setRevoking({ id: key.id, name: key.name }) }]} />}
           </SettingsRow>)}

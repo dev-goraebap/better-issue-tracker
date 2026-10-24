@@ -32,8 +32,6 @@ export const workspaceItemsQuery = (w: string, filters: TaskFilters = {}) => inf
   queryFn: ({ pageParam, signal }) => readJson<components['schemas']['WorkItems']>(`/api/v1/workspaces/${encodeURIComponent(w)}/work-items?${taskParams(filters, pageParam)}`, signal),
   getNextPageParam: page => page.nextCursor ?? undefined, retry: false,
 });
-export const countsQuery = (w: string, p: string, filters: TaskFilters = {}) => queryOptions({ queryKey: [...root(w, p), 'counts', filters], queryFn: ({ signal }) => readJson<components['schemas']['WorkItemColumnCount'][]>(`${workBase(w, p)}/counts?${taskParams(filters)}`, signal), retry: false });
-export const myTasksQuery = (w: string, filters: TaskFilters = {}) => infiniteQueryOptions({ queryKey: ['workspace', w, 'my-tasks', filters], initialPageParam: undefined as string | undefined, queryFn: ({ pageParam, signal }) => readJson<components['schemas']['WorkItems']>(`/api/v1/workspaces/${encodeURIComponent(w)}/my-tasks?${taskParams(filters, pageParam)}`, signal), getNextPageParam: page => page.nextCursor ?? undefined, retry: false });
 export const byRefQuery = (w: string, reference: string) => queryOptions({ queryKey: ['workspace', w, 'task-ref', reference], queryFn: ({ signal }) => readJson<WorkItem>(`/api/v1/workspaces/${encodeURIComponent(w)}/work-items/by-ref/${encodeURIComponent(reference)}`, signal), retry: false });
 export const createItem = (w: string, p: string, body: components['schemas']['CreateWorkItem']) => createAt(workBase(w, p), body);
 export const moveItem = (w: string, p: string, id: string, body: components['schemas']['MoveWorkItem']) => command('POST', `${itemPath(w, p, id)}/move`, body);
@@ -43,4 +41,4 @@ export const updateItem = (w: string, p: string, id: string, body: components['s
 export const archiveItem = (w: string, p: string, id: string, expectedVersion: number, isArchived = true) => command('POST', `${itemPath(w, p, id)}/${isArchived ? 'archive' : 'unarchive'}`, { expectedVersion });
 /** Deletes an issue (soft: an administrator can restore it). */
 export const deleteItem = (w: string, p: string, id: string, expectedVersion: number) => command('DELETE', `${itemPath(w, p, id)}?expectedVersion=${expectedVersion}`);
-export const refreshItems = (client: QueryClient, w: string, p: string) => Promise.allSettled([client.invalidateQueries({ queryKey: root(w, p) }), client.invalidateQueries({ queryKey: ['workspace', w, 'items'] }), client.invalidateQueries({ queryKey: ['workspace', w, 'my-tasks'] }), client.invalidateQueries({ queryKey: ['workspace', w, 'task-ref'] })]);
+export const refreshItems = (client: QueryClient, w: string, p: string) => Promise.allSettled([client.invalidateQueries({ queryKey: root(w, p) }), client.invalidateQueries({ queryKey: ['workspace', w, 'items'] }), client.invalidateQueries({ queryKey: ['workspace', w, 'task-ref'] })]);

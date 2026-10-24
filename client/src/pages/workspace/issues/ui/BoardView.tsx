@@ -1,10 +1,9 @@
 import { useState, type DragEvent } from 'react';
 import { IconButton, useToast } from '@astryxdesign/core';
 import { useQueryClient } from '@tanstack/react-query';
-import { Link } from '@tanstack/react-router';
 import { authError } from '@/shared/api';
 import { DefaultAvatar, NavIcon } from '@/shared/ui';
-import { CATEGORIES, CATEGORY_LABELS, moveItem, PriorityMark, refreshItems, StatusBadge, type ColumnCategory, type IssueSearch, type WorkItem } from '@/entities/work-item';
+import { CATEGORIES, CATEGORY_LABELS, IssueLink, moveItem, PriorityMark, refreshItems, StatusBadge, type ColumnCategory, type IssueSearch, type WorkItem } from '@/entities/work-item';
 import type { Scope } from '../model/scope';
 import styles from './board.module.css';
 
@@ -50,14 +49,13 @@ export function BoardView({ scope, items, search, onCreate }: { scope: Scope; it
         {onCreate && <span className={styles.columnAdd}><IconButton label={`${lane.name}에 이슈 추가`} icon={<NavIcon name="plus" />} variant="ghost" size="sm" onClick={() => onCreate(lane.key)} /></span>}
       </header>
       <ul className={styles.cards}>{lane.cards.map(item => <li key={item.id}>
-        <Link to="/w/$workspaceId/p/$projectId/work-items/$workItemId" params={{ workspaceId: scope.workspaceId, projectId: item.projectId, workItemId: item.id }} search={search}
-          className={styles.card} draggable={canDrag} data-dragging={dragged?.id === item.id || undefined}
+        <IssueLink workspaceId={scope.workspaceId} item={item} search={search} className={styles.card} draggable={canDrag} data-dragging={dragged?.id === item.id || undefined}
           onDragStart={canDrag ? event => { setDragged(item); event.dataTransfer.effectAllowed = 'move'; event.dataTransfer.setData('text/plain', item.key); } : undefined}
           onDragEnd={canDrag ? () => { setDragged(null); setOver(null); } : undefined}>
           <span className={styles.cardKey}>{item.key}</span>
           <span className={styles.cardTitle}>{item.title}</span>
           <span className={styles.cardMeta}>{item.priority ? <PriorityMark priority={item.priority} /> : <span />}{item.assigneeId && <DefaultAvatar seed={item.assigneeId} name={item.assigneeName ?? ''} size={20} />}</span>
-        </Link>
+        </IssueLink>
       </li>)}</ul>
     </section>)}
   </div>;

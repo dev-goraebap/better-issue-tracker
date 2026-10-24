@@ -16,7 +16,7 @@ export { DateField } from './date-field';
 // Brought from SandboxHr shared/ui with the same names and roles (bit-frontend).
 export { PageBackShownContext, PageChromeContext, type PageChromeTargets } from './page-chrome';
 export { SHEET_ROW_LINK, SheetTable, type SheetColumn } from './sheet-table';
-export { sortOf, sortSearch, type ListSort, type SortDirection, type SortKey } from './sort-menu';
+export type { ListSort, SortDirection, SortKey } from './sort-menu';
 export { ITEM_ROW_LINK, ItemList, ItemMeta, ItemRow } from './item-list';
 export { PageFoot } from './page-foot';
 export { CompactDialog, ConfirmDialog, FrameBody, FrameFoot, FrameHead } from './frame';
@@ -28,7 +28,7 @@ export type { ListAction, ListDisplay, ListSearch, ListViews } from './list-tool
 export { BackLink } from './BackLink';
 export { PageState } from './page-state';
 export { StatusToken } from './StatusToken';
-export { Marked, SearchTrigger } from './search-palette';
+export { SearchTrigger } from './search-palette';
 export { PageTabs, type PageTab } from './page-tabs';
 export { SearchSelect, Select, SheetList, type SheetChoice, type SheetGroup } from './select';
 export { useFillRoom } from './use-fill-room';
@@ -36,4 +36,4 @@ export { NotificationBell } from './notification-bell';
 export { SettingsCard, SettingsHead, SettingsRow } from './settings-card';
 export { PropertyPicker, type PropertyOption } from './property-picker';
 export { DuePicker } from './due-picker';
-export { PanelDialog, RoutedPanel, SidePanel, Surface, SurfaceContext, usePanelSurface, type PanelSurface } from './side-panel';
+export { PanelDialog, RoutedPanel, Surface, SurfaceContext, usePanelSurface, type PanelSurface } from './side-panel';

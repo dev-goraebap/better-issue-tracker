@@ -1,9 +1,9 @@
-import { Link } from '@tanstack/react-router';
 import { DefaultAvatar, ITEM_ROW_LINK, ItemList, ItemMeta, ItemRow, NavIcon } from '@/shared/ui';
+import { dateText } from '@/shared/lib/date-text';
 import type { WorkItem } from '../api/work-item';
-import { dateText } from '../model/issue';
 import type { IssueSearch } from '../model/search';
 import type { ViewColumn } from '../model/views';
+import { IssueLink } from './IssueLink';
 import { LabelTokens } from './LabelTokens';
 import { PriorityMark } from './PriorityMark';
 import { StatusBadge } from './StatusBadge';
@@ -19,7 +19,7 @@ export function IssueRows({ workspaceId, rows, search, columns, columnNames }: {
   const shows = (column: ViewColumn) => columns.includes(column);
   return <ItemList label="이슈 목록">{rows.map(row => <ItemRow key={row.id}
     lead={row.assigneeId ? <DefaultAvatar seed={row.assigneeId} name={row.assigneeName ?? ''} size={32} /> : <span className={styles.leadEmpty} aria-hidden="true" />}
-    title={<Link to="/w/$workspaceId/p/$projectId/work-items/$workItemId" params={{ workspaceId, projectId: row.projectId, workItemId: row.id }} search={search} className={ITEM_ROW_LINK}>{row.title}</Link>}
+    title={<IssueLink workspaceId={workspaceId} item={row} search={search} className={ITEM_ROW_LINK}>{row.title}</IssueLink>}
     meta={<>
       <ItemMeta><span className={styles.key}>{row.key}</span></ItemMeta>
       {shows('status') && row.columnCategory && <ItemMeta><StatusBadge category={row.columnCategory} name={row.columnId ? columnNames?.get(row.columnId) : undefined} /></ItemMeta>}

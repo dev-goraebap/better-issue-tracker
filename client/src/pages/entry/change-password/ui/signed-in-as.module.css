@@ -1,0 +1,5 @@
+/* Who is signed in, then the ways out under a hairline. */
+.who { display: flex; align-items: center; gap: var(--spacing-3); min-inline-size: 0; padding: var(--spacing-2); }
+.identity { flex: 1; min-inline-size: 0; }
+.signOut { display: flex; flex-direction: column; padding: var(--spacing-1); border-block-start: var(--border-width) solid var(--color-border); }
+@media (width < 64rem) { .signOut button { min-block-size: var(--size-element-touch); } }

@@ -16,7 +16,6 @@
 .brandRule { inline-size: var(--border-width); block-size: 1rem; background: var(--color-border-emphasized, var(--color-border)); flex-shrink: 0; }
 .spaceName { min-inline-size: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.9375rem; font-weight: 700; letter-spacing: -0.01em;
   color: var(--color-text-primary); text-decoration: none; }
-.newsDot { display: inline-block; inline-size: 0.5rem; block-size: 0.5rem; border-radius: var(--radius-full); background: var(--color-accent); flex-shrink: 0; }
 
 /* The card's header row: the fold, the trail, then the page's tools and actions at its end. */
 .topbar { position: sticky; inset-block-start: 0; z-index: 3; flex-shrink: 0; align-items: center; box-sizing: border-box; block-size: var(--workspace-topbar-height);

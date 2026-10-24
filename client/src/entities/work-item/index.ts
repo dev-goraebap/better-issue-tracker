@@ -1,9 +1,9 @@
 export {
-  workBase, itemPath, itemQuery, itemsQuery, workspaceItemsQuery, countsQuery, myTasksQuery, byRefQuery, createItem, moveItem, updateItem, archiveItem, deleteItem, refreshItems, taskParams,
+  workBase, itemPath, itemQuery, itemsQuery, workspaceItemsQuery, byRefQuery, createItem, moveItem, updateItem, archiveItem, deleteItem, refreshItems, taskParams,
 } from './api/work-item';
 export type { WorkItem, ItemLabel, ColumnCategory, TaskFilters } from './api/work-item';
-export { PRIORITIES, TRIGGERS } from './model/labels';
-export { CATEGORIES, CATEGORY_LABELS, categoryOf, dateText, PRIORITY_RANK, spanOf, SYSTEM_LABEL, type Priority, type StatusCategory } from './model/issue';
+export { PRIORITIES } from './model/labels';
+export { CATEGORIES, CATEGORY_LABELS, categoryOf, issueHref, PRIORITY_RANK, spanOf, SYSTEM_LABEL, type Priority, type StatusCategory } from './model/issue';
 export { parseIssueSearch, parseNewIssueSearch, type IssueSearch, type NewIssueSearch } from './model/search';
 export {
   ALL_VIEW, addView, effectiveView, FILTER_KEYS, filterIssues, NO_FILTER, removeView, setViewTweak, updateView, useViews, useViewTweak,
@@ -18,3 +18,5 @@ export { LabelTokens } from './ui/LabelTokens';
 export { PersonCell } from './ui/PersonCell';
 export { IssueTable } from './ui/IssueTable';
 export { IssueRows } from './ui/IssueRows';
+export { IssueLink } from './ui/IssueLink';
+export { labelOptions, NO_STATUS, peopleOptions, priorityOptions, statusOptions } from './ui/property-options';

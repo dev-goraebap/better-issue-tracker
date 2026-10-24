@@ -1,6 +1,5 @@
 import { useLayoutEffect, useRef, type CSSProperties, type ReactNode } from 'react';
-import { Link } from '@tanstack/react-router';
-import { spanOf, StatusBadge, type IssueSearch, type WorkItem } from '@/entities/work-item';
+import { IssueLink, spanOf, StatusBadge, type IssueSearch, type WorkItem } from '@/entities/work-item';
 import { currentDay } from '../model/dates';
 import styles from './timeline.module.css';
 
@@ -47,8 +46,9 @@ export function TimelineView({ workspaceId, items, search, empty }: { workspaceI
       </div>
     </div>
     {dated.map(({ item, start, end }) => <div key={item.id} className={styles.row} role="row">
-      <Link to="/w/$workspaceId/p/$projectId/work-items/$workItemId" params={{ workspaceId, projectId: item.projectId, workItemId: item.id }} search={search}
-        className={styles.name} role="rowheader"><span className={styles.key}>{item.key}</span><span className={styles.title}>{item.title}</span></Link>
+      <IssueLink workspaceId={workspaceId} item={item} search={search} className={styles.name} role="rowheader">
+        <span className={styles.key}>{item.key}</span><span className={styles.title}>{item.title}</span>
+      </IssueLink>
       <div className={styles.track} role="cell">
         <span className={styles.today} style={{ gridColumn: at(today) + 1 }} aria-hidden="true" />
         <span className={styles.bar} data-status={item.columnCategory ?? undefined} style={{ gridColumn: `${at(start) + 1} / ${at(end) + 2}` }}

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
+import { useEffect, useEffectEvent, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import type { WorkItem } from '@/entities/work-item';
 import { daysBetween } from '../model/dates';
 
@@ -24,8 +24,7 @@ export function useDayDrag(onMove: (item: WorkItem, days: number) => void) {
   const press = useRef<Press | null>(null);
   const current = useRef<DayDrag | null>(null);
   const dragged = useRef(false);
-  const handler = useRef(onMove);
-  handler.current = onMove;
+  const moved = useEffectEvent(onMove);
 
   useEffect(() => {
     const end = () => { press.current = null; current.current = null; setDrag(null); };
@@ -43,7 +42,7 @@ export function useDayDrag(onMove: (item: WorkItem, days: number) => void) {
         dragged.current = true;
         setTimeout(() => { dragged.current = false; }, 0);
         const days = daysBetween(done.from, done.to);
-        if (days !== 0) handler.current(done.item, days);
+        if (days !== 0) moved(done.item, days);
       }
       end();
     };
