@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useId, useRef, useState, type MouseEvent } from 'react';
-import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
+import { useToast } from '@astryxdesign/core';
+import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useParams, useRouterState, useSearch } from '@tanstack/react-router';
-import { sessionQueryOptions } from '@/shared/api';
+import { authError, sessionQueryOptions } from '@/shared/api';
 import { PanelHostContext, useScreenPanel, withoutPanel } from '@/shared/lib/routed-panel';
 import { ConfirmDialog, PageFrame, PageState, RequestBoundary, RoutedPanel } from '@/shared/ui';
 import { labelsQuery } from '@/entities/label';
@@ -49,7 +50,9 @@ export function IssuesPage() {
   const labels = useQuery(labelsQuery(workspaceId)).data ?? [];
   const members = useInfiniteQuery(memberOptionsQuery(workspaceId)).data?.pages.flatMap(page => page.items) ?? [];
   const scopeItems = useScopeItems(workspaceId, projectId);
-  const views = useViews(workspaceId, me);
+  const client = useQueryClient();
+  const toast = useToast();
+  const views = useViews(workspaceId);
   const view = views.find(each => each.id === (search.v ?? ALL_VIEW)) ?? views[0]!;
   const tweak = useViewTweak(workspaceId, view.id);
   const effective = effectiveView(view, tweak, search);
@@ -97,18 +100,20 @@ export function IssuesPage() {
   </PageFrame>;
   const startCreate = () => setEditing({ mode: 'create', initial: { name: '', description: '', icon: 'list', color: VIEW_COLORS[1]!, isPersonal: false } });
   const saveView = (draft: ViewDraft) => {
-    if (editing?.mode === 'edit') { updateView(me, workspaceId, view.id, draft); setEditing(null); return; }
-    const id = addView(me, { workspaceId, ...draft, layout: effective.layout, filters: effective.filters, sort: effective.sort, columns: effective.columns });
-    setEditing(null);
-    place({ v: id });
+    if (editing?.mode === 'edit') {
+      void updateView(client, view, draft).then(() => setEditing(null)).catch(failure => toast({ body: authError(failure) }));
+      return;
+    }
+    void addView(client, workspaceId, { ...draft, layout: effective.layout, filters: effective.filters, sort: effective.sort, columns: effective.columns })
+      .then(id => { setEditing(null); place({ v: id }); }).catch(failure => toast({ body: authError(failure) }));
   };
   const copy = () => {
-    const id = addView(me, { ...view, name: `${view.name} 사본`, isBuiltIn: undefined, isPersonal: view.isPersonal });
-    place({ v: id });
+    void addView(client, workspaceId, { ...view, name: `${view.name} 사본`, isPersonal: view.isBuiltIn ? false : view.isPersonal })
+      .then(id => place({ v: id })).catch(failure => toast({ body: authError(failure) }));
   };
   const panelPath = fullSearch.panel?.split('?')[0] ?? '';
   return <PanelHostContext.Provider value={host}><PageFrame title={project.data?.name ?? '홈'} icon={projectId ? 'board' : 'home'} chrome="header"
-    tabs={<ViewTabs views={views} value={view.id} panelId={panelId} me={me} role={role} onPick={pick} onCreate={startCreate} onCopy={copy} onRemove={() => setRemoving(true)}
+    tabs={<ViewTabs views={views} value={view.id} panelId={panelId} onPick={pick} onCreate={startCreate} onCopy={copy} onRemove={() => setRemoving(true)}
       onEdit={() => setEditing({ mode: 'edit', initial: { name: view.name, description: view.description ?? '', icon: view.icon, color: view.color, isPersonal: view.isPersonal } })} />}>
     <div role="tabpanel" id={panelId} onClickCapture={peek}>
       {editing && <ViewEditor key={`${editing.mode}-${view.id}`} initial={editing.initial} mode={editing.mode} onCancel={() => setEditing(null)} onSave={saveView} />}
@@ -121,6 +126,6 @@ export function IssuesPage() {
       size={NEW_PATH.test(panelPath) ? 'form' : 'content'}><IssuePanel href={fullSearch.panel} /></RoutedPanel>}
     {isRemoving && <ConfirmDialog title={`'${view.name}' 뷰를 지울까요?`} description={view.isPersonal ? '나만 보던 뷰가 사라집니다. 이슈는 그대로 남습니다.' : '워크스페이스의 모두에게서 이 뷰가 사라집니다. 이슈는 그대로 남습니다.'}
       confirmLabel="지우기" variant="destructive" onClose={() => setRemoving(false)}
-      onConfirm={() => { setRemoving(false); removeView(me, workspaceId, view.id); place({}); }} />}
+      onConfirm={() => { setRemoving(false); void removeView(client, view).then(() => place({})).catch(failure => toast({ body: authError(failure) })); }} />}
   </PageFrame></PanelHostContext.Provider>;
 }

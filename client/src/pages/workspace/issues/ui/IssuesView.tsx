@@ -9,8 +9,8 @@ import { DefaultAvatar, ListSummary, ListToolbar, PageState, type ListDisplay, t
 import type { Label } from '@/entities/label';
 import type { Member } from '@/entities/workspace';
 import {
-  canEditView, CATEGORY_LABELS, FILTER_KEYS, filterIssues, IssueRows, IssueTable, NO_FILTER, PRIORITIES, refreshItems, setViewTweak, SYSTEM_LABEL, updateItem,
-  updateView, VIEW_COLUMNS, VIEW_LAYOUTS, VIEW_SORT_KEYS, type effectiveView, type IssueSearch, type IssueView, type ViewColumn, type ViewLayout, type ViewTweak,
+  CATEGORY_LABELS, FILTER_KEYS, filterIssues, IssueRows, IssueTable, NO_FILTER, PRIORITIES, refreshItems, setViewTweak, SYSTEM_LABEL, updateItem,
+  updateView, VIEW_COLUMNS, VIEW_LAYOUTS, VIEW_SORT_KEYS, type effectiveView, type IssueSearch, type IssueView, type ViewColumn, type ViewLayout, type ViewSort, type ViewTweak,
   type WorkItem,
 } from '@/entities/work-item';
 import { currentDay, shiftDay } from '../model/dates';
@@ -49,14 +49,14 @@ export function IssuesView({ scope, view, tweak, effective, issues, labels, memb
   // An issue opened from the calendar goes where a pressed link would: into the page's modal (D-069).
   const openPage = useGo();
   const [shown, setShown] = useState(SLICE);
-  const { workspaceId, me, role } = scope;
-  const canEdit = canEditView(view, me, role);
+  const { workspaceId } = scope;
+  const canEdit = view.canEdit;
   const rows = useMemo(() => filterIssues(issues, effective.filters, effective.sort, search.q), [issues, effective.filters, effective.sort, search.q]);
   const columnNames = useMemo(() => new Map(scope.columns.map(column => [column.id, column.name])), [scope.columns]);
   // A member's adjustment that comes back to the view's own is no adjustment.
   const adjust = (patch: ViewTweak) => {
     const next = { ...tweak, ...patch };
-    setViewTweak(workspaceId, view.id, {
+    void setViewTweak(client, workspaceId, view.id, {
       layout: next.layout && next.layout !== view.layout ? next.layout : undefined,
       sort: next.sort && !same(next.sort, view.sort) ? next.sort : undefined,
       columns: next.columns && !same(next.columns, view.columns) ? next.columns : undefined,
@@ -84,20 +84,21 @@ export function IssuesView({ scope, view, tweak, effective, issues, labels, memb
   const revert = () => go(Object.fromEntries(FILTER_KEYS.map(key => [key, undefined])));
   const saveFilters = () => {
     if (!canEdit) { onSaveAsView(); return; }
-    updateView(me, workspaceId, view.id, { filters: effective.filters });
+    void updateView(client, view, { filters: effective.filters }).catch(failure => toast({ body: authError(failure) }));
     revert();
   };
   const views: ListViews = { label: '보기 방식', value: effective.layout, options: [...VIEW_LAYOUTS], onChange: layout => adjust({ layout: layout as ViewLayout }) };
   const order: ListSort = { keys: VIEW_SORT_KEYS, key: effective.sort.key, direction: effective.sort.direction, usual: view.sort,
-    onChange: (key, direction) => { setShown(SLICE); adjust({ sort: { key, direction } }); } };
+    onChange: (key, direction) => { setShown(SLICE); adjust({ sort: { key: key as ViewSort['key'], direction } }); } };
   const display: ListDisplay = {
     isChanged: effective.isTweaked,
     columns: effective.layout === 'list' ? { label: '표시할 속성', options: VIEW_COLUMNS.map(column => ({ value: column.value, label: column.label })), value: effective.columns,
       onChange: next => adjust({ columns: VIEW_COLUMNS.map(column => column.value).filter(column => next.includes(column)) as ViewColumn[] }) } : undefined,
     foot: tweak ? <>
-      <Button label="초기화" variant="ghost" size="sm" onClick={() => setViewTweak(workspaceId, view.id, undefined)} />
+      <Button label="초기화" variant="ghost" size="sm" onClick={() => { void setViewTweak(client, workspaceId, view.id, undefined); }} />
       {canEdit && <Button label={view.isPersonal ? '뷰에 저장' : '모두의 기본값으로 저장'} variant="secondary" size="sm"
-        onClick={() => { updateView(me, workspaceId, view.id, { layout: effective.layout, sort: effective.sort, columns: effective.columns }); setViewTweak(workspaceId, view.id, undefined); }} />}
+        onClick={() => { void updateView(client, view, { layout: effective.layout, sort: effective.sort, columns: effective.columns })
+          .then(() => setViewTweak(client, workspaceId, view.id, undefined)).catch(failure => toast({ body: authError(failure) })); }} />}
     </> : undefined,
   };
   const applied = effective.isFiltered ? <>

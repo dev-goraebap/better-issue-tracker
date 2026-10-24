@@ -1,7 +1,7 @@
 import { useId } from 'react';
 import { IconButton, MoreMenu } from '@astryxdesign/core';
 import { NavIcon, PageTabs, type PageTab } from '@/shared/ui';
-import { canEditView, type IssueView } from '@/entities/work-item';
+import type { IssueView } from '@/entities/work-item';
 import styles from './views.module.css';
 
 /**
@@ -10,8 +10,8 @@ import styles from './views.module.css';
  * sight that the member may change has a menu to edit, copy or remove it. The chips are tabs to assistive technology,
  * the view the address's.
  */
-export function ViewTabs({ views, value, panelId, me, role, onPick, onCreate, onEdit, onCopy, onRemove }: {
-  views: readonly IssueView[]; value: string; panelId: string; me: string; role?: string;
+export function ViewTabs({ views, value, panelId, onPick, onCreate, onEdit, onCopy, onRemove }: {
+  views: readonly IssueView[]; value: string; panelId: string;
   onPick: (id: string) => void; onCreate: () => void; onEdit: () => void; onCopy: () => void; onRemove: () => void;
 }) {
   const current = views.find(view => view.id === value);
@@ -23,9 +23,9 @@ export function ViewTabs({ views, value, panelId, me, role, onPick, onCreate, on
     <PageTabs value={value} items={items} panelId={panelId} onChange={onPick} />
     <IconButton label="새 뷰" tooltip="새 뷰" variant="ghost" size="sm" icon={<NavIcon name="plus" />} onClick={onCreate} />
     {current && !current.isBuiltIn && <MoreMenu label={`${current.name} 뷰 메뉴`} variant="ghost" size="sm" items={[
-      ...(canEditView(current, me, role) ? [{ label: '뷰 고치기', icon: <NavIcon name="edit" />, onClick: onEdit }] : []),
+      ...(current.canEdit ? [{ label: '뷰 고치기', icon: <NavIcon name="edit" />, onClick: onEdit }] : []),
       { label: '복제', icon: <NavIcon name="copy" />, onClick: onCopy },
-      ...(canEditView(current, me, role) ? [{ label: '뷰 지우기', icon: <NavIcon name="delete" />, onClick: onRemove }] : []),
+      ...(current.canEdit ? [{ label: '뷰 지우기', icon: <NavIcon name="delete" />, onClick: onRemove }] : []),
     ]} />}
   </div>;
 }

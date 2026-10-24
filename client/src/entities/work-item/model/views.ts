@@ -1,25 +1,25 @@
-import { useSyncExternalStore } from 'react';
+import { useQuery, type QueryClient } from '@tanstack/react-query';
+import type { components } from '@/shared/api';
 import type { WorkItem } from '../api/work-item';
+import { createView, deleteTweak, deleteView, patchView, putTweak, tweaksQuery, viewsQuery, type ServerTweak, type ServerView } from '../api/view';
 import { categoryOf, PRIORITY_RANK, SYSTEM_LABEL } from './issue';
 
 /**
- * The views over a workspace's issues (D-066, D-068), as Linear's, in three layers: a shared view everyone sees, a
- * personal view only its maker sees ('나만 보기'), and each member's own adjustments to a shared view (its layout, order
- * and columns), which '초기화' drops and '모두의 기본값으로 저장' writes into the view. '전체 이슈' is built in: every
- * issue, a list, never renamed or removed. Until the server keeps views (T-006 stage 5) they live in this browser.
- * Filters are scope-free so one view reads the same in 전체 and in a project: status by category (todo, doing, done,
- * none), labels by id or SYSTEM_LABEL, assignees by user id.
+ * The views over a workspace's issues (D-066, D-068), as Linear's, in three layers kept on the server: a shared view
+ * everyone sees, a personal view only its maker sees ('나만 보기'), and each member's own adjustments to a view (its
+ * layout, order and columns), which '초기화' drops and '모두의 기본값으로 저장' writes into the view. '전체 이슈' is built
+ * in here, not stored: every issue, a list, never renamed or removed, though a member may still adjust it. Filters are
+ * scope-free so one view reads the same in 전체 and in a project: status by category (todo, doing, done, none), labels
+ * by id or SYSTEM_LABEL, assignees by user id. Whether the member may change a view is the server's (canEdit).
  */
-export type ViewLayout = 'list' | 'calendar' | 'board' | 'timeline' | 'cards' | 'history';
-export type ViewFilters = { status?: string; priority?: string; assignee?: string; label?: string };
-export type ViewSort = { key: string; direction: 'asc' | 'desc' };
-export type ViewColumn = 'status' | 'priority' | 'assignee' | 'labels' | 'due' | 'updated' | 'created';
-export type IssueView = {
-  id: string; workspaceId: string; name: string; icon: string; color: string; description?: string;
-  layout: ViewLayout; filters: ViewFilters; sort: ViewSort; columns: ViewColumn[];
-  ownerId: string; isPersonal: boolean; isBuiltIn?: boolean;
+export type ViewLayout = ServerView['layout'];
+export type ViewFilters = components['schemas']['IssueViewFilters'];
+export type ViewSort = ServerView['sort'];
+export type ViewColumn = ServerView['columns'][number];
+export type IssueView = Omit<ServerView, 'description' | 'version' | 'position' | 'createdAt' | 'updatedAt'> & {
+  description?: string; version?: number; isBuiltIn?: boolean;
 };
-/** A member's own adjustments to a shared view. */
+/** A member's own adjustments to a view. */
 export type ViewTweak = { layout?: ViewLayout; sort?: ViewSort; columns?: ViewColumn[] };
 
 export const ALL_VIEW = 'all';
@@ -40,70 +40,58 @@ export const VIEW_SORT_KEYS = [
 ];
 export const VIEW_ICONS = ['list', 'rows', 'board', 'calendar', 'milestone', 'decision', 'session', 'members', 'person', 'priority', 'label', 'agent'];
 export const VIEW_COLORS = ['#95959f', '#5e6ad2', '#26b5ce', '#4cb782', '#f2c94c', '#f2994a', '#eb5757', '#bb87fc'];
-const USUAL_COLUMNS: ViewColumn[] = ['status', 'priority', 'assignee', 'labels', 'updated'];
-const USUAL_SORT: ViewSort = { key: 'updated', direction: 'desc' };
 
-/** The views a workspace starts with: 전체 이슈, then a few the team would make itself. */
-function starters(workspaceId: string, ownerId: string): IssueView[] {
-  const base = { workspaceId, ownerId, isPersonal: false, sort: USUAL_SORT, columns: USUAL_COLUMNS };
-  return [
-    { ...base, id: ALL_VIEW, name: '전체 이슈', icon: 'list', color: '#95959f', layout: 'list', filters: {}, isBuiltIn: true },
-    { ...base, id: `${workspaceId}-backlog`, name: '백로그', icon: 'rows', color: '#95959f', layout: 'list', filters: { status: 'none' }, sort: { key: 'priority', direction: 'asc' } },
-    { ...base, id: `${workspaceId}-board`, name: '진행 보드', icon: 'board', color: '#f2c94c', layout: 'board', filters: {} },
-    { ...base, id: `${workspaceId}-calendar`, name: '캘린더', icon: 'calendar', color: '#4cb782', layout: 'calendar', filters: {} },
-    { ...base, id: `${workspaceId}-decisions`, name: '결정기록', icon: 'decision', color: '#5e6ad2', layout: 'history', filters: { label: SYSTEM_LABEL }, columns: ['assignee', 'labels', 'updated'] },
-  ];
-}
+/** 전체 이슈, the one view every workspace has and nobody stores. */
+const allView = (workspaceId: string): IssueView => ({
+  id: ALL_VIEW, workspaceId, name: '전체 이슈', icon: 'list', color: '#95959f', layout: 'list', filters: {}, sort: { key: 'updated', direction: 'desc' },
+  columns: ['status', 'priority', 'assignee', 'labels', 'updated'], ownerId: '', isPersonal: false, canEdit: false, isBuiltIn: true,
+});
+const fromServer = ({ description, position: _position, createdAt: _createdAt, updatedAt: _updatedAt, ...view }: ServerView): IssueView =>
+  ({ ...view, description: description ?? undefined });
 
-const VIEWS_KEY = 'bit-views';
-const TWEAKS_KEY = 'bit-view-tweaks';
-const read = <T,>(key: string, fallback: T): T => { try { return (JSON.parse(localStorage.getItem(key) ?? 'null') as T | null) ?? fallback; } catch { return fallback; } };
-const write = (key: string, value: unknown) => { try { localStorage.setItem(key, JSON.stringify(value)); } catch { /* This visit still keeps it in memory. */ } };
-
-let views: Record<string, IssueView[]> = read(VIEWS_KEY, {});
-let tweaks: Record<string, ViewTweak> = read(TWEAKS_KEY, {});
-let version = 0;
-const listeners = new Set<() => void>();
-const changed = () => { version += 1; write(VIEWS_KEY, views); write(TWEAKS_KEY, tweaks); listeners.forEach(listener => listener()); };
-const subscribe = (listener: () => void) => { listeners.add(listener); return () => { listeners.delete(listener); }; };
-const listOf = (workspaceId: string, me: string) => views[workspaceId] ?? starters(workspaceId, me);
-const tweakKey = (workspaceId: string, viewId: string) => `${workspaceId}:${viewId}`;
-
-/** The views the member sees in a workspace: the shared ones and their own personal ones, in order. */
-export function useViews(workspaceId: string, me: string): IssueView[] {
-  useSyncExternalStore(subscribe, () => version);
-  return listOf(workspaceId, me).filter(view => !view.isPersonal || view.ownerId === me);
+/** The views the member sees in a workspace: 전체 이슈 first, then the server's in order. */
+export function useViews(workspaceId: string): IssueView[] {
+  const views = useQuery(viewsQuery(workspaceId)).data ?? [];
+  return [allView(workspaceId), ...[...views].sort((a, b) => a.position - b.position).map(fromServer)];
 }
 /** The member's adjustments to a view, if any. */
 export function useViewTweak(workspaceId: string, viewId: string): ViewTweak | undefined {
-  useSyncExternalStore(subscribe, () => version);
-  return tweaks[tweakKey(workspaceId, viewId)];
+  const tweak = useQuery(tweaksQuery(workspaceId)).data?.find(each => each.viewKey === viewId);
+  return tweak && (tweak.layout || tweak.sort || tweak.columns) ? { layout: tweak.layout, sort: tweak.sort, columns: tweak.columns } : undefined;
 }
-/** Whether the member may change a view for everyone: its maker, or the workspace's owner or admin (D-068). */
-export const canEditView = (view: IssueView, me: string, role?: string) => !view.isBuiltIn && (view.ownerId === me || role === 'owner' || role === 'admin');
 
-export function addView(me: string, draft: Omit<IssueView, 'id' | 'ownerId'>): string {
-  const id = `view-${Date.now().toString(36)}`;
-  views = { ...views, [draft.workspaceId]: [...listOf(draft.workspaceId, me), { ...draft, id, ownerId: me }] };
-  changed();
+type ViewDraft = Pick<IssueView, 'name' | 'icon' | 'color' | 'isPersonal' | 'layout' | 'filters' | 'sort' | 'columns'> & { description?: string };
+const refreshViews = (client: QueryClient, w: string) => client.invalidateQueries({ queryKey: ['workspace', w, 'views'] });
+
+/** Makes a view and answers its id. */
+export async function addView(client: QueryClient, workspaceId: string, draft: ViewDraft): Promise<string> {
+  const id = await createView(workspaceId, { ...draft, description: draft.description || null });
+  await refreshViews(client, workspaceId);
   return id;
 }
-export function updateView(me: string, workspaceId: string, id: string, patch: Partial<Omit<IssueView, 'id' | 'workspaceId' | 'ownerId' | 'isBuiltIn'>>) {
-  views = { ...views, [workspaceId]: listOf(workspaceId, me).map(view => (view.id === id ? { ...view, ...patch } : view)) };
-  changed();
+/** Changes a stored view for everyone who sees it. */
+export async function updateView(client: QueryClient, view: IssueView, patch: Partial<ViewDraft>) {
+  if (view.isBuiltIn || view.version === undefined) return;
+  try { await patchView(view.workspaceId, view.id, { expectedVersion: view.version, ...patch, ...('description' in patch ? { description: patch.description || null } : {}) }); }
+  finally { await refreshViews(client, view.workspaceId); }
 }
-export function removeView(me: string, workspaceId: string, id: string) {
-  views = { ...views, [workspaceId]: listOf(workspaceId, me).filter(view => view.id !== id || view.isBuiltIn) };
-  const { [tweakKey(workspaceId, id)]: _dropped, ...rest } = tweaks;
-  tweaks = rest;
-  changed();
+export async function removeView(client: QueryClient, view: IssueView) {
+  if (view.isBuiltIn || view.version === undefined) return;
+  try { await deleteView(view.workspaceId, view.id, view.version); }
+  finally { await Promise.allSettled([refreshViews(client, view.workspaceId), client.invalidateQueries({ queryKey: ['workspace', view.workspaceId, 'view-tweaks'] })]); }
 }
-/** Keeps the member's adjustment to a view; an empty one drops it. */
-export function setViewTweak(workspaceId: string, viewId: string, tweak: ViewTweak | undefined) {
-  const key = tweakKey(workspaceId, viewId);
-  const { [key]: _old, ...rest } = tweaks;
-  tweaks = tweak && Object.values(tweak).some(value => value !== undefined) ? { ...rest, [key]: tweak } : rest;
-  changed();
+/**
+ * Keeps the member's adjustment to a view (an empty one drops it). It shows at once: the cached tweaks change before the
+ * server answers, and are read again either way.
+ */
+export async function setViewTweak(client: QueryClient, workspaceId: string, viewKey: string, tweak: ViewTweak | undefined) {
+  const isEmpty = !tweak || Object.values(tweak).every(value => value === undefined);
+  const key = tweaksQuery(workspaceId).queryKey;
+  client.setQueryData<ServerTweak[]>(key, previous => [...(previous ?? []).filter(each => each.viewKey !== viewKey), ...(isEmpty ? [] : [{ viewKey, ...tweak }])]);
+  try {
+    if (isEmpty) await deleteTweak(workspaceId, viewKey);
+    else await putTweak(workspaceId, viewKey, { layout: tweak.layout ?? null, sort: tweak.sort, columns: tweak.columns ?? null });
+  } finally { await client.invalidateQueries({ queryKey: key }); }
 }
 
 /** The address's conditions over a view: a filter the address names (or '-' for none) stands over the view's own. */
@@ -120,10 +108,7 @@ export function effectiveView(view: IssueView, tweak: ViewTweak | undefined, sea
     if (value) filters[key] = value;
   }
   const isFiltered = FILTER_KEYS.some(key => (filters[key] ?? '') !== (view.filters[key] ?? ''));
-  return {
-    filters, isFiltered, layout: tweak?.layout ?? view.layout, sort: tweak?.sort ?? view.sort,
-    columns: (tweak?.columns ?? view.columns).filter(column => VIEW_COLUMNS.some(known => known.value === column)), isTweaked: !!tweak,
-  };
+  return { filters, isFiltered, layout: tweak?.layout ?? view.layout, sort: tweak?.sort ?? view.sort, columns: tweak?.columns ?? view.columns, isTweaked: !!tweak };
 }
 
 const valuesOf = (value?: string) => (value ? value.split(',').filter(Boolean) : []);
