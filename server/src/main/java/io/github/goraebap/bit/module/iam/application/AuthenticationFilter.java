@@ -139,6 +139,12 @@ final class AuthenticationFilter extends OncePerRequestFilter {
         if (Set.of("GET", "HEAD").contains(method) && path.matches(labels + "(?:/[^/]+)?")
                 || method.equals("POST") && path.matches(labels)
                 || Set.of("PATCH", "DELETE").contains(method) && path.matches(labels + "/[^/]+")) return true;
+        String views = "/api/v1/workspaces/[^/]+/views";
+        String tweaks = "/api/v1/workspaces/[^/]+/view-tweaks";
+        if (Set.of("GET", "HEAD").contains(method) && (path.matches(views + "(?:/[^/]+)?") || path.matches(tweaks))
+                || method.equals("POST") && path.matches(views)
+                || Set.of("PATCH", "DELETE").contains(method) && path.matches(views + "/[^/]+")
+                || Set.of("PUT", "DELETE").contains(method) && path.matches(tweaks + "/[^/]+")) return true;
         if (Set.of("GET", "HEAD").contains(method))
             return path.equals("/api/v1/me")
                     || path.equals("/api/v1/me/workspaces")

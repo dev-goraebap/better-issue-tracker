@@ -94,6 +94,8 @@ class WorkItemIntegrationTest {
                 "project",
                 "workspace_invitation",
                 "workspace_member",
+                "issue_view_tweak",
+                "issue_view",
                 "label",
                 "workspace",
                 "iam_api_key",

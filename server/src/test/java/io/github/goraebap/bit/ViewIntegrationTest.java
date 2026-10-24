@@ -1,0 +1,474 @@
+package io.github.goraebap.bit;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowableOfType;
+
+import io.github.goraebap.bit.module.view.application.ViewRequests;
+import io.github.goraebap.bit.module.view.application.ViewService;
+import io.github.goraebap.bit.module.view.application.ViewViews;
+import io.github.goraebap.bit.module.view.domain.IssueView;
+import io.github.goraebap.bit.module.workspace.application.WorkspaceService;
+import io.github.goraebap.bit.shared.error.BusinessException;
+import io.github.goraebap.bit.shared.persistence.InstantTextBinding;
+import io.github.goraebap.bit.shared.web.CurrentUser;
+import java.net.CookieManager;
+import java.net.CookiePolicy;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.nio.file.Path;
+import java.time.Instant;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import org.assertj.core.api.ThrowableAssert.ThrowingCallable;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
+import tools.jackson.databind.json.JsonMapper;
+
+@Tag("integration")
+@SpringBootTest(
+        webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
+        properties = {
+            "app.secrets.generate=false", "app.auth.secret=view-integration-secret-at-least-32-characters",
+            "app.auth.cookie-secure=false", "app.auth.allowed-origins=http://localhost:8080"
+        })
+class ViewIntegrationTest {
+    private static final JsonMapper JSON = JsonMapper.builder().build();
+    private static final List<IssueView.Column> USUAL = List.of(IssueView.Column.status, IssueView.Column.updated);
+
+    @LocalServerPort
+    private int port;
+
+    @Autowired
+    private WorkspaceService workspaceService;
+
+    @Autowired
+    private ViewService viewService;
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    private CurrentUser owner;
+    private CurrentUser admin;
+    private CurrentUser member;
+    private CurrentUser other;
+    private CurrentUser viewer;
+    private UUID workspace;
+
+    @DynamicPropertySource
+    static void database(DynamicPropertyRegistry registry) {
+        String url = "jdbc:sqlite:"
+                + Path.of("build/test-db/view-" + UUID.randomUUID() + ".db").toAbsolutePath();
+        registry.add("spring.datasource.url", () -> url);
+    }
+
+    @BeforeEach
+    void prepare() {
+        for (String table : List.of(
+                "issue_view_tweak",
+                "issue_view",
+                "label",
+                "workspace_invitation",
+                "workspace_member",
+                "workspace",
+                "iam_api_key",
+                "iam_session",
+                "iam_password",
+                "iam_user")) jdbcTemplate.update("DELETE FROM " + table);
+        owner = identity("owner");
+        workspace = workspaceService.create(owner, "Views", "views-" + UUID.randomUUID());
+        admin = member("admin");
+        member = member("member");
+        other = member("member");
+        viewer = member("viewer");
+    }
+
+    @Test
+    void newWorkspacesStartWithTheFourSharedViewsAndOnlyMakersOrAdminsMayEditThem() {
+        var views = viewService.list(owner, workspace);
+        assertThat(views.stream().map(ViewViews.View::name)).containsExactly("백로그", "진행 보드", "캘린더", "결정기록");
+        var backlog = views.getFirst();
+        assertThat(backlog.icon()).isEqualTo("rows");
+        assertThat(backlog.color()).isEqualTo("#95959f");
+        assertThat(backlog.layout()).isEqualTo(IssueView.Layout.list);
+        assertThat(backlog.filters().status()).isEqualTo("none");
+        assertThat(backlog.sort()).isEqualTo(new ViewViews.Sort(IssueView.SortKey.priority, IssueView.Direction.asc));
+        assertThat(backlog.ownerId()).isEqualTo(owner.userId());
+        assertThat(backlog.isPersonal()).isFalse();
+        var decisions = views.getLast();
+        assertThat(decisions.layout()).isEqualTo(IssueView.Layout.history);
+        assertThat(decisions.filters().label()).isEqualTo("system");
+        assertThat(decisions.columns())
+                .containsExactly(IssueView.Column.assignee, IssueView.Column.labels, IssueView.Column.updated);
+        assertThat(views.get(1).filters()).isEqualTo(new ViewViews.Filters(null, null, null, null));
+        assertThat(views.get(1).sort())
+                .isEqualTo(new ViewViews.Sort(IssueView.SortKey.updated, IssueView.Direction.desc));
+        assertThat(views.stream().allMatch(ViewViews.View::canEdit)).isTrue();
+        assertThat(viewService.list(admin, workspace).stream().allMatch(ViewViews.View::canEdit))
+                .isTrue();
+        assertThat(viewService.list(member, workspace).stream().noneMatch(ViewViews.View::canEdit))
+                .isTrue();
+        assertThat(viewService.list(viewer, workspace)).hasSize(4);
+
+        UUID shared = viewService.create(member, workspace, create("Team bugs", false, Map.of("label", "x")));
+        assertThat(viewService.get(member, workspace, shared).canEdit()).isTrue();
+        assertThat(viewService.get(other, workspace, shared).canEdit()).isFalse();
+        assertThat(viewService.get(admin, workspace, shared).canEdit()).isTrue();
+        assertThat(viewService.list(owner, workspace).getLast().id()).isEqualTo(shared);
+        assertThat(code(() -> viewService.revise(other, workspace, shared, rename(0, "Taken"))))
+                .isEqualTo("AUTH_FORBIDDEN");
+        viewService.revise(admin, workspace, shared, rename(0, "Admin rename"));
+        viewService.revise(member, workspace, shared, rename(1, "Maker rename"));
+        assertThat(code(() -> viewService.revise(member, workspace, shared, rename(1, "Stale"))))
+                .isEqualTo("VIEW_VERSION_CONFLICT");
+        assertThat(code(() -> viewService.delete(viewer, workspace, shared, 2))).isEqualTo("AUTH_FORBIDDEN");
+        assertThat(code(() -> viewService.create(viewer, workspace, create("Shared by viewer", false, Map.of()))))
+                .isEqualTo("AUTH_FORBIDDEN");
+        viewService.delete(owner, workspace, shared, 2);
+        assertThat(code(() -> viewService.get(member, workspace, shared))).isEqualTo("VIEW_NOT_FOUND");
+    }
+
+    @Test
+    void personalViewsAreInvisibleToEveryoneElseIncludingTheWorkspaceOwner() {
+        UUID mine = viewService.create(viewer, workspace, create("Mine", true, Map.of("assignee", "me")));
+        assertThat(viewService.list(viewer, workspace).getLast().id()).isEqualTo(mine);
+        assertThat(viewService.get(viewer, workspace, mine).canEdit()).isTrue();
+        for (CurrentUser someone : List.of(owner, admin, member)) {
+            assertThat(viewService.list(someone, workspace).stream().map(ViewViews.View::id))
+                    .doesNotContain(mine);
+            assertThat(code(() -> viewService.get(someone, workspace, mine))).isEqualTo("VIEW_NOT_FOUND");
+            assertThat(code(() -> viewService.delete(someone, workspace, mine, 0)))
+                    .isEqualTo("VIEW_NOT_FOUND");
+        }
+        var share = new ViewRequests.Update();
+        share.setExpectedVersion(0L);
+        share.setIsPersonal(false);
+        assertThat(code(() -> viewService.revise(viewer, workspace, mine, share)))
+                .isEqualTo("AUTH_FORBIDDEN");
+
+        UUID team = viewService.create(member, workspace, create("Team", false, Map.of()));
+        var hide = new ViewRequests.Update();
+        hide.setExpectedVersion(0L);
+        hide.setIsPersonal(true);
+        assertThat(code(() -> viewService.revise(admin, workspace, team, hide))).isEqualTo("AUTH_FORBIDDEN");
+        viewService.revise(member, workspace, team, hide);
+        assertThat(code(() -> viewService.get(admin, workspace, team))).isEqualTo("VIEW_NOT_FOUND");
+        var unhide = new ViewRequests.Update();
+        unhide.setExpectedVersion(1L);
+        unhide.setIsPersonal(false);
+        viewService.revise(member, workspace, team, unhide);
+        assertThat(viewService.get(admin, workspace, team).isPersonal()).isFalse();
+    }
+
+    @Test
+    void definitionsAreValidatedAndPatchesChangeOnlyWhatTheyName() {
+        assertThat(code(() -> viewService.create(member, workspace, create("Bad", false, Map.of("project", "x")))))
+                .isEqualTo("VIEW_FILTERS_INVALID");
+        assertThat(code(() ->
+                        viewService.create(member, workspace, create("Long", false, Map.of("label", "x".repeat(901))))))
+                .isEqualTo("VIEW_FILTERS_INVALID");
+        var twice = new ViewRequests.Create(
+                "Twice",
+                null,
+                "list",
+                "#5e6ad2",
+                false,
+                IssueView.Layout.list,
+                Map.of(),
+                new ViewViews.Sort(IssueView.SortKey.title, IssueView.Direction.asc),
+                List.of(IssueView.Column.due, IssueView.Column.due));
+        assertThat(code(() -> viewService.create(member, workspace, twice))).isEqualTo("VIEW_COLUMNS_INVALID");
+        var noSort = new ViewRequests.Create(
+                "No sort",
+                null,
+                "list",
+                "#5e6ad2",
+                false,
+                IssueView.Layout.list,
+                Map.of(),
+                new ViewViews.Sort(null, IssueView.Direction.asc),
+                USUAL);
+        assertThat(code(() -> viewService.create(member, workspace, noSort))).isEqualTo("VIEW_INVALID");
+
+        var filters = new java.util.HashMap<String, String>();
+        filters.put("status", " todo,none ");
+        filters.put("priority", "");
+        filters.put("label", null);
+        UUID id = viewService.create(member, workspace, create("  Spaced  ", false, filters));
+        var read = viewService.get(member, workspace, id);
+        assertThat(read.name()).isEqualTo("Spaced");
+        assertThat(read.filters()).isEqualTo(new ViewViews.Filters("todo,none", null, null, null));
+        assertThat(read.color()).isEqualTo("#4cb782");
+        var patch = new ViewRequests.Update();
+        patch.setExpectedVersion(0L);
+        patch.setLayout(IssueView.Layout.board);
+        patch.setDescription("For triage");
+        viewService.revise(member, workspace, id, patch);
+        var patched = viewService.get(member, workspace, id);
+        assertThat(patched.layout()).isEqualTo(IssueView.Layout.board);
+        assertThat(patched.description()).isEqualTo("For triage");
+        assertThat(patched.name()).isEqualTo("Spaced");
+        assertThat(patched.filters().status()).isEqualTo("todo,none");
+        var clear = new ViewRequests.Update();
+        clear.setExpectedVersion(1L);
+        clear.setFilters(null);
+        clear.setDescription(null);
+        viewService.revise(member, workspace, id, clear);
+        var cleared = viewService.get(member, workspace, id);
+        assertThat(cleared.filters()).isEqualTo(new ViewViews.Filters(null, null, null, null));
+        assertThat(cleared.description()).isNull();
+        var same = new ViewRequests.Update();
+        same.setExpectedVersion(2L);
+        same.setName("Spaced");
+        viewService.revise(member, workspace, id, same);
+        assertThat(viewService.get(member, workspace, id).version()).isEqualTo(2);
+        var nullName = new ViewRequests.Update();
+        nullName.setExpectedVersion(2L);
+        nullName.setName(null);
+        assertThat(code(() -> viewService.revise(member, workspace, id, nullName)))
+                .isEqualTo("VIEW_INVALID");
+    }
+
+    @Test
+    void tweaksAreEachMembersOwnAndFollowTheViewsTheyCanSee() {
+        UUID board = viewService.list(owner, workspace).get(1).id();
+        UUID mine = viewService.create(member, workspace, create("Mine", true, Map.of()));
+        viewService.putTweak(member, workspace, "all", tweak(IssueView.Layout.cards, null, null));
+        viewService.putTweak(
+                member,
+                workspace,
+                board.toString().toUpperCase(java.util.Locale.ROOT),
+                tweak(null, new ViewViews.Sort(IssueView.SortKey.created, IssueView.Direction.asc), USUAL));
+        viewService.putTweak(member, workspace, mine.toString(), tweak(IssueView.Layout.timeline, null, null));
+        assertThat(viewService.tweaks(member, workspace).stream().map(ViewViews.Tweak::viewKey))
+                .containsExactlyInAnyOrder("all", board.toString(), mine.toString());
+        var boardTweak = viewService.tweaks(member, workspace).stream()
+                .filter(t -> t.viewKey().equals(board.toString()))
+                .findFirst()
+                .orElseThrow();
+        assertThat(boardTweak.layout()).isNull();
+        assertThat(boardTweak.columns()).isEqualTo(USUAL);
+        assertThat(boardTweak.sort().key()).isEqualTo(IssueView.SortKey.created);
+        viewService.putTweak(member, workspace, board.toString(), tweak(IssueView.Layout.list, null, null));
+        var replaced = viewService.tweaks(member, workspace).stream()
+                .filter(t -> t.viewKey().equals(board.toString()))
+                .findFirst()
+                .orElseThrow();
+        assertThat(replaced.layout()).isEqualTo(IssueView.Layout.list);
+        assertThat(replaced.sort()).isNull();
+        assertThat(viewService.tweaks(other, workspace)).isEmpty();
+
+        assertThat(code(() -> viewService.putTweak(
+                        other, workspace, mine.toString(), tweak(IssueView.Layout.list, null, null))))
+                .isEqualTo("VIEW_NOT_FOUND");
+        assertThat(code(() ->
+                        viewService.putTweak(other, workspace, "everything", tweak(IssueView.Layout.list, null, null))))
+                .isEqualTo("VIEW_NOT_FOUND");
+        assertThat(code(() -> viewService.putTweak(
+                        member,
+                        workspace,
+                        "all",
+                        tweak(null, null, List.of(IssueView.Column.due, IssueView.Column.due)))))
+                .isEqualTo("VIEW_COLUMNS_INVALID");
+        viewService.putTweak(viewer, workspace, board.toString(), tweak(IssueView.Layout.calendar, null, null));
+
+        viewService.putTweak(member, workspace, "all", tweak(null, null, null));
+        viewService.deleteTweak(member, workspace, mine.toString());
+        assertThat(viewService.tweaks(member, workspace).stream().map(ViewViews.Tweak::viewKey))
+                .containsExactly(board.toString());
+        viewService.delete(owner, workspace, board, 0);
+        assertThat(viewService.tweaks(member, workspace)).isEmpty();
+        assertThat(viewService.tweaks(viewer, workspace)).isEmpty();
+        assertThat(jdbcTemplate.queryForObject("SELECT count(*) FROM issue_view_tweak", Integer.class))
+                .isZero();
+    }
+
+    @Test
+    void httpShowsTheClientShapeAndChecksAccessBeforeReadingTheBody() throws Exception {
+        String base = "/api/v1/workspaces/" + workspace;
+        UUID starter = viewService.list(owner, workspace).getFirst().id();
+        UUID personal = viewService.create(other, workspace, create("Other's", true, Map.of()));
+        CurrentUser outsider = identity("outsider");
+        try (var client = login(outsider)) {
+            expect(http(client, "GET", base + "/views", null), 404);
+            expect(http(client, "POST", base + "/views", "bad JSON"), 404);
+            expect(http(client, "GET", base + "/view-tweaks", null), 404);
+        }
+        try (var client = login(viewer)) {
+            var list = JSON.readTree(http(client, "GET", base + "/views", null).body());
+            assertThat(list.size()).isEqualTo(4);
+            var first = list.get(0);
+            assertThat(first.path("name").stringValue()).isEqualTo("백로그");
+            assertThat(first.path("filters").toString()).isEqualTo("{\"status\":\"none\"}");
+            assertThat(list.get(1).path("filters").toString()).isEqualTo("{}");
+            assertThat(first.path("sort").toString()).isEqualTo("{\"key\":\"priority\",\"direction\":\"asc\"}");
+            assertThat(first.path("isPersonal").booleanValue()).isFalse();
+            assertThat(first.path("canEdit").booleanValue()).isFalse();
+            assertThat(first.path("description").isNull()).isTrue();
+            expect(http(client, "PATCH", base + "/views/" + starter, "bad JSON"), 403);
+            expect(http(client, "DELETE", base + "/views/" + starter + "?expectedVersion=0", null), 403);
+            expect(http(client, "GET", base + "/views/" + personal, null), 404);
+            expect(http(client, "PATCH", base + "/views/" + personal, "bad JSON"), 404);
+            expect(http(client, "GET", base + "/views/all", null), 404);
+            String body = "{\"name\":\"My list\",\"icon\":\"person\",\"color\":\"#BB87FC\",\"isPersonal\":true,"
+                    + "\"layout\":\"list\",\"filters\":{\"assignee\":\"" + viewer.userId() + "\"},"
+                    + "\"sort\":{\"key\":\"title\",\"direction\":\"asc\"},\"columns\":[\"status\",\"due\"]}";
+            var created = http(client, "POST", base + "/views", body);
+            expect(created, 201);
+            String location = created.headers().firstValue("location").orElseThrow();
+            var read = JSON.readTree(http(client, "GET", location, null).body());
+            assertThat(read.path("color").stringValue()).isEqualTo("#bb87fc");
+            assertThat(read.path("canEdit").booleanValue()).isTrue();
+            assertThat(read.path("columns").toString()).isEqualTo("[\"status\",\"due\"]");
+            expect(http(client, "POST", base + "/views", body.replace("\"list\"", "\"gallery\"")), 400);
+            var invalid = http(client, "POST", base + "/views", body.replace("assignee", "project"));
+            expect(invalid, 400);
+            assertThat(JSON.readTree(invalid.body()).path("code").stringValue()).isEqualTo("VIEW_FILTERS_INVALID");
+            expect(http(client, "POST", base + "/views", body.replace("true", "false")), 403);
+            expect(http(client, "PATCH", location, "{\"expectedVersion\":0,\"filters\":{\"status\":\"done\"}}"), 204);
+            expect(http(client, "PATCH", location, "{\"expectedVersion\":1,\"owner\":\"x\"}"), 400);
+            expect(
+                    http(client, "PUT", base + "/view-tweaks/all", "{\"layout\":\"board\",\"columns\":[\"labels\"]}"),
+                    204);
+            expect(http(client, "PUT", base + "/view-tweaks/" + personal, "{\"layout\":\"board\"}"), 404);
+            var tweaks = JSON.readTree(
+                    http(client, "GET", base + "/view-tweaks", null).body());
+            assertThat(tweaks.toString())
+                    .isEqualTo("[{\"viewKey\":\"all\",\"layout\":\"board\",\"columns\":[\"labels\"]}]");
+            expect(http(client, "DELETE", base + "/view-tweaks/all", null), 204);
+            expect(http(client, "DELETE", location + "?expectedVersion=1", null), 204);
+            expect(http(client, "GET", location, null), 404);
+        }
+    }
+
+    private static ViewRequests.Create create(String name, boolean personal, Map<String, String> filters) {
+        return new ViewRequests.Create(
+                name,
+                null,
+                "list",
+                "#4CB782",
+                personal,
+                IssueView.Layout.list,
+                filters,
+                new ViewViews.Sort(IssueView.SortKey.updated, IssueView.Direction.desc),
+                USUAL);
+    }
+
+    private static ViewRequests.Update rename(long version, String name) {
+        var update = new ViewRequests.Update();
+        update.setExpectedVersion(version);
+        update.setName(name);
+        return update;
+    }
+
+    private static ViewRequests.PutTweak tweak(
+            IssueView.Layout layout, ViewViews.Sort sort, List<IssueView.Column> columns) {
+        return new ViewRequests.PutTweak(layout, sort, columns);
+    }
+
+    private static String code(ThrowingCallable call) {
+        return catchThrowableOfType(BusinessException.class, call).errorCode().code();
+    }
+
+    private CurrentUser member(String role) {
+        var actor = identity(role);
+        jdbcTemplate.update(
+                "INSERT INTO workspace_member(workspace_member_id,workspace_id,iam_user_id,role,joined_at) VALUES (?,?,?,?,?)",
+                UUID.randomUUID().toString(),
+                workspace.toString(),
+                actor.userId().toString(),
+                role,
+                InstantTextBinding.text(Instant.now()));
+        return actor;
+    }
+
+    private CurrentUser identity(String role) {
+        UUID user = UUID.randomUUID();
+        UUID credential = UUID.randomUUID();
+        String now = InstantTextBinding.text(Instant.now());
+        jdbcTemplate.update(
+                "INSERT INTO iam_user(iam_user_id,email,name,created_at,updated_at) VALUES (?,?,?,?,?)",
+                user.toString(),
+                role + user + "@example.test",
+                role,
+                now,
+                now);
+        jdbcTemplate.update(
+                "INSERT INTO iam_password(iam_user_id,password_hash,changed_at) VALUES (?,?,?)",
+                user.toString(),
+                passwordEncoder.encode(role + " password phrase for views"),
+                now);
+        jdbcTemplate.update(
+                "INSERT INTO iam_session(iam_session_id,iam_user_id,token_hash,expires_at,absolute_expires_at,last_seen_at,created_at) VALUES (?,?,?,?,?,?,?)",
+                credential.toString(),
+                user.toString(),
+                credential.toString(),
+                InstantTextBinding.text(Instant.now().plusSeconds(3600)),
+                InstantTextBinding.text(Instant.now().plusSeconds(7200)),
+                now,
+                now);
+        return new CurrentUser(user, false, CurrentUser.Method.SESSION, credential, null, false);
+    }
+
+    private HttpClient login(CurrentUser actor) throws Exception {
+        var row = jdbcTemplate.queryForMap(
+                "SELECT email,name FROM iam_user WHERE iam_user_id=?",
+                actor.userId().toString());
+        var client = HttpClient.newBuilder()
+                .cookieHandler(new CookieManager(null, CookiePolicy.ACCEPT_ALL))
+                .build();
+        expect(
+                http(
+                        client,
+                        "POST",
+                        "/api/v1/auth/sessions",
+                        JSON.writeValueAsString(Map.of(
+                                "email",
+                                row.get("email"),
+                                "password",
+                                row.get("name") + " password phrase for views"))),
+                201);
+        return client;
+    }
+
+    private static void expect(HttpResponse<String> response, int status) {
+        assertThat(response.statusCode()).as(response.body()).isEqualTo(status);
+    }
+
+    private HttpResponse<String> http(HttpClient client, String method, String path, String body) throws Exception {
+        var request = HttpRequest.newBuilder(URI.create("http://localhost:" + port + path))
+                .header("Accept", "application/json");
+        if (!method.equals("GET")) {
+            var csrf = client.send(
+                    HttpRequest.newBuilder(URI.create("http://localhost:" + port + "/api/v1/auth/csrf"))
+                            .build(),
+                    HttpResponse.BodyHandlers.ofString());
+            request.header("Origin", "http://localhost:8080")
+                    .header(
+                            "X-CSRF-Token",
+                            JSON.readTree(csrf.body()).path("token").stringValue());
+        }
+        if (body != null) request.header("Content-Type", "application/json");
+        return client.send(
+                request.method(
+                                method,
+                                body == null
+                                        ? HttpRequest.BodyPublishers.noBody()
+                                        : HttpRequest.BodyPublishers.ofString(body))
+                        .build(),
+                HttpResponse.BodyHandlers.ofString());
+    }
+}

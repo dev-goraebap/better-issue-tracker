@@ -96,3 +96,12 @@
 - 데모를 지웠다(`pages/demo`, 데모 위젯·기능·`entities/demo-sample`, `DemoLayout`). 상태·대화상자 패턴만 `pages/patterns`로 옮겨 개발 모드의 `/patterns/states`, `/patterns/dialogs`에 둔다(로그인한 셸 안).
 - 확인: 테스트 서버에서 라벨 만들기(성능), 보드 칸·구성원·프로필·모든 프로젝트 화면이 실제 값으로 보이는 것을 확인했다. `npm run check` 통과. 짧은 창은 제목에 먼저 초점을 두는 규칙(CompactDialog)이라 이름 칸을 눌러야 입력된다.
 
+### 2026-10-25 5단계 뷰 저장 — 서버 (커밋 전)
+
+- **스키마**: V6에 `issue_view`·`issue_view_tweak`(06-schema의 T-006 V6 계약). 기존 워크스페이스마다 공용 시작 뷰 넷(백로그·진행 보드·캘린더·결정기록)을 넣는다. '전체 이슈'(`all`)는 저장하지 않는다.
+- **뷰 모듈**: `module/view`가 두 테이블을 맡고 workspace에만 기댄다. 새 워크스페이스의 시작 뷰는 라벨처럼 `WorkspaceCreatedEvent`를 `BEFORE_COMMIT`으로 받아 같은 트랜잭션에서 만든다. `canEdit`을 계산하려고 `WorkspaceFacade.allows`(역할 검사, 예외 없이 참거짓)를 더했다.
+- **REST**: `GET/POST /workspaces/{id}/views`, `GET/PATCH/DELETE /views/{viewId}`, `GET /view-tweaks`, `PUT/DELETE /view-tweaks/{viewKey}`. 응답 `IssueView`는 화면의 `IssueView` 모양에 `canEdit`·`position`·`version`·`createdAt`·`updatedAt`를 더했고 `description`은 없으면 null이다. 필터는 빈 키를 빼고 돌려준다. 새 뷰는 맨 뒤에 붙는다(순서 바꾸기 API는 아직 없다).
+- **권한(D-068)**: 개인 뷰 만들기·조정은 viewer까지 모두, 공용 뷰 만들기는 owner/admin/member. 개인 뷰는 주인만 보고 고치며 다른 사람에게는 404다(워크스페이스 소유자도). 공용 뷰는 주인(지금 쓰기 권한이 있을 때)이나 owner/admin이 고치고 지운다. 공용↔개인 전환은 뷰 주인만 할 수 있고, 공용으로 바꾸려면 쓰기 권한이 있어야 한다(관리자가 남의 공용 뷰를 개인 뷰로 숨기지 못하게).
+- **검증**: 필터 키는 status·priority·assignee·label만, 값마다 900자까지(`VIEW_FILTERS_INVALID`), 표시 속성은 알려진 값이고 겹치지 않게(`VIEW_COLUMNS_INVALID`), 이름·아이콘·색·보기 방식·정렬 누락은 `VIEW_INVALID`, 버전 충돌은 `VIEW_VERSION_CONFLICT`. 빈 필터 값과 null은 필터 없음으로 정리한다. 모든 부분을 뺀 조정 PUT은 조정을 지운다.
+- **보안 경로**: 새 경로를 Spring Security 허용 목록과 API 키 업무 경로에 더했다.
+- **검사**: 서버 `./gradlew.bat check` 통과(단위 28, 통합 92 — 뷰 통합 5·V5→V6 마이그레이션 1 포함). OpenAPI와 `schema.d.ts`를 다시 만들었고 `npm run check --prefix client` 통과. 화면의 localStorage 뷰를 서버로 바꾸는 것은 남았다.

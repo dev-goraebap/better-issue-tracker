@@ -49,6 +49,9 @@ class OpenApiContractTest {
     private io.github.goraebap.bit.module.label.domain.LabelRepository labelRepository;
 
     @MockitoBean
+    private io.github.goraebap.bit.module.view.domain.ViewRepository viewRepository;
+
+    @MockitoBean
     private io.github.goraebap.bit.module.decision.domain.DecisionRepository decisionRepository;
 
     @MockitoBean

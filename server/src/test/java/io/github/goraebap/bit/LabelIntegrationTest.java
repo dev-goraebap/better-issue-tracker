@@ -97,6 +97,8 @@ class LabelIntegrationTest {
                 "board_column",
                 "project_key",
                 "project",
+                "issue_view_tweak",
+                "issue_view",
                 "label",
                 "workspace_invitation",
                 "workspace_member",

@@ -16,6 +16,9 @@ public interface WorkspaceFacade {
 
     void requireAccess(CurrentUser actor, UUID workspaceId, Action action);
 
+    /** Whether a member may take the action; a non-member still gets WORKSPACE_NOT_FOUND. */
+    boolean allows(CurrentUser actor, UUID workspaceId, Action action);
+
     boolean hasMember(CurrentUser actor, UUID workspaceId, UUID userId);
 
     Map<UUID, String> memberNames(CurrentUser actor, UUID workspaceId, Set<UUID> userIds);

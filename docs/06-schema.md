@@ -71,6 +71,8 @@ erDiagram
 | `workspace_member` | `workspace_member_id`, `workspace_id`, `iam_user_id`, `role varchar(16)`, `joined_at` | `ux_workspace_member_workspace_id_iam_user_id`, `ck_workspace_member_role` (owner, admin, member, viewer) |
 | `workspace_invitation` | `workspace_invitation_id`, `workspace_id`, `email`, `role`, `token_hash`, `status varchar(16)`, `expires_at`, `invited_by`, `created_at` | `ck_..._status` (pending, accepted, revoked, expired) |
 | `label` | `label_id`, `workspace_id`, `name varchar(32)`, `color varchar(7)`, `is_system boolean`, `system_key varchar(32)?`, `version bigint`, 감사 | `ux_label_workspace_id_name` (workspace_id, lower(name), deleted_at IS NULL), `ux_label_workspace_id_system_key` (system_key IS NOT NULL) |
+| `issue_view` | `issue_view_id`, `workspace_id`, `owner_id`, `is_personal boolean`, `name varchar(64)`, `description varchar(200)?`, `icon varchar(32)`, `color varchar(7)`, `layout varchar(16)`, `filters text`(JSON 객체), `sort_key varchar(16)`, `sort_direction varchar(4)`, `columns text`(JSON 배열), `position real`, `version bigint`, 감사 | `ix_issue_view_workspace_id_position`, `ck_..._layout` (list, calendar, board, timeline, cards, history), `ck_..._sort_key` (updated, created, priority, title) |
+| `issue_view_tweak` | (`workspace_id`, `iam_user_id`, `view_key varchar(40)`) 기본 키, `tweak text`(JSON 객체), `updated_at` | `ix_issue_view_tweak_workspace_id_view_key` |
 
 - 역할 4개는 고정값이다. Kaneo의 워크스페이스별 사용자 정의 역할(`workspace_role`)과 멤버별 프로젝트 접근 제한은 1차에 넣지 않는다.
 - 라벨은 워크스페이스에 한 벌만 두고 작업항목과는 연결표로 잇는다. Kaneo처럼 작업마다 사본 행을 만들지 않는다 (D-009).
@@ -147,6 +149,12 @@ erDiagram
 - V5는 기존 워크스페이스마다 결정기록 라벨을 하나씩 넣는다(만든 사람은 그 워크스페이스의 `created_by`). 새 워크스페이스는 생성 트랜잭션 안에서 같은 라벨을 받는다.
 - `work_item_label`: 작업항목·라벨 FK, `(work_item_id, label_id)` 고유. 라벨이 삭제되어도 연결 행은 남고 응답·필터에서만 빠진다. 다른 워크스페이스 라벨 연결은 서비스가 거부한다(DB는 공간 일치를 검사하지 않는다).
 - `board_column.category`: `ALTER TABLE ADD COLUMN`(기본값 doing)으로 더하고 기존 행을 채운다. 완료 컬럼은 done, 프로젝트마다 지우지 않은 비완료 컬럼 중 position이 가장 앞인 것은 todo, 나머지는 doing이다. 완료→done 규칙은 열 하나짜리 CHECK로 걸 수 없어(ADD COLUMN이 기존 행에 CHECK를 바로 검사) 도메인이 지킨다.
+
+### T-006 실제 V6 계약 (`V6__issue_views.sql`)
+
+- `issue_view`: 뷰(D-066·D-068). `is_personal=0`이면 워크스페이스 모두에게, 1이면 `owner_id`에게만 보인다. `filters`는 status·priority·assignee·label 키만 쓰는 JSON 객체(4,000자 이하, 값은 화면이 정하는 쉼표 문자열이라 서버는 키와 길이만 검사), `columns`는 표시 속성 JSON 배열(500자 이하)이다. JSON CHECK는 `json_valid`가 거짓이면 `json_type`을 부르지 않도록 CASE로 쓴다(깨진 JSON이 오류가 아니라 제약 위반이 되게).
+- 기본 뷰 '전체 이슈'는 저장하지 않는다. V6은 기존 워크스페이스마다 백로그·진행 보드·캘린더·결정기록 공용 뷰 넷을 position 0~3으로 넣는다(주인은 워크스페이스의 `created_by`). 새 워크스페이스는 생성 트랜잭션 안에서 같은 넷을 받는다.
+- `issue_view_tweak`: 사람별 조정(보기 방식·정렬·표시 속성). `view_key`는 뷰 ID(소문자 표준 표기)나 `all`이라 FK가 없다. 뷰를 지우면 그 뷰의 조정 행을 모두 지운다. 남의 개인 뷰가 된 뷰의 조정은 행은 남기고 조회에서 뺀다.
 
 ## 6. artifact — 문서함
 

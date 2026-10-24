@@ -4,6 +4,22 @@
  */
 
 export interface paths {
+    "/api/v1/workspaces/{workspaceId}/view-tweaks/{viewKey}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["putTweak"];
+        post?: never;
+        delete: operations["deleteTweak"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/workspaces/{id}/owner": {
         parameters: {
             query?: never;
@@ -68,7 +84,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/workspaces/{workspaceId}/projects": {
+    "/api/v1/workspaces/{workspaceId}/views": {
         parameters: {
             query?: never;
             header?: never;
@@ -84,7 +100,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/work-items": {
+    "/api/v1/workspaces/{workspaceId}/projects": {
         parameters: {
             query?: never;
             header?: never;
@@ -94,6 +110,22 @@ export interface paths {
         get: operations["list_1"];
         put?: never;
         post: operations["create_2"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/work-items": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_2"];
+        put?: never;
+        post: operations["create_3"];
         delete?: never;
         options?: never;
         head?: never;
@@ -251,9 +283,9 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_2"];
+        get: operations["list_3"];
         put?: never;
-        post: operations["create_3"];
+        post: operations["create_4"];
         delete?: never;
         options?: never;
         head?: never;
@@ -388,7 +420,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/workspaces/{workspaceId}/projects/{projectId}": {
+    "/api/v1/workspaces/{workspaceId}/views/{viewId}": {
         parameters: {
             query?: never;
             header?: never;
@@ -404,7 +436,7 @@ export interface paths {
         patch: operations["revise"];
         trace?: never;
     };
-    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/work-items/{id}": {
+    "/api/v1/workspaces/{workspaceId}/projects/{projectId}": {
         parameters: {
             query?: never;
             header?: never;
@@ -418,6 +450,22 @@ export interface paths {
         options?: never;
         head?: never;
         patch: operations["revise_1"];
+        trace?: never;
+    };
+    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/work-items/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_2"];
+        put?: never;
+        post?: never;
+        delete: operations["delete_2"];
+        options?: never;
+        head?: never;
+        patch: operations["revise_2"];
         trace?: never;
     };
     "/api/v1/workspaces/{workspaceId}/projects/{projectId}/columns/{columnId}": {
@@ -443,13 +491,13 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_2"];
+        get: operations["get_3"];
         put?: never;
         post?: never;
-        delete: operations["delete_2"];
+        delete: operations["delete_3"];
         options?: never;
         head?: never;
-        patch: operations["revise_2"];
+        patch: operations["revise_3"];
         trace?: never;
     };
     "/api/v1/workspaces/{id}": {
@@ -459,10 +507,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_3"];
+        get: operations["get_4"];
         put?: never;
         post?: never;
-        delete: operations["delete_3"];
+        delete: operations["delete_4"];
         options?: never;
         head?: never;
         patch: operations["rename"];
@@ -508,6 +556,22 @@ export interface paths {
             cookie?: never;
         };
         get: operations["byRef"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{workspaceId}/view-tweaks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["tweaks"];
         put?: never;
         post?: never;
         delete?: never;
@@ -603,7 +667,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_3"];
+        get: operations["list_4"];
         put?: never;
         post?: never;
         delete?: never;
@@ -714,6 +778,18 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        IssueViewSort: {
+            /** @enum {string} */
+            key: "updated" | "created" | "priority" | "title";
+            /** @enum {string} */
+            direction: "asc" | "desc";
+        };
+        PutIssueViewTweak: {
+            /** @enum {string|null} */
+            layout?: "list" | "calendar" | "board" | "timeline" | "cards" | "history" | null;
+            sort?: components["schemas"]["IssueViewSort"];
+            columns?: ("status" | "priority" | "assignee" | "labels" | "due" | "updated" | "created")[] | null;
+        };
         Transfer: {
             /** Format: uuid */
             userId: string;
@@ -730,6 +806,28 @@ export interface components {
         Create: {
             name: string;
             slug: string;
+        };
+        CreateIssueView: {
+            name: string;
+            description?: string | null;
+            icon: string;
+            color: string;
+            /** @description Personal views are seen only by their owner; omitted means shared */
+            isPersonal?: boolean;
+            /** @enum {string} */
+            layout: "list" | "calendar" | "board" | "timeline" | "cards" | "history";
+            filters?: components["schemas"]["IssueViewFilters"];
+            sort: components["schemas"]["IssueViewSort"];
+            columns: ("status" | "priority" | "assignee" | "labels" | "due" | "updated" | "created")[];
+        };
+        IssueViewFilters: {
+            /** @description Status categories: todo, doing, done, none */
+            status?: string;
+            priority?: string;
+            /** @description User ids */
+            assignee?: string;
+            /** @description Label ids, or system for the decision label */
+            label?: string;
         };
         CreateProject: {
             name: string;
@@ -856,6 +954,22 @@ export interface components {
         TemporaryPassword: {
             temporaryPassword: string;
         };
+        UpdateIssueView: {
+            /** Format: int64 */
+            expectedVersion: number;
+            name?: string;
+            description?: string | null;
+            icon?: string;
+            color?: string;
+            /** @description Only the view's owner may change it; making it shared needs owner, admin or member */
+            isPersonal?: boolean;
+            /** @enum {string} */
+            layout?: "list" | "calendar" | "board" | "timeline" | "cards" | "history";
+            /** @description Replaces all filters */
+            filters?: components["schemas"]["IssueViewFilters"];
+            sort?: components["schemas"]["IssueViewSort"];
+            columns?: ("status" | "priority" | "assignee" | "labels" | "due" | "updated" | "created")[];
+        };
         UpdateProject: {
             /** Format: int64 */
             expectedVersion: number;
@@ -970,6 +1084,42 @@ export interface components {
         WorkItems: {
             items: components["schemas"]["WorkItem"][];
             nextCursor: string | null;
+        };
+        IssueView: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            workspaceId: string;
+            name: string;
+            description: string | null;
+            icon: string;
+            color: string;
+            /** @enum {string} */
+            layout: "list" | "calendar" | "board" | "timeline" | "cards" | "history";
+            filters: components["schemas"]["IssueViewFilters"];
+            sort: components["schemas"]["IssueViewSort"];
+            columns: ("status" | "priority" | "assignee" | "labels" | "due" | "updated" | "created")[];
+            /** Format: uuid */
+            ownerId: string;
+            isPersonal: boolean;
+            /** @description Whether the caller may change or delete it (D-068) */
+            canEdit: boolean;
+            /** Format: double */
+            position: number;
+            /** Format: int64 */
+            version: number;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        IssueViewTweak: {
+            /** @description A view id, or all for 전체 이슈 */
+            viewKey: string;
+            /** @enum {string} */
+            layout?: "list" | "calendar" | "board" | "timeline" | "cards" | "history";
+            sort?: components["schemas"]["IssueViewSort"];
+            columns?: ("status" | "priority" | "assignee" | "labels" | "due" | "updated" | "created")[];
         };
         Project: {
             /** Format: uuid */
@@ -1154,6 +1304,52 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    putTweak: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+                viewKey: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PutIssueViewTweak"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    deleteTweak: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+                viewKey: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     transfer: {
         parameters: {
             query?: never;
@@ -1246,6 +1442,52 @@ export interface operations {
     };
     list: {
         parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IssueView"][];
+                };
+            };
+        };
+    };
+    create_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateIssueView"];
+            };
+        };
+        responses: {
+            /** @description 뷰 생성 */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    list_1: {
+        parameters: {
             query?: {
                 status?: string;
                 q?: string;
@@ -1273,7 +1515,7 @@ export interface operations {
             };
         };
     };
-    create_1: {
+    create_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -1297,7 +1539,7 @@ export interface operations {
             };
         };
     };
-    list_1: {
+    list_2: {
         parameters: {
             query?: {
                 /** @description A column id of the project, or backlog */
@@ -1344,7 +1586,7 @@ export interface operations {
             };
         };
     };
-    create_2: {
+    create_3: {
         parameters: {
             query?: never;
             header?: never;
@@ -1621,7 +1863,7 @@ export interface operations {
             };
         };
     };
-    list_2: {
+    list_3: {
         parameters: {
             query?: never;
             header?: never;
@@ -1643,7 +1885,7 @@ export interface operations {
             };
         };
     };
-    create_3: {
+    create_4: {
         parameters: {
             query?: never;
             header?: never;
@@ -1959,6 +2201,77 @@ export interface operations {
             header?: never;
             path: {
                 workspaceId: string;
+                viewId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IssueView"];
+                };
+            };
+        };
+    };
+    delete: {
+        parameters: {
+            query: {
+                expectedVersion: number;
+            };
+            header?: never;
+            path: {
+                workspaceId: string;
+                viewId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    revise: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+                viewId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateIssueView"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
                 projectId: string;
             };
             cookie?: never;
@@ -1976,7 +2289,7 @@ export interface operations {
             };
         };
     };
-    delete: {
+    delete_1: {
         parameters: {
             query: {
                 expectedVersion: number;
@@ -1999,7 +2312,7 @@ export interface operations {
             };
         };
     };
-    revise: {
+    revise_1: {
         parameters: {
             query?: never;
             header?: never;
@@ -2024,7 +2337,7 @@ export interface operations {
             };
         };
     };
-    get_1: {
+    get_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -2048,7 +2361,7 @@ export interface operations {
             };
         };
     };
-    delete_1: {
+    delete_2: {
         parameters: {
             query: {
                 expectedVersion: number;
@@ -2072,7 +2385,7 @@ export interface operations {
             };
         };
     };
-    revise_1: {
+    revise_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -2173,7 +2486,7 @@ export interface operations {
             };
         };
     };
-    get_2: {
+    get_3: {
         parameters: {
             query?: never;
             header?: never;
@@ -2196,7 +2509,7 @@ export interface operations {
             };
         };
     };
-    delete_2: {
+    delete_3: {
         parameters: {
             query: {
                 expectedVersion: number;
@@ -2219,7 +2532,7 @@ export interface operations {
             };
         };
     };
-    revise_2: {
+    revise_3: {
         parameters: {
             query?: never;
             header?: never;
@@ -2244,7 +2557,7 @@ export interface operations {
             };
         };
     };
-    get_3: {
+    get_4: {
         parameters: {
             query?: never;
             header?: never;
@@ -2266,7 +2579,7 @@ export interface operations {
             };
         };
     };
-    delete_3: {
+    delete_4: {
         parameters: {
             query?: never;
             header?: never;
@@ -2423,6 +2736,28 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["WorkItem"];
+                };
+            };
+        };
+    };
+    tweaks: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IssueViewTweak"][];
                 };
             };
         };
@@ -2611,7 +2946,7 @@ export interface operations {
             };
         };
     };
-    list_3: {
+    list_4: {
         parameters: {
             query?: {
                 cursor?: string;

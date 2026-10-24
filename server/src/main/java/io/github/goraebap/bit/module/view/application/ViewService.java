@@ -1,0 +1,251 @@
+package io.github.goraebap.bit.module.view.application;
+
+import io.github.goraebap.bit.module.view.ViewFacade;
+import io.github.goraebap.bit.module.view.domain.IssueView;
+import io.github.goraebap.bit.module.view.domain.ViewRepository;
+import io.github.goraebap.bit.module.view.domain.ViewTweak;
+import io.github.goraebap.bit.module.workspace.WorkspaceCreatedEvent;
+import io.github.goraebap.bit.module.workspace.WorkspaceFacade;
+import io.github.goraebap.bit.shared.error.CommonErrorCode;
+import io.github.goraebap.bit.shared.web.CurrentUser;
+import java.time.Clock;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
+
+@Service
+@RequiredArgsConstructor
+public class ViewService implements ViewFacade {
+    private final ViewRepository viewRepository;
+    private final WorkspaceFacade workspaceFacade;
+    private final Clock clock;
+
+    @Override
+    @Transactional(readOnly = true)
+    public void requireAccess(CurrentUser actor, UUID workspaceId, String viewKey, boolean editing) {
+        var rights = rights(actor, workspaceId);
+        if (IssueView.ALL.equals(viewKey)) {
+            if (editing) throw ViewErrorCode.VIEW_NOT_FOUND.raise();
+            return;
+        }
+        var view = visible(rights, workspaceId, id(viewKey));
+        if (editing && !rights.edits(view)) throw CommonErrorCode.AUTH_FORBIDDEN.raise();
+    }
+
+    @Transactional(readOnly = true)
+    public List<ViewViews.View> list(CurrentUser actor, UUID workspaceId) {
+        var rights = rights(actor, workspaceId);
+        return viewRepository.findAllVisible(workspaceId, actor.userId()).stream()
+                .map(view -> view(view, rights))
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public ViewViews.View get(CurrentUser actor, UUID workspaceId, UUID viewId) {
+        var rights = rights(actor, workspaceId);
+        return view(visible(rights, workspaceId, viewId), rights);
+    }
+
+    @Transactional(readOnly = true)
+    public List<ViewViews.Tweak> tweaks(CurrentUser actor, UUID workspaceId) {
+        workspaceFacade.requireAccess(actor, workspaceId, WorkspaceFacade.Action.READ);
+        var keys = new HashSet<String>();
+        keys.add(IssueView.ALL);
+        viewRepository.findAllVisible(workspaceId, actor.userId()).forEach(v -> keys.add(v.id().toString()));
+        // A view that became someone else's personal view or was deleted keeps no visible tweak.
+        return viewRepository.findTweaks(workspaceId, actor.userId()).stream()
+                .filter(t -> keys.contains(t.viewKey()))
+                .map(t -> new ViewViews.Tweak(t.viewKey(), t.layout(), sort(t.sort()), t.columns()))
+                .toList();
+    }
+
+    @Transactional
+    public UUID create(CurrentUser actor, UUID workspaceId, ViewRequests.Create request) {
+        workspaceFacade.requireAccess(
+                actor,
+                workspaceId,
+                request.isPersonal() ? WorkspaceFacade.Action.READ : WorkspaceFacade.Action.WRITE_WORK);
+        var definition = definition(
+                request.name(),
+                request.description(),
+                request.icon(),
+                request.color(),
+                request.layout(),
+                request.filters(),
+                request.sort(),
+                request.columns());
+        var view = IssueView.create(
+                workspaceId,
+                actor.userId(),
+                request.isPersonal(),
+                definition,
+                viewRepository.nextPosition(workspaceId),
+                agent(actor),
+                clock.instant());
+        viewRepository.save(view);
+        return view.id();
+    }
+
+    @Transactional
+    public void revise(CurrentUser actor, UUID workspaceId, UUID viewId, ViewRequests.Update request) {
+        var rights = rights(actor, workspaceId);
+        var view = visible(rights, workspaceId, viewId);
+        if (!rights.edits(view)) throw CommonErrorCode.AUTH_FORBIDDEN.raise();
+        version(view, request.getExpectedVersion());
+        if (request.hasIsPersonal() && request.getIsPersonal() == null) throw ViewErrorCode.VIEW_INVALID.raise();
+        boolean personal = request.hasIsPersonal() ? request.getIsPersonal() : view.personal();
+        if (personal != view.personal() && (!view.ownerId().equals(actor.userId()) || !personal && !rights.writer()))
+            throw CommonErrorCode.AUTH_FORBIDDEN.raise();
+        var d = view.definition();
+        var next = definition(
+                request.hasName() ? request.getName() : d.name(),
+                request.hasDescription() ? request.getDescription() : d.description(),
+                request.hasIcon() ? request.getIcon() : d.icon(),
+                request.hasColor() ? request.getColor() : d.color(),
+                request.hasLayout() ? request.getLayout() : d.layout(),
+                request.hasFilters() ? request.getFilters() : d.filters(),
+                request.hasSort() ? request.getSort() : sort(d.sort()),
+                request.hasColumns() ? request.getColumns() : d.columns());
+        long before = view.version();
+        view.revise(next, personal, actor.userId(), agent(actor), clock.instant());
+        if (view.version() != before) viewRepository.save(view);
+    }
+
+    @Transactional
+    public void delete(CurrentUser actor, UUID workspaceId, UUID viewId, long expectedVersion) {
+        var rights = rights(actor, workspaceId);
+        var view = visible(rights, workspaceId, viewId);
+        if (!rights.edits(view)) throw CommonErrorCode.AUTH_FORBIDDEN.raise();
+        version(view, expectedVersion);
+        view.delete(actor.userId(), agent(actor), clock.instant());
+        viewRepository.save(view);
+        viewRepository.deleteAllTweaksByViewKey(workspaceId, viewId.toString());
+    }
+
+    @Transactional
+    public void putTweak(CurrentUser actor, UUID workspaceId, String viewKey, ViewRequests.PutTweak request) {
+        requireAccess(actor, workspaceId, viewKey, false);
+        if (!ViewTweak.validColumns(request.columns())) throw ViewErrorCode.VIEW_COLUMNS_INVALID.raise();
+        var sort = request.sort() == null ? null : domainSort(request.sort());
+        String key = key(viewKey);
+        var tweak = new ViewTweak(
+                workspaceId, actor.userId(), key, request.layout(), sort, request.columns(), clock.instant());
+        if (tweak.isEmpty()) viewRepository.deleteTweak(workspaceId, actor.userId(), key);
+        else viewRepository.saveTweak(tweak);
+    }
+
+    @Transactional
+    public void deleteTweak(CurrentUser actor, UUID workspaceId, String viewKey) {
+        requireAccess(actor, workspaceId, viewKey, false);
+        viewRepository.deleteTweak(workspaceId, actor.userId(), key(viewKey));
+    }
+
+    /** Seeds the starter views in the workspace's own transaction, as label seeds the decision label. */
+    @Transactional(propagation = Propagation.MANDATORY)
+    @TransactionalEventListener(phase = TransactionPhase.BEFORE_COMMIT)
+    public void seed(WorkspaceCreatedEvent event) {
+        viewRepository.saveAll(
+                IssueView.starters(event.workspaceId(), event.actorId(), event.actorAgent(), event.occurredAt()));
+    }
+
+    private record Rights(UUID me, boolean writer, boolean admin) {
+        boolean edits(IssueView view) {
+            if (view.personal()) return view.ownerId().equals(me);
+            return admin || writer && view.ownerId().equals(me);
+        }
+    }
+
+    private Rights rights(CurrentUser actor, UUID workspaceId) {
+        boolean writer = workspaceFacade.allows(actor, workspaceId, WorkspaceFacade.Action.WRITE_WORK);
+        boolean admin = writer && workspaceFacade.allows(actor, workspaceId, WorkspaceFacade.Action.EDIT_SETTINGS);
+        return new Rights(actor.userId(), writer, admin);
+    }
+
+    private IssueView visible(Rights rights, UUID workspaceId, UUID viewId) {
+        return viewRepository
+                .findById(workspaceId, viewId)
+                .filter(view -> view.visibleTo(rights.me()))
+                .orElseThrow(ViewErrorCode.VIEW_NOT_FOUND::raise);
+    }
+
+    /** Tweaks are stored under "all" or the view id's canonical text. */
+    private static String key(String viewKey) {
+        return IssueView.ALL.equals(viewKey) ? IssueView.ALL : id(viewKey).toString();
+    }
+
+    private static UUID id(String viewKey) {
+        try {
+            return UUID.fromString(viewKey);
+        } catch (IllegalArgumentException invalid) {
+            throw ViewErrorCode.VIEW_NOT_FOUND.raise();
+        }
+    }
+
+    private static IssueView.Definition definition(
+            String name,
+            String description,
+            String icon,
+            String color,
+            IssueView.Layout layout,
+            Map<String, String> filters,
+            ViewViews.Sort sort,
+            List<IssueView.Column> columns) {
+        var domainSort = sort == null ? null : domainSort(sort);
+        var problem = IssueView.Definition.check(name, description, icon, color, layout, filters, domainSort, columns);
+        if (problem.isPresent())
+            throw switch (problem.get()) {
+                case FILTERS -> ViewErrorCode.VIEW_FILTERS_INVALID.raise();
+                case COLUMNS -> ViewErrorCode.VIEW_COLUMNS_INVALID.raise();
+                case DEFINITION -> ViewErrorCode.VIEW_INVALID.raise();
+            };
+        return IssueView.Definition.of(name, description, icon, color, layout, filters, domainSort, columns);
+    }
+
+    private static IssueView.Sort domainSort(ViewViews.Sort sort) {
+        if (sort.key() == null || sort.direction() == null) throw ViewErrorCode.VIEW_INVALID.raise();
+        return new IssueView.Sort(sort.key(), sort.direction());
+    }
+
+    private static ViewViews.Sort sort(IssueView.Sort sort) {
+        return sort == null ? null : new ViewViews.Sort(sort.key(), sort.direction());
+    }
+
+    private static void version(IssueView view, Long expected) {
+        if (expected == null || view.version() != expected) throw ViewErrorCode.VIEW_VERSION_CONFLICT.raise();
+    }
+
+    private static ViewViews.View view(IssueView view, Rights rights) {
+        var d = view.definition();
+        var f = d.filters();
+        var a = view.audit();
+        return new ViewViews.View(
+                view.id(),
+                view.workspaceId(),
+                d.name(),
+                d.description(),
+                d.icon(),
+                d.color(),
+                d.layout(),
+                new ViewViews.Filters(f.get("status"), f.get("priority"), f.get("assignee"), f.get("label")),
+                sort(d.sort()),
+                d.columns(),
+                view.ownerId(),
+                view.personal(),
+                rights.edits(view),
+                view.position(),
+                view.version(),
+                a.createdAt(),
+                a.updatedAt());
+    }
+
+    private static String agent(CurrentUser actor) {
+        return actor.method() == CurrentUser.Method.API_KEY ? actor.agentName() : null;
+    }
+}

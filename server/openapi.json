@@ -9,6 +9,68 @@
     "description" : "Generated server url"
   } ],
   "paths" : {
+    "/api/v1/workspaces/{workspaceId}/view-tweaks/{viewKey}" : {
+      "put" : {
+        "tags" : [ "view-controller" ],
+        "operationId" : "putTweak",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "name" : "viewKey",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/PutIssueViewTweak"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        }
+      },
+      "delete" : {
+        "tags" : [ "view-controller" ],
+        "operationId" : "deleteTweak",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "name" : "viewKey",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        }
+      }
+    },
     "/api/v1/workspaces/{id}/owner" : {
       "put" : {
         "tags" : [ "workspace-controller" ],
@@ -102,10 +164,68 @@
         }
       }
     },
+    "/api/v1/workspaces/{workspaceId}/views" : {
+      "get" : {
+        "tags" : [ "view-controller" ],
+        "operationId" : "list",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/IssueView"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post" : {
+        "tags" : [ "view-controller" ],
+        "operationId" : "create_1",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CreateIssueView"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "description" : "뷰 생성"
+          }
+        }
+      }
+    },
     "/api/v1/workspaces/{workspaceId}/projects" : {
       "get" : {
         "tags" : [ "project-controller" ],
-        "operationId" : "list",
+        "operationId" : "list_1",
         "parameters" : [ {
           "name" : "workspaceId",
           "in" : "path",
@@ -178,7 +298,7 @@
       },
       "post" : {
         "tags" : [ "project-controller" ],
-        "operationId" : "create_1",
+        "operationId" : "create_2",
         "parameters" : [ {
           "name" : "workspaceId",
           "in" : "path",
@@ -208,7 +328,7 @@
     "/api/v1/workspaces/{workspaceId}/projects/{projectId}/work-items" : {
       "get" : {
         "tags" : [ "work-item-controller" ],
-        "operationId" : "list_1",
+        "operationId" : "list_2",
         "parameters" : [ {
           "name" : "workspaceId",
           "in" : "path",
@@ -395,7 +515,7 @@
       },
       "post" : {
         "tags" : [ "work-item-controller" ],
-        "operationId" : "create_2",
+        "operationId" : "create_3",
         "parameters" : [ {
           "name" : "workspaceId",
           "in" : "path",
@@ -843,7 +963,7 @@
     "/api/v1/workspaces/{workspaceId}/labels" : {
       "get" : {
         "tags" : [ "label-controller" ],
-        "operationId" : "list_2",
+        "operationId" : "list_3",
         "parameters" : [ {
           "name" : "workspaceId",
           "in" : "path",
@@ -871,7 +991,7 @@
       },
       "post" : {
         "tags" : [ "label-controller" ],
-        "operationId" : "create_3",
+        "operationId" : "create_4",
         "parameters" : [ {
           "name" : "workspaceId",
           "in" : "path",
@@ -1256,10 +1376,116 @@
         }
       }
     },
+    "/api/v1/workspaces/{workspaceId}/views/{viewId}" : {
+      "get" : {
+        "tags" : [ "view-controller" ],
+        "operationId" : "get",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "name" : "viewId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/IssueView"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete" : {
+        "tags" : [ "view-controller" ],
+        "operationId" : "delete",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "name" : "viewId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "name" : "expectedVersion",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64",
+            "minimum" : 0
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        }
+      },
+      "patch" : {
+        "tags" : [ "view-controller" ],
+        "operationId" : "revise",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "name" : "viewId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/UpdateIssueView"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        }
+      }
+    },
     "/api/v1/workspaces/{workspaceId}/projects/{projectId}" : {
       "get" : {
         "tags" : [ "project-controller" ],
-        "operationId" : "get",
+        "operationId" : "get_1",
         "parameters" : [ {
           "name" : "workspaceId",
           "in" : "path",
@@ -1292,7 +1518,7 @@
       },
       "delete" : {
         "tags" : [ "project-controller" ],
-        "operationId" : "delete",
+        "operationId" : "delete_1",
         "parameters" : [ {
           "name" : "workspaceId",
           "in" : "path",
@@ -1327,7 +1553,7 @@
       },
       "patch" : {
         "tags" : [ "project-controller" ],
-        "operationId" : "revise",
+        "operationId" : "revise_1",
         "parameters" : [ {
           "name" : "workspaceId",
           "in" : "path",
@@ -1365,7 +1591,7 @@
     "/api/v1/workspaces/{workspaceId}/projects/{projectId}/work-items/{id}" : {
       "get" : {
         "tags" : [ "work-item-controller" ],
-        "operationId" : "get_1",
+        "operationId" : "get_2",
         "parameters" : [ {
           "name" : "workspaceId",
           "in" : "path",
@@ -1406,7 +1632,7 @@
       },
       "delete" : {
         "tags" : [ "work-item-controller" ],
-        "operationId" : "delete_1",
+        "operationId" : "delete_2",
         "parameters" : [ {
           "name" : "workspaceId",
           "in" : "path",
@@ -1449,7 +1675,7 @@
       },
       "patch" : {
         "tags" : [ "work-item-controller" ],
-        "operationId" : "revise_1",
+        "operationId" : "revise_2",
         "parameters" : [ {
           "name" : "workspaceId",
           "in" : "path",
@@ -1632,7 +1858,7 @@
     "/api/v1/workspaces/{workspaceId}/labels/{labelId}" : {
       "get" : {
         "tags" : [ "label-controller" ],
-        "operationId" : "get_2",
+        "operationId" : "get_3",
         "parameters" : [ {
           "name" : "workspaceId",
           "in" : "path",
@@ -1665,7 +1891,7 @@
       },
       "delete" : {
         "tags" : [ "label-controller" ],
-        "operationId" : "delete_2",
+        "operationId" : "delete_3",
         "parameters" : [ {
           "name" : "workspaceId",
           "in" : "path",
@@ -1700,7 +1926,7 @@
       },
       "patch" : {
         "tags" : [ "label-controller" ],
-        "operationId" : "revise_2",
+        "operationId" : "revise_3",
         "parameters" : [ {
           "name" : "workspaceId",
           "in" : "path",
@@ -1738,7 +1964,7 @@
     "/api/v1/workspaces/{id}" : {
       "get" : {
         "tags" : [ "workspace-controller" ],
-        "operationId" : "get_3",
+        "operationId" : "get_4",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -1763,7 +1989,7 @@
       },
       "delete" : {
         "tags" : [ "workspace-controller" ],
-        "operationId" : "delete_3",
+        "operationId" : "delete_4",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -2099,6 +2325,36 @@
               "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/WorkItem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/view-tweaks" : {
+      "get" : {
+        "tags" : [ "view-controller" ],
+        "operationId" : "tweaks",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/IssueViewTweak"
+                  }
                 }
               }
             }
@@ -2620,7 +2876,7 @@
     "/api/v1/me/workspaces" : {
       "get" : {
         "tags" : [ "workspace-controller" ],
-        "operationId" : "list_3",
+        "operationId" : "list_4",
         "parameters" : [ {
           "name" : "cursor",
           "in" : "query",
@@ -2794,6 +3050,40 @@
   },
   "components" : {
     "schemas" : {
+      "IssueViewSort" : {
+        "type" : "object",
+        "properties" : {
+          "key" : {
+            "type" : "string",
+            "enum" : [ "updated", "created", "priority", "title" ]
+          },
+          "direction" : {
+            "type" : "string",
+            "enum" : [ "asc", "desc" ]
+          }
+        },
+        "required" : [ "direction", "key" ]
+      },
+      "PutIssueViewTweak" : {
+        "type" : "object",
+        "properties" : {
+          "layout" : {
+            "type" : [ "string", "null" ],
+            "enum" : [ "list", "calendar", "board", "timeline", "cards", "history", null ]
+          },
+          "sort" : {
+            "type" : "null",
+            "$ref" : "#/components/schemas/IssueViewSort"
+          },
+          "columns" : {
+            "type" : [ "array", "null" ],
+            "items" : {
+              "type" : "string",
+              "enum" : [ "status", "priority", "assignee", "labels", "due", "updated", "created" ]
+            }
+          }
+        }
+      },
       "Transfer" : {
         "type" : "object",
         "properties" : {
@@ -2850,6 +3140,73 @@
           }
         },
         "required" : [ "name", "slug" ]
+      },
+      "CreateIssueView" : {
+        "type" : "object",
+        "properties" : {
+          "name" : {
+            "type" : "string",
+            "maxLength" : 64,
+            "minLength" : 0
+          },
+          "description" : {
+            "type" : [ "string", "null" ],
+            "maxLength" : 200,
+            "minLength" : 0
+          },
+          "icon" : {
+            "type" : "string",
+            "maxLength" : 32,
+            "minLength" : 0
+          },
+          "color" : {
+            "type" : "string",
+            "pattern" : "#[0-9a-fA-F]{6}"
+          },
+          "isPersonal" : {
+            "type" : "boolean",
+            "description" : "Personal views are seen only by their owner; omitted means shared"
+          },
+          "layout" : {
+            "type" : "string",
+            "enum" : [ "list", "calendar", "board", "timeline", "cards", "history" ]
+          },
+          "filters" : {
+            "type" : "null",
+            "$ref" : "#/components/schemas/IssueViewFilters"
+          },
+          "sort" : {
+            "$ref" : "#/components/schemas/IssueViewSort"
+          },
+          "columns" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "enum" : [ "status", "priority", "assignee", "labels", "due", "updated", "created" ]
+            }
+          }
+        },
+        "required" : [ "color", "columns", "icon", "layout", "name", "sort" ]
+      },
+      "IssueViewFilters" : {
+        "type" : "object",
+        "properties" : {
+          "status" : {
+            "type" : "string",
+            "description" : "Status categories: todo, doing, done, none"
+          },
+          "priority" : {
+            "type" : "string"
+          },
+          "assignee" : {
+            "type" : "string",
+            "description" : "User ids"
+          },
+          "label" : {
+            "type" : "string",
+            "description" : "Label ids, or system for the decision label"
+          }
+        }
       },
       "CreateProject" : {
         "type" : "object",
@@ -3220,6 +3577,59 @@
         },
         "required" : [ "temporaryPassword" ]
       },
+      "UpdateIssueView" : {
+        "type" : "object",
+        "properties" : {
+          "expectedVersion" : {
+            "type" : "integer",
+            "format" : "int64",
+            "minimum" : 0
+          },
+          "name" : {
+            "type" : "string",
+            "maxLength" : 64,
+            "minLength" : 0
+          },
+          "description" : {
+            "type" : [ "string", "null" ],
+            "maxLength" : 200,
+            "minLength" : 0
+          },
+          "icon" : {
+            "type" : "string",
+            "maxLength" : 32,
+            "minLength" : 0
+          },
+          "color" : {
+            "type" : "string",
+            "pattern" : "#[0-9a-fA-F]{6}"
+          },
+          "isPersonal" : {
+            "type" : "boolean",
+            "description" : "Only the view's owner may change it; making it shared needs owner, admin or member"
+          },
+          "layout" : {
+            "type" : "string",
+            "enum" : [ "list", "calendar", "board", "timeline", "cards", "history" ]
+          },
+          "filters" : {
+            "type" : "null",
+            "$ref" : "#/components/schemas/IssueViewFilters",
+            "description" : "Replaces all filters"
+          },
+          "sort" : {
+            "$ref" : "#/components/schemas/IssueViewSort"
+          },
+          "columns" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "enum" : [ "status", "priority", "assignee", "labels", "due", "updated", "created" ]
+            }
+          }
+        },
+        "required" : [ "expectedVersion" ]
+      },
       "UpdateProject" : {
         "type" : "object",
         "properties" : {
@@ -3496,6 +3906,100 @@
           }
         },
         "required" : [ "items", "nextCursor" ]
+      },
+      "IssueView" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "workspaceId" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "description" : {
+            "type" : [ "string", "null" ]
+          },
+          "icon" : {
+            "type" : "string"
+          },
+          "color" : {
+            "type" : "string"
+          },
+          "layout" : {
+            "type" : "string",
+            "enum" : [ "list", "calendar", "board", "timeline", "cards", "history" ]
+          },
+          "filters" : {
+            "$ref" : "#/components/schemas/IssueViewFilters"
+          },
+          "sort" : {
+            "$ref" : "#/components/schemas/IssueViewSort"
+          },
+          "columns" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "enum" : [ "status", "priority", "assignee", "labels", "due", "updated", "created" ]
+            }
+          },
+          "ownerId" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "isPersonal" : {
+            "type" : "boolean"
+          },
+          "canEdit" : {
+            "type" : "boolean",
+            "description" : "Whether the caller may change or delete it (D-068)"
+          },
+          "position" : {
+            "type" : "number",
+            "format" : "double"
+          },
+          "version" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "createdAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "updatedAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        },
+        "required" : [ "canEdit", "color", "columns", "createdAt", "description", "filters", "icon", "id", "isPersonal", "layout", "name", "ownerId", "position", "sort", "updatedAt", "version", "workspaceId" ]
+      },
+      "IssueViewTweak" : {
+        "type" : "object",
+        "properties" : {
+          "viewKey" : {
+            "type" : "string",
+            "description" : "A view id, or all for 전체 이슈"
+          },
+          "layout" : {
+            "type" : "string",
+            "enum" : [ "list", "calendar", "board", "timeline", "cards", "history" ]
+          },
+          "sort" : {
+            "$ref" : "#/components/schemas/IssueViewSort"
+          },
+          "columns" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "enum" : [ "status", "priority", "assignee", "labels", "due", "updated", "created" ]
+            }
+          }
+        },
+        "required" : [ "viewKey" ]
       },
       "Project" : {
         "type" : "object",

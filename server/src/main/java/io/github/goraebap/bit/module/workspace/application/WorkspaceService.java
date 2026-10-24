@@ -60,6 +60,12 @@ public class WorkspaceService implements WorkspaceFacade {
 
     @Override
     @Transactional(readOnly = true)
+    public boolean allows(CurrentUser actor, UUID workspaceId, Action action) {
+        return permits(access(actor, workspaceId, Action.READ).role(), action);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public void requireMemberManagement(CurrentUser actor, UUID workspaceId, UUID memberId) {
         var own = access(actor, workspaceId, Action.MANAGE_MEMBERS);
         if (!own.role().manages(target(workspaceId, memberId).role())) throw CommonErrorCode.AUTH_FORBIDDEN.raise();
@@ -77,11 +83,14 @@ public class WorkspaceService implements WorkspaceFacade {
         Membership own = workspaceRepository
                 .findMember(id, actor.userId())
                 .orElseThrow(WorkspaceErrorCode.WORKSPACE_NOT_FOUND::raise);
-        if (action == Action.WRITE_WORK && own.role() == WorkspaceRole.viewer
-                || action == Action.OWNER && own.role() != WorkspaceRole.owner
-                || (action == Action.EDIT_SETTINGS || action == Action.MANAGE_MEMBERS)
-                        && !own.role().editsSettings()) throw CommonErrorCode.AUTH_FORBIDDEN.raise();
+        if (!permits(own.role(), action)) throw CommonErrorCode.AUTH_FORBIDDEN.raise();
         return own;
+    }
+
+    private static boolean permits(WorkspaceRole role, Action action) {
+        return !(action == Action.WRITE_WORK && role == WorkspaceRole.viewer
+                || action == Action.OWNER && role != WorkspaceRole.owner
+                || (action == Action.EDIT_SETTINGS || action == Action.MANAGE_MEMBERS) && !role.editsSettings());
     }
 
     private Workspace space(UUID id) {

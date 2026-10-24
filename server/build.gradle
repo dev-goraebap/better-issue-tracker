@@ -58,7 +58,7 @@ jooq {
                     // SQLite REAL stores doubles; DDLDatabase otherwise maps SQL REAL to Java Float.
                     forcedType {
                         name = 'DOUBLE'
-                        includeExpression = '(?i:.*work_item\\.position)'
+                        includeExpression = '(?i:.*(work_item|issue_view)\\.position)'
                     }
                     forcedType {
                         userType = 'java.time.Instant'

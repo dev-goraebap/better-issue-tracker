@@ -132,7 +132,10 @@ class AuthSecurityConfig {
                                 "/api/v1/workspaces/*/work-items",
                                 "/api/v1/workspaces/*/work-items/by-ref/*",
                                 "/api/v1/workspaces/*/labels",
-                                "/api/v1/workspaces/*/labels/*")
+                                "/api/v1/workspaces/*/labels/*",
+                                "/api/v1/workspaces/*/views",
+                                "/api/v1/workspaces/*/views/*",
+                                "/api/v1/workspaces/*/view-tweaks")
                         .authenticated()
                         .requestMatchers(
                                 HttpMethod.HEAD,
@@ -140,13 +143,23 @@ class AuthSecurityConfig {
                                 "/api/v1/workspaces/*/work-items",
                                 "/api/v1/workspaces/*/work-items/by-ref/*",
                                 "/api/v1/workspaces/*/labels",
-                                "/api/v1/workspaces/*/labels/*")
+                                "/api/v1/workspaces/*/labels/*",
+                                "/api/v1/workspaces/*/views",
+                                "/api/v1/workspaces/*/views/*",
+                                "/api/v1/workspaces/*/view-tweaks")
                         .authenticated()
-                        .requestMatchers(HttpMethod.POST, "/api/v1/workspaces/*/labels")
+                        .requestMatchers(HttpMethod.POST, "/api/v1/workspaces/*/labels", "/api/v1/workspaces/*/views")
                         .authenticated()
-                        .requestMatchers(HttpMethod.PATCH, "/api/v1/workspaces/*/labels/*")
+                        .requestMatchers(
+                                HttpMethod.PATCH, "/api/v1/workspaces/*/labels/*", "/api/v1/workspaces/*/views/*")
                         .authenticated()
-                        .requestMatchers(HttpMethod.DELETE, "/api/v1/workspaces/*/labels/*")
+                        .requestMatchers(
+                                HttpMethod.DELETE,
+                                "/api/v1/workspaces/*/labels/*",
+                                "/api/v1/workspaces/*/views/*",
+                                "/api/v1/workspaces/*/view-tweaks/*")
+                        .authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/workspaces/*/view-tweaks/*")
                         .authenticated()
                         .requestMatchers("/api", "/api/**")
                         .denyAll()
