@@ -14,7 +14,7 @@ export function CardsView({ workspaceId, items, search, empty }: { workspaceId: 
   return <ul className={styles.keep} aria-label="카드">{items.map(issue => {
     const label = issue.labels[0];
     return <li key={issue.id} className={styles.cell}>
-      <IssueLink workspaceId={workspaceId} item={issue} search={search} className={styles.card} style={{ '--tone': label?.color ?? '#95959f' } as CSSProperties}>
+      <IssueLink workspaceId={workspaceId} item={issue} search={search} className={styles.card} style={label ? { '--tone': label.color } as CSSProperties : undefined}>
         {label && <span className={styles.label}><span className={styles.dot} aria-hidden="true" />{label.name}{issue.labels.length > 1 && <span className={styles.more}>+{issue.labels.length - 1}</span>}</span>}
         <h3 className={styles.title}><span className={styles.key}>{issue.key}</span>{issue.title}</h3>
         {issue.description && <p className={styles.summary}>{issue.description}</p>}
