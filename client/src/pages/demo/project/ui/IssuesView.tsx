@@ -12,8 +12,10 @@ import {
 import type { DemoCalendarSearch } from '../model/month';
 import type { Scope } from '../model/scope';
 import { BoardView } from './BoardView';
+import { CardsView } from './CardsView';
 import { DemoCalendar } from './DemoCalendar';
 import { DemoCalendarBar } from './DemoCalendarBar';
+import { HistoryView } from './HistoryView';
 import { TimelineView } from './TimelineView';
 import styles from './views.module.css';
 
@@ -30,7 +32,7 @@ const same = <T,>(a: T, b: T) => JSON.stringify(a) === JSON.stringify(b);
  * - 표시 picks the layout, the order and the columns shown; they stay the member's own (setViewTweak) until 초기화 drops
  *   them or '모두의 기본값으로 저장' writes them into the view for everyone.
  * - 리스트 shows every issue (a table on a desktop, cards on a phone), 칸반 those with a status, 캘린더 those with a day,
- *   타임라인 those with a day as bars.
+ *   타임라인 those with a day as bars, 카드 every issue as Keep's cards, 히스토리 every issue down a timeline by month.
  */
 export function IssuesView({ scope, view, tweak, effective, issues, search, go, onCreate, onSaveAsView }: {
   scope: Scope; view: IssueView; tweak?: ViewTweak; effective: ReturnType<typeof effectiveView>;
@@ -119,5 +121,7 @@ export function IssuesView({ scope, view, tweak, effective, issues, search, go, 
       <DemoCalendar workspaceId={workspaceId} issues={rows} search={calendarSearch} onPlace={placeCalendar} onOpen={href => void navigate({ href })} />
     </div>}
     {effective.layout === 'timeline' && <TimelineView workspaceId={workspaceId} items={rows} search={search} />}
+    {effective.layout === 'cards' && <CardsView workspaceId={workspaceId} items={rows} search={search} />}
+    {effective.layout === 'history' && <HistoryView workspaceId={workspaceId} items={rows} search={search} />}
   </>;
 }

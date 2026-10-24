@@ -10,7 +10,7 @@ import { DECISION_LABEL, type Issue } from './issues';
  * issue, a list, never renamed or removed. The demo keeps views and adjustments in this browser (localStorage); the real
  * app keeps views on the server and adjustments with each member.
  */
-export type ViewLayout = 'list' | 'calendar' | 'board' | 'timeline';
+export type ViewLayout = 'list' | 'calendar' | 'board' | 'timeline' | 'cards' | 'history';
 export type ViewFilters = { status?: string; priority?: string; assignee?: string; label?: string };
 export type ViewSort = { key: string; direction: 'asc' | 'desc' };
 export type ViewColumn = 'status' | 'priority' | 'assignee' | 'labels' | 'due' | 'comments' | 'updated' | 'created';
@@ -26,6 +26,7 @@ export const ALL_VIEW = 'all';
 export const VIEW_LAYOUTS: readonly { value: ViewLayout; label: string; icon: string }[] = [
   { value: 'list', label: '리스트', icon: 'list' }, { value: 'calendar', label: '캘린더', icon: 'calendar' },
   { value: 'board', label: '칸반', icon: 'board' }, { value: 'timeline', label: '타임라인', icon: 'milestone' },
+  { value: 'cards', label: '카드', icon: 'grid' }, { value: 'history', label: '히스토리', icon: 'clock' },
 ];
 export const VIEW_COLUMNS: readonly { value: ViewColumn; label: string }[] = [
   { value: 'status', label: '상태' }, { value: 'priority', label: '우선순위' }, { value: 'assignee', label: '담당자' }, { value: 'labels', label: '라벨' },
@@ -44,8 +45,8 @@ function starters(workspaceId: string): IssueView[] {
     { ...base, id: `${workspaceId}-backlog`, name: '백로그', icon: 'rows', color: '#95959f', layout: 'list', filters: { status: 'todo' }, sort: { key: 'priority', direction: 'asc' } },
     { ...base, id: `${workspaceId}-board`, name: '진행 보드', icon: 'board', color: '#f2c94c', layout: 'board', filters: {} },
     { ...base, id: `${workspaceId}-calendar`, name: '일정', icon: 'calendar', color: '#4cb782', layout: 'calendar', filters: {} },
-    { ...base, id: `${workspaceId}-notes`, name: '회의록', icon: 'session', color: '#26b5ce', layout: 'list', filters: { label: '회의록,세션 요약' }, columns: ['labels', 'assignee', 'comments', 'created'], sort: { key: 'created', direction: 'desc' } },
-    { ...base, id: `${workspaceId}-decisions`, name: DECISION_LABEL, icon: 'decision', color: '#5e6ad2', layout: 'list', filters: { label: DECISION_LABEL }, columns: ['assignee', 'labels', 'updated'] },
+    { ...base, id: `${workspaceId}-notes`, name: '회의록', icon: 'session', color: '#26b5ce', layout: 'cards', filters: { label: '회의록,세션 요약' }, columns: ['labels', 'assignee', 'comments', 'created'], sort: { key: 'created', direction: 'desc' } },
+    { ...base, id: `${workspaceId}-decisions`, name: DECISION_LABEL, icon: 'decision', color: '#5e6ad2', layout: 'history', filters: { label: DECISION_LABEL }, columns: ['assignee', 'labels', 'updated'] },
   ];
 }
 
