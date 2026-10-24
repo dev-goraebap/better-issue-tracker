@@ -2,10 +2,10 @@
 .shell { display: flex; flex-direction: column; inline-size: 100%; block-size: 100%; min-block-size: 0; min-inline-size: 0; background: var(--bit-theme-wash, var(--color-background-body)); }
 .frame { position: relative; flex: 1; min-inline-size: 0; min-block-size: 0; padding: 0; box-sizing: border-box; }
 /* The page's card: one scroll box on a surface of its own. */
-.panel { display: flex; flex: 1; block-size: 100%; min-block-size: 0; min-inline-size: 0; overflow: hidden; background: var(--color-background-surface);
+.panel { position: relative; display: flex; flex: 1; block-size: 100%; min-block-size: 0; min-inline-size: 0; overflow: hidden; background: var(--color-background-surface);
   border: var(--border-width) solid var(--color-border); border-radius: var(--radius-container); }
 .card { --workspace-topbar-height: 2.75rem; flex: 1; block-size: 100%; min-block-size: 0; min-inline-size: 0; overflow-y: auto; overflow-x: hidden;
-  scrollbar-gutter: stable; scrollbar-width: thin; scrollbar-color: var(--color-border-emphasized, var(--color-border)) transparent; overscroll-behavior: contain;
+  scrollbar-gutter: stable; overscroll-behavior: contain;
   background: var(--color-background-surface); }
 
 /* The menu on the wash: no surface or rule of its own; Astryx's resizable keeps its width (D-044). */

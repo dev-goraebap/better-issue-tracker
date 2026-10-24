@@ -37,26 +37,26 @@ body { font-family: 'Pretendard Variable', Pretendard, system-ui, sans-serif; }
   --color-background-surface: light-dark(#f9f9fa, #121213);
   --color-background-muted: light-dark(#ececed, #232326);
   --color-border: light-dark(#e4e4e5, #212224);
-  --color-border-subtle: color-mix(in srgb, var(--color-text-primary) light-dark(7%, 6%), var(--color-background-surface));
+  --color-border-subtle: light-dark(color-mix(in srgb, var(--color-text-primary) 7%, var(--color-background-surface)), color-mix(in srgb, var(--color-text-primary) 6%, var(--color-background-surface)));
   --color-text-primary: light-dark(#1b1b1b, #f7f8f8);
   --color-text-secondary: light-dark(#5c5c5e, #8a8f98);
   --color-icon-secondary: light-dark(#6b6b6f, #8a8f98);
   --color-accent: light-dark(#1b1b1b, #f7f8f8);
-  --color-accent-muted: color-mix(in srgb, var(--color-accent) light-dark(8%, 12%), transparent);
+  --color-accent-muted: light-dark(color-mix(in srgb, var(--color-accent) 8%, transparent), color-mix(in srgb, var(--color-accent) 12%, transparent));
   --color-icon-accent: var(--color-accent);
   /* Drawn from the palette, so a colour theme carries them in its own colours. */
   --color-background-card: light-dark(color-mix(in srgb, var(--color-background-surface) 25%, #ffffff), color-mix(in srgb, var(--color-text-primary) 3%, var(--color-background-surface)));
   --color-background-popover: light-dark(color-mix(in srgb, var(--color-background-surface) 15%, #ffffff), color-mix(in srgb, var(--color-text-primary) 6%, var(--color-background-surface)));
-  --color-background-gray: color-mix(in srgb, var(--color-text-primary) light-dark(10%, 13%), var(--color-background-surface));
-  --color-border-control: color-mix(in srgb, var(--color-text-primary) light-dark(13%, 12%), var(--color-background-surface));
-  --color-border-emphasized: color-mix(in srgb, var(--color-text-primary) light-dark(18%, 16%), var(--color-background-surface));
+  --color-background-gray: light-dark(color-mix(in srgb, var(--color-text-primary) 10%, var(--color-background-surface)), color-mix(in srgb, var(--color-text-primary) 13%, var(--color-background-surface)));
+  --color-border-control: light-dark(color-mix(in srgb, var(--color-text-primary) 13%, var(--color-background-surface)), color-mix(in srgb, var(--color-text-primary) 12%, var(--color-background-surface)));
+  --color-border-emphasized: light-dark(color-mix(in srgb, var(--color-text-primary) 18%, var(--color-background-surface)), color-mix(in srgb, var(--color-text-primary) 16%, var(--color-background-surface)));
   --color-text-disabled: color-mix(in srgb, var(--color-text-secondary) 62%, var(--color-background-surface));
   --color-icon-primary: color-mix(in srgb, var(--color-text-primary) 88%, var(--color-background-surface));
   --color-text-accent: var(--color-accent);
   --color-on-accent: light-dark(#ffffff, color-mix(in srgb, var(--color-background-surface) 85%, #000000));
   --color-overlay: light-dark(rgb(0 0 0 / 0.4), rgb(0 0 0 / 0.55));
-  --color-overlay-hover: color-mix(in srgb, var(--color-text-primary) light-dark(4%, 5%), transparent);
-  --color-overlay-pressed: color-mix(in srgb, var(--color-text-primary) light-dark(7%, 8%), transparent);
+  --color-overlay-hover: light-dark(color-mix(in srgb, var(--color-text-primary) 4%, transparent), color-mix(in srgb, var(--color-text-primary) 5%, transparent));
+  --color-overlay-pressed: light-dark(color-mix(in srgb, var(--color-text-primary) 7%, transparent), color-mix(in srgb, var(--color-text-primary) 8%, transparent));
   --color-shadow: light-dark(rgb(0 0 0 / 0.04), rgb(0 0 0 / 0.3));
 
   --font-size-base: 0.8125rem;
@@ -84,7 +84,29 @@ body { font-family: 'Pretendard Variable', Pretendard, system-ui, sans-serif; }
   /* A chip or round tool at rest (the card on a ring in light mode, a lifted surface in dark), and a floating surface's rule. */
   --bit-chip-bg: light-dark(var(--color-background-card), color-mix(in srgb, var(--color-text-primary) 4%, var(--color-background-surface)));
   --bit-chip-ring: light-dark(color-mix(in srgb, var(--color-text-primary) 11%, transparent), transparent);
-  --bit-float-border: color-mix(in srgb, var(--color-text-primary) light-dark(10%, 12%), transparent);
+  --bit-float-border: light-dark(color-mix(in srgb, var(--color-text-primary) 10%, transparent), color-mix(in srgb, var(--color-text-primary) 12%, transparent));
+  /* A scrollbar's thumb: faint at rest, a step darker under the pointer, on no track. */
+  --bit-scroll-thumb: light-dark(color-mix(in srgb, var(--color-text-primary) 16%, transparent), color-mix(in srgb, var(--color-text-primary) 20%, transparent));
+  --bit-scroll-thumb-hover: light-dark(color-mix(in srgb, var(--color-text-primary) 30%, transparent), color-mix(in srgb, var(--color-text-primary) 34%, transparent));
+}
+/*
+ * Scrollbars, everywhere alike, as Linear's: thin, on no track, the thumb faint until the pointer is over its box. A
+ * browser without scrollbar-color (Safari) draws the same with its own scrollbar parts: an 8px pill inset in a 12px
+ * lane. Inside what floats over the page (dialogs, sheets, menus, popovers) a scroll the app asks for glides rather than
+ * jumps, and reaching the end never scrolls the page under it; the page's own card keeps instant scrolling, so a
+ * restored position lands at once.
+ */
+* { scrollbar-width: thin; scrollbar-color: var(--bit-scroll-thumb) transparent; }
+*:hover { scrollbar-color: var(--bit-scroll-thumb-hover) transparent; }
+@supports not (scrollbar-color: auto) {
+  ::-webkit-scrollbar { width: 12px; height: 12px; background: transparent; }
+  ::-webkit-scrollbar-thumb { border: 3px solid transparent; border-radius: 9999px; background: var(--bit-scroll-thumb) padding-box; }
+  ::-webkit-scrollbar-thumb:hover { background-color: var(--bit-scroll-thumb-hover); }
+  ::-webkit-scrollbar-corner, ::-webkit-scrollbar-track { background: transparent; }
+}
+:is(dialog, [role="dialog"], [role="menu"], [role="listbox"], .astryx-popover-surface, .astryx-bottom-sheet), :is(dialog, [role="dialog"], [role="menu"], [role="listbox"], .astryx-popover-surface, .astryx-bottom-sheet) * { overscroll-behavior: contain; }
+@media (prefers-reduced-motion: no-preference) {
+  :is(dialog, [role="dialog"], [role="menu"], [role="listbox"], .astryx-popover-surface, .astryx-bottom-sheet), :is(dialog, [role="dialog"], [role="menu"], [role="listbox"], .astryx-popover-surface, .astryx-bottom-sheet) * { scroll-behavior: smooth; }
 }
 /*
  * Corners (D-067): what is pressed is a pill (buttons, icon buttons, toggles); what takes room keeps 8px (menu rows);

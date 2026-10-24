@@ -8,6 +8,9 @@ export { DefaultAvatar } from './DefaultAvatar';
 export { ProductMark } from './ProductMark';
 export { CompactDialog } from './CompactDialog';
 export { QueryMessage } from './QueryMessage';
+export { RequestBoundary } from './RequestBoundary';
+export { PageLoader, InlineLoader } from './page-loading';
+export { useLoadingHold } from './use-loading-hold';
 
 export { DateField } from './date-field';
 

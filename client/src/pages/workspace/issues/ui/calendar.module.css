@@ -128,7 +128,7 @@
   background: var(--color-background-muted); color: var(--color-text-secondary); font: inherit; font-size: 0.6875rem; font-weight: 700; cursor: pointer; }
 .allDayMore:hover { color: var(--color-text-primary); }
 .allDayMore:focus-visible { outline: var(--focus-outline-width) var(--focus-outline-style) var(--focus-outline-color); outline-offset: 1px; }
-.hours { flex: 1; min-block-size: 0; overflow-y: auto; scrollbar-width: thin; }
+.hours { flex: 1; min-block-size: 0; overflow-y: auto; }
 .hoursGrid { position: relative; display: grid; grid-template-columns: 3.5rem repeat(var(--days, 7), minmax(0, 1fr)); }
 .hourLabels { position: relative; }
 .hourLabel { position: absolute; inset-inline-end: var(--spacing-2); translate: 0 -50%; font-size: 0.6875rem; color: var(--color-text-secondary); font-variant-numeric: tabular-nums; }

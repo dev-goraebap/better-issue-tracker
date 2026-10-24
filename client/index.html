@@ -6,9 +6,38 @@
     <meta name="theme-color" content="#F3F3F5" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title>%PRODUCT_TITLE%</title>
+    <!-- The boot screen stands in the first-visit loader's place until the app draws that loader over it (boot-screen.ts). -->
+    <style>
+      .boot { position: fixed; inset: 0; z-index: 10; display: flex; flex-direction: column; align-items: center; justify-content: center;
+        gap: 0.75rem; margin: 0; background: var(--boot-body); color: var(--boot-secondary);
+        font: 0.75rem / 1.4545 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+      .boot-mark { width: 10rem; height: 10rem; }
+      .boot-mark svg { display: block; }
+      .boot-mark [stroke="rgb(0,0,0)"] { stroke: var(--boot-secondary); }
+      .boot-mark [fill="rgb(254,254,255)"], .boot-mark [fill="#ffffff"] { fill: var(--boot-surface); }
+    </style>
+    <script>
+      (function () {
+        var colors = %BOOT_COLORS%;
+        var chosen = {};
+        try { chosen = JSON.parse(localStorage.getItem(%BOOT_KEY%) || '{}') || {}; } catch (error) { /* the plain look */ }
+        var palette = colors[chosen.color] || colors.none;
+        var dark = chosen.color && chosen.color !== 'none' ? chosen.mode === 'dark'
+          : chosen.mode === 'dark' || (chosen.mode !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches);
+        var side = dark ? 1 : 0;
+        var style = document.documentElement.style;
+        style.setProperty('--boot-body', palette.body[side]);
+        style.setProperty('--boot-surface', palette.surface[side]);
+        style.setProperty('--boot-secondary', palette.secondary[side]);
+        // The status bar takes its colour from the first paint, before the app keeps it in step.
+        document.querySelector('meta[name="theme-color"]').setAttribute('content', palette.body[side]);
+        style.colorScheme = dark ? 'dark' : 'light';
+        style.backgroundColor = palette.body[side];
+      })();
+    </script>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root"><div class="boot" role="status" aria-label="화면을 불러오는 중"><div class="boot-mark" aria-hidden="true">%BOOT_ROCKET%</div><span>불러오는 중입니다</span></div></div>
     <script type="module" src="/src/app/entry.tsx"></script>
   </body>
 </html>

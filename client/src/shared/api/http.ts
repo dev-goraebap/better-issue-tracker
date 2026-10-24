@@ -6,6 +6,8 @@ export class ApiError extends Error {
     this.name = 'ApiError';
   }
 }
+/** Whether a read found nothing at its address (404): asking again finds nothing either. */
+export const isNotFound = (error: unknown): boolean => error instanceof ApiError && error.status === 404;
 let onUnauthorized = () => {};
 export function setUnauthorizedHandler(handler: () => void) { onUnauthorized = handler; }
 export function notifySessionExpired() { onUnauthorized(); }

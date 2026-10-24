@@ -3,7 +3,7 @@ import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { useNavigate, useParams, useRouterState, useSearch } from '@tanstack/react-router';
 import { sessionQueryOptions } from '@/shared/api';
 import { PanelHostContext, useScreenPanel, withoutPanel } from '@/shared/lib/routed-panel';
-import { ConfirmDialog, PageFrame, PageState, QueryMessage, RoutedPanel } from '@/shared/ui';
+import { ConfirmDialog, PageFrame, PageState, RequestBoundary, RoutedPanel } from '@/shared/ui';
 import { labelsQuery } from '@/entities/label';
 import { columnsQuery, projectQuery, projectsQuery } from '@/entities/project';
 import { memberOptionsQuery, workspaceQuery } from '@/entities/workspace';
@@ -112,10 +112,10 @@ export function IssuesPage() {
       onEdit={() => setEditing({ mode: 'edit', initial: { name: view.name, description: view.description ?? '', icon: view.icon, color: view.color, isPersonal: view.isPersonal } })} />}>
     <div role="tabpanel" id={panelId} onClickCapture={peek}>
       {editing && <ViewEditor key={`${editing.mode}-${view.id}`} initial={editing.initial} mode={editing.mode} onCancel={() => setEditing(null)} onSave={saveView} />}
-      {scopeItems.isLoading || scopeItems.error
-        ? <QueryMessage pending={scopeItems.isLoading} error={scopeItems.error} retry={() => { void scopeItems.refetch(); }} />
-        : <IssuesView scope={scope} view={view} tweak={tweak} effective={effective} issues={scopeItems.items} labels={labels} members={members} search={search} go={go}
-          onCreate={canWrite ? openNew : undefined} onSaveAsView={startCreate} />}
+      <RequestBoundary pending={scopeItems.isLoading} hasData={!scopeItems.isMissing} error={scopeItems.error} retry={() => { void scopeItems.refetch(); }}>
+        <IssuesView scope={scope} view={view} tweak={tweak} effective={effective} issues={scopeItems.items} labels={labels} members={members} search={search} go={go}
+          onCreate={canWrite ? openNew : undefined} onSaveAsView={startCreate} />
+      </RequestBoundary>
     </div>
     {fullSearch.panel && <RoutedPanel label={NEW_PATH.test(panelPath) ? '새 이슈' : '이슈'} href={fullSearch.panel} depth={depth} host={host}
       size={NEW_PATH.test(panelPath) ? 'form' : 'content'}><IssuePanel href={fullSearch.panel} /></RoutedPanel>}

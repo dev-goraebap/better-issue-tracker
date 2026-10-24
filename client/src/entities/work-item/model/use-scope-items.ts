@@ -19,5 +19,5 @@ export function useScopeItems(workspaceId: string, projectId?: string) {
     if (hasNextPage && !isFetchingNextPage && pages < MOST_PAGES) void fetchNextPage();
   }, [hasNextPage, isFetchingNextPage, fetchNextPage, pages]);
   const items: WorkItem[] = query.data?.pages.flatMap(page => page.items) ?? [];
-  return { items, isLoading: query.isPending, error: query.error, isCapped: !!hasNextPage && pages >= MOST_PAGES, refetch: query.refetch };
+  return { items, isLoading: query.isPending, isMissing: !query.data, error: query.error, isCapped: !!hasNextPage && pages >= MOST_PAGES, refetch: query.refetch };
 }

@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { AppShell, HStack, IconButton, VStack } from '@astryxdesign/core';
+import { useRouterState } from '@tanstack/react-router';
 import { useMediaQuery } from '@astryxdesign/core/hooks';
 import { MOBILE_QUERY, PRODUCT_NAME } from '@/shared/config';
 import { useAppearance } from '@/shared/lib/appearance';
-import { NavIcon, PageBackShownContext, PageChromeContext } from '@/shared/ui';
+import { NavIcon, PageBackShownContext, PageChromeContext, PageLoader, useLoadingHold } from '@/shared/ui';
 import { AgentBar } from './AgentBar';
 import styles from './app-shell.module.css';
 
@@ -12,8 +13,8 @@ import styles from './app-shell.module.css';
  * the page's card, whose header row holds the menu's fold, the trail and the page's tools and actions, with the rows a
  * page hands it (tabs, conditions) under it and its foot row (PageFoot) at the card's bottom; under the card the agent
  * strip. A phone keeps the card full width with its tab bar under it, and gives a page with a way back of its own (a
- * detail, a form) the whole screen. The workspace shell and the /demo shell both draw it, so the demo shows the real
- * frame.
+ * detail, a form) the whole screen. A move to another page that waits for its reads veils the card (not the menu) with
+ * the rocket, as SandboxHr's, past 100ms and for 300ms at least, until the next page is drawn under it.
  */
 export function ShellFrame({ pathname, sidebar, trail, mobileNav, mobileEnd, folded, onFold, children }: {
   pathname: string; sidebar: ReactNode; trail: ReactNode; mobileNav?: ReactNode;
@@ -31,6 +32,8 @@ export function ShellFrame({ pathname, sidebar, trail, mobileNav, mobileEnd, fol
   // A page with a way back of its own (PageFrame back) tells the shell, which gives it a phone's whole screen.
   const [hasPageBack, setPageBack] = useState(false);
   const isPhoneBare = isMobile && hasPageBack;
+  const isMoving = useRouterState({ select: state => state.status === 'pending' && !!state.resolvedLocation && state.location.pathname !== state.resolvedLocation.pathname });
+  const isVeiled = useLoadingHold(isMoving, { delay: 100, minimum: 300 });
   // What sticks under the rows (a table's header) needs their height.
   useEffect(() => {
     const box = scrollBox.current;
@@ -65,6 +68,7 @@ export function ShellFrame({ pathname, sidebar, trail, mobileNav, mobileEnd, fol
             </PageChromeContext.Provider>
             <div ref={setFoot} className={styles.footSlot} />
           </VStack>
+          <PageLoader isVisible={isVeiled} place="card" />
         </div>
         {!isMobile && <AgentBar />}
         {isMobile && !isPhoneBare && mobileNav}

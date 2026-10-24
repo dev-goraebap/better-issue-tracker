@@ -3,7 +3,7 @@
  * its own box; over the days the months, under them each week's first date, today an accent pill over a thin accent line;
  * a bar spans its item's days in its status's colour. No rules between rows; the hover band parts them.
  */
-.timeline { --name: 18rem; --day: 2rem; overflow-x: auto; scrollbar-width: thin; }
+.timeline { --name: 18rem; --day: 2rem; overflow-x: auto; }
 .head, .row { display: grid; grid-template-columns: var(--name) calc(var(--days) * var(--day)); min-inline-size: max-content; }
 .head { position: sticky; inset-block-start: 0; z-index: 2; border-block-end: 1px solid var(--color-border); background: var(--color-background-surface); }
 .corner, .name { position: sticky; inset-inline-start: 0; z-index: 3; display: flex; align-items: center; gap: var(--spacing-2); min-inline-size: 0;
