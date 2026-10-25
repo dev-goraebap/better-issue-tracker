@@ -1,5 +1,11 @@
 # bit-release 수정 기록
 
+## 2026-10-25 · 절차
+- 증상 1: 0.8.0 배포 때 1단계의 "origin/main과 같다"가 너무 엄격했다. 아직 올리지 않은 이 세션의 커밋(배포 스킬, sharp) 때문에 규칙대로면 멈춰야 했지만, 그 커밋은 3단계에서 함께 올라가는 것이라 문제가 아니었다.
+- 증상 2: 6단계에서 사용자가 `docker login`만 하고 `gh auth refresh`를 건너뛰어 `Login Succeeded`가 나왔는데도 받기가 403이었다. 권한을 더한 뒤에도 Docker에 옛 토큰이 남아 403이 한 번 더 났다.
+- 수정: 1단계를 "origin/main이 앞서 있지 않다(`HEAD..origin/main`이 0)"로 바꿨다. 6단계에 "받기가 403이면 `gh auth status`의 scopes에서 `read:packages`를 보고, 없으면 refresh, 있으면 `docker login`을 다시"를 더했다.
+- 확인: 0.8.0 배포에서 두 상황을 실제로 겪었다. 다음 배포에서 1단계가 미푸시 커밋으로 멈추지 않는지, 403 때 원인을 한 번에 짚는지 본다.
+
 ## 2026-10-25 · 처음 만듦
 - 계기: 사용자가 배포할 때 태그와 도커 이미지 게시를 함께 하는 스킬을 원했다. 이미지는 태그 푸시 → Actions → GHCR로 정했다(D-082).
 - 만든 것: SKILL.md, `scripts/set-version.mjs`, `.github/workflows/release.yml`. 화면 사이드바의 버전이 `package.json`을 읽게 바꿨다.

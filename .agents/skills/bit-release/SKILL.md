@@ -17,7 +17,7 @@ description: BIT 배포(릴리스) 절차. 버전을 정하고 검사한 뒤 버
 ## 절차
 
 1. **확인한다.**
-   - `main`이고 `git fetch` 뒤 `origin/main`과 같다. 다르면 멈추고 알린다.
+   - `main`이고 `git fetch` 뒤 `origin/main`이 앞서 있지 않다(`git rev-list --count HEAD..origin/main`이 0). 앞서 있으면 멈추고 알린다. 아직 올리지 않은 로컬 커밋은 괜찮다. 3단계에서 함께 올라간다.
    - 같은 태그가 없다: `git tag -l 'v<버전>*'`, `git ls-remote --tags origin`.
    - 버전 파일 세 개에 커밋하지 않은 다른 변경이 있으면 멈추고 묻는다. 버전 커밋에 남의 변경이 섞이면 안 된다(사용자의 미커밋 브랜드 파일·`sharp` 변경이 이 경우였다).
    - 포함될 커밋: `git log --oneline <지난 태그>..HEAD`(첫 배포면 전체 개수만).
@@ -27,6 +27,7 @@ description: BIT 배포(릴리스) 절차. 버전을 정하고 검사한 뒤 버
 5. **이미지를 기다린다.** `gh run list --workflow release.yml --limit 1`로 실행을 찾아 `gh run watch <id> --exit-status`. 실패하면 `gh run view <id> --log-failed`로 원인을 읽고 고친 뒤 4로(번호를 올려서).
 6. **후보 이미지를 확인한다.**
    - 받기: `docker pull ghcr.io/dev-goraebap/better-issue-tracker:<버전>-rc.<번호>`. 저장소가 비공개라 이미지도 비공개이고, 받으려면 `read:packages` 권한으로 `docker login ghcr.io`가 되어 있어야 한다. 거절되면 사용자에게 로그인을 부탁한다: `gh auth refresh -h github.com -s read:packages`로 권한을 더한 뒤 `gh auth token | docker login ghcr.io -u <GitHub 아이디> --password-stdin`. 토큰을 대화에 적거나 대신 입력하지 않는다.
+   - 받기가 403이면 `gh auth status`의 scopes에 `read:packages`가 있는지 본다. `docker login`은 권한을 따지지 않아 권한이 없어도 `Login Succeeded`가 나온다. 없으면 `gh auth refresh`부터, 있는데도 403이면 Docker에 옛 토큰이 남은 것이라 `docker login`을 다시 부탁한다.
    - 띄우기: `docker run -d --name bit-rc -p 18080:8080 -v bit-rc-data:/var/lib/bit <이미지>`.
    - 확인: `curl -fsS http://localhost:18080/api/v1/health`가 200이고, `curl -s http://localhost:18080/`에 화면 HTML이 온다.
    - 치우기: `docker rm -f bit-rc && docker volume rm bit-rc-data`.
