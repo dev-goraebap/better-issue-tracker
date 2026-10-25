@@ -652,3 +652,10 @@
 - **왜 10개**: 결정·세션·산출물 화면과 모듈이 아직 없거나(산출물 모듈은 빈 패키지) D-066 이후 결정기록이 라벨 이슈가 되어 D-022의 결정 도구와 모델이 어긋난다. 지금 있는 이슈·댓글·타임라인 위에서 "이슈 맥락 읽기 → 작업 → 댓글로 결과 → 상태 옮기기"가 끝나는 범위로 잡았다. 결정은 결정기록 라벨과 템플릿(D-077)으로 남긴다.
 - **기각**: stateful Streamable HTTP(재시작에 약하고 쓸 기능이 없음), MCP를 직접 JSON-RPC로 구현(스펙 변화를 따라가야 함), Spring AI의 MCP 스타터(Spring Boot 4와 맞는 정식판을 확인하지 못했고 우리가 쓰는 건 전송 하나뿐), mcp 모듈이 각 모듈 Facade를 부르기(Facade마다 화면용 조회를 다시 만들어야 하고 Facade가 비대해짐), D-022의 24개 전부(서버부터 새로 만들 것이 많아 쓸 때까지 오래 걸림).
 - **확인한 것**: 통합 테스트가 HTTP로 initialize → tools/list → 만들기·댓글·옮기기·맥락 읽기를 거치고, 세션 쿠키 요청이 거절되는지 본다. MCP Inspector CLI로 8092의 오름랩 데이터에서 whoami·맥락·목록을 확인했다.
+
+## D-082. 배포는 태그를 푸시하면 Actions가 이미지를 만들어 GHCR에 올리고, 버전은 태그가 원본이다 (2026-10-25)
+- **무엇을**: `v*` 태그를 푸시하면 `.github/workflows/release.yml`이 루트 `Dockerfile`로 이미지를 만들어 `ghcr.io/dev-goraebap/better-issue-tracker`에 올린다. 후보 `v0.8.0-rc.1`은 `0.8.0-rc.1`로만, 정식 `v0.8.0`은 `0.8.0`·`0.8`·`latest`로 올린다. 저장소 기본 토큰(`GITHUB_TOKEN`, `packages: write`)만 쓰고 linux/amd64만 만든다. 절차는 `bit-release` 스킬(검사 → 버전 맞추기 → 후보 태그 → 이미지 확인 → 같은 커밋에 정식 태그 → GitHub Release)이다.
+- **버전**: 태그가 원본이다. 태그를 달 커밋의 `client/package.json`·`package-lock.json`·`server/build.gradle`을 `scripts/set-version.mjs`로 같은 값으로 맞춘다. 화면 사이드바의 버전은 빌드할 때 `package.json`에서 읽는다(전에는 `v0.0.0`이 코드에 적혀 있었다). 첫 배포는 0.8.0이다.
+- **왜**: 사용자가 태그 푸시 → Actions → GHCR을 골랐다. `deploy.md`가 이미 "태그에서 CI가 이미지를 만든다"고 정해 두었지만 CI에 그 단계가 없었고, 레지스트리는 미룬 상태였다. GHCR은 같은 GitHub 계정·권한으로 비밀값 없이 올릴 수 있다.
+- **기각**: 내 컴퓨터에서 빌드해 올리기(패키지 쓰기 토큰을 따로 두어야 하고 빌드 환경이 한 컴퓨터에 묶임), Docker Hub(계정·토큰을 저장소 비밀값으로 넣어야 하고 무료 비공개 이미지가 하나), arm64까지(QEMU 빌드가 몇 배 느림; 필요해지면 `platforms`에 더한다).
+- **감수하는 것**: 저장소가 비공개라 이미지도 비공개다. 다른 서버에서 받으려면 `read:packages` 권한으로 `docker login ghcr.io`가 필요하다. 비공개 저장소의 Actions 무료 시간(월 2,000분)을 쓴다.

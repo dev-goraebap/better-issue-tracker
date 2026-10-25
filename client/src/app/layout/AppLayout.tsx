@@ -4,7 +4,7 @@ import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-quer
 import { Outlet, useNavigate, useRouter, useRouterState } from '@tanstack/react-router';
 import { ShellFrame, ShellTabBar, Trail, useSidebarFold, type ShellTab, type TrailStep } from '@/widgets/app-shell';
 import {
-  ACCOUNT_MENU, appPlace, PRODUCT_NAME, PROJECT_SETTINGS_MENU, projectPath, projectSettingsPath, WORKSPACE_MENU, WORKSPACE_SETTINGS_MENU, workspacePath,
+  ACCOUNT_MENU, APP_VERSION, appPlace, PRODUCT_NAME, PROJECT_SETTINGS_MENU, projectPath, projectSettingsPath, WORKSPACE_MENU, WORKSPACE_SETTINGS_MENU, workspacePath,
   workspaceSettingsPath,
 } from '@/shared/config';
 import { ApiError, logout, sessionQueryOptions } from '@/shared/api';
@@ -124,7 +124,7 @@ export function AppLayout() {
     <SideNavItem key={href} label={label} href={href} icon={<NavIcon name={icon} />} isSelected={isSelected} onClick={go(href)} />;
   const openSettings = () => void navigate({ href: ACCOUNT_MENU[0]!.path });
   const resizable = { defaultWidth: 250, minWidth: 236, maxWidth: 350, autoSaveId: 'bit-sidebar', isCollapsed: folded, onCollapseChange: setFolded };
-  const version = !folded && <Text type="supporting" color="secondary" className={styles.version}>v0.0.0</Text>;
+  const version = !folded && <Text type="supporting" color="secondary" className={styles.version}>v{APP_VERSION}</Text>;
   const backHead = <button type="button" className={styles.backHead} data-folded={folded || undefined} onClick={leaveSettings} aria-label="돌아가기 (Esc)">
     <NavIcon name="previous" />{!folded && <><span className={styles.backLabel}>돌아가기</span><kbd className={styles.kbd}>Esc</kbd></>}
   </button>;
