@@ -415,6 +415,19 @@ public class ProjectService implements ProjectFacade {
         touch(p, actor);
     }
 
+    /**
+     * Puts the workspace's projects in the order given (D-080), which every list and the sidebar read: those who manage
+     * its settings may, and the order must name each live, unarchived project once.
+     */
+    @Transactional
+    public void reorder(CurrentUser actor, UUID workspaceId, List<UUID> order) {
+        workspaceFacade.requireAccess(actor, workspaceId, WorkspaceFacade.Action.EDIT_SETTINGS);
+        var active = projectRepository.findActiveIds(workspaceId);
+        if (order == null || order.size() != active.size() || !new HashSet<>(order).equals(new HashSet<>(active)))
+            throw CommonErrorCode.COMMON_INVALID_REQUEST.raise();
+        projectRepository.updateOrder(workspaceId, order);
+    }
+
     private Project access(CurrentUser actor, UUID workspaceId, UUID projectId, boolean writing, boolean deleted) {
         workspaceFacade.requireAccess(
                 actor, workspaceId, writing ? WorkspaceFacade.Action.WRITE_WORK : WorkspaceFacade.Action.READ);

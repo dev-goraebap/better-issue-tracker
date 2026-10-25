@@ -121,6 +121,14 @@ public final class ProjectRequests {
         }
     }
 
+    /** The workspace's live, unarchived projects in the order they should read (D-080). */
+    @Schema(name = "ProjectOrder")
+    public record Order(@NotNull List<@NotNull UUID> order) {
+        public Order {
+            order = List.copyOf(order);
+        }
+    }
+
     @Schema(name = "ReorderBoardColumns")
     public record Reorder(
             @NotNull @Min(0) Long expectedVersion, @NotNull List<@NotNull UUID> order) {

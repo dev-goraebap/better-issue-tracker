@@ -11,16 +11,31 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-/** Who belongs to which project (D-075): read by every member, changed by those who manage members. */
+/**
+ * Who belongs to which project (D-075): read by every member, changed by those who manage members; and the workspace's
+ * project order (D-080).
+ */
 @RestController
 @RequestMapping(value = "/api/v1/workspaces/{workspaceId}", produces = "application/json")
 @RequiredArgsConstructor
 class ProjectMemberController {
     private final ProjectService projectService;
+
+    /** The workspace's project order (D-080), set by those who manage its settings. */
+    @PutMapping("/project-order")
+    @ApiResponse(responseCode = "204", description = "Projects reordered")
+    ResponseEntity<Void> reorder(
+            @AuthenticationPrincipal CurrentUser actor,
+            @PathVariable UUID workspaceId,
+            @Valid @RequestBody ProjectRequests.Order body) {
+        projectService.reorder(actor, workspaceId, body.order());
+        return ResponseEntity.noContent().build();
+    }
 
     @GetMapping("/project-members")
     ProjectViews.Memberships list(@AuthenticationPrincipal CurrentUser actor, @PathVariable UUID workspaceId) {

@@ -38,6 +38,7 @@ public class ProjectQueryService {
                 p.icon(),
                 p.color(),
                 p.archivedAt(),
+                p.position(),
                 p.version(),
                 p.audit()));
     }
@@ -59,20 +60,26 @@ public class ProjectQueryService {
         if (!Set.of("active", "archived", "deleted").contains(status)
                 || size < 1
                 || size > 100
-                || !"createdAt".equals(sort)
-                || !"DESC".equals(direction)) throw CommonErrorCode.COMMON_INVALID_REQUEST.raise();
+                || !("createdAt".equals(sort) && "DESC".equals(direction)
+                        || "position".equals(sort) && "ASC".equals(direction)))
+            throw CommonErrorCode.COMMON_INVALID_REQUEST.raise();
+        boolean byPosition = "position".equals(sort);
         String query = q == null ? "" : q.strip();
         if (query.length() > 200) throw CommonErrorCode.COMMON_INVALID_REQUEST.raise();
-        String scope =
-                secretTokens.hash("project-list", actor.userId() + ":" + workspaceId + ":" + status + ":" + query);
-        var point = decode(cursor, scope);
-        var rows = projectRepository.findAll(workspaceId, status, query, point.time(), point.id(), size + 1);
+        String scope = secretTokens.hash(
+                "project-list", actor.userId() + ":" + workspaceId + ":" + status + ":" + query + ":" + sort);
+        var point = decode(cursor, scope, byPosition);
+        var rows = projectRepository.findAll(
+                workspaceId, status, query, byPosition, point.time(), point.position(), point.id(), size + 1);
         var page = rows.stream().limit(size).toList();
+        var last = page.isEmpty() ? null : page.getLast();
         String next = rows.size() > size
                 ? encode(
                         scope,
-                        page.getLast().audit().createdAt(),
-                        page.getLast().id())
+                        byPosition
+                                ? String.valueOf(last.position())
+                                : last.audit().createdAt().toString(),
+                        last.id())
                 : null;
         return new ProjectViews.Projects(page.stream().map(this::view).toList(), next);
     }
@@ -111,6 +118,7 @@ public class ProjectQueryService {
                 row.color(),
                 row.archivedAt(),
                 a.deletedAt(),
+                row.position(),
                 row.version(),
                 a.createdAt(),
                 a.createdBy(),
@@ -118,23 +126,25 @@ public class ProjectQueryService {
                 a.updatedAt());
     }
 
-    private record Point(Instant time, UUID id) {}
+    private record Point(Instant time, Integer position, UUID id) {}
 
-    private static Point decode(String cursor, String scope) {
-        if (cursor == null) return new Point(null, null);
+    private static Point decode(String cursor, String scope, boolean byPosition) {
+        if (cursor == null) return new Point(null, null, null);
         if (cursor.length() > 1024) throw CommonErrorCode.COMMON_INVALID_REQUEST.raise();
         try {
             String[] parts = new String(Base64.getUrlDecoder().decode(cursor), StandardCharsets.UTF_8).split("\\|", -1);
             if (parts.length != 3 || !parts[0].equals(scope)) throw new IllegalArgumentException("cursor");
-            return new Point(Instant.parse(parts[1]), UUID.fromString(parts[2]));
+            return byPosition
+                    ? new Point(null, Integer.valueOf(parts[1]), UUID.fromString(parts[2]))
+                    : new Point(Instant.parse(parts[1]), null, UUID.fromString(parts[2]));
         } catch (IllegalArgumentException | java.time.format.DateTimeParseException invalid) {
             throw CommonErrorCode.COMMON_INVALID_REQUEST.raise();
         }
     }
 
-    private static String encode(String scope, Instant time, UUID id) {
+    private static String encode(String scope, String value, UUID id) {
         return Base64.getUrlEncoder()
                 .withoutPadding()
-                .encodeToString((scope + "|" + time + "|" + id).getBytes(StandardCharsets.UTF_8));
+                .encodeToString((scope + "|" + value + "|" + id).getBytes(StandardCharsets.UTF_8));
     }
 }

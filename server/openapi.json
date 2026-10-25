@@ -71,6 +71,36 @@
         }
       }
     },
+    "/api/v1/workspaces/{workspaceId}/project-order" : {
+      "put" : {
+        "tags" : [ "project-member-controller" ],
+        "operationId" : "reorder",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ProjectOrder"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "204" : {
+            "description" : "Projects reordered"
+          }
+        }
+      }
+    },
     "/api/v1/workspaces/{id}/owner" : {
       "put" : {
         "tags" : [ "workspace-controller" ],
@@ -925,7 +955,7 @@
     "/api/v1/workspaces/{workspaceId}/projects/{projectId}/columns/reorder" : {
       "post" : {
         "tags" : [ "project-controller" ],
-        "operationId" : "reorder",
+        "operationId" : "reorder_1",
         "parameters" : [ {
           "name" : "workspaceId",
           "in" : "path",
@@ -3368,6 +3398,19 @@
           }
         }
       },
+      "ProjectOrder" : {
+        "type" : "object",
+        "properties" : {
+          "order" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "format" : "uuid"
+            }
+          }
+        },
+        "required" : [ "order" ]
+      },
       "Transfer" : {
         "type" : "object",
         "properties" : {
@@ -4451,6 +4494,11 @@
             "type" : [ "string", "null" ],
             "format" : "date-time"
           },
+          "position" : {
+            "type" : "integer",
+            "format" : "int32",
+            "description" : "The project's place in the workspace's order (D-080), smallest first"
+          },
           "version" : {
             "type" : "integer",
             "format" : "int64"
@@ -4471,7 +4519,7 @@
             "format" : "date-time"
           }
         },
-        "required" : [ "archivedAt", "color", "createdAt", "createdBy", "createdByAgent", "deletedAt", "description", "icon", "id", "key", "name", "updatedAt", "version", "workspaceId" ]
+        "required" : [ "archivedAt", "color", "createdAt", "createdBy", "createdByAgent", "deletedAt", "description", "icon", "id", "key", "name", "position", "updatedAt", "version", "workspaceId" ]
       },
       "Projects" : {
         "type" : "object",

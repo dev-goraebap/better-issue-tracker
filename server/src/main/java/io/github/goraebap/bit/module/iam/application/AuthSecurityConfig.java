@@ -163,6 +163,8 @@ class AuthSecurityConfig {
                         .authenticated()
                         .requestMatchers(HttpMethod.PUT, "/api/v1/workspaces/*/view-tweaks/*")
                         .authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/workspaces/*/project-order")
+                        .authenticated()
                         // Comments and a target's timeline (D-078).
                         .requestMatchers(HttpMethod.GET, "/api/v1/workspaces/*/timeline")
                         .authenticated()

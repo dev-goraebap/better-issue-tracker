@@ -13,7 +13,25 @@ public interface ProjectRepository {
 
     String currentKey(UUID projectId);
 
-    List<Row> findAll(UUID workspaceId, String status, String query, Instant beforeTime, UUID beforeId, int limit);
+    /**
+     * A page of the workspace's projects: newest first, after (time, id); or byPosition in the workspace's order, after
+     * (position, id).
+     */
+    List<Row> findAll(
+            UUID workspaceId,
+            String status,
+            String query,
+            boolean byPosition,
+            Instant beforeTime,
+            Integer afterPosition,
+            UUID cursorId,
+            int limit);
+
+    /** The workspace's live, unarchived projects in its order. */
+    List<UUID> findActiveIds(UUID workspaceId);
+
+    /** Puts the given projects in this order (positions 0, 1, …); version and audit stay, the order not being an edit. */
+    void updateOrder(UUID workspaceId, List<UUID> orderedIds);
 
     int nextPosition(UUID workspaceId);
 
@@ -48,6 +66,7 @@ public interface ProjectRepository {
             String icon,
             String color,
             Instant archivedAt,
+            int position,
             long version,
             Audit audit) {}
 }

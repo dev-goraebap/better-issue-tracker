@@ -83,3 +83,9 @@
 .firstProjectMark svg { inline-size: 1rem; block-size: 1rem; }
 .firstProjectText { display: flex; flex-direction: column; gap: 2px; min-inline-size: 0; word-break: keep-all; }
 .firstProjectText strong { font-size: 0.8125rem; font-weight: 500; color: var(--color-text-primary); }
+/* A project being moved in the menu (D-080): it fades while dragged, and a 2px line in the accent shows where it lands. */
+.projectRow { position: relative; }
+.projectRow[data-dragging] { opacity: 0.45; }
+.projectRow[data-drop]::after { content: ''; position: absolute; inset-inline: 6px; block-size: 2px; border-radius: 1px; background: var(--color-accent); pointer-events: none; }
+.projectRow[data-drop='before']::after { inset-block-start: -1px; }
+.projectRow[data-drop='after']::after { inset-block-end: -1px; }

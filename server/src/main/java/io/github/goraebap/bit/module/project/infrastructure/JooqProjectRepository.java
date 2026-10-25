@@ -56,7 +56,15 @@ class JooqProjectRepository implements ProjectRepository {
     }
 
     @Override
-    public List<Row> findAll(UUID workspaceId, String status, String query, Instant time, UUID id, int limit) {
+    public List<Row> findAll(
+            UUID workspaceId,
+            String status,
+            String query,
+            boolean byPosition,
+            Instant time,
+            Integer position,
+            UUID id,
+            int limit) {
         var state =
                 switch (status) {
                     case "deleted" -> PROJECT.DELETED_AT.isNotNull();
@@ -76,12 +84,23 @@ class JooqProjectRepository implements ProjectRepository {
                                 ? DSL.noCondition()
                                 : PROJECT.NAME.containsIgnoreCase(query).or(PROJECT_KEY.KEY.containsIgnoreCase(query)))
                 .and(
-                        time == null
-                                ? DSL.noCondition()
-                                : PROJECT.CREATED_AT
-                                        .lt(time)
-                                        .or(PROJECT.CREATED_AT.eq(time).and(PROJECT.PROJECT_ID.lt(id))))
-                .orderBy(PROJECT.CREATED_AT.desc(), PROJECT.PROJECT_ID.desc())
+                        byPosition
+                                ? position == null
+                                        ? DSL.noCondition()
+                                        : PROJECT.POSITION
+                                                .gt(position)
+                                                .or(PROJECT.POSITION
+                                                        .eq(position)
+                                                        .and(PROJECT.PROJECT_ID.gt(id)))
+                                : time == null
+                                        ? DSL.noCondition()
+                                        : PROJECT.CREATED_AT
+                                                .lt(time)
+                                                .or(PROJECT.CREATED_AT.eq(time).and(PROJECT.PROJECT_ID.lt(id))))
+                .orderBy(
+                        byPosition
+                                ? List.of(PROJECT.POSITION.asc(), PROJECT.PROJECT_ID.asc())
+                                : List.of(PROJECT.CREATED_AT.desc(), PROJECT.PROJECT_ID.desc()))
                 .limit(limit)
                 .fetch(r -> new Row(
                         r.get(PROJECT.PROJECT_ID),
@@ -92,8 +111,33 @@ class JooqProjectRepository implements ProjectRepository {
                         r.get(PROJECT.ICON),
                         r.get(PROJECT.COLOR),
                         r.get(PROJECT.ARCHIVED_AT),
+                        r.get(PROJECT.POSITION),
                         r.get(PROJECT.VERSION),
                         AuditRecords.read(r)));
+    }
+
+    @Override
+    public List<UUID> findActiveIds(UUID workspaceId) {
+        return dslContext
+                .select(PROJECT.PROJECT_ID)
+                .from(PROJECT)
+                .where(PROJECT.WORKSPACE_ID.eq(workspaceId))
+                .and(PROJECT.DELETED_AT.isNull())
+                .and(PROJECT.ARCHIVED_AT.isNull())
+                .orderBy(PROJECT.POSITION, PROJECT.PROJECT_ID)
+                .fetch(PROJECT.PROJECT_ID);
+    }
+
+    @Override
+    public void updateOrder(UUID workspaceId, List<UUID> orderedIds) {
+        var updates = new java.util.ArrayList<org.jooq.Query>();
+        for (int i = 0; i < orderedIds.size(); i++)
+            updates.add(dslContext
+                    .update(PROJECT)
+                    .set(PROJECT.POSITION, i)
+                    .where(PROJECT.WORKSPACE_ID.eq(workspaceId))
+                    .and(PROJECT.PROJECT_ID.eq(orderedIds.get(i))));
+        if (!updates.isEmpty()) dslContext.batch(updates).execute();
     }
 
     @Override

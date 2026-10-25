@@ -328,6 +328,30 @@ class ProjectPersistenceIntegrationTest {
     }
 
     @Test
+    void theWorkspacesProjectOrderIsSetWholeAndReadAPageAtATime() {
+        UUID a = projectService.create(actor, workspace, "Project A", "PA", null);
+        UUID b = projectService.create(actor, workspace, "Project B", "PB", null);
+        UUID c = projectService.create(actor, workspace, "Project C", "PC", null);
+        var created = projectQueryService.list(actor, workspace, "active", "", null, 50, "position", "ASC");
+        assertThat(created.items()).extracting(ProjectViews.ProjectInfo::id).containsExactly(a, b, c);
+        projectService.reorder(actor, workspace, List.of(c, a, b));
+        var first = projectQueryService.list(actor, workspace, "active", "", null, 2, "position", "ASC");
+        assertThat(first.items()).extracting(ProjectViews.ProjectInfo::id).containsExactly(c, a);
+        var rest = projectQueryService.list(actor, workspace, "active", "", first.nextCursor(), 2, "position", "ASC");
+        assertThat(rest.items()).extracting(ProjectViews.ProjectInfo::id).containsExactly(b);
+        assertThat(rest.nextCursor()).isNull();
+        // The order is not an edit: a project's version stays, so nobody's open edit conflicts with it.
+        assertThat(projectQueryService.get(actor, workspace, a).version()).isZero();
+        assertThatThrownBy(() -> projectService.reorder(actor, workspace, List.of(c, a)))
+                .hasMessageContaining("요청");
+        assertThatThrownBy(() -> projectService.reorder(actor, workspace, List.of(c, a, a)))
+                .hasMessageContaining("요청");
+        assertThatThrownBy(() -> projectQueryService.list(
+                        actor, workspace, "active", "", first.nextCursor(), 2, "createdAt", "DESC"))
+                .hasMessageContaining("요청");
+    }
+
+    @Test
     void projectCursorIsBoundToTheSearchAndHidesDeletedRowsByDefault() {
         UUID first = projectService.create(actor, workspace, "Project A", "PA", null);
         projectService.create(actor, workspace, "Project B", "PB", null);

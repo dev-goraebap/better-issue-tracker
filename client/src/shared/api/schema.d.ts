@@ -20,6 +20,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workspaces/{workspaceId}/project-order": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["reorder"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/workspaces/{id}/owner": {
         parameters: {
             query?: never;
@@ -269,7 +285,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["reorder"];
+        post: operations["reorder_1"];
         delete?: never;
         options?: never;
         head?: never;
@@ -886,6 +902,9 @@ export interface components {
             sort?: components["schemas"]["IssueViewSort"];
             columns?: ("status" | "priority" | "assignee" | "labels" | "due" | "updated" | "created")[] | null;
         };
+        ProjectOrder: {
+            order: string[];
+        };
         Transfer: {
             /** Format: uuid */
             userId: string;
@@ -1285,6 +1304,11 @@ export interface components {
             archivedAt: string | null;
             /** Format: date-time */
             deletedAt: string | null;
+            /**
+             * Format: int32
+             * @description The project's place in the workspace's order (D-080), smallest first
+             */
+            position: number;
             /** Format: int64 */
             version: number;
             /** Format: date-time */
@@ -1504,6 +1528,30 @@ export interface operations {
         responses: {
             /** @description OK */
             200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    reorder: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProjectOrder"];
+            };
+        };
+        responses: {
+            /** @description Projects reordered */
+            204: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -1999,7 +2047,7 @@ export interface operations {
             };
         };
     };
-    reorder: {
+    reorder_1: {
         parameters: {
             query?: never;
             header?: never;

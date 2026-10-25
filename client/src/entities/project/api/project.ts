@@ -11,7 +11,7 @@ export const projectQuery = (w: string, p: string) => queryOptions({ queryKey: p
 export const columnsQuery = (w: string, p: string) => queryOptions({ queryKey: [...projectKey(w, p), 'columns'], queryFn: ({ signal }) => readJson<BoardColumn[]>(`${projectPath(w, p)}/columns`, signal), retry: false });
 export const projectsQuery = (w: string, status: ProjectStatus = 'active', q = '') => infiniteQueryOptions({
   queryKey: ['workspace', w, 'projects', status, q], initialPageParam: undefined as string | undefined,
-  queryFn: ({ pageParam, signal }) => { const params = new URLSearchParams({ status, q, size: '50' }); if (pageParam) params.set('cursor', pageParam); return readJson<components['schemas']['Projects']>(`${projectBase(w)}?${params}`, signal); },
+  queryFn: ({ pageParam, signal }) => { const params = new URLSearchParams({ status, q, size: '50', sort: 'position', direction: 'ASC' }); if (pageParam) params.set('cursor', pageParam); return readJson<components['schemas']['Projects']>(`${projectBase(w)}?${params}`, signal); },
   getNextPageParam: page => page.nextCursor ?? undefined, retry: false,
 });
 export const createProject = (w: string, body: components['schemas']['CreateProject']) => createAt(projectBase(w), body);
@@ -28,6 +28,8 @@ export const updateColumn = (w: string, p: string, columnId: string, body: compo
 export const deleteColumn = (w: string, p: string, columnId: string, expectedVersion: number, moveTo: string) =>
   command('DELETE', `${projectPath(w, p)}/columns/${encodeURIComponent(columnId)}?expectedVersion=${expectedVersion}&moveTo=${encodeURIComponent(moveTo)}`);
 export const reorderColumns = (w: string, p: string, expectedVersion: number, order: string[]) => command('POST', `${projectPath(w, p)}/columns/reorder`, { expectedVersion, order });
+/** Puts the workspace's live projects in this order (D-080), every list's and the sidebar's. */
+export const reorderProjects = (w: string, order: string[]) => command('PUT', `/api/v1/workspaces/${encodeURIComponent(w)}/project-order`, { order });
 export const refreshProjects = (client: QueryClient, w: string) => client.invalidateQueries({ queryKey: ['workspace', w] }).catch(() => {});
 /** Who belongs to which project (D-075), the whole workspace at once: where each member works; it grants nothing. */
 export type ProjectMembership = components['schemas']['ProjectMembership'];

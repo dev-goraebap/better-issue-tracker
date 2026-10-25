@@ -21,6 +21,7 @@ public final class ProjectViews {
                 "color",
                 "archivedAt",
                 "deletedAt",
+                "position",
                 "version",
                 "createdAt",
                 "createdBy",
@@ -40,6 +41,10 @@ public final class ProjectViews {
             @Schema(nullable = true) String color,
             @Schema(nullable = true) Instant archivedAt,
             @Schema(nullable = true) Instant deletedAt,
+
+            @Schema(description = "The project's place in the workspace's order (D-080), smallest first")
+            int position,
+
             long version,
             Instant createdAt,
             UUID createdBy,

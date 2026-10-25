@@ -17,6 +17,7 @@ import { canManage, forgetWorkspace, workspaceQuery } from '@/entities/workspace
 import { ProjectMark, projectsQuery, type Project } from '@/entities/project';
 import { itemQuery } from '@/entities/work-item';
 import { ScopeSwitcher } from './ScopeSwitcher';
+import { SidebarProjects } from './SidebarProjects';
 import styles from './app-layout.module.css';
 
 const SECTION_NAMES: Record<string, string> = { '/inbox': '알림', '/projects': '모든 프로젝트', '/issues/new': '새 이슈' };
@@ -173,10 +174,8 @@ export function AppLayout() {
       {/* 프로젝트 with its + in a round box, as the toolbar's 필터; with none yet, a dashed card that makes the first. */}
       {workspace && <SideNavSection title="프로젝트" endContent={folded || !canMakeProjects ? undefined : <button type="button" className={styles.sectionAdd} aria-label="프로젝트 만들기"
         title="프로젝트 만들기" onClick={() => setCreatingProject(true)}><NavIcon name="plus" /></button>}>
-        {projects.map(project => {
-          const href = projectPath(workspaceId, project.id);
-          return <SideNavItem key={project.id} label={project.name} href={href} icon={projectMark(project)} isSelected={place.projectId === project.id} onClick={go(href)} />;
-        })}
+        <SidebarProjects workspaceId={workspaceId} projects={projects} currentId={place.projectId} canReorder={canMakeProjects && !folded}
+          href={project => projectPath(workspaceId, project.id)} mark={projectMark} onGo={go} />
         {!folded && canMakeProjects && projects.length === 0 && <button type="button" className={styles.firstProject} onClick={() => setCreatingProject(true)}>
           <span className={styles.firstProjectMark} aria-hidden="true"><NavIcon name="board" /></span>
           <span className={styles.firstProjectText}><strong>첫 프로젝트 만들기</strong>이슈를 묶어 보드와 일정으로 봅니다.</span>
