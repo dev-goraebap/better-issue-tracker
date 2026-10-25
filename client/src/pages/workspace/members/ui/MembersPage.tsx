@@ -16,7 +16,6 @@ import {
 } from '@/entities/workspace';
 import { ProjectMark, projectMembershipsQuery, projectsQuery } from '@/entities/project';
 import type { MembersSearch } from '../model/search';
-import { InvitationDialog } from './InvitationDialog';
 import { MemberProjectsDialog } from './MemberProjectsDialog';
 import styles from './members.module.css';
 
@@ -37,7 +36,7 @@ const roleRank = (role: Role) => ROLES.indexOf(role);
  * different shapes.
  *
  * - The tab is the URL's view (구성원 left out); 초대 shows to the workspace's owner and admins only. They also get
- *   구성원 초대 (a one-time link to hand over) on both tabs.
+ *   구성원 초대 (its own page of rows, D-079, each a one-time link to hand over) on both tabs.
  * - 구성원 is a list (a table on a desktop, D-064): the person (picture, name, email), their role (a select for those
  *   the member may change: the owner changes anyone but the owner, an admin changes members and viewers), when they
  *   joined, the projects they belong to (D-075: marks and the first one's name, opening the member's projects, where
@@ -60,7 +59,6 @@ export function MembersPage() {
   const tab: Tab = isManager && search.view === 'invitations' ? 'invitations' : 'members';
   const people = useMembers(workspaceId);
   const invitations = useQuery({ ...invitationsQuery(workspaceId), enabled: tab === 'invitations' });
-  const [isInviting, setInviting] = useState(false);
   const [pending, setPending] = useState<Pending | null>(null);
   const [projectsOf, setProjectsOf] = useState<Member | null>(null);
   const projectPages = useInfiniteQuery(projectsQuery(workspaceId));
@@ -149,7 +147,7 @@ export function MembersPage() {
     tabs={<PageTabs value={tab} items={tabs} panelId={panelId} onChange={next => go({ view: next === 'members' ? undefined : 'invitations' })} />}>
     <ListToolbar search={tab === 'members' ? { label: '구성원 검색', placeholder: '이름이나 이메일로 찾기', value: search.q, onChange: q => go({ q: q || undefined }, true) } : undefined}
       label={tab === 'members' ? '구성원 조건' : '초대 조건'} filters={filters} onFiltersChange={values => go({ role: values.role as MembersSearch['role'] }, true)} order={order}
-      action={isManager ? { label: '구성원 초대', icon: 'plus', onClick: () => setInviting(true), isCreate: true } : undefined} />
+      action={isManager ? { label: '구성원 초대', icon: 'plus', onClick: () => void navigate({ to: '/w/$workspaceId/members/invite', params: { workspaceId } }), isCreate: true } : undefined} />
     <div role="tabpanel" id={panelId}>
       {(request.isPending || request.isError) && <QueryMessage pending={request.isPending} error={request.error} retry={() => { void request.refetch(); }} />}
       {tab === 'members' && people.hasData && (members.length === 0
@@ -168,7 +166,6 @@ export function MembersPage() {
     </div>
     {projectsOf && <MemberProjectsDialog workspaceId={workspaceId} member={projectsOf} projects={projects} joined={joinedBy(projectsOf.userId)} canEdit={isManager}
       onClose={() => setProjectsOf(null)} />}
-    {isManager && <InvitationDialog isOpen={isInviting} workspaceId={workspaceId} myRole={myRole} onClose={() => setInviting(false)} onChanged={changed} />}
     {pending && <ConfirmDialog isPending={isBusy} error={error} onClose={() => { setPending(null); setError(null); }} onConfirm={() => { void confirm(); }}
       variant={pending.kind === 'role' ? 'primary' : 'destructive'}
       title={pending.kind === 'role' ? `${pending.member.name}의 역할을 바꿀까요?` : pending.kind === 'remove' ? `${pending.member.name}을(를) 구성원에서 뺄까요?`

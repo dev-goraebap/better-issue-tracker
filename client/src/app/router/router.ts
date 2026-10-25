@@ -24,6 +24,7 @@ import { InboxPage } from '@/pages/workspace/inbox';
 import { NewIssuePage } from '@/pages/workspace/issue-new';
 import { IssuesPage, loadIssues } from '@/pages/workspace/issues';
 import { loadMembers, MembersPage, parseMembersSearch } from '@/pages/workspace/members';
+import { InvitePage } from '@/pages/workspace/members-invite';
 import { loadProjects, parseProjectsSearch, ProjectsPage } from '@/pages/workspace/projects';
 import { AppLayout } from '../layout/AppLayout';
 import { RootLayout } from '../layout/RootLayout';
@@ -110,6 +111,8 @@ const inbox = createRoute({ getParentRoute: () => scoped, path: '/inbox', compon
 const myTasks = createRoute({ getParentRoute: () => scoped, path: '/my-tasks', beforeLoad: ({ params }) => leadTo(`/w/${params.workspaceId}`) });
 const members = createRoute({ getParentRoute: () => scoped, path: '/members', component: MembersPage, validateSearch: ownSearch(parseMembersSearch),
   loader: ({ params }) => loadMembers(queryClient, params.workspaceId) });
+// 구성원 초대 is a page of rows, as 호호 HR's 사원 등록 (D-079).
+const membersInvite = createRoute({ getParentRoute: () => scoped, path: '/members/invite', component: InvitePage });
 const documents = createRoute({ getParentRoute: () => scoped, path: '/documents', component: DocumentsPage });
 const projects = createRoute({ getParentRoute: () => scoped, path: '/projects', component: ProjectsPage, validateSearch: ownSearch(parseProjectsSearch),
   loaderDeps: ({ search }) => search, loader: ({ params, deps }) => loadProjects(queryClient, params.workspaceId, deps) });
@@ -160,7 +163,7 @@ const routeTree = rootRoute.addChildren([
   workspace.addChildren([
     start, chooser,
     scoped.addChildren([
-      home, issuesNew, inbox, myTasks, members, documents, projects,
+      home, issuesNew, inbox, myTasks, members, membersInvite, documents, projects,
       projectItems, itemNew, itemDetail, itemEdit, itemReference,
       settingsStart, settings, projectSettingsStart, projectSettings, oldProjectSettings,
     ]),

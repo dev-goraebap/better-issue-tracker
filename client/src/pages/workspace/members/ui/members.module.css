@@ -4,9 +4,6 @@
 .personName { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
 .personEmail { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.75rem; color: var(--color-text-secondary); }
 .clip { min-inline-size: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-/* The invitation link, shown once: a muted box the link can be read and selected in. */
-.secret { padding: var(--spacing-4); background: var(--color-background-muted); border-radius: var(--radius-container); }
-.code { overflow-wrap: anywhere; font-family: var(--font-family-code); font-size: var(--text-supporting-size); }
 /* A member's projects in the table: their marks side by side and the first one's name, the whole a button for those who manage members. */
 .projects { display: inline-flex; align-items: center; gap: var(--spacing-2); max-inline-size: 100%; min-inline-size: 0; padding: 0; border: 0; background: none;
   color: var(--color-text-secondary); font: inherit; font-size: 0.8125rem; text-align: start; }
