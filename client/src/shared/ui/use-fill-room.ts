@@ -60,7 +60,8 @@ export function useFillRoom<T extends HTMLElement>(isOn: boolean): RefObject<T |
         spare += room;
         inner = box;
       }
-      if (spare >= 1) element.style.minBlockSize = `${element.offsetHeight + spare}px`;
+      // Rounded down from the box's exact height: a rounded-up pixel (offsetHeight rounds) would make the page scroll by one.
+      if (spare >= 1) element.style.minBlockSize = `${Math.floor(element.getBoundingClientRect().height + spare)}px`;
     };
     fit();
     const observer = new ResizeObserver(fit);

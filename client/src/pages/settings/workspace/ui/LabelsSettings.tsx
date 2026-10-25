@@ -64,7 +64,7 @@ export function LabelsSettings({ workspaceId, canWrite }: { workspaceId: string;
           </span>}
         </SettingsRow>)}
       </SettingsCard>}
-    <CompactDialog isOpen={!!draft} title={draft?.from ? '라벨 고치기' : '새 라벨'} width={420} isBusy={isBusy} onClose={close} onSubmit={() => { void save(); }}
+    <CompactDialog isOpen={!!draft} title={draft?.from ? '라벨 고치기' : '새 라벨'} width={520} isBusy={isBusy} onClose={close} onSubmit={() => { void save(); }}
       footer={<><Button label="취소" variant="ghost" onClick={close} isDisabled={isBusy} /><Button type="submit" label={draft?.from ? '저장' : '라벨 만들기'} variant="primary" isLoading={isBusy} /></>}>
       <TextInput label="이름" value={draft?.name ?? ''} onChange={value => draft && setDraft({ ...draft, name: value })} isRequired hasAutoFocus
         isDisabled={isBusy || !!draft?.from?.system} placeholder="예: 성능" status={nameError ? { type: 'error', message: nameError } : undefined} />

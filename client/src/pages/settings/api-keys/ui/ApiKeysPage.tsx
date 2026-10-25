@@ -64,7 +64,7 @@ export function ApiKeysPage() {
         </SettingsCard>}
       <ListMore hasMore={!!keys.hasNextPage} isLoading={keys.isFetchingNextPage} onMore={() => { void keys.fetchNextPage(); }} />
     </VStack>
-    <CompactDialog isOpen={isCreating} title="새 API 키" subtitle="어디에 쓰는 키인지 알아볼 이름을 붙이세요." width={460} isBusy={isBusy} onClose={closeCreate} onSubmit={() => { void create(); }}
+    <CompactDialog isOpen={isCreating} title="새 API 키" subtitle="어디에 쓰는 키인지 알아볼 이름을 붙이세요." width={580} isBusy={isBusy} onClose={closeCreate} onSubmit={() => { void create(); }}
       footer={<><Button label="취소" variant="ghost" onClick={closeCreate} isDisabled={isBusy} /><Button type="submit" label="만들기" variant="primary" isLoading={isBusy} isDisabled={!name.trim() || !password} /></>}>
       <TextInput label="이름" value={name} onChange={setName} hasAutoFocus isRequired isDisabled={isBusy} placeholder="예: Claude Code (노트북)" />
       <TextInput label="에이전트 이름" value={agentName} onChange={setAgentName} isOptional isDisabled={isBusy} placeholder="예: claude" description="이 키로 남긴 기록에 함께 적힙니다." />

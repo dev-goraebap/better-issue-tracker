@@ -35,7 +35,7 @@ export function ColumnDialog({ project, column, onClose }: { project: Project; c
     } catch (failure) { setError(authError(failure)); }
     finally { setBusy(false); }
   };
-  return <CompactDialog isOpen title={column ? '칸 고치기' : '새 칸'} width={420} isBusy={isBusy} onClose={() => { if (!isBusy) onClose(); }} onSubmit={() => { void save(); }}
+  return <CompactDialog isOpen title={column ? '칸 고치기' : '새 칸'} width={520} isBusy={isBusy} onClose={() => { if (!isBusy) onClose(); }} onSubmit={() => { void save(); }}
     footer={<><Button label="취소" variant="ghost" onClick={onClose} isDisabled={isBusy} /><Button type="submit" label={column ? '저장' : '칸 만들기'} variant="primary" isLoading={isBusy} /></>}>
     <TextInput label="이름" value={name} onChange={setName} isRequired hasAutoFocus isDisabled={isBusy} placeholder="예: 검토 중" status={nameError ? { type: 'error', message: nameError } : undefined} />
     <Select label="분류" options={[...CATEGORIES]} value={isFinal ? 'done' : category} onChange={value => setCategory((value ?? 'doing') as Category)} isDisabled={isBusy || isFinal}

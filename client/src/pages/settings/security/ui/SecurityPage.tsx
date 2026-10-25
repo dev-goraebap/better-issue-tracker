@@ -39,7 +39,7 @@ export function SecurityPage() {
         </SettingsRow>
       </SettingsCard>
     </VStack>
-    <CompactDialog isOpen={isChanging} title="비밀번호 변경" width={460} onClose={() => setChanging(false)} footer={null}>
+    <CompactDialog isOpen={isChanging} title="비밀번호 변경" width={580} onClose={() => setChanging(false)} footer={null}>
       <PasswordChangeForm />
     </CompactDialog>
     {isLeaving && <ConfirmDialog title="모든 기기에서 로그아웃할까요?" description="이 기기도 로그아웃되어 다시 로그인해야 합니다." confirmLabel="모두 로그아웃" variant="destructive"

@@ -42,12 +42,16 @@ const paddingOf = (element: Element) => {
  */
 export function naturalHeight(modal: HTMLElement, classes: { panel: string; body: string }) {
   const border = modal.offsetHeight - modal.clientHeight;
+  // Boxes are measured on screen, where the opening rise still scales the modal (0.98); laid-out pixels undo it, or
+  // the modal would settle a few pixels short and scroll.
+  const scale = modal.offsetHeight ? modal.getBoundingClientRect().height / modal.offsetHeight || 1 : 1;
+  const stack = (element: Element) => stackHeight(boxesOf(element)) / scale;
   const panel = modal.querySelector<HTMLElement>(`.${classes.panel}`);
-  if (!panel) return border + paddingOf(modal) + stackHeight(boxesOf(modal));
+  if (!panel) return border + paddingOf(modal) + stack(modal);
   let height = 0;
   for (const part of Array.from(panel.children)) {
     if (!part.getClientRects().length) continue;
-    height += part.classList.contains(classes.body) ? paddingOf(part) + stackHeight(boxesOf(part)) : (part as HTMLElement).offsetHeight;
+    height += part.classList.contains(classes.body) ? paddingOf(part) + stack(part) : (part as HTMLElement).offsetHeight;
   }
   return border + height;
 }

@@ -17,7 +17,7 @@ import styles from './frame.module.css';
  * panel (Surface, RoutedPanel). onSubmit wraps the body and foot in a form, so Enter in a field submits. isOpen lets a
  * caller keep it mounted and close it with its animation; left out, it is open while it is rendered.
  */
-export function CompactDialog({ isOpen = true, title, subtitle, width = 440, isBusy = false, isAlert = false, footer, footerStart, onSubmit, onClose, children }: {
+export function CompactDialog({ isOpen = true, title, subtitle, width = 560, isBusy = false, isAlert = false, footer, footerStart, onSubmit, onClose, children }: {
   isOpen?: boolean; title: string; subtitle?: string; width?: number; isBusy?: boolean;
   /** A question that must be answered (an alert dialog), which the router's own back leaves to its answer. */
   isAlert?: boolean;

@@ -46,7 +46,7 @@ export function InvitationDialog({ workspaceId, myRole, isOpen, onClose, onChang
   const footer = link
     ? <><Button label="링크 복사" onClick={() => { void copy(); }} /><Button label="닫기" variant="primary" onClick={close} /></>
     : <><Button label="취소" variant="ghost" onClick={close} isDisabled={isBusy} /><Button type="submit" label="초대 링크 만들기" variant="primary" isLoading={isBusy} /></>;
-  return <CompactDialog isOpen={isOpen} title="구성원 초대" subtitle="초대 링크는 7일 동안 한 번 쓸 수 있습니다. 링크를 직접 전달하세요." width={480} isBusy={isBusy}
+  return <CompactDialog isOpen={isOpen} title="구성원 초대" subtitle="초대 링크는 7일 동안 한 번 쓸 수 있습니다. 링크를 직접 전달하세요." width={600} isBusy={isBusy}
     onClose={close} onSubmit={link ? undefined : () => { void create(); }} footer={footer}>
     {link
       ? <section className={styles.secret}><VStack gap={3}>

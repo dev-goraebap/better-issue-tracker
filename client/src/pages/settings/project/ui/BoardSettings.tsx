@@ -63,7 +63,7 @@ export function BoardSettings({ project, canManage }: { project: Project; canMan
       </SettingsCard>}
     <FormMessage message={error} />
     {editing && <ColumnDialog project={project} column={editing === 'new' ? undefined : editing} onClose={() => setEditing(null)} />}
-    <CompactDialog isOpen={!!removing} title={`'${removing?.name ?? ''}' 칸을 지울까요?`} width={420} isBusy={isBusy} onClose={() => { if (!isBusy) setRemoving(null); }}
+    <CompactDialog isOpen={!!removing} title={`'${removing?.name ?? ''}' 칸을 지울까요?`} width={520} isBusy={isBusy} onClose={() => { if (!isBusy) setRemoving(null); }}
       footer={<><Button label="취소" variant="ghost" onClick={() => setRemoving(null)} isDisabled={isBusy} /><Button label="옮기고 지우기" variant="destructive" isLoading={isBusy} onClick={() => { void remove(); }} /></>}>
       <Select label="이 칸의 이슈를 옮길 곳" value={moveTo} onChange={value => setMoveTo(value ?? BACKLOG)}
         options={[{ value: BACKLOG, label: '상태 없음' }, ...list.filter(column => column.id !== removing?.id).map(column => ({ value: column.id, label: column.name }))]} />

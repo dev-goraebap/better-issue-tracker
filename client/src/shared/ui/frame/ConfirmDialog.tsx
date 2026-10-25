@@ -16,7 +16,7 @@ export function ConfirmDialog({ title, description, confirmLabel, cancelLabel = 
 }) {
   const [typed, setTyped] = useState('');
   const ready = !word || typed.trim() === word;
-  return <CompactDialog title={title} width={420} isBusy={isPending} isAlert={isAlert} onClose={onClose} onSubmit={() => { if (ready && !isPending) onConfirm(); }}
+  return <CompactDialog title={title} width={520} isBusy={isPending} isAlert={isAlert} onClose={onClose} onSubmit={() => { if (ready && !isPending) onConfirm(); }}
     footer={<>
       <Button label={cancelLabel} variant="ghost" onClick={onClose} isDisabled={isPending} data-autofocus={isAlert || undefined} />
       <Button type="submit" label={confirmLabel} variant={variant} isLoading={isPending} isDisabled={!ready} />
