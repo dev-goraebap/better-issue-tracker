@@ -73,8 +73,8 @@ export function IssueDetail({ workspaceId, projectId, id, search }: { workspaceI
       onChange={value => { void save(version => moveItem(workspaceId, projectId, id, { expectedVersion: version, targetColumnId: value === NO_STATUS ? null : value as string })); }} />],
     ['우선순위', <PropertyPicker label="우선순위" icon="priority" options={priorityOptions} value={item.priority ?? undefined} onChange={value => { void patch({ priority: (value as Priority | undefined) ?? null }); }} />],
     ['담당자', <PropertyPicker label="담당자" icon="person" options={peopleOptions(members)} value={item.assigneeId ?? undefined} onChange={value => { void patch({ assigneeId: (value as string | undefined) ?? null }); }} />],
-    ['시작일', <DuePicker label="시작일" value={item.startDate} onChange={day => { void patch({ startDate: day ?? null }); }} />],
-    ['기한', <DuePicker value={item.dueDate} onChange={day => { void patch({ dueDate: day ?? null }); }} />],
+    ['시작일', <DuePicker label="시작일" asDate value={item.startDate} onChange={day => { void patch({ startDate: day ?? null }); }} />],
+    ['기한', <DuePicker asDate={item.columnCategory === 'done'} value={item.dueDate} onChange={day => { void patch({ dueDate: day ?? null }); }} />],
   ] : [
     ...(item.columnCategory ? [['상태', <StatusBadge category={item.columnCategory} name={column?.name} />] as [string, ReactNode]] : []),
     ...(item.priority ? [['우선순위', <PriorityMark priority={item.priority} />] as [string, ReactNode]] : []),

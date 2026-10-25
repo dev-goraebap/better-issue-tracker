@@ -20,14 +20,15 @@ export function ScopeSwitcher({ projects, current, mark, onPick, onCreate }: {
   mark: (project: Project) => ReactNode;
   /** A project's id, or none for 전체. */
   onPick: (projectId?: string) => void;
-  onCreate: () => void;
+  /** 프로젝트 만들기, for those who may make projects (the workspace's owner and admins); left out, the menu has none. */
+  onCreate?: () => void;
 }) {
   const isMobile = useMediaQuery(MOBILE_QUERY);
   const [isOpen, setOpen] = useState(false);
   const titleId = useId();
   const label = projects.find(project => project.id === current)?.name ?? '전체';
   const pick = (value: string) => { setOpen(false); onPick(value === ALL ? undefined : value); };
-  const create = () => { setOpen(false); onCreate(); };
+  const create = () => { setOpen(false); onCreate?.(); };
   const trigger = (ref?: (node: HTMLElement | null) => void, onClick?: () => void) => <span ref={ref} className={styles.scopeWrap}>
     <button type="button" className={styles.scope} aria-haspopup={isMobile ? 'dialog' : 'menu'} aria-expanded={isOpen} aria-current="page"
       onClick={onClick ?? (() => setOpen(true))}>
@@ -43,7 +44,7 @@ export function ScopeSwitcher({ projects, current, mark, onPick, onCreate }: {
           { choices: [{ value: ALL, label: '전체', icon: <NavIcon name="home" /> }] },
           { title: '프로젝트', choices: projects.map(project => ({ value: project.id, label: project.name, icon: mark(project) })) },
         ]} />
-        <button type="button" className={styles.scopeCreateRow} onClick={create}><NavIcon name="plus" />프로젝트 만들기</button>
+        {onCreate && <button type="button" className={styles.scopeCreateRow} onClick={create}><NavIcon name="plus" />프로젝트 만들기</button>}
       </FrameBody>
     </BottomSheet>}
   </>;
@@ -57,10 +58,10 @@ export function ScopeSwitcher({ projects, current, mark, onPick, onCreate }: {
             {(current ?? ALL) === choice.value && <NavIcon name="check" />}
           </button>
         </span>)}
-      <hr className={styles.scopeRule} />
-      <button type="button" role="menuitem" className={styles.scopeItem} onClick={create}>
-        <span className={styles.scopeIcon}><NavIcon name="plus" /></span><span className={styles.scopeLabel}>프로젝트 만들기</span>
-      </button>
+      {onCreate && <><hr className={styles.scopeRule} />
+        <button type="button" role="menuitem" className={styles.scopeItem} onClick={create}>
+          <span className={styles.scopeIcon}><NavIcon name="plus" /></span><span className={styles.scopeLabel}>프로젝트 만들기</span>
+        </button></>}
     </div>}>
     {({ ref, onClick }) => trigger(ref, onClick)}
   </Popover>;

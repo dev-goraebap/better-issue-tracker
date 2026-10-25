@@ -1,12 +1,13 @@
 import { useMemo, useState } from 'react';
 import { Button, useToast } from '@astryxdesign/core';
 import { useMediaQuery } from '@astryxdesign/core/hooks';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueries, useQueryClient } from '@tanstack/react-query';
 import { MOBILE_QUERY } from '@/shared/config';
 import { authError } from '@/shared/api';
 import { useGo } from '@/shared/lib/routed-panel';
 import { DefaultAvatar, ListSummary, ListToolbar, PageState, type ListDisplay, type ListFilter, type ListSort, type ListViews } from '@/shared/ui';
 import type { Label } from '@/entities/label';
+import { columnsQuery } from '@/entities/project';
 import type { Member } from '@/entities/workspace';
 import {
   CATEGORY_LABELS, FILTER_KEYS, filterIssues, IssueRows, IssueTable, NO_FILTER, PRIORITIES, refreshItems, setViewTweak, SYSTEM_LABEL, updateItem,
@@ -52,7 +53,11 @@ export function IssuesView({ scope, view, tweak, effective, issues, labels, memb
   const { workspaceId } = scope;
   const canEdit = view.canEdit;
   const rows = useMemo(() => filterIssues(issues, effective.filters, effective.sort, search.q), [issues, effective.filters, effective.sort, search.q]);
-  const columnNames = useMemo(() => new Map(scope.columns.map(column => [column.id, column.name])), [scope.columns]);
+  // A row names its status by its column (검토 중), in 전체 too: there every project's columns are read.
+  const allColumns = useQueries({ queries: scope.project ? [] : scope.projects.map(project => columnsQuery(scope.workspaceId, project.id)) });
+  // Kept as one string so the map changes only when a column does (the query results are new arrays each render).
+  const columnList = JSON.stringify([...scope.columns, ...allColumns.flatMap(result => result.data ?? [])].map(column => [column.id, column.name]));
+  const columnNames = useMemo(() => new Map(JSON.parse(columnList) as [string, string][]), [columnList]);
   // A member's adjustment that comes back to the view's own is no adjustment.
   const adjust = (patch: ViewTweak) => {
     const next = { ...tweak, ...patch };

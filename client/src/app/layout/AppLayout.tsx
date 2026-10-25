@@ -13,7 +13,7 @@ import { isForOther } from '@/shared/lib/key-target';
 import { DefaultAvatar, NavIcon, NotificationBell } from '@/shared/ui';
 import { WorkspaceSwitcher } from '@/features/workspace-switcher';
 import { CreateProjectDialog } from '@/features/project-create';
-import { forgetWorkspace, workspaceQuery } from '@/entities/workspace';
+import { canManage, forgetWorkspace, workspaceQuery } from '@/entities/workspace';
 import { ProjectMark, projectsQuery, type Project } from '@/entities/project';
 import { itemQuery } from '@/entities/work-item';
 import { ScopeSwitcher } from './ScopeSwitcher';
@@ -49,6 +49,8 @@ export function AppLayout() {
   const me = useQuery(sessionQueryOptions).data?.user;
   const space = useQuery({ ...workspaceQuery(workspaceId), enabled: !!workspaceId });
   const workspace = workspaceId ? space.data : undefined;
+  // Only the workspace's owner and admins make projects: the others see no + and no first-project card.
+  const canMakeProjects = !!workspace && canManage(workspace.myRole);
   const projectPages = useInfiniteQuery({ ...projectsQuery(workspaceId), enabled: !!workspace });
   const projects = projectPages.data?.pages.flatMap(page => page.items) ?? [];
   const item = useQuery({ ...itemQuery(workspaceId, place.projectId ?? '', place.itemId ?? ''), enabled: !!workspace && !!place.projectId && !!place.itemId && place.itemId !== 'new' });
@@ -90,7 +92,7 @@ export function AppLayout() {
   const projectName = (id?: string) => projects.find(project => project.id === id)?.name;
   // The scope's step on the home and a project's pages: 전체 or the project, switching among them with the view kept.
   const scopeStep = (label: string): TrailStep => ({ label, content: <ScopeSwitcher projects={projects} current={place.projectId} mark={projectMark}
-    onCreate={() => setCreatingProject(true)}
+    onCreate={canMakeProjects ? () => setCreatingProject(true) : undefined}
     onPick={projectId => {
       const keep = new URLSearchParams([...new URLSearchParams(searchStr)].filter(([key]) => key === 'v'));
       void navigate({ href: `${projectId ? projectPath(workspaceId, projectId) : workspacePath(workspaceId)}${keep.size ? `?${keep}` : ''}` });
@@ -169,13 +171,13 @@ export function AppLayout() {
         {workspace && WORKSPACE_MENU.map(each => entry(each.label, each.icon, workspacePath(workspaceId, each.path), !place.projectId && place.workspaceSection === each.path))}
       </SideNavSection>
       {/* 프로젝트 with its + in a round box, as the toolbar's 필터; with none yet, a dashed card that makes the first. */}
-      {workspace && <SideNavSection title="프로젝트" endContent={folded ? undefined : <button type="button" className={styles.sectionAdd} aria-label="프로젝트 만들기"
+      {workspace && <SideNavSection title="프로젝트" endContent={folded || !canMakeProjects ? undefined : <button type="button" className={styles.sectionAdd} aria-label="프로젝트 만들기"
         title="프로젝트 만들기" onClick={() => setCreatingProject(true)}><NavIcon name="plus" /></button>}>
         {projects.map(project => {
           const href = projectPath(workspaceId, project.id);
           return <SideNavItem key={project.id} label={project.name} href={href} icon={projectMark(project)} isSelected={place.projectId === project.id} onClick={go(href)} />;
         })}
-        {!folded && projects.length === 0 && <button type="button" className={styles.firstProject} onClick={() => setCreatingProject(true)}>
+        {!folded && canMakeProjects && projects.length === 0 && <button type="button" className={styles.firstProject} onClick={() => setCreatingProject(true)}>
           <span className={styles.firstProjectMark} aria-hidden="true"><NavIcon name="board" /></span>
           <span className={styles.firstProjectText}><strong>첫 프로젝트 만들기</strong>이슈를 묶어 보드와 일정으로 봅니다.</span>
         </button>}

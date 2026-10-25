@@ -52,9 +52,12 @@ const offText = (day: string, today: string) => {
  * A day as a property pill (D-067), 기한 by default: unset it reads its name in the quiet ink; set, how far off the day
  * is with an orange calendar. It opens a box to type the day in words ('내일', '3일', '10월 30일') over quick picks (오늘,
  * 내일, 이번 주 금요일, 다음 주 월요일, 1주 뒤), each with its date, and a way to clear it once one is set. A phone opens
- * it in a sheet.
+ * it in a sheet. asDate shows the date itself (10월 2일 (목)) instead of how far off it is: a start date, or the due date
+ * of an issue already done, is a fact, not a warning, so it never reads '19일 지남'.
  */
-export function DuePicker({ value, onChange, label = '기한' }: { value?: string | null; onChange: (day: string | undefined) => void; label?: string }) {
+export function DuePicker({ value, onChange, label = '기한', asDate = false }: {
+  value?: string | null; onChange: (day: string | undefined) => void; label?: string; asDate?: boolean;
+}) {
   const isMobile = useMediaQuery(MOBILE_QUERY);
   const [isOpen, setOpen] = useState(false);
   const [words, setWords] = useState('');
@@ -67,7 +70,7 @@ export function DuePicker({ value, onChange, label = '기한' }: { value?: strin
   const pill = (ref?: (node: HTMLElement | null) => void, onClick?: () => void) => <span ref={ref} className={styles.pillWrap}>
     <button type="button" className={styles.duePill} data-empty={!value || undefined} aria-haspopup="dialog" aria-expanded={isOpen}
       aria-label={value ? `${label}: ${short(value)}` : `${label} 정하기`} title={value ? short(value) : undefined} onClick={onClick ?? (() => open(true))}>
-      <NavIcon name="calendar" />{value ? offText(value, today) : label}
+      <NavIcon name="calendar" />{value ? (asDate ? short(value) : offText(value, today)) : label}
     </button>
   </span>;
   const menu = <div className={styles.dueMenu} data-size={isMobile ? 'lg' : undefined}>
