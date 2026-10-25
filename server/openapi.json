@@ -1056,6 +1056,36 @@
         }
       }
     },
+    "/api/v1/workspaces/{workspaceId}/comments" : {
+      "post" : {
+        "tags" : [ "comment-controller" ],
+        "operationId" : "create_5",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CreateComment"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "description" : "댓글 작성"
+          }
+        }
+      }
+    },
     "/api/v1/workspaces/{id}/invitations" : {
       "get" : {
         "tags" : [ "workspace-controller" ],
@@ -1999,6 +2029,79 @@
         }
       }
     },
+    "/api/v1/workspaces/{workspaceId}/comments/{commentId}" : {
+      "delete" : {
+        "tags" : [ "comment-controller" ],
+        "operationId" : "delete_4",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "name" : "commentId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "name" : "expectedVersion",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64",
+            "minimum" : 0
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        }
+      },
+      "patch" : {
+        "tags" : [ "comment-controller" ],
+        "operationId" : "revise_4",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "name" : "commentId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/UpdateComment"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        }
+      }
+    },
     "/api/v1/workspaces/{id}" : {
       "get" : {
         "tags" : [ "workspace-controller" ],
@@ -2027,7 +2130,7 @@
       },
       "delete" : {
         "tags" : [ "workspace-controller" ],
-        "operationId" : "delete_4",
+        "operationId" : "delete_5",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -2430,6 +2533,67 @@
                   "items" : {
                     "$ref" : "#/components/schemas/IssueViewTweak"
                   }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/timeline" : {
+      "get" : {
+        "tags" : [ "comment-controller" ],
+        "operationId" : "timeline",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "name" : "targetType",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "work_item", "decision", "session_record", "artifact", "code_ref" ]
+          }
+        }, {
+          "name" : "targetId",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "name" : "cursor",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "size",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 100,
+            "maximum" : 200,
+            "minimum" : 1
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Timeline"
                 }
               }
             }
@@ -3523,6 +3687,26 @@
         },
         "required" : [ "color", "name" ]
       },
+      "CreateComment" : {
+        "type" : "object",
+        "properties" : {
+          "targetType" : {
+            "type" : "string",
+            "enum" : [ "work_item", "decision", "session_record", "artifact" ]
+          },
+          "targetId" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "body" : {
+            "type" : "string",
+            "description" : "Markdown",
+            "maxLength" : 20000,
+            "minLength" : 0
+          }
+        },
+        "required" : [ "body", "targetId", "targetType" ]
+      },
       "Invite" : {
         "type" : "object",
         "properties" : {
@@ -3887,6 +4071,23 @@
         },
         "required" : [ "expectedVersion" ]
       },
+      "UpdateComment" : {
+        "type" : "object",
+        "properties" : {
+          "body" : {
+            "type" : "string",
+            "description" : "Markdown",
+            "maxLength" : 20000,
+            "minLength" : 0
+          },
+          "expectedVersion" : {
+            "type" : "integer",
+            "format" : "int64",
+            "minimum" : 0
+          }
+        },
+        "required" : [ "body", "expectedVersion" ]
+      },
       "Rename" : {
         "type" : "object",
         "properties" : {
@@ -4144,6 +4345,76 @@
           }
         },
         "required" : [ "viewKey" ]
+      },
+      "Timeline" : {
+        "type" : "object",
+        "properties" : {
+          "items" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/TimelineEntry"
+            }
+          },
+          "nextCursor" : {
+            "type" : [ "string", "null" ]
+          }
+        },
+        "required" : [ "items", "nextCursor" ]
+      },
+      "TimelineEntry" : {
+        "type" : "object",
+        "properties" : {
+          "kind" : {
+            "type" : "string",
+            "enum" : [ "comment", "activity" ]
+          },
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "at" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "actorId" : {
+            "type" : [ "string", "null" ],
+            "format" : "uuid"
+          },
+          "actorName" : {
+            "type" : [ "string", "null" ]
+          },
+          "actorAgent" : {
+            "type" : [ "string", "null" ],
+            "description" : "The API key's agent name when an agent did it"
+          },
+          "body" : {
+            "type" : [ "string", "null" ],
+            "description" : "A comment's Markdown"
+          },
+          "version" : {
+            "type" : "integer",
+            "format" : "int64",
+            "description" : "A comment's version, for editing and deleting it; 0 for an activity"
+          },
+          "editedAt" : {
+            "type" : [ "string", "null" ],
+            "format" : "date-time"
+          },
+          "action" : {
+            "type" : [ "string", "null" ],
+            "description" : "created, changed, deleted, restored, …"
+          },
+          "field" : {
+            "type" : [ "string", "null" ]
+          },
+          "before" : {
+            "type" : [ "string", "null" ]
+          },
+          "after" : {
+            "type" : [ "string", "null" ]
+          }
+        },
+        "required" : [ "action", "actorAgent", "actorId", "actorName", "after", "at", "before", "body", "editedAt", "field", "id", "kind", "version" ]
       },
       "Project" : {
         "type" : "object",

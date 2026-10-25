@@ -2,12 +2,16 @@ package io.github.goraebap.bit.module.link.infrastructure;
 
 import static io.github.goraebap.bit.jooq.tables.Activity.ACTIVITY;
 
+import io.github.goraebap.bit.module.link.TargetType;
 import io.github.goraebap.bit.module.link.domain.Activity;
 import io.github.goraebap.bit.module.link.domain.ActivityRepository;
+import java.time.Instant;
 import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.jooq.DSLContext;
 import org.jooq.JSON;
+import org.jooq.impl.DSL;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -34,5 +38,35 @@ class JooqActivityRepository implements ActivityRepository {
                 })
                 .toList();
         if (!records.isEmpty()) dslContext.batchInsert(records).execute();
+    }
+
+    @Override
+    public List<Activity> findAllByTarget(
+            UUID workspaceId, TargetType type, UUID targetId, Instant afterTime, UUID afterId, int limit) {
+        return dslContext
+                .selectFrom(ACTIVITY)
+                .where(ACTIVITY.WORKSPACE_ID.eq(workspaceId))
+                .and(ACTIVITY.TARGET_TYPE.eq(type.name()))
+                .and(ACTIVITY.TARGET_ID.eq(targetId))
+                .and(ACTIVITY.TYPE.notIn("comment_created", "comment_changed", "comment_deleted", "comment_restored"))
+                .and(
+                        afterTime == null
+                                ? DSL.noCondition()
+                                : ACTIVITY.OCCURRED_AT
+                                        .gt(afterTime)
+                                        .or(ACTIVITY.OCCURRED_AT.eq(afterTime).and(ACTIVITY.ACTIVITY_ID.gt(afterId))))
+                .orderBy(ACTIVITY.OCCURRED_AT, ACTIVITY.ACTIVITY_ID)
+                .limit(limit)
+                .fetch(r -> new Activity(
+                        r.getActivityId(),
+                        r.getWorkspaceId(),
+                        r.getProjectId(),
+                        TargetType.valueOf(r.getTargetType()),
+                        r.getTargetId(),
+                        r.getType(),
+                        r.getActorId(),
+                        r.getActorAgent(),
+                        r.getPayload() == null ? null : r.getPayload().data(),
+                        r.getOccurredAt()));
     }
 }

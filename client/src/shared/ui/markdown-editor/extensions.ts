@@ -1,4 +1,4 @@
-import { Extension, type AnyExtension } from '@tiptap/core';
+import { Extension, InputRule, type AnyExtension } from '@tiptap/core';
 import { TaskItem, TaskList } from '@tiptap/extension-list';
 import { Placeholder } from '@tiptap/extensions';
 import { Markdown } from '@tiptap/markdown';
@@ -25,6 +25,29 @@ const MarkdownPaste = Extension.create({
           if (!text || html || view.state.selection.$from.parent.type.spec.code || !MARKDOWN_SIGNS.test(text)) return false;
           return editor.commands.insertContent(text, { contentType: 'markdown' });
         },
+      },
+    })];
+  },
+});
+
+/**
+ * '- [ ] ' as Markdown is written: '- ' has already made a bullet, so '[ ] ' (or '[x] ') at the start of its item turns
+ * the list into a task list, the box checked for an x; at the start of a task it sets that task's box. ('[ ] ' on a
+ * line of its own is the task item's own rule.)
+ */
+const BulletToTask = Extension.create({
+  name: 'bulletToTask',
+  addInputRules() {
+    return [new InputRule({
+      find: /^\[( |x|X)?\]\s$/,
+      handler: ({ state, range, match, chain }) => {
+        const $from = state.doc.resolve(range.from);
+        const checked = /x/i.test(match[1] ?? '');
+        const item = $from.depth < 2 ? '' : $from.node(-1).type.name;
+        // Already a task (the line after one): the box is what was typed.
+        if (item === 'taskItem') { chain().deleteRange(range).updateAttributes('taskItem', { checked }).run(); return; }
+        if (item !== 'listItem' || $from.node(-2).type.name !== 'bulletList') return null;
+        chain().deleteRange(range).toggleTaskList().updateAttributes('taskItem', { checked }).run();
       },
     })];
   },
@@ -68,7 +91,7 @@ export function readingExtensions(): AnyExtension[] {
   ];
 }
 
-/** The editing set: the reading set with the slash menu, Markdown paste, the placeholder and the send shortcut. */
+/** The editing set: the reading set with the slash menu, Markdown paste, '- [ ] ', the placeholder and the send shortcut. */
 export function writingExtensions({ placeholder, store, onSubmit }: { placeholder: string; store: SlashStore; onSubmit?: () => void }): AnyExtension[] {
   return [
     StarterKit.configure({
@@ -81,6 +104,7 @@ export function writingExtensions({ placeholder, store, onSubmit }: { placeholde
     Markdown.configure({ indentation: { style: 'space', size: 2 } }),
     Placeholder.configure({ placeholder, emptyNodeClass: 'is-empty', showOnlyCurrent: true }),
     MarkdownPaste,
+    BulletToTask,
     SubmitShortcut.configure({ onSubmit }),
     SlashCommand.configure({ store }),
   ];

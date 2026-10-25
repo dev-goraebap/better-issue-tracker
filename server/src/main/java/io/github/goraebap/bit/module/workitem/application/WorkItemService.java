@@ -1,6 +1,9 @@
 package io.github.goraebap.bit.module.workitem.application;
 
 import io.github.goraebap.bit.module.label.LabelFacade;
+import io.github.goraebap.bit.module.link.TargetChangedEvent;
+import io.github.goraebap.bit.module.link.TargetChangedEvent.FieldChange;
+import io.github.goraebap.bit.module.link.TargetType;
 import io.github.goraebap.bit.module.project.ColumnWorkItemSpi;
 import io.github.goraebap.bit.module.project.ProjectFacade;
 import io.github.goraebap.bit.module.workitem.WorkItemFacade;
@@ -16,7 +19,9 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,6 +34,7 @@ public class WorkItemService implements WorkItemFacade, ColumnWorkItemSpi {
     private final ProjectFacade projectFacade;
     private final WorkspaceFacade workspaceFacade;
     private final LabelFacade labelFacade;
+    private final ApplicationEventPublisher applicationEventPublisher;
     private final Clock clock;
 
     @Override
@@ -98,6 +104,7 @@ public class WorkItemService implements WorkItemFacade, ColumnWorkItemSpi {
                 agent(actor),
                 clock.instant());
         workItemRepository.save(w);
+        changed(actor, workspaceId, w, "created", List.of());
         return w.id();
     }
 
@@ -119,8 +126,21 @@ public class WorkItemService implements WorkItemFacade, ColumnWorkItemSpi {
         var labelIds = request.hasLabelIds() ? request.labels() : w.labelIds();
         if (!labelIds.equals(w.labelIds())) labels(actor, workspaceId, labelIds);
         long before = w.version();
+        var previousLabels = w.labelIds();
         w.revise(next, labelIds, actor.userId(), agent(actor), clock.instant());
-        if (w.version() != before) workItemRepository.save(w);
+        if (w.version() == before) return;
+        workItemRepository.save(w);
+        var changes = new ArrayList<FieldChange>();
+        field(changes, "title", d.title(), next.title());
+        // A description is written in place and saved as it is typed: the activity says it changed, not what it said.
+        if (!Objects.equals(d.description(), next.description()))
+            changes.add(new FieldChange("description", null, null));
+        field(changes, "priority", text(d.priority()), text(next.priority()));
+        field(changes, "assignee", text(d.assigneeId()), text(next.assigneeId()));
+        field(changes, "startDate", text(d.startDate()), text(next.startDate()));
+        field(changes, "dueDate", text(d.dueDate()), text(next.dueDate()));
+        field(changes, "labels", ids(previousLabels), ids(labelIds));
+        if (!changes.isEmpty()) changed(actor, workspaceId, w, "changed", changes);
     }
 
     @Transactional
@@ -154,6 +174,12 @@ public class WorkItemService implements WorkItemFacade, ColumnWorkItemSpi {
             var old = projectFacade.requireColumn(actor, workspaceId, projectId, previous);
             applyOrder(
                     actor, workItemRepository.findColumnItems(projectId, previous, false), previous, old.finalColumn());
+            changed(
+                    actor,
+                    workspaceId,
+                    w,
+                    "changed",
+                    List.of(new FieldChange("column", text(previous), text(targetColumnId))));
         }
     }
 
@@ -162,8 +188,11 @@ public class WorkItemService implements WorkItemFacade, ColumnWorkItemSpi {
             CurrentUser actor, UUID workspaceId, UUID projectId, UUID id, long expectedVersion, boolean archived) {
         var w = access(actor, workspaceId, projectId, id, true, false);
         version(w, expectedVersion);
+        boolean was = w.archivedAt() != null;
         w.archive(archived, actor.userId(), agent(actor), clock.instant());
         workItemRepository.save(w);
+        if (was != archived)
+            changed(actor, workspaceId, w, "changed", List.of(new FieldChange("archived", text(was), text(archived))));
     }
 
     @Transactional
@@ -172,6 +201,7 @@ public class WorkItemService implements WorkItemFacade, ColumnWorkItemSpi {
         version(w, expectedVersion);
         w.delete(actor.userId(), agent(actor), clock.instant());
         workItemRepository.save(w);
+        changed(actor, workspaceId, w, "deleted", List.of());
     }
 
     @Transactional
@@ -183,6 +213,7 @@ public class WorkItemService implements WorkItemFacade, ColumnWorkItemSpi {
         w.restore(existing.isPresent(), actor.userId(), agent(actor), clock.instant());
         w.move(column.id(), column.finalColumn(), w.position(), actor.userId(), agent(actor), clock.instant());
         workItemRepository.save(w);
+        changed(actor, workspaceId, w, "restored", List.of());
     }
 
     @Override
@@ -248,6 +279,34 @@ public class WorkItemService implements WorkItemFacade, ColumnWorkItemSpi {
                 && details.dueDate() != null
                 && details.startDate().isAfter(details.dueDate()))
             throw WorkItemErrorCode.WORKITEM_DATE_RANGE_INVALID.raise();
+    }
+
+    /** Records what happened to an issue in its activity (D-078): safe values only, ids for people, columns and labels. */
+    private void changed(CurrentUser actor, UUID workspaceId, WorkItem item, String action, List<FieldChange> changes) {
+        applicationEventPublisher.publishEvent(new TargetChangedEvent(
+                workspaceId,
+                item.projectId(),
+                TargetType.work_item,
+                item.id(),
+                action,
+                item.version(),
+                actor.userId(),
+                agent(actor),
+                item.audit().updatedAt(),
+                changes));
+    }
+
+    private static void field(List<FieldChange> changes, String field, String before, String after) {
+        if (!Objects.equals(before, after)) changes.add(new FieldChange(field, before, after));
+    }
+
+    private static String text(Object value) {
+        return value == null ? null : value.toString();
+    }
+
+    /** Label ids in a stable order, joined by commas; null for none. */
+    private static String ids(Set<UUID> ids) {
+        return ids.isEmpty() ? null : ids.stream().map(UUID::toString).sorted().collect(Collectors.joining(","));
     }
 
     private static void version(WorkItem item, long expected) {

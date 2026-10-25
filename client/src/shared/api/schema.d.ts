@@ -308,6 +308,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workspaces/{workspaceId}/comments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["create_5"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/workspaces/{id}/invitations": {
         parameters: {
             query?: never;
@@ -516,6 +532,22 @@ export interface paths {
         patch: operations["revise_3"];
         trace?: never;
     };
+    "/api/v1/workspaces/{workspaceId}/comments/{commentId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["delete_4"];
+        options?: never;
+        head?: never;
+        patch: operations["revise_4"];
+        trace?: never;
+    };
     "/api/v1/workspaces/{id}": {
         parameters: {
             query?: never;
@@ -526,7 +558,7 @@ export interface paths {
         get: operations["get_4"];
         put?: never;
         post?: never;
-        delete: operations["delete_4"];
+        delete: operations["delete_5"];
         options?: never;
         head?: never;
         patch: operations["rename"];
@@ -604,6 +636,22 @@ export interface paths {
             cookie?: never;
         };
         get: operations["tweaks"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{workspaceId}/timeline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["timeline"];
         put?: never;
         post?: never;
         delete?: never;
@@ -946,6 +994,14 @@ export interface components {
             /** @example #5e6ad2 */
             color: string;
         };
+        CreateComment: {
+            /** @enum {string} */
+            targetType: "work_item" | "decision" | "session_record" | "artifact";
+            /** Format: uuid */
+            targetId: string;
+            /** @description Markdown */
+            body: string;
+        };
         Invite: {
             /** Format: email */
             email: string;
@@ -1070,6 +1126,12 @@ export interface components {
             name?: string;
             color?: string;
         };
+        UpdateComment: {
+            /** @description Markdown */
+            body: string;
+            /** Format: int64 */
+            expectedVersion: number;
+        };
         Rename: {
             name?: string;
         };
@@ -1176,6 +1238,37 @@ export interface components {
             layout?: "list" | "calendar" | "board" | "timeline" | "cards" | "history";
             sort?: components["schemas"]["IssueViewSort"];
             columns?: ("status" | "priority" | "assignee" | "labels" | "due" | "updated" | "created")[];
+        };
+        Timeline: {
+            items: components["schemas"]["TimelineEntry"][];
+            nextCursor: string | null;
+        };
+        TimelineEntry: {
+            /** @enum {string} */
+            kind: "comment" | "activity";
+            /** Format: uuid */
+            id: string;
+            /** Format: date-time */
+            at: string;
+            /** Format: uuid */
+            actorId: string | null;
+            actorName: string | null;
+            /** @description The API key's agent name when an agent did it */
+            actorAgent: string | null;
+            /** @description A comment's Markdown */
+            body: string | null;
+            /**
+             * Format: int64
+             * @description A comment's version, for editing and deleting it; 0 for an activity
+             */
+            version: number;
+            /** Format: date-time */
+            editedAt: string | null;
+            /** @description created, changed, deleted, restored, … */
+            action: string | null;
+            field: string | null;
+            before: string | null;
+            after: string | null;
         };
         Project: {
             /** Format: uuid */
@@ -2002,6 +2095,30 @@ export interface operations {
             };
         };
     };
+    create_5: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateComment"];
+            };
+        };
+        responses: {
+            /** @description 댓글 작성 */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     invitations: {
         parameters: {
             query?: {
@@ -2650,6 +2767,54 @@ export interface operations {
             };
         };
     };
+    delete_4: {
+        parameters: {
+            query: {
+                expectedVersion: number;
+            };
+            header?: never;
+            path: {
+                workspaceId: string;
+                commentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    revise_4: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+                commentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateComment"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     get_4: {
         parameters: {
             query?: never;
@@ -2672,7 +2837,7 @@ export interface operations {
             };
         };
     };
-    delete_4: {
+    delete_5: {
         parameters: {
             query?: never;
             header?: never;
@@ -2893,6 +3058,33 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["IssueViewTweak"][];
+                };
+            };
+        };
+    };
+    timeline: {
+        parameters: {
+            query: {
+                targetType: "work_item" | "decision" | "session_record" | "artifact" | "code_ref";
+                targetId: string;
+                cursor?: string;
+                size?: number;
+            };
+            header?: never;
+            path: {
+                workspaceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Timeline"];
                 };
             };
         };

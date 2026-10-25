@@ -145,6 +145,11 @@ final class AuthenticationFilter extends OncePerRequestFilter {
                 || method.equals("POST") && path.matches(views)
                 || Set.of("PATCH", "DELETE").contains(method) && path.matches(views + "/[^/]+")
                 || Set.of("PUT", "DELETE").contains(method) && path.matches(tweaks + "/[^/]+")) return true;
+        // An agent reads a target's timeline and comments on it as its owner (D-078).
+        String comments = "/api/v1/workspaces/[^/]+/comments";
+        if (Set.of("GET", "HEAD").contains(method) && path.matches("/api/v1/workspaces/[^/]+/timeline")
+                || method.equals("POST") && path.matches(comments)
+                || Set.of("PATCH", "DELETE").contains(method) && path.matches(comments + "/[^/]+")) return true;
         if (Set.of("GET", "HEAD").contains(method))
             return path.equals("/api/v1/me")
                     || path.equals("/api/v1/me/workspaces")

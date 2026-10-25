@@ -9,3 +9,12 @@ export function dateText(iso: string) {
 }
 /** 2026년 10월. */
 export const monthText = (iso: string) => `${dateOf(iso).getFullYear()}년 ${dateOf(iso).getMonth() + 1}월`;
+/** When something happened, as Linear says it: 방금, 5분 전, 3시간 전, 어제, then the day (10월 25일). */
+export function agoText(iso: string, now = Date.now()) {
+  const minutes = Math.floor((now - new Date(iso).getTime()) / 60000);
+  if (minutes < 1) return '방금';
+  if (minutes < 60) return `${minutes}분 전`;
+  if (minutes < 24 * 60) return `${Math.floor(minutes / 60)}시간 전`;
+  if (minutes < 48 * 60) return '어제';
+  return dateText(iso);
+}

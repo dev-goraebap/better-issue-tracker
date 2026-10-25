@@ -9,11 +9,13 @@ import {
 } from '@/shared/ui';
 import { labelsQuery } from '@/entities/label';
 import { columnsQuery } from '@/entities/project';
-import { canWrite as canWriteIn, useMembers, workspaceQuery } from '@/entities/workspace';
+import { canManage, canWrite as canWriteIn, useMembers, workspaceQuery } from '@/entities/workspace';
 import {
   archiveItem, deleteItem, itemQuery, labelOptions, LabelTokens, moveItem, NO_STATUS, peopleOptions, PersonCell, priorityOptions, PriorityMark, refreshItems,
   StatusBadge, statusOptions, updateItem, type IssueSearch, type Priority, type WorkItem,
 } from '@/entities/work-item';
+import { refreshTimeline } from '../api/timeline';
+import { IssueActivity } from './IssueActivity';
 import { IssueDescription } from './IssueDescription';
 import styles from './detail.module.css';
 
@@ -30,7 +32,8 @@ import styles from './detail.module.css';
  * - The description is written in place and saves itself (IssueDescription, D-076); a viewer reads it rendered.
  * - The title row ends with 편집 (the form page for the title and description) and the more menu: 링크 복사, 보관, then
  *   삭제 behind ConfirmDialog. A change someone else saved first (409) says so and shows the latest.
- * - 연결 and 활동 come with the links and comments (T-005).
+ * - Under the description its 활동 (IssueActivity, D-078): what happened to it and its comments on one timeline, the
+ *   box to comment at its foot. 연결 comes with the links (T-005).
  */
 export function IssueDetail({ workspaceId, projectId, id, search }: { workspaceId: string; projectId: string; id: string; search: IssueSearch }) {
   const panel = usePanelSurface();
@@ -55,7 +58,8 @@ export function IssueDetail({ workspaceId, projectId, id, search }: { workspaceI
   if (!item) return <Surface title="이슈를 찾을 수 없습니다" back={back} width="default">
     <PageState kind="not-found" title="이슈를 찾을 수 없습니다" description="지워졌거나 주소가 바뀌었습니다. 목록에서 다시 찾아보세요." />
   </Surface>;
-  const refresh = () => refreshItems(client, workspaceId, projectId);
+  // A change shows in the lists and, as a line of activity, in the issue's timeline.
+  const refresh = () => Promise.allSettled([refreshItems(client, workspaceId, projectId), refreshTimeline(client, workspaceId, 'work_item', id)]);
   const itemKey = itemQuery(workspaceId, projectId, id).queryKey;
   /** Saves one change over the latest version once the changes before it are done; answers whether it was saved. */
   const save = (change: (version: number) => Promise<unknown>): Promise<boolean> => {
@@ -102,6 +106,7 @@ export function IssueDetail({ workspaceId, projectId, id, search }: { workspaceI
           <SectionHeader id="detail-body" title="설명" />
           <IssueDescription key={item.id} value={item.description ?? ''} canWrite={canWrite} onSave={description => patch({ description })} />
         </section>
+        <IssueActivity workspaceId={workspaceId} projectId={projectId} issueId={id} canWrite={canWrite} canModerate={canManage(role)} />
       </VStack>
       <aside className={styles.aside} aria-label="속성">
         <h2 className={styles.asideHead}>속성</h2>

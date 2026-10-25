@@ -64,6 +64,12 @@ class WorkItemIntegrationTest {
     private WorkItemRepository workItemRepository;
 
     @Autowired
+    private io.github.goraebap.bit.module.link.application.CommentService commentService;
+
+    @Autowired
+    private io.github.goraebap.bit.module.link.application.TimelineService timelineService;
+
+    @Autowired
     private JdbcTemplate jdbcTemplate;
 
     @Autowired
@@ -87,6 +93,8 @@ class WorkItemIntegrationTest {
         for (String trigger : List.of("reject_task", "reject_move", "reject_close"))
             jdbcTemplate.execute("DROP TRIGGER IF EXISTS " + trigger);
         for (String table : List.of(
+                "comment",
+                "activity",
                 "work_item_label",
                 "work_item",
                 "board_column",
@@ -120,6 +128,52 @@ class WorkItemIntegrationTest {
         var columns = projectService.columns(owner, workspace, project);
         todo = columns.getFirst().id();
         done = columns.getLast().id();
+    }
+
+    @Test
+    void anIssuesChangesAndCommentsReadAsOneTimelineOldestFirst() {
+        UUID id = create(owner, "Task", todo, null);
+        var update = new WorkItemRequests.Update();
+        update.setExpectedVersion(0L);
+        update.setTitle("Renamed");
+        update.setDescription("## Notes");
+        workItemService.revise(owner, workspace, project, id, update);
+        UUID comment = commentService.create(
+                owner, workspace, io.github.goraebap.bit.module.link.TargetType.work_item, id, "Looks right");
+        workItemService.move(owner, workspace, project, id, 1, done, null, null);
+        var lines = timelineService
+                .list(owner, workspace, io.github.goraebap.bit.module.link.TargetType.work_item, id, null, 100)
+                .items();
+        // One change's fields share its moment, so between themselves they keep no order.
+        assertThat(lines)
+                .extracting(line -> line.kind() + ":" + line.action() + ":" + line.field())
+                .satisfiesExactly(
+                        line -> assertThat(line).isEqualTo("activity:created:null"),
+                        line -> assertThat(line).startsWith("activity:changed:"),
+                        line -> assertThat(line).startsWith("activity:changed:"),
+                        line -> assertThat(line).isEqualTo("comment:null:null"),
+                        line -> assertThat(line).isEqualTo("activity:changed:column"));
+        var title = lines.stream()
+                .filter(line -> "title".equals(line.field()))
+                .findFirst()
+                .orElseThrow();
+        assertThat(title.before()).isEqualTo("Task");
+        assertThat(title.after()).isEqualTo("Renamed");
+        var description = lines.stream()
+                .filter(line -> "description".equals(line.field()))
+                .findFirst()
+                .orElseThrow();
+        assertThat(description.after()).isNull();
+        assertThat(lines.get(3).id()).isEqualTo(comment);
+        assertThat(lines.get(3).body()).isEqualTo("Looks right");
+        assertThat(lines.get(4).after()).isEqualTo(done.toString());
+        var first = timelineService.list(
+                owner, workspace, io.github.goraebap.bit.module.link.TargetType.work_item, id, null, 2);
+        var rest = timelineService.list(
+                owner, workspace, io.github.goraebap.bit.module.link.TargetType.work_item, id, first.nextCursor(), 100);
+        assertThat(first.items()).hasSize(2);
+        assertThat(rest.items()).hasSize(3);
+        assertThat(rest.nextCursor()).isNull();
     }
 
     @Test
@@ -388,6 +442,31 @@ class WorkItemIntegrationTest {
                     .isEqualTo(1);
             assertThat(JSON.readTree(get.body()).path("createdByAgent").asText())
                     .isEqualTo("task-agent");
+            String issueId = JSON.readTree(get.body()).path("id").asText();
+            var comment = http(
+                    client,
+                    "POST",
+                    "/api/v1/workspaces/" + workspace + "/comments",
+                    JSON.writeValueAsString(
+                            Map.of("targetType", "work_item", "targetId", issueId, "body", "**Agreed**")),
+                    key);
+            expect(comment, 201);
+            String commentPath = comment.headers().firstValue("location").orElseThrow();
+            expect(
+                    http(client, "PATCH", commentPath, "{\"body\":\"Agreed, shipping\",\"expectedVersion\":0}", null),
+                    204);
+            var timeline = http(
+                    client,
+                    "GET",
+                    "/api/v1/workspaces/" + workspace + "/timeline?targetType=work_item&targetId=" + issueId,
+                    null,
+                    key);
+            expect(timeline, 200);
+            var lines = JSON.readTree(timeline.body()).path("items");
+            assertThat(lines.get(0).path("action").asText()).isEqualTo("created");
+            assertThat(lines.get(1).path("body").asText()).isEqualTo("Agreed, shipping");
+            assertThat(lines.get(1).path("actorAgent").asText()).isEqualTo("task-agent");
+            expect(http(client, "DELETE", commentPath + "?expectedVersion=1", null, null), 204);
             String columnPath = "/api/v1/workspaces/" + workspace + "/projects/" + project + "/columns/" + done;
             expect(http(client, "PATCH", columnPath, "{\"expectedVersion\":0,\"color\":\"#112233\"}", null), 204);
             var columnRead =

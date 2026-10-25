@@ -602,8 +602,11 @@ class TargetPersistenceIntegrationTest {
         assertThat(activityCount()).isEqualTo(8);
     }
 
+    /** Activity other than an issue's own changes (D-078), which the issue tests below count apart. */
     private int activityCount() {
-        return java.util.Objects.requireNonNull(jdbc.queryForObject("SELECT count(*) FROM activity", Integer.class));
+        return java.util.Objects.requireNonNull(jdbc.queryForObject(
+                "SELECT count(*) FROM activity WHERE NOT (target_type='work_item' AND type NOT LIKE 'comment%')",
+                Integer.class));
     }
 
     @Test
@@ -627,12 +630,17 @@ class TargetPersistenceIntegrationTest {
         var decision = decisions.findById(project, id, false).orElseThrow();
         assertThat(decision.audit().createdBy()).isEqualTo(actor.userId());
         assertThat(decision.audit().createdByAgent()).isEqualTo("Decision agent");
-        assertThat(jdbc.queryForList("SELECT actor_id FROM activity", String.class))
+        assertThat(jdbc.queryForList(
+                        "SELECT actor_id FROM activity WHERE NOT (target_type='work_item' AND type NOT LIKE 'comment%')",
+                        String.class))
                 .containsOnly(actor.userId().toString());
-        assertThat(jdbc.queryForList("SELECT actor_agent FROM activity", String.class))
+        assertThat(jdbc.queryForList(
+                        "SELECT actor_agent FROM activity WHERE NOT (target_type='work_item' AND type NOT LIKE 'comment%')",
+                        String.class))
                 .containsOnly("Decision agent");
-        for (String payload : jdbc.queryForList("SELECT payload FROM activity", String.class))
-            assertThat(payload).doesNotContain("never-log-fixture-key-hash", credential.toString());
+        for (String payload : jdbc.queryForList(
+                "SELECT payload FROM activity WHERE NOT (target_type='work_item' AND type NOT LIKE 'comment%')",
+                String.class)) assertThat(payload).doesNotContain("never-log-fixture-key-hash", credential.toString());
         jdbc.update("UPDATE iam_api_key SET revoked_at=? WHERE iam_api_key_id=?", time, credential.toString());
         denied(
                 () -> decisionService.revise(
@@ -713,7 +721,10 @@ class TargetPersistenceIntegrationTest {
                                 List.of(work)))
                         .isInstanceOf(RuntimeException.class);
                 for (String child : List.of("session_record", "session_participant", "decision", "link", "activity"))
-                    assertThat(jdbc.queryForObject("SELECT count(*) FROM " + child, Integer.class))
+                    assertThat(jdbc.queryForObject(
+                                    "SELECT count(*) FROM " + child
+                                            + (child.equals("activity") ? " WHERE target_type<>'work_item'" : ""),
+                                    Integer.class))
                             .isZero();
                 assertThat(jdbc.queryForObject(
                                 "SELECT last_session_number+last_decision_number FROM project WHERE project_id=?",
@@ -807,8 +818,9 @@ class TargetPersistenceIntegrationTest {
         assertThat(sessions.findById(project, id, false).orElseThrow().participants())
                 .extracting(Participant::displayName)
                 .containsExactly("Current owner");
-        for (String payload : jdbc.queryForList("SELECT payload FROM activity", String.class))
-            assertThat(payload).doesNotContain("Original private summary", "New private summary");
+        for (String payload : jdbc.queryForList(
+                "SELECT payload FROM activity WHERE NOT (target_type='work_item' AND type NOT LIKE 'comment%')",
+                String.class)) assertThat(payload).doesNotContain("Original private summary", "New private summary");
         denied(() -> sessionService.revise(actor, workspace, project, id, sessionDraft("Stale"), null, 0), 409);
         sessionService.delete(actor, workspace, project, id, 1);
         denied(() -> sessionService.findByRef(actor, workspace, project, "S-001"), 404);
@@ -892,7 +904,9 @@ class TargetPersistenceIntegrationTest {
         assertThat(comment.version()).isEqualTo(3);
         assertThat(comment.audit().deletedAt()).isNull();
         assertThat(activityCount()).isEqualTo(4);
-        for (String payload : jdbc.queryForList("SELECT payload FROM activity", String.class))
+        for (String payload : jdbc.queryForList(
+                "SELECT payload FROM activity WHERE NOT (target_type='work_item' AND type NOT LIKE 'comment%')",
+                String.class))
             assertThat(payload).contains(id.toString()).doesNotContain("private comment", "Original", "Corrected");
     }
 

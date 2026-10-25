@@ -34,7 +34,18 @@ public class ActivityService {
                             "status",
                             "deleted",
                             "replacementId"),
-            TargetType.session_record, Set.of("title", "type", "summary", "occurredAt", "participants", "deleted"));
+            TargetType.session_record, Set.of("title", "type", "summary", "occurredAt", "participants", "deleted"),
+            TargetType.work_item,
+                    Set.of(
+                            "title",
+                            "description",
+                            "priority",
+                            "assignee",
+                            "startDate",
+                            "dueDate",
+                            "labels",
+                            "column",
+                            "archived"));
     private final ActivityRepository activityRepository;
     private final JsonMapper jsonMapper;
 
