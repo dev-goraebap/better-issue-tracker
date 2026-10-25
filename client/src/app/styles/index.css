@@ -133,7 +133,9 @@ body { font-family: 'Pretendard Variable', Pretendard, system-ui, sans-serif; }
  * fields (EmailField, the toolbar's search, a phone's picker search) use the --bit-field-* tokens. A phone keeps its
  * 48px thumb-sized fields and 16px type (below), so iOS does not zoom into them.
  */
-:is(.astryx-text-input, .astryx-text-area, .astryx-selector.input, .astryx-multi-selector, .astryx-typeahead, .astryx-number-input,
+/* One list of every Astryx field. The selector is a compound (.astryx-selector.input), and :is() would take its weight
+   for the whole list and outrank the phone's touch sizes below; :where() weighs nothing, so those still apply. */
+:where(.astryx-text-input, .astryx-text-area, .astryx-selector.input, .astryx-multi-selector, .astryx-typeahead, .astryx-number-input,
   .astryx-date-input, .astryx-date-range-input, .astryx-time-input) {
   --size-element-sm: var(--bit-field-height);
   --size-element-md: var(--bit-field-height);
@@ -146,7 +148,7 @@ body { font-family: 'Pretendard Variable', Pretendard, system-ui, sans-serif; }
   --color-background-surface: transparent;
   --duration-fast: 150ms;
 }
-:is(.astryx-text-input, .astryx-text-area, .astryx-selector.input, .astryx-multi-selector, .astryx-typeahead, .astryx-number-input,
+:where(.astryx-text-input, .astryx-text-area, .astryx-selector.input, .astryx-multi-selector, .astryx-typeahead, .astryx-number-input,
   .astryx-date-input, .astryx-date-range-input, .astryx-time-input):hover { box-shadow: none !important; }
 /* Astryx raises a field's type to 16px wherever the pointer is coarse (a touch-screen laptop too); from a desktop's width
    it stays the field's 13px, and a phone's fields take 16px below. */
