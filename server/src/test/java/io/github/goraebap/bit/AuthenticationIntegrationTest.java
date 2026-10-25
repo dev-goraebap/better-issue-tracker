@@ -396,6 +396,19 @@ class AuthenticationIntegrationTest {
         }
     }
 
+    @Test
+    void membersRenameThemselvesInASessionButNotWithAKey() throws Exception {
+        try (Client client = signedIn()) {
+            assertThat(client.write("PATCH", "/me", Map.of("name", "  새 이름 ")).statusCode())
+                    .isEqualTo(204);
+            assertThat(client.get("/me").body()).contains("\"name\":\"새 이름\"");
+            assertThat(client.write("PATCH", "/me", Map.of("name", " ")).statusCode())
+                    .isEqualTo(400);
+            String key = createKey(client, 7).path("key").asText();
+            assertThat(client.bearer("PATCH", "/me", key).statusCode()).isEqualTo(403);
+        }
+    }
+
     private Client signedIn() throws Exception {
         Client client = new Client();
         assertThat(client.bootstrap(EMAIL, PASSWORD).statusCode()).isEqualTo(201);

@@ -65,3 +65,20 @@
 /* The member at the foot of a phone's 더보기 sheet: their card, then 로그아웃 the sheet's width. */
 .sheetAccount { display: flex; flex-direction: column; gap: var(--spacing-3); padding-block-start: var(--spacing-4); border-block-start: 1px solid var(--color-border); }
 .sheetAccount > :global(.astryx-button) { inline-size: 100%; }
+/* 프로젝트's + as the toolbar's round tools (header-tools .roundButton), a size smaller for the section's head. */
+.sectionAdd { display: inline-grid; place-items: center; inline-size: 1.5rem; block-size: 1.5rem; padding: 0; border: 0; border-radius: var(--radius-full);
+  background: var(--bit-chip-bg); box-shadow: inset 0 0 0 1px var(--bit-chip-ring); color: var(--color-icon-primary); cursor: pointer; }
+.sectionAdd:hover { color: var(--color-text-primary); background: var(--color-overlay-hover); }
+.sectionAdd:focus-visible { outline: var(--focus-outline-width) var(--focus-outline-style) var(--focus-outline-color); }
+.sectionAdd svg { inline-size: 0.875rem; block-size: 0.875rem; }
+/* No project yet: a dashed card under the section's head, its mark and two lines, the whole card making the first one. */
+.firstProject { display: flex; align-items: flex-start; gap: var(--spacing-2-5, 0.625rem); inline-size: 100%; box-sizing: border-box; margin-block: var(--spacing-1) 0;
+  padding: var(--spacing-3); border: 1px dashed var(--color-border-emphasized); border-radius: var(--radius-element); background: none; color: var(--color-text-secondary);
+  font: inherit; font-size: 0.75rem; line-height: 1.45; text-align: start; cursor: pointer; transition: border-color 150ms, background-color 150ms; }
+.firstProject:hover { border-color: var(--color-text-disabled); background: var(--color-overlay-hover); }
+.firstProject:focus-visible { outline: var(--focus-outline-width) var(--focus-outline-style) var(--focus-outline-color); }
+.firstProjectMark { display: inline-grid; place-items: center; flex-shrink: 0; inline-size: 1.75rem; block-size: 1.75rem; border-radius: 6px;
+  background: var(--color-background-muted); color: var(--color-icon-primary); }
+.firstProjectMark svg { inline-size: 1rem; block-size: 1rem; }
+.firstProjectText { display: flex; flex-direction: column; gap: 2px; min-inline-size: 0; word-break: keep-all; }
+.firstProjectText strong { font-size: 0.8125rem; font-weight: 500; color: var(--color-text-primary); }

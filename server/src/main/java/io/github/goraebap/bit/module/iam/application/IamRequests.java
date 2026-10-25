@@ -23,6 +23,13 @@ public final class IamRequests {
         }
     }
 
+    /** The member's own name, as teammates and agents' records show it. */
+    public record Rename(@NotBlank @Size(max = 64) String name) {
+        public Rename {
+            if (name != null) name = name.strip();
+        }
+    }
+
     public record Login(
             @NotBlank @Size(max = 256) String email,
             @NotNull @Size(min = 1, max = 128) String password) {

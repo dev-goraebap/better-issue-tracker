@@ -24,6 +24,8 @@ public interface IamRepository {
 
     void createUser(Identity user, String hash, Instant now);
 
+    void renameUser(UUID id, String name, Instant now);
+
     void savePassword(PasswordCredential password, Instant now);
 
     Optional<LoginSession> findSessionByHash(String hash);

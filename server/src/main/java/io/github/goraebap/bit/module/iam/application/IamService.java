@@ -6,6 +6,7 @@ import io.github.goraebap.bit.module.iam.domain.IamRepository;
 import io.github.goraebap.bit.module.iam.domain.Identity;
 import io.github.goraebap.bit.module.iam.domain.LoginSession;
 import io.github.goraebap.bit.module.iam.domain.PasswordCredential;
+import io.github.goraebap.bit.shared.error.CommonErrorCode;
 import io.github.goraebap.bit.shared.web.CurrentUser;
 import io.github.goraebap.bit.shared.web.SecretTokens;
 import java.time.Clock;
@@ -102,6 +103,19 @@ public class IamService {
                 key.get().id(),
                 key.get().agentName(),
                 false));
+    }
+
+    /** A member renames themself in a signed-in session (an agent's key does not rename its owner). */
+    @Transactional
+    public void rename(CurrentUser actor, IamRequests.Rename request) {
+        Identity user = requireActor(actor, true);
+        if (iamRepository
+                .findPassword(user.id())
+                .map(PasswordCredential::mustChange)
+                .orElse(false)) throw AuthErrorCode.AUTH_FORBIDDEN.raise();
+        if (request.name().isEmpty() || request.name().length() > 64)
+            throw CommonErrorCode.COMMON_INVALID_REQUEST.raise();
+        if (!request.name().equals(user.name())) iamRepository.renameUser(user.id(), request.name(), clock.instant());
     }
 
     @Transactional(readOnly = true)

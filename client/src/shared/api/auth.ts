@@ -17,6 +17,8 @@ export async function login(body: Schemas['Login']) { await command('POST', '/ap
 export async function bootstrap(body: Schemas['Bootstrap']) { await command('POST', '/api/v1/auth/bootstrap', body); }
 export async function logout(all = false) { await command('DELETE', all ? '/api/v1/auth/sessions' : '/api/v1/auth/sessions/current'); hadSession = false; resetCsrf(); }
 export async function changePassword(body: Schemas['Password']) { await command('PUT', '/api/v1/me/password', body); resetCsrf(); }
+/** The member's own name, as teammates and agents' records show it. */
+export const renameMe = (name: string) => command('PATCH', '/api/v1/me', { name });
 /** The member's API keys, a page after another (the newest first). */
 export const keyQueryOptions = infiniteQueryOptions({
   queryKey: ['api-keys'], initialPageParam: undefined as string | undefined,

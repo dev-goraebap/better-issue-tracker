@@ -168,12 +168,17 @@ export function AppLayout() {
       <SideNavSection title="워크스페이스">
         {workspace && WORKSPACE_MENU.map(each => entry(each.label, each.icon, workspacePath(workspaceId, each.path), !place.projectId && place.workspaceSection === each.path))}
       </SideNavSection>
-      {workspace && <SideNavSection title="프로젝트" endContent={folded ? undefined : <IconButton label="프로젝트 만들기" tooltip="프로젝트 만들기" variant="ghost" size="sm"
-        icon={<NavIcon name="plus" />} onClick={() => setCreatingProject(true)} />}>
+      {/* 프로젝트 with its + in a round box, as the toolbar's 필터; with none yet, a dashed card that makes the first. */}
+      {workspace && <SideNavSection title="프로젝트" endContent={folded ? undefined : <button type="button" className={styles.sectionAdd} aria-label="프로젝트 만들기"
+        title="프로젝트 만들기" onClick={() => setCreatingProject(true)}><NavIcon name="plus" /></button>}>
         {projects.map(project => {
           const href = projectPath(workspaceId, project.id);
           return <SideNavItem key={project.id} label={project.name} href={href} icon={projectMark(project)} isSelected={place.projectId === project.id} onClick={go(href)} />;
         })}
+        {!folded && projects.length === 0 && <button type="button" className={styles.firstProject} onClick={() => setCreatingProject(true)}>
+          <span className={styles.firstProjectMark} aria-hidden="true"><NavIcon name="board" /></span>
+          <span className={styles.firstProjectText}><strong>첫 프로젝트 만들기</strong>이슈를 묶어 보드와 일정으로 봅니다.</span>
+        </button>}
       </SideNavSection>}
     </SideNav>;
 

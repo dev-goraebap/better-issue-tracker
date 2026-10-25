@@ -63,6 +63,17 @@ class JooqIamRepository implements IamRepository {
     }
 
     @Override
+    public void renameUser(UUID id, String name, Instant now) {
+        dslContext
+                .update(IAM_USER)
+                .set(IAM_USER.NAME, name)
+                .set(IAM_USER.UPDATED_AT, now)
+                .set(IAM_USER.UPDATED_BY, id)
+                .where(IAM_USER.IAM_USER_ID.eq(id))
+                .execute();
+    }
+
+    @Override
     public void createUser(Identity user, String hash, Instant now) {
         dslContext
                 .insertInto(IAM_USER)

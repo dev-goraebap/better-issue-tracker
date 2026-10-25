@@ -2098,6 +2098,43 @@
         }
       }
     },
+    "/api/v1/me" : {
+      "get" : {
+        "tags" : [ "auth-controller" ],
+        "operationId" : "me",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Me"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch" : {
+        "tags" : [ "auth-controller" ],
+        "operationId" : "rename_1",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/Rename"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "204" : {
+            "description" : "Name changed"
+          }
+        }
+      }
+    },
     "/api/v1/workspaces/{workspaceId}/work-items" : {
       "get" : {
         "tags" : [ "work-item-controller" ],
@@ -2851,24 +2888,6 @@
         "responses" : {
           "204" : {
             "description" : "Invitation revoked"
-          }
-        }
-      }
-    },
-    "/api/v1/me" : {
-      "get" : {
-        "tags" : [ "auth-controller" ],
-        "operationId" : "me",
-        "responses" : {
-          "200" : {
-            "description" : "OK",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Me"
-                }
-              }
-            }
           }
         }
       }
