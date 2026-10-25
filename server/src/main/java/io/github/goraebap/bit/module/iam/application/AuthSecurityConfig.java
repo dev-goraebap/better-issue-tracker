@@ -116,6 +116,8 @@ class AuthSecurityConfig {
                         .requestMatchers(
                                 HttpMethod.GET, "/api/v1/workspaces/*/projects", "/api/v1/workspaces/*/projects/**")
                         .authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/workspaces/*/project-members")
+                        .authenticated()
                         .requestMatchers(
                                 HttpMethod.HEAD, "/api/v1/workspaces/*/projects", "/api/v1/workspaces/*/projects/**")
                         .authenticated()

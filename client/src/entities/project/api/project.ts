@@ -29,3 +29,11 @@ export const deleteColumn = (w: string, p: string, columnId: string, expectedVer
   command('DELETE', `${projectPath(w, p)}/columns/${encodeURIComponent(columnId)}?expectedVersion=${expectedVersion}&moveTo=${encodeURIComponent(moveTo)}`);
 export const reorderColumns = (w: string, p: string, expectedVersion: number, order: string[]) => command('POST', `${projectPath(w, p)}/columns/reorder`, { expectedVersion, order });
 export const refreshProjects = (client: QueryClient, w: string) => client.invalidateQueries({ queryKey: ['workspace', w] }).catch(() => {});
+/** Who belongs to which project (D-075), the whole workspace at once: where each member works; it grants nothing. */
+export type ProjectMembership = components['schemas']['ProjectMembership'];
+export const projectMembershipsQuery = (w: string) => queryOptions({
+  queryKey: ['workspace', w, 'project-members'], retry: false,
+  queryFn: ({ signal }) => readJson<components['schemas']['ProjectMemberships']>(`/api/v1/workspaces/${encodeURIComponent(w)}/project-members`, signal).then(page => page.items),
+});
+export const addProjectMember = (w: string, p: string, userId: string) => command('POST', `${projectPath(w, p)}/members`, { userId });
+export const removeProjectMember = (w: string, p: string, userId: string) => command('DELETE', `${projectPath(w, p)}/members/${encodeURIComponent(userId)}`);

@@ -1,7 +1,7 @@
 import { useCallback, useId, useState } from 'react';
 import { MoreMenu } from '@astryxdesign/core';
 import { useMediaQuery } from '@astryxdesign/core/hooks';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import { MOBILE_QUERY } from '@/shared/config';
 import { authError, sessionQueryOptions } from '@/shared/api';
@@ -14,8 +14,10 @@ import {
   canManage, changeRole, forgetWorkspace, invitationsQuery, leaveWorkspace, refreshWorkspace, removeMember, revokeInvitation, ROLE_LABELS, ROLES, useMembers, workspaceQuery,
   type Invitation, type Member, type Role,
 } from '@/entities/workspace';
+import { ProjectMark, projectMembershipsQuery, projectsQuery } from '@/entities/project';
 import type { MembersSearch } from '../model/search';
 import { InvitationDialog } from './InvitationDialog';
+import { MemberProjectsDialog } from './MemberProjectsDialog';
 import styles from './members.module.css';
 
 type Tab = 'members' | 'invitations';
@@ -38,7 +40,8 @@ const roleRank = (role: Role) => ROLES.indexOf(role);
  *   구성원 초대 (a one-time link to hand over) on both tabs.
  * - 구성원 is a list (a table on a desktop, D-064): the person (picture, name, email), their role (a select for those
  *   the member may change: the owner changes anyone but the owner, an admin changes members and viewers), when they
- *   joined, and a row menu: 구성원에서 제거 for those one may change, 워크스페이스에서 나가기 on one's own row (not the
+ *   joined, the projects they belong to (D-075: marks and the first one's name, opening the member's projects, where
+ *   those who manage members add them to projects or take them off), and a row menu: 구성원에서 제거 for those one may change, 워크스페이스에서 나가기 on one's own row (not the
  *   owner's). Every change asks first. It narrows by role, orders by when they joined, name or role (the address keeps
  *   both), and ends in the count line every list has. A phone shows the same rows as cards. Members are managed here
  *   and nowhere else; the workspace's settings only explain the roles.
@@ -59,6 +62,12 @@ export function MembersPage() {
   const invitations = useQuery({ ...invitationsQuery(workspaceId), enabled: tab === 'invitations' });
   const [isInviting, setInviting] = useState(false);
   const [pending, setPending] = useState<Pending | null>(null);
+  const [projectsOf, setProjectsOf] = useState<Member | null>(null);
+  const projectPages = useInfiniteQuery(projectsQuery(workspaceId));
+  const projects = projectPages.data?.pages.flatMap(page => page.items) ?? [];
+  const memberships = useQuery({ ...projectMembershipsQuery(workspaceId), enabled: tab === 'members' }).data ?? [];
+  const joinedBy = (userId: string) => new Set(memberships.filter(row => row.userId === userId).map(row => row.projectId));
+  const joinedProjects = (userId: string) => { const joined = joinedBy(userId); return projects.filter(project => joined.has(project.id)); };
   const [isBusy, setBusy] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const go = useCallback((patch: Partial<MembersSearch>, replace = false) => void navigate({
@@ -90,6 +99,14 @@ export function MembersPage() {
       ? <Select label={`${row.name} 역할`} isLabelHidden size="sm" options={roleOptions} value={row.role}
         onChange={value => { if (value && value !== row.role) setPending({ kind: 'role', member: row, role: value as Role }); }} />
       : ROLE_LABELS[row.role]) },
+    { key: 'projects', header: '참여 프로젝트', width: '13rem', render: row => {
+      const mine = joinedProjects(row.userId);
+      const label = mine.length === 0 ? (isManager ? '프로젝트에 넣기' : '없음') : mine.length === 1 ? mine[0]!.name : `${mine[0]!.name} 외 ${mine.length - 1}`;
+      const body = <><span className={styles.marks}>{mine.slice(0, 3).map(project => <ProjectMark key={project.id} project={project} />)}</span>
+        <span className={styles.projectsLabel}>{label}</span></>;
+      return <button type="button" className={styles.projects} aria-label={`${row.name}의 참여 프로젝트: ${mine.map(project => project.name).join(', ') || '없음'}`}
+        onClick={() => setProjectsOf(row)}>{body}</button>;
+    } },
     { key: 'joined', header: '참여한 날', width: '8rem', render: row => dateText(row.joinedAt) },
     { key: 'menu', header: '', width: '3.5rem', align: 'end', render: row => {
       const items = canChange(row) ? [{ label: '구성원에서 제거', icon: <NavIcon name="delete" />, onClick: () => setPending({ kind: 'remove', member: row }) }]
@@ -140,8 +157,8 @@ export function MembersPage() {
         : isMobile
           ? <><ItemList label="구성원">{members.map(member => <ItemRow key={member.memberId} lead={<DefaultAvatar seed={member.userId} name={member.name} size={32} />}
             title={<span className={styles.personText}><span className={styles.personName}>{member.name}{member.userId === me ? ' (나)' : ''}</span><span className={styles.personEmail}>{member.email}</span></span>}
-            meta={<ItemMeta>{ROLE_LABELS[member.role]}</ItemMeta>} />)}</ItemList>{memberSummary}</>
-          : <SheetTable label="구성원" columns={memberColumns} rows={members} rowKey={row => row.memberId} minWidth="40rem" order={order} foot={memberSummary} />)}
+            meta={<><ItemMeta>{ROLE_LABELS[member.role]}</ItemMeta><ItemMeta>프로젝트 {joinedBy(member.userId).size}개</ItemMeta></>} />)}</ItemList>{memberSummary}</>
+          : <SheetTable label="구성원" columns={memberColumns} rows={members} rowKey={row => row.memberId} minWidth="52rem" order={order} foot={memberSummary} />)}
       {tab === 'invitations' && invitations.data && (invites.length === 0
         ? <PageState title="보낸 초대가 없습니다" description="구성원 초대로 초대 링크를 만들어 전달하세요." />
         : isMobile
@@ -149,6 +166,8 @@ export function MembersPage() {
             meta={<><ItemMeta>{ROLE_LABELS[invite.role]}</ItemMeta><ItemMeta><StatusToken label={token.label} color={token.color} /></ItemMeta><ItemMeta>{dateText(invite.expiresAt)}</ItemMeta></>} />; })}</ItemList>{inviteSummary}</>
           : <SheetTable label="초대" columns={inviteColumns} rows={invites} rowKey={row => row.id} minWidth="44rem" foot={inviteSummary} />)}
     </div>
+    {projectsOf && <MemberProjectsDialog workspaceId={workspaceId} member={projectsOf} projects={projects} joined={joinedBy(projectsOf.userId)} canEdit={isManager}
+      onClose={() => setProjectsOf(null)} />}
     {isManager && <InvitationDialog isOpen={isInviting} workspaceId={workspaceId} myRole={myRole} onClose={() => setInviting(false)} onChanged={changed} />}
     {pending && <ConfirmDialog isPending={isBusy} error={error} onClose={() => { setPending(null); setError(null); }} onConfirm={() => { void confirm(); }}
       variant={pending.kind === 'role' ? 'primary' : 'destructive'}

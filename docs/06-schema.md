@@ -91,6 +91,7 @@ erDiagram
 | 테이블 | 열 | 제약·인덱스 |
 |---|---|---|
 | `project` | `project_id`, `workspace_id`, `name varchar(64)`, `icon varchar(32)?`, `color varchar(7)?`(V7, 둘 다 없으면 키 첫 글자), `description text?`, `position integer`, `last_work_item_number bigint`, `last_decision_number bigint`, `last_session_number bigint`, `archived_at?`, `version bigint`, 감사 | `ix_project_workspace_id` |
+| `project_member` | `project_member_id`, `project_id`, `workspace_id`, `iam_user_id`, `created_at`, `created_by` (V8, D-075: 소속 표시일 뿐 권한을 주지 않는다) | `ux_project_member_project_id_iam_user_id`, `ix_project_member_workspace_id_iam_user_id` |
 | `project_key` | `project_key_id`, `project_id`, `workspace_id`, `key varchar(10)`, `is_current boolean`, `created_at` | `ux_project_key_workspace_id_key` (모든 행), `ux_project_key_project_id_current` (is_current = 1), `ck_project_key_key` (대문자·숫자, 2~10자) |
 | `board_column` | `board_column_id`, `project_id`, `name varchar(32)`, `position integer`, `color varchar(7)?`, `is_final boolean`, `category varchar(8)`, `version bigint`, 감사 | `ix_board_column_project_id_position`, `ck_..._category` (todo, doing, done) |
 

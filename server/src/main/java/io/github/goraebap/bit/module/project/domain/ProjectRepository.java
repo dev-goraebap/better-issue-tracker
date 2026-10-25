@@ -27,6 +27,16 @@ public interface ProjectRepository {
 
     void save(BoardColumn column);
 
+    /** The projects' members in a workspace, live projects only (D-075). */
+    List<Membership> findMemberships(UUID workspaceId);
+
+    /** Adds the member to the project unless already there. */
+    void addMember(UUID workspaceId, UUID projectId, UUID userId, UUID actor, Instant now);
+
+    void removeMember(UUID projectId, UUID userId);
+
+    record Membership(UUID projectId, UUID userId) {}
+
     record Key(UUID projectId, boolean current) {}
 
     record Row(

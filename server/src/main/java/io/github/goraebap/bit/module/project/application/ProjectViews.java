@@ -46,6 +46,21 @@ public final class ProjectViews {
             @Schema(nullable = true) String createdByAgent,
             Instant updatedAt) {}
 
+    /** A member of a project (D-075): where they work, shown on the members page; it grants nothing. */
+    @Schema(
+            name = "ProjectMembership",
+            requiredProperties = {"projectId", "userId"})
+    public record Membership(UUID projectId, UUID userId) {}
+
+    @Schema(
+            name = "ProjectMemberships",
+            requiredProperties = {"items"})
+    public record Memberships(List<Membership> items) {
+        public Memberships {
+            items = List.copyOf(items);
+        }
+    }
+
     @Schema(requiredProperties = {"items", "nextCursor"})
     public record Projects(
             List<ProjectInfo> items,

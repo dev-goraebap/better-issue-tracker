@@ -3,6 +3,7 @@ package io.github.goraebap.bit.module.project.infrastructure;
 import static io.github.goraebap.bit.jooq.tables.BoardColumn.BOARD_COLUMN;
 import static io.github.goraebap.bit.jooq.tables.Project.PROJECT;
 import static io.github.goraebap.bit.jooq.tables.ProjectKey.PROJECT_KEY;
+import static io.github.goraebap.bit.jooq.tables.ProjectMember.PROJECT_MEMBER;
 
 import io.github.goraebap.bit.module.project.ColumnCategory;
 import io.github.goraebap.bit.module.project.domain.BoardColumn;
@@ -103,6 +104,43 @@ class JooqProjectRepository implements ProjectRepository {
                 .where(PROJECT.WORKSPACE_ID.eq(workspaceId))
                 .fetchOne(0, Integer.class);
         return max == null ? 0 : Math.incrementExact(max);
+    }
+
+    @Override
+    public List<Membership> findMemberships(UUID workspaceId) {
+        return dslContext
+                .select(PROJECT_MEMBER.PROJECT_ID, PROJECT_MEMBER.IAM_USER_ID)
+                .from(PROJECT_MEMBER)
+                .join(PROJECT)
+                .on(PROJECT.PROJECT_ID.eq(PROJECT_MEMBER.PROJECT_ID))
+                .where(PROJECT_MEMBER.WORKSPACE_ID.eq(workspaceId))
+                .and(PROJECT.DELETED_AT.isNull())
+                .orderBy(PROJECT_MEMBER.CREATED_AT, PROJECT_MEMBER.PROJECT_MEMBER_ID)
+                .fetch(r -> new Membership(r.get(PROJECT_MEMBER.PROJECT_ID), r.get(PROJECT_MEMBER.IAM_USER_ID)));
+    }
+
+    @Override
+    public void addMember(UUID workspaceId, UUID projectId, UUID userId, UUID actor, Instant now) {
+        dslContext
+                .insertInto(PROJECT_MEMBER)
+                .set(PROJECT_MEMBER.PROJECT_MEMBER_ID, UUID.randomUUID())
+                .set(PROJECT_MEMBER.PROJECT_ID, projectId)
+                .set(PROJECT_MEMBER.WORKSPACE_ID, workspaceId)
+                .set(PROJECT_MEMBER.IAM_USER_ID, userId)
+                .set(PROJECT_MEMBER.CREATED_AT, now)
+                .set(PROJECT_MEMBER.CREATED_BY, actor)
+                .onConflict(PROJECT_MEMBER.PROJECT_ID, PROJECT_MEMBER.IAM_USER_ID)
+                .doNothing()
+                .execute();
+    }
+
+    @Override
+    public void removeMember(UUID projectId, UUID userId) {
+        dslContext
+                .deleteFrom(PROJECT_MEMBER)
+                .where(PROJECT_MEMBER.PROJECT_ID.eq(projectId))
+                .and(PROJECT_MEMBER.IAM_USER_ID.eq(userId))
+                .execute();
     }
 
     @Override

@@ -15,6 +15,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
@@ -133,6 +134,8 @@ public class ProjectService implements ProjectFacade {
                 clock.instant());
         projectRepository.save(p);
         projectRepository.switchKey(workspaceId, p.id(), normalized, clock.instant());
+        // The member who makes a project belongs to it (D-075).
+        projectRepository.addMember(workspaceId, p.id(), actor.userId(), actor.userId(), clock.instant());
         var names = List.of("할 일", "진행 중", "검토 중", "완료");
         var categories = List.of(ColumnCategory.todo, ColumnCategory.doing, ColumnCategory.doing, ColumnCategory.done);
         for (int i = 0; i < names.size(); i++) {
@@ -216,6 +219,41 @@ public class ProjectService implements ProjectFacade {
                 clock.instant());
         projectRepository.save(p);
         if (normalized != null) projectRepository.switchKey(workspaceId, projectId, normalized, clock.instant());
+    }
+
+    /** Every live project's members who are still in the workspace (D-075); any member reads them. */
+    @Transactional(readOnly = true)
+    public ProjectViews.Memberships memberships(CurrentUser actor, UUID workspaceId) {
+        workspaceFacade.requireAccess(actor, workspaceId, WorkspaceFacade.Action.READ);
+        var rows = projectRepository.findMemberships(workspaceId);
+        var members = workspaceFacade
+                .memberNames(
+                        actor,
+                        workspaceId,
+                        rows.stream().map(ProjectRepository.Membership::userId).collect(Collectors.toSet()))
+                .keySet();
+        return new ProjectViews.Memberships(rows.stream()
+                .filter(row -> members.contains(row.userId()))
+                .map(row -> new ProjectViews.Membership(row.projectId(), row.userId()))
+                .toList());
+    }
+
+    /** Adds a workspace member to a project; those who manage members do it (D-075). */
+    @Transactional
+    public void addMember(CurrentUser actor, UUID workspaceId, UUID projectId, UUID userId) {
+        workspaceFacade.requireAccess(actor, workspaceId, WorkspaceFacade.Action.MANAGE_MEMBERS);
+        settings(actor, workspaceId, projectId, false, true);
+        if (!workspaceFacade.hasMember(actor, workspaceId, userId))
+            throw ProjectErrorCode.PROJECT_MEMBER_NOT_IN_WORKSPACE.raise();
+        projectRepository.addMember(workspaceId, projectId, userId, actor.userId(), clock.instant());
+    }
+
+    /** Takes a member off a project; they still read it, as every member of the workspace does. */
+    @Transactional
+    public void removeMember(CurrentUser actor, UUID workspaceId, UUID projectId, UUID userId) {
+        workspaceFacade.requireAccess(actor, workspaceId, WorkspaceFacade.Action.MANAGE_MEMBERS);
+        settings(actor, workspaceId, projectId, false, true);
+        projectRepository.removeMember(projectId, userId);
     }
 
     @Transactional

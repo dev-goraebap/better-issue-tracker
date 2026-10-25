@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import io.github.goraebap.bit.module.project.application.ProjectQueryService;
 import io.github.goraebap.bit.module.project.application.ProjectService;
+import io.github.goraebap.bit.module.project.application.ProjectViews;
 import io.github.goraebap.bit.module.project.domain.ProjectRepository;
 import io.github.goraebap.bit.module.workspace.WorkspaceFacade;
 import io.github.goraebap.bit.shared.persistence.InstantTextBinding;
@@ -87,6 +88,7 @@ class ProjectPersistenceIntegrationTest {
                 "work_item_label",
                 "work_item",
                 "board_column",
+                "project_member",
                 "project_key",
                 "project",
                 "workspace_invitation",
@@ -142,6 +144,24 @@ class ProjectPersistenceIntegrationTest {
                 "owner",
                 time);
         actor = new CurrentUser(user, false, CurrentUser.Method.SESSION, credential, null, false);
+    }
+
+    @Test
+    void theMakerBelongsToANewProjectAndMembersComeAndGoOnlyFromTheWorkspace() {
+        UUID project = projectService.create(actor, workspace, "Members", "PM", null);
+        assertThat(projectService.memberships(actor, workspace).items())
+                .extracting(ProjectViews.Membership::projectId, ProjectViews.Membership::userId)
+                .contains(org.assertj.core.groups.Tuple.tuple(project, actor.userId()));
+        projectService.removeMember(actor, workspace, project, actor.userId());
+        assertThat(projectService.memberships(actor, workspace).items())
+                .noneMatch(row -> row.projectId().equals(project));
+        projectService.addMember(actor, workspace, project, actor.userId());
+        projectService.addMember(actor, workspace, project, actor.userId());
+        assertThat(projectService.memberships(actor, workspace).items())
+                .filteredOn(row -> row.projectId().equals(project))
+                .hasSize(1);
+        assertThatThrownBy(() -> projectService.addMember(actor, workspace, project, UUID.randomUUID()))
+                .hasMessageContaining("워크스페이스 구성원만");
     }
 
     @Test

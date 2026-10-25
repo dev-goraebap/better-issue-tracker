@@ -228,6 +228,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/members": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["add"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/workspaces/{workspaceId}/projects/{projectId}/columns": {
         parameters: {
             query?: never;
@@ -612,6 +628,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workspaces/{workspaceId}/project-members": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_4"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/workspaces/{workspaceId}/my-tasks": {
         parameters: {
             query?: never;
@@ -667,7 +699,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_4"];
+        get: operations["list_5"];
         put?: never;
         post?: never;
         delete?: never;
@@ -737,6 +769,22 @@ export interface paths {
         put?: never;
         post?: never;
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/members/{userId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["remove_1"];
         options?: never;
         head?: never;
         patch?: never;
@@ -871,6 +919,10 @@ export interface components {
         ProjectVersion: {
             /** Format: int64 */
             expectedVersion: number;
+        };
+        AddProjectMember: {
+            /** Format: uuid */
+            userId: string;
         };
         CreateBoardColumn: {
             /** Format: int64 */
@@ -1172,6 +1224,15 @@ export interface components {
             category: "todo" | "doing" | "done";
             /** Format: int64 */
             version: number;
+        };
+        ProjectMembership: {
+            /** Format: uuid */
+            projectId: string;
+            /** Format: uuid */
+            userId: string;
+        };
+        ProjectMemberships: {
+            items: components["schemas"]["ProjectMembership"][];
         };
         Label: {
             /** Format: uuid */
@@ -1765,6 +1826,31 @@ export interface operations {
         responses: {
             /** @description OK */
             200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    add: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+                projectId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AddProjectMember"];
+            };
+        };
+        responses: {
+            /** @description Member added (or already there) */
+            204: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -2858,6 +2944,28 @@ export interface operations {
             };
         };
     };
+    list_4: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProjectMemberships"];
+                };
+            };
+        };
+    };
     mine: {
         parameters: {
             query?: {
@@ -2975,7 +3083,7 @@ export interface operations {
             };
         };
     };
-    list_4: {
+    list_5: {
         parameters: {
             query?: {
                 cursor?: string;
@@ -3095,6 +3203,28 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["Csrf"];
                 };
+            };
+        };
+    };
+    remove_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+                projectId: string;
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Member taken off */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

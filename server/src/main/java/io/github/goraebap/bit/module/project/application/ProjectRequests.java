@@ -21,6 +21,9 @@ public final class ProjectRequests {
             @Size(max = 32) @Schema(nullable = true) String icon,
             @Schema(nullable = true) String color) {}
 
+    @Schema(name = "AddProjectMember")
+    public record AddMember(@NotNull UUID userId) {}
+
     @Schema(name = "ProjectVersion")
     public record Version(@NotNull @Min(0) Long expectedVersion) {}
 

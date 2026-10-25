@@ -7,3 +7,18 @@
 /* The invitation link, shown once: a muted box the link can be read and selected in. */
 .secret { padding: var(--spacing-4); background: var(--color-background-muted); border-radius: var(--radius-container); }
 .code { overflow-wrap: anywhere; font-family: var(--font-family-code); font-size: var(--text-supporting-size); }
+/* A member's projects in the table: their marks side by side and the first one's name, the whole a button for those who manage members. */
+.projects { display: inline-flex; align-items: center; gap: var(--spacing-2); max-inline-size: 100%; min-inline-size: 0; padding: 0; border: 0; background: none;
+  color: var(--color-text-secondary); font: inherit; font-size: 0.8125rem; text-align: start; }
+button.projects { cursor: pointer; border-radius: var(--radius-element); }
+button.projects:hover .projectsLabel { color: var(--color-text-primary); text-decoration: underline; text-underline-offset: 3px; }
+button.projects:focus-visible { outline: var(--focus-outline-width) var(--focus-outline-style) var(--focus-outline-color); }
+.marks { display: inline-flex; flex-shrink: 0; }
+.marks > * + * { margin-inline-start: -4px; box-shadow: 0 0 0 2px var(--color-background-surface); }
+.projectsLabel { min-inline-size: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* The dialog's list: a row per project, its mark, name over key, and the switch at the end. */
+.projectList { display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none; }
+.projectRow { display: flex; align-items: center; gap: var(--spacing-3); min-block-size: 3rem; padding-block: var(--spacing-1); }
+.projectRow + .projectRow { border-block-start: 1px solid var(--color-border-subtle, var(--color-border)); }
+.projectText { display: flex; flex-direction: column; flex: 1; min-inline-size: 0; }
+.note { margin: 0; font-size: 0.75rem; color: var(--color-text-secondary); }

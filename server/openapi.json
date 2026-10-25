@@ -810,6 +810,44 @@
         }
       }
     },
+    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/members" : {
+      "post" : {
+        "tags" : [ "project-member-controller" ],
+        "operationId" : "add",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "name" : "projectId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/AddProjectMember"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "204" : {
+            "description" : "Member added (or already there)"
+          }
+        }
+      }
+    },
     "/api/v1/workspaces/{workspaceId}/projects/{projectId}/columns" : {
       "get" : {
         "tags" : [ "project-controller" ],
@@ -2591,6 +2629,33 @@
         }
       }
     },
+    "/api/v1/workspaces/{workspaceId}/project-members" : {
+      "get" : {
+        "tags" : [ "project-member-controller" ],
+        "operationId" : "list_4",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProjectMemberships"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/workspaces/{workspaceId}/my-tasks" : {
       "get" : {
         "tags" : [ "work-item-controller" ],
@@ -2895,7 +2960,7 @@
     "/api/v1/me/workspaces" : {
       "get" : {
         "tags" : [ "workspace-controller" ],
-        "operationId" : "list_4",
+        "operationId" : "list_5",
         "parameters" : [ {
           "name" : "cursor",
           "in" : "query",
@@ -3022,6 +3087,42 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/members/{userId}" : {
+      "delete" : {
+        "tags" : [ "project-member-controller" ],
+        "operationId" : "remove_1",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "name" : "projectId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "name" : "userId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "Member taken off"
           }
         }
       }
@@ -3350,6 +3451,16 @@
           }
         },
         "required" : [ "expectedVersion" ]
+      },
+      "AddProjectMember" : {
+        "type" : "object",
+        "properties" : {
+          "userId" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        },
+        "required" : [ "userId" ]
       },
       "CreateBoardColumn" : {
         "type" : "object",
@@ -4150,6 +4261,32 @@
           }
         },
         "required" : [ "category", "color", "id", "isFinal", "name", "position", "version" ]
+      },
+      "ProjectMembership" : {
+        "type" : "object",
+        "properties" : {
+          "projectId" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "userId" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        },
+        "required" : [ "projectId", "userId" ]
+      },
+      "ProjectMemberships" : {
+        "type" : "object",
+        "properties" : {
+          "items" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ProjectMembership"
+            }
+          }
+        },
+        "required" : [ "items" ]
       },
       "Label" : {
         "type" : "object",
