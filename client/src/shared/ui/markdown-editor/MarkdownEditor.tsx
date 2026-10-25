@@ -18,8 +18,9 @@ const tidy = (markdown: string) => markdown.replace(/\s+$/, '');
  * a task, '```' code, '**' bold, and Markdown pasted as plain text becomes its blocks.
  *
  * - A desktop adds '/' for the block menu and a menu over selected text (marks, link); Ctrl (⌘) + Enter submits.
- * - A phone (or a coarse pointer) gets a formatting bar on top of the keyboard instead, the type at 16px so the page
- *   never zooms.
+ * - A phone (the phone's width, as everywhere in the app) gets a formatting bar on top of the keyboard instead, the
+ *   type at 16px so the page never zooms. The width decides, not the pointer: a touch-screen laptop reports only a
+ *   coarse pointer and no hover, and is still a desktop.
  *
  * value is the Markdown; onChange gets it back on every change. A new value from outside (a template, the server's
  * copy after a save) replaces the text only while the member is not writing in it. variant 'bare' is text on the page
@@ -31,7 +32,6 @@ export function MarkdownEditor({ value, onChange, label, placeholder = '쓰기 �
   isDisabled?: boolean; minHeight?: string; onSubmit?: () => void; onBlur?: () => void;
 }) {
   const isMobile = useMediaQuery(MOBILE_QUERY);
-  const isCoarse = useMediaQuery('(pointer: coarse)');
   const box = useRef<HTMLDivElement>(null);
   const [store] = useState(() => new SlashStore());
   const [isWriting, setWriting] = useState(false);
@@ -54,7 +54,7 @@ export function MarkdownEditor({ value, onChange, label, placeholder = '쓰기 �
     editor.commands.setContent(value, { contentType: 'markdown', emitUpdate: false });
   }, [editor, value]);
   useEffect(() => { editor?.setEditable(!isDisabled); }, [editor, isDisabled]);
-  const isTouch = isMobile || isCoarse;
+  const isTouch = isMobile;
   return <div ref={box} className={styles.editor} data-variant={variant} data-touch={isTouch || undefined} style={minHeight ? { ['--editor-min' as string]: minHeight } : undefined}
     onFocus={() => setWriting(true)} onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setWriting(false); }}>
     <EditorContent editor={editor} className={styles.content} />
