@@ -3,7 +3,7 @@ import {
   ChevronDown, ChevronLeft, ChevronRight, ChevronsUpDown, CircleCheck, CircleDot, Clock, Copy, Ellipsis, File, FileText, Filter, Flag, Folder, GitBranch, GripVertical, Hash, House,
   Inbox, KanbanSquare, LayoutGrid, LayoutList, Link, ListFilter, ListTodo, Lock, LogOut, Mail, Maximize2, MessageSquare, Milestone, PanelLeft, Paperclip,
   Pencil, Plus, RefreshCw, Repeat, Rows3, Scale, Search, Settings, Shield, SlidersHorizontal, Sparkles, Table2, Tag, Trash2, User, Users, Workflow, X,
-  ArrowUp, Bold, Code, Heading1, Heading2, Heading3, Italic, List, ListChecks, ListOrdered, Minus, Redo2, SquareCode, Strikethrough, TextQuote, Type, Undo2, Unlink,
+  ArrowUp, Bold, Bug, LayoutTemplate, Code, Heading1, Heading2, Heading3, Italic, List, ListChecks, ListOrdered, Minus, Redo2, SquareCode, Strikethrough, TextQuote, Type, Undo2, Unlink,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -94,6 +94,9 @@ const icons: Record<string, LucideIcon> = {
   redo: Redo2,
   unlink: Unlink,
   send: ArrowUp,
+  // Issue templates (D-077).
+  bug: Bug,
+  template: LayoutTemplate,
 };
 
 /** A menu or action icon by name; an unknown name draws a plain file rather than nothing. */

@@ -4,6 +4,7 @@ export {
 export type { WorkItem, ItemLabel, ColumnCategory, TaskFilters } from './api/work-item';
 export { PRIORITIES } from './model/labels';
 export { CATEGORIES, CATEGORY_LABELS, categoryOf, issueHref, PRIORITY_RANK, spanOf, SYSTEM_LABEL, type Priority, type StatusCategory } from './model/issue';
+export { ISSUE_TEMPLATES, templateLabel, type IssueTemplate } from './model/templates';
 export { parseIssueSearch, parseNewIssueSearch, type IssueSearch, type NewIssueSearch } from './model/search';
 export {
   ALL_VIEW, addView, effectiveView, FILTER_KEYS, filterIssues, NO_FILTER, removeView, setViewTweak, updateView, useViews, useViewTweak,

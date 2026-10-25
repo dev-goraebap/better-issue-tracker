@@ -9,12 +9,16 @@ import { BackLink, DuePicker, FormMessage, MarkdownEditor, NavIcon, PageFoot, Pa
 import { labelsQuery } from '@/entities/label';
 import { columnsQuery, ProjectMark, projectsQuery, type BoardColumn, type Project } from '@/entities/project';
 import { useMembers } from '@/entities/workspace';
-import { createItem, issueHref, labelOptions, NO_STATUS, peopleOptions, priorityOptions, refreshItems, statusOptions, type Priority } from '@/entities/work-item';
+import {
+  createItem, ISSUE_TEMPLATES, issueHref, labelOptions, NO_STATUS, peopleOptions, priorityOptions, refreshItems, statusOptions, templateLabel, type Priority,
+} from '@/entities/work-item';
 import styles from './create-issue.module.css';
 
 const mark = (project: Project) => <ProjectMark project={project} size="xs" />;
 
-type Draft = { projectId?: string; title: string; body: string; status?: string; priority: Priority; assigneeId?: string; labelIds: string[]; dueDate?: string };
+type Draft = {
+  projectId?: string; title: string; body: string; templateId?: string; status?: string; priority: Priority; assigneeId?: string; labelIds: string[]; dueDate?: string;
+};
 
 /**
  * Where a new issue starts in a project: the column a board lane's + named, the first column of the category 전체's lane
@@ -34,6 +38,8 @@ function startColumn(columns: readonly BoardColumn[], status?: string): string {
  * no dialog head): the page's title and way back, the form on the page, the project first among the pills, and 취소 ·
  * 계속 만들기 · 이슈 만들기 in the page's foot row. Either way a borderless title and description, the properties as a row
  * of pills (상태 — the project's columns or 상태 없음 —, 우선순위, 담당자, 라벨, 기한) each opening its searchable menu.
+ * 템플릿 (D-077) leads the pills: picking one puts its Markdown in the description (under what was written, if anything
+ * was) and adds its label when the workspace has one; 템플릿 없음 takes its untouched text and its label back out.
  * Ctrl/⌘+Enter makes it; with 계속 만들기 on it stays and starts a fresh title keeping the properties, else it closes (the
  * modal) or opens the issue made (the page). A toast names what was made, with 보기 to its page.
  */
@@ -68,7 +74,7 @@ export function NewIssue({ workspaceId, projectId, status }: { workspaceId: stri
       const href = issueHref(workspaceId, { id, projectId: target.id });
       // The toast lives in a layer above the router, so its way to the issue navigates rather than linking.
       toast({ body: `${draft.title.trim()}을(를) 만들었습니다.`, endContent: <Button label="보기" variant="ghost" size="sm" onClick={() => void router.navigate({ href })} /> });
-      if (isMore) { set({ title: '', body: '' }); titleBox.current?.focus(); return; }
+      if (isMore) { set({ title: '', body: draft.templateId ? ISSUE_TEMPLATES.find(each => each.id === draft.templateId)?.body ?? '' : '' }); titleBox.current?.focus(); return; }
       if (panel) panel.onClose();
       else void router.navigate({ href, replace: true });
     } catch (failure) { setError(authError(failure)); }
@@ -84,9 +90,24 @@ export function NewIssue({ workspaceId, projectId, status }: { workspaceId: stri
   const descriptionField = <div className={styles.description}>
     <MarkdownEditor value={draft.body} label="설명" placeholder="설명을 덧붙이세요… ( / 로 블록)" minHeight={panel ? '3.5rem' : '12rem'} onChange={body => set({ body })} />
   </div>;
+  /** Starts the description from a template, or takes an untouched one back out (undefined). */
+  const applyTemplate = (id?: string) => setDraft(previous => {
+    const before = ISSUE_TEMPLATES.find(each => each.id === previous.templateId);
+    const next = ISSUE_TEMPLATES.find(each => each.id === id);
+    const isUntouched = !previous.body.trim() || previous.body === before?.body;
+    const body = next ? (isUntouched ? next.body : `${previous.body}
+
+${next.body}`) : isUntouched ? '' : previous.body;
+    const dropped = before && templateLabel(before, labels);
+    const added = next && templateLabel(next, labels);
+    const labelIds = new Set([...previous.labelIds.filter(label => label !== dropped), ...(added ? [added] : [])]);
+    return { ...previous, templateId: next?.id, body, labelIds: [...labelIds] };
+  });
   // On the page the project leads the pills, the head being the page's own title.
   const properties = (lead?: ReactNode) => <div className={styles.pills} role="group" aria-label="속성">
     {lead}
+    <PropertyPicker label="템플릿" icon="template" value={draft.templateId} onChange={value => applyTemplate((value as string | undefined) || undefined)}
+      options={[{ value: '', label: '템플릿 없음', icon: <NavIcon name="document" /> }, ...ISSUE_TEMPLATES.map(each => ({ value: each.id, label: each.name, icon: <NavIcon name={each.icon} /> }))]} />
     <PropertyPicker label="상태" icon="status" options={statusOptions(columns)} value={shownStatus} onChange={value => set({ status: (value as string | undefined) ?? NO_STATUS })} />
     <PropertyPicker label="우선순위" icon="priority" options={priorityOptions} value={draft.priority} onChange={value => set({ priority: (value as Priority | undefined) ?? 'medium' })} />
     <PropertyPicker label="담당자" icon="person" options={peopleOptions(members)} value={draft.assigneeId} onChange={value => set({ assigneeId: value as string | undefined })} />
