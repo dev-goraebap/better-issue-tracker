@@ -32,8 +32,9 @@
 .empty { margin: 0; padding: var(--spacing-2); font-size: 0.75rem; color: var(--color-text-secondary); }
 
 /* A phone's sheet (the frame's body gives the inset): a search box to type in, touch rows of 48px in 15px type. */
-.menu[data-size="lg"] .search { block-size: 2.75rem; margin-block-end: var(--spacing-2); padding: 0 var(--spacing-3); border: 1px solid var(--color-border);
-  border-radius: var(--radius-element); background: var(--color-background-muted); font-size: 1rem; }
+.menu[data-size="lg"] .search { block-size: 2.75rem; margin-block-end: var(--spacing-2); padding: 0 var(--spacing-3); border: 1px solid var(--bit-field-border);
+  border-radius: var(--bit-field-radius); background: transparent; font-size: 1rem; }
+.menu[data-size="lg"] .search:focus { border-color: var(--bit-field-focus); }
 .menu[data-size="lg"] .list { max-block-size: none; padding: 0; margin-inline: calc(-1 * var(--spacing-2)); }
 .menu[data-size="lg"] .option { min-block-size: 3rem; gap: var(--spacing-3); font-size: 0.9375rem; }
 .menu[data-size="lg"] .option[data-active] { background: none; }

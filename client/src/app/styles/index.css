@@ -88,6 +88,14 @@ body { font-family: 'Pretendard Variable', Pretendard, system-ui, sans-serif; }
   /* A scrollbar's thumb: faint at rest, a step darker under the pointer, on no track. */
   --bit-scroll-thumb: light-dark(color-mix(in srgb, var(--color-text-primary) 16%, transparent), color-mix(in srgb, var(--color-text-primary) 20%, transparent));
   --bit-scroll-thumb-hover: light-dark(color-mix(in srgb, var(--color-text-primary) 30%, transparent), color-mix(in srgb, var(--color-text-primary) 34%, transparent));
+  /* A bordered field as Linear's (D-074): its size and inset, its line, the line that takes its place in focus, its label. */
+  --bit-field-height: 2.25rem;
+  --bit-field-inset: 0.75rem;
+  --bit-field-radius: var(--radius-element);
+  --bit-field-border: var(--color-border-emphasized);
+  --bit-field-focus: var(--color-accent);
+  --bit-field-label: color-mix(in srgb, var(--color-text-primary) 90%, var(--color-background-surface));
+  --bit-field-label-gap: 0.4375rem;
 }
 /*
  * Scrollbars, everywhere alike, as Linear's: thin, on no track, the thumb faint until the pointer is over its box. A
@@ -116,6 +124,41 @@ body { font-family: 'Pretendard Variable', Pretendard, system-ui, sans-serif; }
 .astryx-side-nav-item.astryx-side-nav-item { border-radius: var(--radius-element); margin-block: 1px; }
 .astryx-avatar.astryx-avatar, .astryx-avatar.astryx-avatar img { border-radius: 50%; }
 .astryx-button.astryx-button, .astryx-icon-button.astryx-icon-button, .astryx-toggle-button.astryx-toggle-button { border-radius: var(--radius-full); }
+/*
+ * Every bordered field as Linear's (D-074, measured on its settings and invite window): 36px tall, 12px in, 8px corners,
+ * 13px type, and no fill of its own, so it takes the ground it sits on (a card's, a window's, the page's) under a
+ * hairline firm enough to show there. Focus swaps that line for the accent's, with no ring or glow, and a pointer over
+ * it changes nothing. The label is 13px/500 a step under the ink, 7px above the field. Astryx's fields take this
+ * through their own tokens (their rules outrank any selector, so only the hover ring needs !important); BIT's own
+ * fields (EmailField, the toolbar's search, a phone's picker search) use the --bit-field-* tokens. A phone keeps its
+ * 48px thumb-sized fields and 16px type (below), so iOS does not zoom into them.
+ */
+:is(.astryx-text-input, .astryx-text-area, .astryx-selector.input, .astryx-multi-selector, .astryx-typeahead, .astryx-number-input,
+  .astryx-date-input, .astryx-date-range-input, .astryx-time-input) {
+  --size-element-sm: var(--bit-field-height);
+  --size-element-md: var(--bit-field-height);
+  --size-element-lg: var(--bit-field-height);
+  --spacing-2: var(--bit-field-inset);
+  --radius-element: var(--bit-field-radius);
+  --color-border-emphasized: var(--bit-field-border);
+  --color-accent: var(--bit-field-focus);
+  --color-accent-muted: transparent;
+  --color-background-surface: transparent;
+  --duration-fast: 150ms;
+}
+:is(.astryx-text-input, .astryx-text-area, .astryx-selector.input, .astryx-multi-selector, .astryx-typeahead, .astryx-number-input,
+  .astryx-date-input, .astryx-date-range-input, .astryx-time-input):hover { box-shadow: none !important; }
+/* Astryx raises a field's type to 16px wherever the pointer is coarse (a touch-screen laptop too); from a desktop's width
+   it stays the field's 13px, and a phone's fields take 16px below. */
+@media (min-width: 64rem) {
+  :is(.astryx-text-input, .astryx-text-area, .astryx-typeahead, .astryx-number-input, .astryx-date-input, .astryx-time-input) :is(input, textarea) {
+    font-size: var(--text-body-size) !important;
+  }
+}
+/* The placeholder is drawn in the input's secondary ink; inside a field that ink is the disabled one, as Linear's. */
+:is(.astryx-text-input, .astryx-text-area, .astryx-typeahead, .astryx-number-input) :is(input, textarea) { --color-text-secondary: var(--color-text-disabled); }
+.astryx-field-label { --font-weight-medium: 500; --color-text-secondary: var(--bit-field-label); }
+.astryx-field:has(> .astryx-field-label) { row-gap: var(--bit-field-label-gap); }
 /* A page's own labelled buttons (새 작업, 만들기, …) at Linear's 12px/500; a primary one sits on a faint shadow, never a glow. */
 [data-page-action] button:not([aria-label]) { font-size: 0.75rem; font-weight: 500; }
 [data-page-action] button[data-variant="primary"]:not([aria-label]) { box-shadow: 0 0.5px 1px 1px light-dark(rgb(0 0 0 / 0.06), rgb(0 0 0 / 0.3)); }

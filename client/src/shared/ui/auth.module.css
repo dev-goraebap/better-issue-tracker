@@ -1,17 +1,16 @@
+/* The sign-in pages' column. Their fields and buttons are every field's and button's (D-074): 36px, 13px type. */
 .frame { inline-size: 100%; max-inline-size: calc(var(--spacing-10) * 12); margin: var(--spacing-10) auto;
-  --bit-auth-font-size: 1rem;
-  --bit-auth-field-height: calc(var(--spacing-6) + var(--spacing-3) * 2 + var(--border-width) * 2);
+  --bit-auth-font-size: var(--text-body-size);
+  --bit-auth-field-height: var(--bit-field-height);
 }
-.frame :global(.astryx-text-input) {
-  --size-element-sm: var(--bit-auth-field-height);
-  --size-element-md: var(--bit-auth-field-height);
-  --size-element-lg: var(--bit-auth-field-height);
-  --text-body-size: var(--bit-auth-font-size);
-}
-.emailLabel { display: grid; gap: var(--spacing-2); font-size: var(--text-label-size); }
-.emailInput { box-sizing: border-box; width: 100%; block-size: var(--size-element-md); padding-inline: var(--spacing-2); border: 1px solid var(--color-border); border-radius: var(--radius-element); background: var(--color-background-card); color: var(--color-text-primary); font: inherit; font-size: var(--text-body-size); }
-.frame .emailInput { block-size: var(--bit-auth-field-height); font-size: var(--bit-auth-font-size); padding-inline: var(--spacing-3); }
-.emailInput:focus-visible { outline: 2px solid var(--color-text-primary); outline-offset: 2px; }
+/* The email field, drawn as Astryx's fields are under D-074: its label 13px/500 7px above, a hairline with no fill, the accent's line in focus. */
+.emailLabel { display: grid; gap: var(--bit-field-label-gap); font-size: var(--text-label-size); font-weight: 500; color: var(--bit-field-label); }
+.emailInput { box-sizing: border-box; width: 100%; block-size: var(--bit-field-height); padding-inline: var(--bit-field-inset); border: 1px solid var(--bit-field-border);
+  border-radius: var(--bit-field-radius); outline: 0; background: transparent; color: var(--color-text-primary); font: inherit; font-size: var(--text-body-size);
+  font-weight: var(--font-weight-normal, 450); transition: border-color 150ms; }
+.emailInput::placeholder { color: var(--color-text-disabled); }
+.emailInput:focus { border-color: var(--bit-field-focus); }
+.emailInput:disabled { opacity: 0.6; }
 @media (max-width: 63.999rem) {
   .emailInput { min-block-size: var(--size-element-touch); font-size: 1rem; }
 }

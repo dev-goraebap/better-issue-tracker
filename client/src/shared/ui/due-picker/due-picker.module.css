@@ -20,8 +20,9 @@
 .dueOption svg { inline-size: 1rem; block-size: 1rem; color: var(--color-icon-secondary); }
 .dueHint { margin-inline-start: auto; font-size: 0.75rem; color: var(--color-text-secondary); }
 .dueEmpty { margin: 0; padding: var(--spacing-2); font-size: 0.75rem; color: var(--color-text-secondary); }
-.dueMenu[data-size="lg"] .dueSearch { block-size: 2.75rem; margin-block-end: var(--spacing-2); border: 1px solid var(--color-border); border-radius: var(--radius-element);
-  background: var(--color-background-muted); font-size: 1rem; }
+.dueMenu[data-size="lg"] .dueSearch { block-size: 2.75rem; margin-block-end: var(--spacing-2); border: 1px solid var(--bit-field-border); border-radius: var(--bit-field-radius);
+  background: transparent; font-size: 1rem; }
+.dueMenu[data-size="lg"] .dueSearch:focus { border-color: var(--bit-field-focus); }
 .dueMenu[data-size="lg"] .dueList { padding: 0; margin-inline: calc(-1 * var(--spacing-2)); }
 .dueMenu[data-size="lg"] .dueOption { min-block-size: 3rem; font-size: 0.9375rem; }
 

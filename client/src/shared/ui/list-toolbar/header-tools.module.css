@@ -2,15 +2,16 @@
  * The header's tools, after Plane and Linear: a search that opens from a magnifier, 필터 and 표시 as round icon buttons
  * (필터 opening a menu of the filters, 표시 the views and the order), its menus in small type, and the filters in force as chips in the row under the header. Secondary text is a step
  * smaller than the page's (11–12px) so the controls stay light. Their rule is the app's control rule
- * (--color-border-control), lighter than the page's in light mode and firmer in dark mode.
+ * (--color-border-control), lighter than the page's in light mode and firmer in dark mode. The search is a field (D-074): a
+ * field's line and corners with no fill, the accent's line in focus, at the toolbar's 28px.
  */
 .search { display: inline-flex; align-items: center; gap: var(--spacing-1-5, 0.375rem); inline-size: 16rem; block-size: 1.75rem; padding-inline: var(--spacing-2-5, 0.625rem);
-  box-sizing: border-box; border: 1px solid var(--color-border-control); border-radius: var(--radius-full); background: var(--bit-chip-bg);
+  box-sizing: border-box; border: 1px solid var(--bit-field-border); border-radius: var(--bit-field-radius); background: transparent; transition: border-color 150ms;
   color: var(--color-text-secondary); animation: open 150ms linear; }
 .search > svg { inline-size: 0.875rem; block-size: 0.875rem; flex-shrink: 0; }
 .search input { flex: 1; min-width: 0; border: 0; outline: 0; background: none; font: inherit; font-size: 0.8125rem; color: var(--color-text-primary); }
-.search input::placeholder { color: var(--color-text-secondary); opacity: 0.8; }
-.search:focus-within { border-color: var(--color-border-emphasized); }
+.search input::placeholder { color: var(--color-text-disabled); }
+.search:focus-within { border-color: var(--bit-field-focus); }
 .searchClose { display: grid; place-items: center; padding: 0; border: 0; background: none; color: var(--color-text-secondary); cursor: pointer; }
 .searchClose svg { inline-size: 0.75rem; block-size: 0.75rem; }
 @keyframes open { from { inline-size: 1.75rem; opacity: 0; } }
