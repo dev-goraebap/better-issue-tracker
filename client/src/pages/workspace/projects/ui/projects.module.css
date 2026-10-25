@@ -1,6 +1,5 @@
 /* A project's key, as an issue's: quieter figures of one width; a long description cut to one line. */
 .key { font-size: 0.8125rem; font-variant-numeric: tabular-nums; color: var(--color-text-secondary); white-space: nowrap; }
 .clip { display: block; min-inline-size: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--color-text-secondary); }
-/* A phone card's lead: the key's first letter on a muted square. */
-.mark { display: inline-grid; place-items: center; inline-size: 1.75rem; block-size: 1.75rem; border-radius: 6px; background: var(--color-background-muted);
-  font-size: 0.75rem; font-weight: 700; color: var(--color-text-secondary); }
+/* A table row's name after the project's mark (a phone card leads with it). */
+.named { display: inline-flex; align-items: center; gap: var(--spacing-2); min-inline-size: 0; }

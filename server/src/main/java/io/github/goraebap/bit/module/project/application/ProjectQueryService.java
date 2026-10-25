@@ -35,6 +35,8 @@ public class ProjectQueryService {
                 p.name(),
                 projectRepository.currentKey(p.id()),
                 p.description(),
+                p.icon(),
+                p.color(),
                 p.archivedAt(),
                 p.version(),
                 p.audit()));
@@ -105,6 +107,8 @@ public class ProjectQueryService {
                 row.name(),
                 row.key(),
                 row.description(),
+                row.icon(),
+                row.color(),
                 row.archivedAt(),
                 a.deletedAt(),
                 row.version(),

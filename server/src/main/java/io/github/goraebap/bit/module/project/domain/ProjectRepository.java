@@ -35,6 +35,8 @@ public interface ProjectRepository {
             String name,
             String key,
             String description,
+            String icon,
+            String color,
             Instant archivedAt,
             long version,
             Audit audit) {}

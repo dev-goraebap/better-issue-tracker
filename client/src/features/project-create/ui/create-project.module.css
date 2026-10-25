@@ -1,0 +1,4 @@
+/* The mark beside the name, level with the name's field under its label (--label-room: the label's line and gap). */
+.named { --label-room: 1.41rem; display: flex; align-items: flex-start; gap: var(--spacing-2); }
+.named > :first-child { margin-block-start: var(--label-room); }
+.named > :last-child { flex: 1; min-inline-size: 0; }

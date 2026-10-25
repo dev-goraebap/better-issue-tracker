@@ -22,8 +22,8 @@ class ProjectRulesTest {
 
     @Test
     void invalidRevisionCannotPartiallyChangeProjectAndRestorePreservesArchiveAndCounter() {
-        var p = Project.create(UUID.randomUUID(), "Original", "body", 0, actor, "codex", now);
-        assertThatThrownBy(() -> p.revise("New", "x".repeat(20001), actor, null, now))
+        var p = Project.create(UUID.randomUUID(), "Original", "body", null, null, 0, actor, "codex", now);
+        assertThatThrownBy(() -> p.revise("New", "x".repeat(20001), null, null, actor, null, now))
                 .isInstanceOf(IllegalArgumentException.class);
         assertThat(p.name()).isEqualTo("Original");
         assertThat(p.version()).isZero();
@@ -35,6 +35,21 @@ class ProjectRulesTest {
         assertThat(p.audit().createdByAgent()).isEqualTo("codex");
         assertThat(p.archivedAt()).isEqualTo(now);
         assertThat(p.allocateWorkItemNumber()).isEqualTo(2);
+    }
+
+    @Test
+    void markKeepsAnIconNameAndAHexColorOrNothing() {
+        var p = Project.create(UUID.randomUUID(), "Marked", null, " rocket ", "#5E6AD2", 0, actor, null, now);
+        assertThat(p.icon()).isEqualTo("rocket");
+        assertThat(p.color()).isEqualTo("#5E6AD2");
+        assertThatThrownBy(() -> p.revise("Marked", null, "rocket", "blue", actor, null, now))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> p.revise("Marked", null, " ", "#000000", actor, null, now))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThat(p.color()).isEqualTo("#5E6AD2");
+        p.revise("Marked", null, null, null, actor, null, now);
+        assertThat(p.icon()).isNull();
+        assertThat(p.color()).isNull();
     }
 
     @Test

@@ -88,6 +88,8 @@ class JooqProjectRepository implements ProjectRepository {
                         r.get(PROJECT.NAME),
                         r.get(PROJECT_KEY.KEY),
                         r.get(PROJECT.DESCRIPTION),
+                        r.get(PROJECT.ICON),
+                        r.get(PROJECT.COLOR),
                         r.get(PROJECT.ARCHIVED_AT),
                         r.get(PROJECT.VERSION),
                         AuditRecords.read(r)));
@@ -110,6 +112,8 @@ class JooqProjectRepository implements ProjectRepository {
         r.setWorkspaceId(p.workspaceId());
         r.setName(p.name());
         r.setDescription(p.description());
+        r.setIcon(p.icon());
+        r.setColor(p.color());
         r.setPosition(p.position());
         r.setLastWorkItemNumber(p.lastWorkItemNumber());
         r.setLastDecisionNumber(p.lastDecisionNumber());
@@ -207,6 +211,8 @@ class JooqProjectRepository implements ProjectRepository {
                 r.get(PROJECT.WORKSPACE_ID),
                 r.get(PROJECT.NAME),
                 r.get(PROJECT.DESCRIPTION),
+                r.get(PROJECT.ICON),
+                r.get(PROJECT.COLOR),
                 r.get(PROJECT.POSITION),
                 r.get(PROJECT.LAST_WORK_ITEM_NUMBER),
                 r.get(PROJECT.LAST_DECISION_NUMBER),

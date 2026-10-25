@@ -46,7 +46,14 @@ class ProjectController {
             @AuthenticationPrincipal CurrentUser actor,
             @PathVariable UUID workspaceId,
             @Valid @RequestBody ProjectRequests.Create request) {
-        UUID id = projectService.create(actor, workspaceId, request.name(), request.key(), request.description());
+        UUID id = projectService.create(
+                actor,
+                workspaceId,
+                request.name(),
+                request.key(),
+                request.description(),
+                request.icon(),
+                request.color());
         return ResponseEntity.created(URI.create(base(workspaceId, id))).build();
     }
 
@@ -72,7 +79,11 @@ class ProjectController {
                 request.getKey(),
                 request.hasKey(),
                 request.getDescription(),
-                request.hasDescription());
+                request.hasDescription(),
+                request.getIcon(),
+                request.hasIcon(),
+                request.getColor(),
+                request.hasColor());
         return ResponseEntity.noContent().build();
     }
 

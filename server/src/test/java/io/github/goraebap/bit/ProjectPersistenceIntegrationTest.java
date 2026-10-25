@@ -145,6 +145,17 @@ class ProjectPersistenceIntegrationTest {
     }
 
     @Test
+    void markIsStoredAndAPatchChangesOnlyThePartItNames() {
+        UUID marked = projectService.create(actor, workspace, "Marked", "MK", null, "rocket", "#5e6ad2");
+        assertThat(projectQueryService.get(actor, workspace, marked).icon()).isEqualTo("rocket");
+        projectService.revise(
+                actor, workspace, marked, 0, null, false, null, false, null, false, null, false, "#26b5ce", true);
+        var revised = projectQueryService.get(actor, workspace, marked);
+        assertThat(revised.icon()).isEqualTo("rocket");
+        assertThat(revised.color()).isEqualTo("#26b5ce");
+    }
+
+    @Test
     void realRepositoryRoundTripsAuditAndKeepsAliasesAfterRenameArchiveAndRestore() {
         UUID id = projectService.create(actor, workspace, "Project", " bit ", "body");
         var created = projectRepository.findById(workspace, id, false).orElseThrow();
@@ -155,6 +166,7 @@ class ProjectPersistenceIntegrationTest {
                         .filter(c -> c.finalColumn())
                         .count())
                 .isEqualTo(1);
+        assertThat(created.icon()).isNull();
         projectService.revise(actor, workspace, id, 0, null, false, "NEW", true, null, false);
         assertThat(projectService.findByKey(actor, workspace, "BIT").id()).isEqualTo(id);
         assertThat(projectService.findByKey(actor, workspace, "NEW").key()).isEqualTo("NEW");

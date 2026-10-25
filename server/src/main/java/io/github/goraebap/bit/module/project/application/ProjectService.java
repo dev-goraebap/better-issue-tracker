@@ -106,6 +106,18 @@ public class ProjectService implements ProjectFacade {
 
     @Transactional
     public UUID create(CurrentUser actor, UUID workspaceId, String name, String key, String description) {
+        return create(actor, workspaceId, name, key, description, null, null);
+    }
+
+    @Transactional
+    public UUID create(
+            CurrentUser actor,
+            UUID workspaceId,
+            String name,
+            String key,
+            String description,
+            String icon,
+            String color) {
         workspaceFacade.requireAccess(actor, workspaceId, WorkspaceFacade.Action.EDIT_SETTINGS);
         var normalized = ProjectKey.of(key);
         assertKeyAvailable(workspaceId, normalized, null);
@@ -113,6 +125,8 @@ public class ProjectService implements ProjectFacade {
                 workspaceId,
                 name,
                 description,
+                icon,
+                color,
                 projectRepository.nextPosition(workspaceId),
                 actor.userId(),
                 agent(actor),
@@ -148,18 +162,55 @@ public class ProjectService implements ProjectFacade {
             boolean hasKey,
             String description,
             boolean hasDescription) {
+        revise(
+                actor,
+                workspaceId,
+                projectId,
+                version,
+                name,
+                hasName,
+                key,
+                hasKey,
+                description,
+                hasDescription,
+                null,
+                false,
+                null,
+                false);
+    }
+
+    @Transactional
+    public void revise(
+            CurrentUser actor,
+            UUID workspaceId,
+            UUID projectId,
+            long version,
+            String name,
+            boolean hasName,
+            String key,
+            boolean hasKey,
+            String description,
+            boolean hasDescription,
+            String icon,
+            boolean hasIcon,
+            String color,
+            boolean hasColor) {
         var p = settings(actor, workspaceId, projectId, false, false);
         version(p.version(), version);
-        if (!hasName && !hasKey && !hasDescription) return;
+        if (!hasName && !hasKey && !hasDescription && !hasIcon && !hasColor) return;
         var normalized = hasKey ? ProjectKey.of(key) : null;
         if (normalized != null) assertKeyAvailable(workspaceId, normalized, projectId);
         if (!hasName
                 && !hasDescription
+                && !hasIcon
+                && !hasColor
                 && normalized != null
                 && normalized.value().equals(projectRepository.currentKey(projectId))) return;
         p.revise(
                 hasName ? name : p.name(),
                 hasDescription ? description : p.description(),
+                hasIcon ? icon : p.icon(),
+                hasColor ? color : p.color(),
                 actor.userId(),
                 agent(actor),
                 clock.instant());

@@ -7,7 +7,7 @@ const MAX_SHARE = 0.9;
 export function modalHeight(natural: number, size: keyof typeof MODAL_MIN_HEIGHT, viewport: number) {
   const max = Math.floor(viewport * MAX_SHARE);
   const min = Math.min(MODAL_MIN_HEIGHT[size], max);
-  return Math.round(Math.min(Math.max(natural, min), max));
+  return Math.ceil(Math.min(Math.max(natural, min), max));
 }
 
 /** A laid-out box as the height measure needs it: its edges and its outer margins. */

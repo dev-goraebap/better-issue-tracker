@@ -11,6 +11,8 @@ public final class Project {
     private final UUID workspaceId;
     private String name;
     private String description;
+    private String icon;
+    private String color;
     private final int position;
     private long lastWorkItemNumber;
     private long lastDecisionNumber;
@@ -24,6 +26,8 @@ public final class Project {
             UUID workspaceId,
             String name,
             String description,
+            String icon,
+            String color,
             int position,
             long lastWorkItemNumber,
             long lastDecisionNumber,
@@ -35,6 +39,8 @@ public final class Project {
         this.workspaceId = workspaceId;
         this.name = name;
         this.description = description;
+        this.icon = icon;
+        this.color = color;
         this.position = position;
         this.lastWorkItemNumber = lastWorkItemNumber;
         this.lastDecisionNumber = lastDecisionNumber;
@@ -45,12 +51,22 @@ public final class Project {
     }
 
     public static Project create(
-            UUID workspaceId, String name, String description, int position, UUID actor, String agent, Instant now) {
+            UUID workspaceId,
+            String name,
+            String description,
+            String icon,
+            String color,
+            int position,
+            UUID actor,
+            String agent,
+            Instant now) {
         return new Project(
                 UUID.randomUUID(),
                 workspaceId,
                 validName(name),
                 validDescription(description),
+                validIcon(icon),
+                validColor(color),
                 position,
                 0,
                 0,
@@ -65,6 +81,8 @@ public final class Project {
             UUID workspaceId,
             String name,
             String description,
+            String icon,
+            String color,
             int position,
             long lastWorkItemNumber,
             long lastDecisionNumber,
@@ -77,6 +95,8 @@ public final class Project {
                 workspaceId,
                 name,
                 description,
+                icon,
+                color,
                 position,
                 lastWorkItemNumber,
                 lastDecisionNumber,
@@ -86,11 +106,16 @@ public final class Project {
                 audit);
     }
 
-    public void revise(String name, String description, UUID actor, String agent, Instant now) {
+    public void revise(
+            String name, String description, String icon, String color, UUID actor, String agent, Instant now) {
         String nextName = validName(name);
         String nextDescription = validDescription(description);
+        String nextIcon = validIcon(icon);
+        String nextColor = validColor(color);
         this.name = nextName;
         this.description = nextDescription;
+        this.icon = nextIcon;
+        this.color = nextColor;
         touch(actor, agent, now);
     }
 
@@ -140,6 +165,20 @@ public final class Project {
 
     private static String validDescription(String value) {
         if (value != null && value.length() > 20000) throw new IllegalArgumentException("Project description too long");
+        return value;
+    }
+
+    /** One of the views' icon names, or none (the screen shows the key's first letter). */
+    private static String validIcon(String value) {
+        if (value == null) return null;
+        if (value.strip().isEmpty() || value.strip().length() > 32)
+            throw new IllegalArgumentException("Invalid project icon");
+        return value.strip();
+    }
+
+    private static String validColor(String value) {
+        if (value != null && !value.matches("#[0-9a-fA-F]{6}"))
+            throw new IllegalArgumentException("Invalid project color");
         return value;
     }
 }

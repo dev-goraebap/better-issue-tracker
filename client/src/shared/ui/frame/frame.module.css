@@ -17,6 +17,17 @@
 .footEnd { display: flex; align-items: center; gap: var(--spacing-2); margin-inline-start: auto; }
 /* A compact frame's body: its fields evenly spaced. */
 .stack { display: flex; flex-direction: column; gap: var(--spacing-4); }
+/*
+ * A short window on a desktop (CompactDialog) as the quick form (새 이슈, D-070): head, body and foot on the modal's one
+ * surface with no rules between them, the close and the actions 12px from the edge. It keeps its content's height, by
+ * which the modal is sized, and a window taller than the modal may be scrolls in it whole.
+ */
+.compact { display: flex; flex-direction: column; }
+:global(dialog):has(> .compact) { overflow-y: auto; }
+.compact > form { display: contents; }
+.compact .head { position: static; padding: var(--spacing-3) var(--spacing-3) 0 var(--spacing-5); border: 0; background: none; }
+.compact .body { padding: var(--spacing-4) var(--spacing-5) var(--spacing-2); }
+.compact .foot { position: static; padding: var(--spacing-3) var(--spacing-3) var(--spacing-3) var(--spacing-5); border: 0; background: none; }
 /* On a phone the parts keep to the phone's narrower insets; a full-screen panel's head clears the status bar. */
 @media (width < 64rem) {
   .head { padding: var(--spacing-3) var(--spacing-3) var(--spacing-3) var(--spacing-5); }

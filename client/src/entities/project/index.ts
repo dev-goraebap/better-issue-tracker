@@ -3,3 +3,4 @@ export {
   refreshProjects, reorderColumns, restoreProject, updateColumn, updateProject,
 } from './api/project';
 export type { Project, BoardColumn, ProjectStatus } from './api/project';
+export { ProjectMark } from './ui/ProjectMark';

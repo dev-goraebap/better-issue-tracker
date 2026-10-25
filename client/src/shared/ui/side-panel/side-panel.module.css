@@ -15,7 +15,7 @@
 .modal:not([open]) { display: none; }
 .modal[data-size="compact"] { inline-size: min(560px, 100vw - 48px); }
 /* A quick form (BIT, D-070): Linear's new issue, 720px wide, near the top of the window rather than its middle. */
-.modal[data-size="form"] { inline-size: min(720px, 100vw - 48px); margin-block: 12dvh auto; }
+.modal[data-size="form"] { inline-size: min(720px, 100vw - 48px); max-block-size: calc(88dvh - var(--spacing-6)); margin-block: 12dvh auto; }
 /* However deep the detail's frame sits, every box down to it fills the modal, and only its body scrolls. */
 .modal :has(.panel), .modal .panel { display: flex; flex-direction: column; flex: 1 1 auto; min-block-size: 0; }
 .modal .panel { max-block-size: none; }

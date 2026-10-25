@@ -28,8 +28,8 @@ type Pending = { kind: 'role'; member: Member; role: Role } | { kind: 'remove'; 
  * PATTERN · 탭마다 다른 리스트 (구성원), /w/$workspaceId/members (?view=invitations). One menu holding two lists of
  * different shapes.
  *
- * - The tab is the URL's view (구성원 left out); 초대 shows to the workspace's owner and admins only, with its own
- *   action (구성원 초대, a one-time link to hand over).
+ * - The tab is the URL's view (구성원 left out); 초대 shows to the workspace's owner and admins only. They also get
+ *   구성원 초대 (a one-time link to hand over) on both tabs.
  * - 구성원 is a list (a table on a desktop, D-064): the person (picture, name, email), their role (a select for those
  *   the member may change: the owner changes anyone but the owner, an admin changes members and viewers), when they
  *   joined, and a row menu to remove them. Every change asks first. A phone shows the same rows as cards.
@@ -100,7 +100,7 @@ export function MembersPage() {
   return <PageFrame title="구성원" icon="members" chrome="header"
     tabs={<PageTabs value={tab} items={tabs} panelId={panelId} onChange={next => go({ view: next === 'members' ? undefined : 'invitations' })} />}>
     <ListToolbar search={tab === 'members' ? { label: '구성원 검색', placeholder: '이름이나 이메일로 찾기', value: search.q, onChange: q => go({ q: q || undefined }, true) } : undefined}
-      label="초대 조건" action={tab === 'invitations' ? { label: '구성원 초대', icon: 'plus', onClick: () => setInviting(true), isCreate: true } : undefined} />
+      label={tab === 'members' ? '구성원 조건' : '초대 조건'} action={isManager ? { label: '구성원 초대', icon: 'plus', onClick: () => setInviting(true), isCreate: true } : undefined} />
     <div role="tabpanel" id={panelId}>
       {(request.isPending || request.isError) && <QueryMessage pending={request.isPending} error={request.error} retry={() => { void request.refetch(); }} />}
       {tab === 'members' && people.hasData && (members.length === 0

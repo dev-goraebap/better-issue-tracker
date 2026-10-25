@@ -17,6 +17,8 @@ public final class ProjectViews {
                 "name",
                 "key",
                 "description",
+                "icon",
+                "color",
                 "archivedAt",
                 "deletedAt",
                 "version",
@@ -31,6 +33,11 @@ public final class ProjectViews {
             String name,
             String key,
             @Schema(nullable = true) String description,
+
+            @Schema(nullable = true, description = "One of the views' icon names; absent, the key's first letter shows")
+            String icon,
+
+            @Schema(nullable = true) String color,
             @Schema(nullable = true) Instant archivedAt,
             @Schema(nullable = true) Instant deletedAt,
             long version,

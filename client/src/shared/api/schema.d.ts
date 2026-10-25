@@ -833,6 +833,8 @@ export interface components {
             name: string;
             key: string;
             description?: string | null;
+            icon?: string | null;
+            color?: string | null;
         };
         CreateWorkItem: {
             title: string;
@@ -976,6 +978,8 @@ export interface components {
             name?: string;
             key?: string;
             description?: string | null;
+            icon?: string | null;
+            color?: string | null;
         };
         UpdateWorkItem: {
             /** Format: int64 */
@@ -1129,6 +1133,9 @@ export interface components {
             name: string;
             key: string;
             description: string | null;
+            /** @description One of the views' icon names; absent, the key's first letter shows */
+            icon: string | null;
+            color: string | null;
             /** Format: date-time */
             archivedAt: string | null;
             /** Format: date-time */

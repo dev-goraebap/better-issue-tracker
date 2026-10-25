@@ -1,0 +1,9 @@
+/* The letter on a muted square; an icon takes the mark's colour (--mark) over a wash of it. */
+.mark { --mark: var(--color-text-secondary); display: inline-grid; place-items: center; flex-shrink: 0; inline-size: 1.25rem; block-size: 1.25rem;
+  border-radius: 4px; background: var(--color-background-muted); font-size: 0.6875rem; font-weight: 700; line-height: 1; color: var(--color-text-secondary); }
+.mark[data-icon] { background: color-mix(in srgb, var(--mark) 16%, transparent); color: var(--mark); }
+.mark svg { inline-size: 0.8125rem; block-size: 0.8125rem; }
+.mark[data-size="xs"] { inline-size: 0.875rem; block-size: 0.875rem; border-radius: 3px; font-size: 0.5625rem; }
+.mark[data-size="xs"] svg { inline-size: 0.625rem; block-size: 0.625rem; }
+.mark[data-size="md"] { inline-size: 1.75rem; block-size: 1.75rem; border-radius: 6px; font-size: 0.75rem; }
+.mark[data-size="md"] svg { inline-size: 1rem; block-size: 1rem; }

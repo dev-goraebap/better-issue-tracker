@@ -9,7 +9,7 @@ import { dateText } from '@/shared/lib/date-text';
 import {
   FormMessage, ITEM_ROW_LINK, ItemList, ItemMeta, ItemRow, ListMore, ListToolbar, PageFrame, PageState, PageTabs, QueryMessage, SHEET_ROW_LINK, SheetTable, type PageTab, type SheetColumn,
 } from '@/shared/ui';
-import { projectsQuery, refreshProjects, restoreProject, type Project, type ProjectStatus } from '@/entities/project';
+import { ProjectMark, projectsQuery, refreshProjects, restoreProject, type Project, type ProjectStatus } from '@/entities/project';
 import { canManage as canManageIn, canWrite as canWriteIn, workspaceQuery } from '@/entities/workspace';
 import { CreateProjectDialog } from '@/features/project-create';
 import type { ProjectsSearch } from '../model/search';
@@ -50,7 +50,7 @@ export function ProjectsPage() {
   const name = (row: Project, className: string) => (tab === 'deleted' ? row.name
     : <Link to="/w/$workspaceId/p/$projectId" params={{ workspaceId, projectId: row.id }} className={className}>{row.name}</Link>);
   const columns: SheetColumn<Project>[] = [
-    { key: 'name', header: '프로젝트', render: row => name(row, SHEET_ROW_LINK) },
+    { key: 'name', header: '프로젝트', render: row => <span className={styles.named}><ProjectMark project={row} />{name(row, SHEET_ROW_LINK)}</span> },
     { key: 'key', header: '키', width: '6rem', render: row => <span className={styles.key}>{row.key}</span> },
     { key: 'description', header: '설명', render: row => <span className={styles.clip}>{row.description}</span> },
     { key: 'updated', header: '최근 변경', width: '8rem', render: row => dateText(row.updatedAt) },
@@ -69,7 +69,7 @@ export function ProjectsPage() {
         : rows.length === 0 ? <PageState kind={search.q ? 'search' : 'empty'} title={search.q ? `'${search.q}'에 맞는 프로젝트가 없습니다` : tab === 'archived' ? '보관한 프로젝트가 없습니다' : tab === 'deleted' ? '삭제한 프로젝트가 없습니다' : '아직 프로젝트가 없습니다'}
           description={search.q ? '다른 이름이나 키로 찾아보세요.' : '프로젝트를 만들면 이슈를 그 안에 모을 수 있습니다.'} />
         : isMobile
-          ? <ItemList label="프로젝트">{rows.map(row => <ItemRow key={row.id} lead={<span className={styles.mark}>{row.key.slice(0, 1)}</span>}
+          ? <ItemList label="프로젝트">{rows.map(row => <ItemRow key={row.id} lead={<ProjectMark project={row} size="md" />}
             title={name(row, ITEM_ROW_LINK)} meta={<><ItemMeta><span className={styles.key}>{row.key}</span></ItemMeta><ItemMeta>{dateText(row.updatedAt)}</ItemMeta></>} />)}</ItemList>
           : <SheetTable label="프로젝트" columns={columns} rows={rows} rowKey={row => row.id} minWidth="44rem" />}
       <ListMore hasMore={!!result.hasNextPage} isLoading={result.isFetchingNextPage} onMore={() => { void result.fetchNextPage(); }} />

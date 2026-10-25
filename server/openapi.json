@@ -3225,6 +3225,14 @@
             "type" : [ "string", "null" ],
             "maxLength" : 20000,
             "minLength" : 0
+          },
+          "icon" : {
+            "type" : [ "string", "null" ],
+            "maxLength" : 32,
+            "minLength" : 0
+          },
+          "color" : {
+            "type" : [ "string", "null" ]
           }
         },
         "required" : [ "key", "name" ]
@@ -3646,6 +3654,12 @@
           },
           "description" : {
             "type" : [ "string", "null" ]
+          },
+          "icon" : {
+            "type" : [ "string", "null" ]
+          },
+          "color" : {
+            "type" : [ "string", "null" ]
           }
         },
         "required" : [ "expectedVersion" ]
@@ -4021,6 +4035,13 @@
           "description" : {
             "type" : [ "string", "null" ]
           },
+          "icon" : {
+            "type" : [ "string", "null" ],
+            "description" : "One of the views' icon names; absent, the key's first letter shows"
+          },
+          "color" : {
+            "type" : [ "string", "null" ]
+          },
           "archivedAt" : {
             "type" : [ "string", "null" ],
             "format" : "date-time"
@@ -4049,7 +4070,7 @@
             "format" : "date-time"
           }
         },
-        "required" : [ "archivedAt", "createdAt", "createdBy", "createdByAgent", "deletedAt", "description", "id", "key", "name", "updatedAt", "version", "workspaceId" ]
+        "required" : [ "archivedAt", "color", "createdAt", "createdBy", "createdByAgent", "deletedAt", "description", "icon", "id", "key", "name", "updatedAt", "version", "workspaceId" ]
       },
       "Projects" : {
         "type" : "object",

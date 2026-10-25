@@ -7,12 +7,12 @@ import { MOBILE_QUERY } from '@/shared/config';
 import { authError } from '@/shared/api';
 import { BackLink, DuePicker, FormMessage, NavIcon, PageFoot, PageFrame, PropertyPicker, usePanelSurface } from '@/shared/ui';
 import { labelsQuery } from '@/entities/label';
-import { columnsQuery, projectsQuery, type BoardColumn, type Project } from '@/entities/project';
+import { columnsQuery, ProjectMark, projectsQuery, type BoardColumn, type Project } from '@/entities/project';
 import { useMembers } from '@/entities/workspace';
 import { createItem, issueHref, labelOptions, NO_STATUS, peopleOptions, priorityOptions, refreshItems, statusOptions, type Priority } from '@/entities/work-item';
 import styles from './create-issue.module.css';
 
-const mark = (project: Pick<Project, 'key'>) => <span className={styles.projectMark}>{project.key.slice(0, 1)}</span>;
+const mark = (project: Project) => <ProjectMark project={project} size="xs" />;
 
 type Draft = { projectId?: string; title: string; body: string; status?: string; priority: Priority; assigneeId?: string; labelIds: string[]; dueDate?: string };
 

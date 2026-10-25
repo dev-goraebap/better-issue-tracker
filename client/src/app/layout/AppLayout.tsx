@@ -14,7 +14,7 @@ import { DefaultAvatar, NavIcon, NotificationBell } from '@/shared/ui';
 import { WorkspaceSwitcher } from '@/features/workspace-switcher';
 import { CreateProjectDialog } from '@/features/project-create';
 import { forgetWorkspace, workspaceQuery } from '@/entities/workspace';
-import { projectsQuery } from '@/entities/project';
+import { ProjectMark, projectsQuery, type Project } from '@/entities/project';
 import { itemQuery } from '@/entities/work-item';
 import { ScopeSwitcher } from './ScopeSwitcher';
 import styles from './app-layout.module.css';
@@ -86,7 +86,7 @@ export function AppLayout() {
   // The notices' bell at the menu's head (a phone's header row). Notices are not made yet (T-006), so it is never lit.
   const inbox = workspacePath(workspaceId, '/inbox');
   const bell = workspace && <NotificationBell count={0} href={inbox} onOpen={go(inbox)} />;
-  const projectMark = (key: string) => <span className={styles.projectMark} aria-hidden="true">{key.slice(0, 1)}</span>;
+  const projectMark = (project: Project) => <ProjectMark project={project} />;
   const projectName = (id?: string) => projects.find(project => project.id === id)?.name;
   // The scope's step on the home and a project's pages: 전체 or the project, switching among them with the view kept.
   const scopeStep = (label: string): TrailStep => ({ label, content: <ScopeSwitcher projects={projects} current={place.projectId} mark={projectMark}
@@ -151,7 +151,7 @@ export function AppLayout() {
       {!folded && projects.length > 0 && <SideNavSection title="프로젝트">
         {projects.map(project => {
           const isOpen = place.settingsProjectId === project.id;
-          return <SideNavItem key={`${project.id}${isOpen ? '-open' : ''}`} label={project.name} icon={projectMark(project.key)} collapsible={{ defaultIsCollapsed: !isOpen }}>
+          return <SideNavItem key={`${project.id}${isOpen ? '-open' : ''}`} label={project.name} icon={projectMark(project)} collapsible={{ defaultIsCollapsed: !isOpen }}>
             {PROJECT_SETTINGS_MENU.map(each => {
               const href = projectSettingsPath(workspaceId, project.id, each.path);
               return <SideNavItem key={each.path} label={each.label} href={href} icon={<NavIcon name={each.icon} />} isSelected={isOpen && place.settings === each.path} onClick={go(href)} />;
@@ -172,7 +172,7 @@ export function AppLayout() {
         icon={<NavIcon name="plus" />} onClick={() => setCreatingProject(true)} />}>
         {projects.map(project => {
           const href = projectPath(workspaceId, project.id);
-          return <SideNavItem key={project.id} label={project.name} href={href} icon={projectMark(project.key)} isSelected={place.projectId === project.id} onClick={go(href)} />;
+          return <SideNavItem key={project.id} label={project.name} href={href} icon={projectMark(project)} isSelected={place.projectId === project.id} onClick={go(href)} />;
         })}
       </SideNavSection>}
     </SideNav>;

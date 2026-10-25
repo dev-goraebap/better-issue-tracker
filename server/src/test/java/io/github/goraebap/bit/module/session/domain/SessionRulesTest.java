@@ -61,7 +61,7 @@ class SessionRulesTest {
 
     @Test
     void projectCountersAreIndependentAndDoNotInvalidateSettingsVersion() {
-        var project = Project.create(UUID.randomUUID(), "Test", null, 0, actor, null, now);
+        var project = Project.create(UUID.randomUUID(), "Test", null, null, null, 0, actor, null, now);
         assertThat(project.allocateDecisionNumber()).isEqualTo(1);
         assertThat(project.allocateDecisionNumber()).isEqualTo(2);
         assertThat(project.allocateSessionNumber()).isEqualTo(1);

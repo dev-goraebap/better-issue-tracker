@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { useQuery, type QueryClient } from '@tanstack/react-query';
 import type { components } from '@/shared/api';
+import { MARK_ICONS } from '@/shared/config';
 import type { WorkItem } from '../api/work-item';
 import { createView, deleteTweak, deleteView, patchView, putTweak, tweaksQuery, viewsQuery, type ServerTweak, type ServerView } from '../api/view';
 import { categoryOf, PRIORITY_RANK, SYSTEM_LABEL } from './issue';
@@ -39,7 +40,7 @@ export const VIEW_SORT_KEYS = [
   { value: 'priority', label: '우선순위', kind: 'rank' as const },
   { value: 'title', label: '제목', kind: 'text' as const },
 ];
-export const VIEW_ICONS = ['list', 'rows', 'board', 'calendar', 'milestone', 'decision', 'session', 'members', 'person', 'priority', 'label', 'agent'];
+export const VIEW_ICONS = MARK_ICONS;
 
 /** 전체 이슈, the one view every workspace has and nobody stores. */
 const allView = (workspaceId: string): IssueView => ({

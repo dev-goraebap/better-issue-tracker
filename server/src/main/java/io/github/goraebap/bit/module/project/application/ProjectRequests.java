@@ -17,7 +17,9 @@ public final class ProjectRequests {
     public record Create(
             @NotBlank @Size(max = 64) String name,
             @NotBlank @Size(max = 10) String key,
-            @Size(max = 20000) @Schema(nullable = true) String description) {}
+            @Size(max = 20000) @Schema(nullable = true) String description,
+            @Size(max = 32) @Schema(nullable = true) String icon,
+            @Schema(nullable = true) String color) {}
 
     @Schema(name = "ProjectVersion")
     public record Version(@NotNull @Min(0) Long expectedVersion) {}
@@ -131,9 +133,13 @@ public final class ProjectRequests {
         private String name;
         private String key;
         private @Schema(nullable = true) String description;
+        private @Schema(nullable = true) String icon;
+        private @Schema(nullable = true) String color;
         private boolean hasName;
         private boolean hasKey;
         private boolean hasDescription;
+        private boolean hasIcon;
+        private boolean hasColor;
 
         public Long getExpectedVersion() {
             return expectedVersion;
@@ -170,6 +176,24 @@ public final class ProjectRequests {
             hasDescription = true;
         }
 
+        public String getIcon() {
+            return icon;
+        }
+
+        public void setIcon(String value) {
+            icon = value;
+            hasIcon = true;
+        }
+
+        public String getColor() {
+            return color;
+        }
+
+        public void setColor(String value) {
+            color = value;
+            hasColor = true;
+        }
+
         public boolean hasName() {
             return hasName;
         }
@@ -180,6 +204,14 @@ public final class ProjectRequests {
 
         public boolean hasDescription() {
             return hasDescription;
+        }
+
+        public boolean hasIcon() {
+            return hasIcon;
+        }
+
+        public boolean hasColor() {
+            return hasColor;
         }
 
         @JsonAnySetter
