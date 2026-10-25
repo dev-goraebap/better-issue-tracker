@@ -644,3 +644,11 @@
 - **왜**: 시험 사용에서 메인 프로젝트(오름 앱 MVP)가 만든 순 때문에 맨 아래로 가고 바꿀 수 없었고, 사용자가 순서 조절에 동의했다. 사이드바와 구성원 화면의 순서가 같아야 같은 프로젝트를 같은 자리에서 찾는다.
 - **기각**: 사람마다 자기 순서(리니어의 팀 순서처럼. 새 표가 필요하고 화면마다 순서가 달라짐), 이름순(메인 프로젝트를 위로 올릴 수 없음), 프로젝트 설정의 숫자 칸(어디에 놓일지 보이지 않음).
 - **남은 것**: 활성 프로젝트가 50개를 넘으면 사이드바가 첫 50개만 읽어 순서를 저장할 수 없다(목록을 다 읽게 하거나 일부만 옮기는 API가 필요).
+
+## D-081. MCP는 세션 없는(stateless) Streamable HTTP이고, 도구는 각 모듈이 등록하며, 1차는 이슈 중심 10개다 (2026-10-25)
+- **무엇을**: `/api/mcp`에 공식 MCP Java SDK(`mcp-core`·`mcp-json-jackson3` 2.1.0)의 `HttpServletStatelessServerTransport`를 서블릿으로 붙였다. 요청마다 API 키(Bearer)를 받아 키 주인으로 도구를 돌리고, 기록에 키의 에이전트 이름을 남긴다(D-021). 브라우저 세션은 거절한다. 도구는 `whoami`, `list_members`, `list_projects`, `list_labels`, `get_work_item_context`, `list_work_items`, `create_work_item`, `update_work_item`, `move_work_item`, `add_comment` 10개다(`docs/07-mcp.md`).
+- **모듈 구조**: mcp 모듈은 등록 계약(`McpToolProvider`, `McpTool`, `McpArguments`)과 서버 설정만 갖는다. 각 모듈이 자기 application 계층에서 도구를 등록하므로(컨트롤러를 각 모듈이 갖는 것과 같다) 도구가 그 모듈의 Service를 직접 부르고 HTTP와 같은 권한·검증·기록을 탄다(D-022의 "Facade 호출" 취지). 다른 모듈 것이 필요하면 공개 Facade로만 부른다: 워크스페이스 고르기·구성원(`WorkspaceFacade.resolve`·`members`·`mine`), 라벨 목록(`LabelFacade.findAll`), 보드 칸(`ProjectFacade.boardColumns`), 타임라인(`TimelineFacade`). mcp 모듈은 아무 모듈에도 기대지 않아 순환이 없다.
+- **왜 stateless**: 도구가 모두 묻고 답하는 한 번의 요청이고 서버가 먼저 보낼 것(진행 알림·되묻기)이 없다. 권한은 요청마다 키로 판정한다. 세션을 메모리에 두면 서버를 다시 띄울 때 연결된 에이전트가 끊기고, 서버를 늘릴 때 세션 고정이 필요하다. 사용자도 stateless를 원했다.
+- **왜 10개**: 결정·세션·산출물 화면과 모듈이 아직 없거나(산출물 모듈은 빈 패키지) D-066 이후 결정기록이 라벨 이슈가 되어 D-022의 결정 도구와 모델이 어긋난다. 지금 있는 이슈·댓글·타임라인 위에서 "이슈 맥락 읽기 → 작업 → 댓글로 결과 → 상태 옮기기"가 끝나는 범위로 잡았다. 결정은 결정기록 라벨과 템플릿(D-077)으로 남긴다.
+- **기각**: stateful Streamable HTTP(재시작에 약하고 쓸 기능이 없음), MCP를 직접 JSON-RPC로 구현(스펙 변화를 따라가야 함), Spring AI의 MCP 스타터(Spring Boot 4와 맞는 정식판을 확인하지 못했고 우리가 쓰는 건 전송 하나뿐), mcp 모듈이 각 모듈 Facade를 부르기(Facade마다 화면용 조회를 다시 만들어야 하고 Facade가 비대해짐), D-022의 24개 전부(서버부터 새로 만들 것이 많아 쓸 때까지 오래 걸림).
+- **확인한 것**: 통합 테스트가 HTTP로 initialize → tools/list → 만들기·댓글·옮기기·맥락 읽기를 거치고, 세션 쿠키 요청이 거절되는지 본다. MCP Inspector CLI로 8092의 오름랩 데이터에서 whoami·맥락·목록을 확인했다.

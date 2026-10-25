@@ -90,6 +90,9 @@ final class AuthenticationFilter extends OncePerRequestFilter {
                 if (user.method() == CurrentUser.Method.API_KEY && !businessBearer(request) && !publicInfo(request))
                     throw AuthErrorCode.AUTH_FORBIDDEN.raise();
                 if (path.equals("/api/v1/invitation-registrations")) throw AuthErrorCode.AUTH_FORBIDDEN.raise();
+                // MCP is for agents, each with its own key (D-021, D-081); a browser's session is not one.
+                if (path.equals("/api/mcp") && user.method() != CurrentUser.Method.API_KEY)
+                    throw AuthErrorCode.AUTH_FORBIDDEN.raise();
                 boolean recovery = path.equals("/api/v1/me")
                         || path.equals("/api/v1/auth/csrf")
                         || path.equals("/api/v1/me/password")
@@ -145,6 +148,7 @@ final class AuthenticationFilter extends OncePerRequestFilter {
                 || method.equals("POST") && path.matches(views)
                 || Set.of("PATCH", "DELETE").contains(method) && path.matches(views + "/[^/]+")
                 || Set.of("PUT", "DELETE").contains(method) && path.matches(tweaks + "/[^/]+")) return true;
+        if (path.equals("/api/mcp")) return true;
         // An agent reads a target's timeline and comments on it as its owner (D-078).
         String comments = "/api/v1/workspaces/[^/]+/comments";
         if (Set.of("GET", "HEAD").contains(method) && path.matches("/api/v1/workspaces/[^/]+/timeline")

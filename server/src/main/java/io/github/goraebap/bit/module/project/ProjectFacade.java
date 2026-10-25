@@ -24,6 +24,11 @@ public interface ProjectFacade {
 
     Optional<ColumnRef> findColumn(CurrentUser actor, UUID workspaceId, UUID projectId, UUID columnId);
 
+    /** The project's board columns in order, with their names: where an issue can be moved. */
+    java.util.List<ColumnInfo> boardColumns(CurrentUser actor, UUID workspaceId, UUID projectId);
+
+    record ColumnInfo(UUID id, String name, ColumnCategory category, boolean finalColumn) {}
+
     record ProjectRef(UUID id, UUID workspaceId, String key, long version, boolean archived) {}
 
     /** A null id is the backlog, which has no category. */

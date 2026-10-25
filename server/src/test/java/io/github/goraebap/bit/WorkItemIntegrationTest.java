@@ -131,6 +131,152 @@ class WorkItemIntegrationTest {
     }
 
     @Test
+    void anAgentWorksOnIssuesOverStatelessMcpWithItsKeyAndASessionIsRefused() throws Exception {
+        String password = "workitem integration password phrase";
+        jdbcTemplate.update(
+                "UPDATE iam_password SET password_hash=? WHERE iam_user_id=?",
+                passwordEncoder.encode(password),
+                owner.userId().toString());
+        String email = jdbcTemplate.queryForObject(
+                "SELECT email FROM iam_user WHERE iam_user_id=?",
+                String.class,
+                owner.userId().toString());
+        try (var client = HttpClient.newBuilder()
+                .cookieHandler(new CookieManager(null, CookiePolicy.ACCEPT_ALL))
+                .build()) {
+            expect(
+                    http(
+                            client,
+                            "POST",
+                            "/api/v1/auth/sessions",
+                            JSON.writeValueAsString(Map.of("email", email, "password", password)),
+                            null),
+                    201);
+            var keyResponse = http(
+                    client,
+                    "POST",
+                    "/api/v1/me/api-keys",
+                    JSON.writeValueAsString(
+                            Map.of("name", "Agent", "agentName", "mcp-agent", "currentPassword", password)),
+                    null);
+            expect(keyResponse, 201);
+            String key = JSON.readTree(keyResponse.body()).path("key").asText();
+
+            var initialized = mcp(
+                    client,
+                    key,
+                    "initialize",
+                    Map.of(
+                            "protocolVersion", "2025-06-18",
+                            "capabilities", Map.of(),
+                            "clientInfo", Map.of("name", "test", "version", "1")));
+            expect(initialized, 200);
+            assertThat(JSON.readTree(initialized.body())
+                            .path("result")
+                            .path("serverInfo")
+                            .path("name")
+                            .asText())
+                    .isEqualTo("bit");
+            var listed = JSON.readTree(mcp(client, key, "tools/list", Map.of()).body());
+            var names = new HashSet<String>();
+            listed.path("result")
+                    .path("tools")
+                    .forEach(tool -> names.add(tool.path("name").asText()));
+            assertThat(names)
+                    .contains(
+                            "whoami",
+                            "list_projects",
+                            "list_members",
+                            "list_labels",
+                            "get_work_item_context",
+                            "list_work_items",
+                            "create_work_item",
+                            "update_work_item",
+                            "move_work_item",
+                            "add_comment");
+
+            var created = call(
+                    client,
+                    key,
+                    "create_work_item",
+                    Map.of(
+                            "project",
+                            "BIT",
+                            "title",
+                            "Agent task",
+                            "description",
+                            "## Plan\n\n- [ ] step",
+                            "status",
+                            "doing"));
+            assertThat(created.path("isError").asBoolean()).isFalse();
+            String ref = JSON.readTree(text(created)).path("ref").asText();
+            assertThat(ref).isEqualTo("BIT-1");
+            assertThat(JSON.readTree(text(created)).path("category").asText()).isEqualTo("doing");
+            assertThat(call(client, key, "add_comment", Map.of("ref", ref, "body", "Started **work**"))
+                            .path("isError")
+                            .asBoolean())
+                    .isFalse();
+            var moved = JSON.readTree(text(call(client, key, "move_work_item", Map.of("ref", ref, "status", "done"))));
+            assertThat(moved.path("closed").asBoolean()).isTrue();
+            var context = JSON.readTree(text(call(client, key, "get_work_item_context", Map.of("ref", ref))));
+            assertThat(context.path("description").asText()).isEqualTo("## Plan\n\n- [ ] step");
+            var timeline = context.path("timeline");
+            assertThat(timeline.get(0).path("activity").asText()).isEqualTo("이슈를 만듦");
+            assertThat(timeline.get(0).path("agent").asText()).isEqualTo("mcp-agent");
+            assertThat(timeline.get(1).path("comment").asText()).isEqualTo("Started **work**");
+            assertThat(timeline.get(2).path("activity").asText()).contains("상태:");
+            assertThat(jdbcTemplate.queryForObject(
+                            "SELECT created_by_agent FROM work_item WHERE number=1", String.class))
+                    .isEqualTo("mcp-agent");
+
+            var missing = call(client, key, "get_work_item_context", Map.of("ref", "BIT-99"));
+            assertThat(missing.path("isError").asBoolean()).isTrue();
+            assertThat(text(missing)).contains("BIT-99");
+            var badStatus = call(client, key, "move_work_item", Map.of("ref", ref, "status", "Nowhere"));
+            assertThat(text(badStatus)).contains("칸이 없습니다");
+
+            // A browser's session is not an agent.
+            var session = client.send(
+                    HttpRequest.newBuilder(URI.create("http://localhost:" + port + "/api/mcp"))
+                            .header("Content-Type", "application/json")
+                            .header("Accept", "application/json, text/event-stream")
+                            .header("Origin", "http://localhost:8080")
+                            .POST(HttpRequest.BodyPublishers.ofString(
+                                    "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/list\"}"))
+                            .build(),
+                    HttpResponse.BodyHandlers.ofString());
+            assertThat(session.statusCode()).isIn(401, 403);
+        }
+    }
+
+    private int rpc = 0;
+
+    private HttpResponse<String> mcp(HttpClient client, String key, String method, Map<String, Object> params)
+            throws Exception {
+        String body =
+                JSON.writeValueAsString(Map.of("jsonrpc", "2.0", "id", ++rpc, "method", method, "params", params));
+        return client.send(
+                HttpRequest.newBuilder(URI.create("http://localhost:" + port + "/api/mcp"))
+                        .header("Authorization", "Bearer " + key)
+                        .header("Content-Type", "application/json")
+                        .header("Accept", "application/json, text/event-stream")
+                        .POST(HttpRequest.BodyPublishers.ofString(body))
+                        .build(),
+                HttpResponse.BodyHandlers.ofString());
+    }
+
+    private tools.jackson.databind.JsonNode call(
+            HttpClient client, String key, String tool, Map<String, Object> arguments) throws Exception {
+        var response = mcp(client, key, "tools/call", Map.of("name", tool, "arguments", arguments));
+        expect(response, 200);
+        return JSON.readTree(response.body()).path("result");
+    }
+
+    private static String text(tools.jackson.databind.JsonNode result) {
+        return result.path("content").get(0).path("text").asText();
+    }
+
+    @Test
     void anIssuesChangesAndCommentsReadAsOneTimelineOldestFirst() {
         UUID id = create(owner, "Task", todo, null);
         var update = new WorkItemRequests.Update();

@@ -10,6 +10,9 @@ public interface LabelFacade {
     /** Live labels of the workspace among the given ids; unknown, deleted and foreign ids are left out. */
     Map<UUID, LabelRef> findAllById(CurrentUser actor, UUID workspaceId, Set<UUID> labelIds);
 
+    /** The workspace's live labels, system labels first and then by name. */
+    java.util.List<LabelRef> findAll(CurrentUser actor, UUID workspaceId);
+
     /** Workspace access for label requests; a non-null id must also name a live label of the workspace. */
     void requireAccess(CurrentUser actor, UUID workspaceId, UUID labelId, boolean writing);
 

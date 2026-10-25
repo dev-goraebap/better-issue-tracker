@@ -3,6 +3,7 @@ package io.github.goraebap.bit.module.link.application;
 import io.github.goraebap.bit.module.iam.IamFacade;
 import io.github.goraebap.bit.module.link.TargetFacade;
 import io.github.goraebap.bit.module.link.TargetType;
+import io.github.goraebap.bit.module.link.TimelineFacade;
 import io.github.goraebap.bit.module.link.domain.Activity;
 import io.github.goraebap.bit.module.link.domain.ActivityRepository;
 import io.github.goraebap.bit.module.link.domain.Comment;
@@ -32,7 +33,7 @@ import tools.jackson.databind.json.JsonMapper;
  */
 @Service
 @RequiredArgsConstructor
-public class TimelineService {
+public class TimelineService implements TimelineFacade {
     private final TargetFacade targetFacade;
     private final CommentRepository commentRepository;
     private final ActivityRepository activityRepository;
@@ -52,8 +53,8 @@ public class TimelineService {
                 activityRepository.findAllByTarget(workspaceId, type, targetId, point.time(), point.id(), size + 1);
         // The same order the queries read in: time, then the id as the database compares it (its text).
         var lines = Stream.concat(
-                        comments.stream().map(Line::of), activity.stream().map(Line::of))
-                .sorted(Comparator.comparing(Line::at)
+                        comments.stream().map(Merged::of), activity.stream().map(Merged::of))
+                .sorted(Comparator.comparing(Merged::at)
                         .thenComparing(line -> line.id().toString()))
                 .toList();
         var page = lines.stream().limit(size).toList();
@@ -62,7 +63,7 @@ public class TimelineService {
         var names =
                 iamFacade
                         .users(page.stream()
-                                .map(Line::actorId)
+                                .map(Merged::actorId)
                                 .filter(Objects::nonNull)
                                 .distinct()
                                 .toList())
@@ -74,6 +75,26 @@ public class TimelineService {
             if (entry != null) entries.add(entry);
         }
         return new TimelineViews.Timeline(entries, next);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public java.util.List<TimelineFacade.Line> lines(
+            CurrentUser actor, UUID workspaceId, TargetType type, UUID targetId, int limit) {
+        return list(actor, workspaceId, type, targetId, null, limit).items().stream()
+                .map(e -> new TimelineFacade.Line(
+                        e.kind(),
+                        e.at(),
+                        e.actorId(),
+                        e.actorName(),
+                        e.actorAgent(),
+                        e.body(),
+                        e.editedAt(),
+                        e.action(),
+                        e.field(),
+                        e.before(),
+                        e.after()))
+                .toList();
     }
 
     private static TimelineViews.Entry comment(Comment c, Map<UUID, String> names) {
@@ -125,13 +146,13 @@ public class TimelineService {
         return id == null ? null : names.getOrDefault(id, "탈퇴한 사용자");
     }
 
-    private record Line(Instant at, UUID id, UUID actorId, Comment comment, Activity activity) {
-        static Line of(Comment c) {
-            return new Line(c.audit().createdAt(), c.id(), c.audit().createdBy(), c, null);
+    private record Merged(Instant at, UUID id, UUID actorId, Comment comment, Activity activity) {
+        static Merged of(Comment c) {
+            return new Merged(c.audit().createdAt(), c.id(), c.audit().createdBy(), c, null);
         }
 
-        static Line of(Activity a) {
-            return new Line(a.occurredAt(), a.id(), a.actorId(), null, a);
+        static Merged of(Activity a) {
+            return new Merged(a.occurredAt(), a.id(), a.actorId(), null, a);
         }
     }
 

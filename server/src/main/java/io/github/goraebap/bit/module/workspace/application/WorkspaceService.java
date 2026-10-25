@@ -114,6 +114,56 @@ public class WorkspaceService implements WorkspaceFacade {
         return w.id();
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<SpaceRef> mine(CurrentUser actor) {
+        iamFacade.actor(actor, false);
+        return workspaceRepository.findAllByUserId(actor.userId(), null, null, 200).stream()
+                .map(w -> new SpaceRef(w.id(), w.name(), w.slug(), w.myRole().name()))
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public UUID resolve(CurrentUser actor, String hint) {
+        var spaces = mine(actor);
+        String names = spaces.stream().map(SpaceRef::name).collect(Collectors.joining(", "));
+        if (hint == null || hint.isBlank()) {
+            if (spaces.size() == 1) return spaces.getFirst().id();
+            throw CommonErrorCode.COMMON_INVALID_REQUEST.raise(
+                    spaces.isEmpty()
+                            ? "속한 워크스페이스가 없습니다."
+                            : "워크스페이스가 여럿입니다(" + names + "). workspace 인자로 이름이나 슬러그를 주세요.");
+        }
+        String wanted = hint.strip();
+        return spaces.stream()
+                .filter(space -> space.id().toString().equals(wanted)
+                        || space.slug().equalsIgnoreCase(wanted)
+                        || space.name().equalsIgnoreCase(wanted))
+                .map(SpaceRef::id)
+                .findFirst()
+                .orElseThrow(() -> CommonErrorCode.COMMON_INVALID_REQUEST.raise(
+                        "'" + wanted + "' 워크스페이스를 찾을 수 없습니다. 속한 워크스페이스: " + names));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<MemberRef> members(CurrentUser actor, UUID workspaceId) {
+        access(actor, workspaceId, Action.READ);
+        var rows = workspaceRepository.findMembers(workspaceId, null, null, 1000);
+        Map<UUID, IamFacade.User> users =
+                iamFacade.users(rows.stream().map(Membership::userId).distinct().toList()).stream()
+                        .collect(Collectors.toMap(IamFacade.User::id, Function.identity()));
+        return rows.stream()
+                .filter(m -> users.containsKey(m.userId()))
+                .map(m -> {
+                    var u = users.get(m.userId());
+                    return new MemberRef(
+                            m.userId(), u.name(), u.email(), m.role().name());
+                })
+                .toList();
+    }
+
     @Transactional(readOnly = true)
     public WorkspaceViews.Spaces list(CurrentUser actor, String cursor, int size, String sort, String direction) {
         iamFacade.actor(actor, false);

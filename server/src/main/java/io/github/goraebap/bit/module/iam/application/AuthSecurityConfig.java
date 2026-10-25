@@ -165,6 +165,10 @@ class AuthSecurityConfig {
                         .authenticated()
                         .requestMatchers(HttpMethod.PUT, "/api/v1/workspaces/*/project-order")
                         .authenticated()
+                        // MCP for agents (D-081): POST carries the messages; GET and DELETE are answered 405 by the
+                        // endpoint.
+                        .requestMatchers("/api/mcp")
+                        .authenticated()
                         // Comments and a target's timeline (D-078).
                         .requestMatchers(HttpMethod.GET, "/api/v1/workspaces/*/timeline")
                         .authenticated()

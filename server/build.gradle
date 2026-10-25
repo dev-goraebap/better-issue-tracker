@@ -24,6 +24,9 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-mail'
     implementation 'org.xerial:sqlite-jdbc'
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-api:3.1.1'
+    // MCP for agents (D-022, D-081): the official Java SDK's stateless Streamable HTTP servlet, on Jackson 3.
+    implementation 'io.modelcontextprotocol.sdk:mcp-core:2.1.0'
+    implementation 'io.modelcontextprotocol.sdk:mcp-json-jackson3:2.1.0'
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
     jooqCodegen 'org.jooq:jooq-meta-extensions:3.21.6'

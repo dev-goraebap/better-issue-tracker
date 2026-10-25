@@ -105,6 +105,16 @@ public class ProjectService implements ProjectFacade {
                 .map(c -> new ColumnRef(c.id(), c.finalColumn(), c.category()));
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<ColumnInfo> boardColumns(CurrentUser actor, UUID workspaceId, UUID projectId) {
+        access(actor, workspaceId, projectId, false, false);
+        return projectRepository.findColumns(projectId).stream()
+                .sorted(java.util.Comparator.comparingInt(BoardColumn::position))
+                .map(c -> new ColumnInfo(c.id(), c.name(), c.category(), c.finalColumn()))
+                .toList();
+    }
+
     @Transactional
     public UUID create(CurrentUser actor, UUID workspaceId, String name, String key, String description) {
         return create(actor, workspaceId, name, key, description, null, null);

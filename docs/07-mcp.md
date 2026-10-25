@@ -9,13 +9,43 @@
 
 | 항목 | 정한 것 |
 |---|---|
-| 서버 형태 | 인스턴스에 내장한 **HTTP MCP 엔드포인트** `/api/mcp` (Streamable HTTP) 하나. stdio 패키지는 만들지 않는다 |
+| 서버 형태 | 인스턴스에 내장한 **HTTP MCP 엔드포인트** `/api/mcp` (Streamable HTTP, **세션 없는 stateless**, D-081) 하나. stdio 패키지는 만들지 않는다 |
 | 인증 | `Authorization: Bearer <API 키>` (D-021). 키 주인의 워크스페이스 역할로 권한 판정, 키의 `agent_name`을 기록에 남김 |
 | 호출 경로 | MCP 도구 → 각 모듈의 Facade. REST API를 다시 부르지 않는다 (같은 서버 안) |
 | 가리키는 방법 | UUID 대신 **사람이 읽는 참조**를 받는다. `BIT-42`(작업항목), `BIT D-007`·`D-007`(결정), `S-003`(세션). 산출물은 1차에 문서 ID가 없어 `artifact` ID |
 | 도구 수 | 24개 (Kaneo 약 40개). 자주 함께 쓰는 정보는 한 번에 돌려주는 "맥락 도구"로 묶는다 |
 | 삭제 | 1차 MCP에는 삭제 도구가 없다. 작업항목은 보관(archive), 링크는 해제(unlink)만 |
 | 응답 | JSON. 본문(Markdown)은 그대로, 긴 산출물 텍스트는 잘라서 주고 잘렸음을 표시 |
+
+## 지금 구현된 것 (1차, D-081)
+
+공식 MCP Java SDK(`mcp-core` 2.1.0)의 stateless 서블릿 전송을 `/api/mcp`에 붙였다. 요청마다 JSON-RPC 메시지 하나를 받아 JSON으로 답하고, 서버는 요청 사이에 아무것도 기억하지 않는다. 모든 요청에 API 키(Bearer)가 실려 와야 하고, 브라우저 세션 쿠키는 거절한다. 도구는 각 모듈이 자기 application 계층에서 `McpToolProvider`로 등록하므로 HTTP API와 같은 Service·권한·기록 규칙을 탄다.
+
+| 도구 | 모듈 | 하는 일 |
+|---|---|---|
+| `whoami` | workspace | 키 주인, 에이전트 이름, 속한 워크스페이스와 역할 |
+| `list_members` | workspace | 구성원 이름·이메일·역할 (담당자 지정용) |
+| `list_projects` | project | 프로젝트 키·이름·설명과 보드 칸, 워크스페이스 순서대로 |
+| `list_labels` | label | 라벨 이름 (결정기록은 system) |
+| `get_work_item_context` | workitem | 이슈 전체: 속성, 마크다운 설명, 댓글과 활동 타임라인을 한 번에 |
+| `list_work_items` | workitem | 프로젝트·제목·분류·담당자·라벨로 찾기, 커서 페이징. 완료는 `include_closed`일 때만 |
+| `create_work_item` | workitem | 새 이슈. 칸·담당자·라벨은 이름으로 |
+| `update_work_item` | workitem | 준 값만 바꿈. `none`으로 지움. 버전은 도구가 최신으로 맞춤 |
+| `move_work_item` | workitem | 칸 이름·분류(todo/doing/done)·backlog로 옮기기, 보관·해제 |
+| `add_comment` | workitem | 이슈에 마크다운 댓글 |
+
+- **가리키는 법**: 이슈는 `ORM-14`, 프로젝트는 키, 칸·사람·라벨은 이름. 워크스페이스가 하나면 생략하고, 여럿이면 `workspace`에 이름이나 슬러그를 준다. 참조만 주면 속한 워크스페이스에서 찾아본다.
+- **결정**: 결정 엔티티 도구 대신, `labels: ["결정기록"]`과 결정 템플릿 본문(D-077)으로 이슈를 만든다. 서버 안내문(instructions)과 도구 설명에 형식을 적어 두었다.
+- **오류**: 업무 오류는 `코드: 메시지`, 잘못된 인자는 무엇이 틀렸는지(예: 없는 칸이면 그 프로젝트의 칸 목록)를 도구 오류로 돌려준다.
+- **아직 없는 것**: 위 표 밖의 도구(검색·결정·세션·산출물·연결·추적·프로젝트 개요)는 그 기능이 생길 때 붙인다.
+
+### 연결하기
+
+BIT 설정 → API 키에서 키를 만들고(에이전트 이름을 적는다), 에이전트에 HTTP MCP 서버로 등록한다. Claude Code라면:
+
+```bash
+claude mcp add --transport http bit https://<BIT 주소>/api/mcp --header "Authorization: Bearer <API 키>"
+```
 
 참조 규칙
 - `D-007`, `S-003`처럼 프로젝트 키가 없으면 `project` 인자(또는 같은 호출의 작업항목 프로젝트)로 해석한다.

@@ -37,6 +37,16 @@ public class LabelService implements LabelFacade {
 
     @Override
     @Transactional(readOnly = true)
+    public List<LabelRef> findAll(CurrentUser actor, UUID workspaceId) {
+        workspaceFacade.requireAccess(actor, workspaceId, WorkspaceFacade.Action.READ);
+        return labelRepository.findAllByWorkspaceId(workspaceId).stream()
+                .map(LabelService::ref)
+                .sorted(LabelRef.ORDER)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public void requireAccess(CurrentUser actor, UUID workspaceId, UUID labelId, boolean writing) {
         workspaceFacade.requireAccess(
                 actor, workspaceId, writing ? WorkspaceFacade.Action.WRITE_WORK : WorkspaceFacade.Action.READ);
