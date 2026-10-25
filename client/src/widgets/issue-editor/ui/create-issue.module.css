@@ -8,7 +8,10 @@
   color: var(--color-text-secondary); }
 .head > svg { inline-size: 0.75rem; block-size: 0.75rem; flex-shrink: 0; }
 .headTitle { margin: 0; font-size: 0.8125rem; font-weight: 450; color: var(--color-text-primary); }
-.headEnd { margin-inline-start: auto; display: inline-flex; }
+/* 크게 보기 and 닫기 as one pair: both icons 16px (the expand arrows reach their box's corners, so they draw a step smaller), 2px apart. */
+.headEnd { margin-inline-start: auto; display: inline-flex; align-items: center; gap: 2px; }
+.headEnd svg { inline-size: 1rem; block-size: 1rem; }
+.headEnd :global(.lucide-maximize-2) { inline-size: 0.875rem; block-size: 0.875rem; }
 .projectChip { display: inline-flex; align-items: center; gap: var(--spacing-1-5, 0.375rem); block-size: 1.5rem; padding: 0 var(--spacing-2) 0 0.3125rem;
   border-radius: var(--radius-full); background: var(--color-background-muted); font-size: 0.75rem; font-weight: 500; color: var(--color-text-secondary); }
 .body { display: flex; flex-direction: column; gap: var(--spacing-1); padding: var(--spacing-3) var(--spacing-4) var(--spacing-2); }

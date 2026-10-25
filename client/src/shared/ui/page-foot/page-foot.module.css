@@ -6,7 +6,8 @@
 .foot { border-block-start: 1px solid var(--color-border); background: var(--color-background-surface); }
 .inner { display: flex; align-items: center; gap: var(--spacing-2); inline-size: 100%; max-inline-size: 64rem; margin-inline: auto;
   padding: var(--spacing-4) var(--spacing-8); box-sizing: border-box; }
-.inner[data-width="narrow"] { max-inline-size: 48rem; }
+/* As wide as the page's own column: the page's narrow width (48rem) is its content's, its gutters added outside. */
+.inner[data-width="narrow"] { max-inline-size: calc(48rem + 2 * var(--spacing-8)); }
 .inner[data-width="wide"] { max-inline-size: 80rem; }
 .inner[data-width="full"] { max-inline-size: none; }
 .start { display: flex; align-items: center; gap: var(--spacing-2); }

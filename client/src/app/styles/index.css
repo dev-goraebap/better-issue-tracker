@@ -88,12 +88,12 @@ body { font-family: 'Pretendard Variable', Pretendard, system-ui, sans-serif; }
   /* A scrollbar's thumb: faint at rest, a step darker under the pointer, on no track. */
   --bit-scroll-thumb: light-dark(color-mix(in srgb, var(--color-text-primary) 16%, transparent), color-mix(in srgb, var(--color-text-primary) 20%, transparent));
   --bit-scroll-thumb-hover: light-dark(color-mix(in srgb, var(--color-text-primary) 30%, transparent), color-mix(in srgb, var(--color-text-primary) 34%, transparent));
-  /* A bordered field as Linear's (D-074): its size and inset, its line, the line that takes its place in focus, its label. */
+  /* A bordered field as Linear's (D-074): its size and inset, its line, its line in focus (the same: no accent), its label. */
   --bit-field-height: 2.25rem;
   --bit-field-inset: 0.75rem;
   --bit-field-radius: var(--radius-element);
   --bit-field-border: var(--color-border-emphasized);
-  --bit-field-focus: var(--color-accent);
+  --bit-field-focus: var(--bit-field-border);
   --bit-field-label: color-mix(in srgb, var(--color-text-primary) 90%, var(--color-background-surface));
   --bit-field-label-gap: 0.4375rem;
 }
@@ -127,8 +127,8 @@ body { font-family: 'Pretendard Variable', Pretendard, system-ui, sans-serif; }
 /*
  * Every bordered field as Linear's (D-074, measured on its settings and invite window): 36px tall, 12px in, 8px corners,
  * 13px type, and no fill of its own, so it takes the ground it sits on (a card's, a window's, the page's) under a
- * hairline firm enough to show there. Focus swaps that line for the accent's, with no ring or glow, and a pointer over
- * it changes nothing. The label is 13px/500 a step under the ink, 7px above the field. Astryx's fields take this
+ * hairline firm enough to show there. Focus keeps that line as it is (the user found the accent's line heavy, D-074):
+ * the caret shows where typing goes, and neither focus nor a pointer over it adds a ring or a colour. The label is 13px/500 a step under the ink, 7px above the field. Astryx's fields take this
  * through their own tokens (their rules outrank any selector, so only the hover ring needs !important); BIT's own
  * fields (EmailField, the toolbar's search, a phone's picker search) use the --bit-field-* tokens. A phone keeps its
  * 48px thumb-sized fields and 16px type (below), so iOS does not zoom into them.
