@@ -14,6 +14,7 @@ import {
   archiveItem, deleteItem, itemQuery, labelOptions, LabelTokens, moveItem, NO_STATUS, peopleOptions, PersonCell, priorityOptions, PriorityMark, refreshItems,
   StatusBadge, statusOptions, updateItem, type IssueSearch, type Priority, type WorkItem,
 } from '@/entities/work-item';
+import { IssueDescription } from './IssueDescription';
 import styles from './detail.module.css';
 
 /**
@@ -26,6 +27,7 @@ import styles from './detail.module.css';
  *   of pills. The panel is Linear's (D-067): under its quiet heads (속성, 라벨) a line per property, each a pill that
  *   opens its menu and saves at once: 상태 (the project's columns, or 상태 없음), 우선순위, 담당자, 시작일, 기한, 라벨.
  *   A viewer reads the same values without the menus.
+ * - The description is written in place and saves itself (IssueDescription, D-076); a viewer reads it rendered.
  * - The title row ends with 편집 (the form page for the title and description) and the more menu: 링크 복사, 보관, then
  *   삭제 behind ConfirmDialog. A change someone else saved first (409) says so and shows the latest.
  * - 연결 and 활동 come with the links and comments (T-005).
@@ -98,9 +100,7 @@ export function IssueDetail({ workspaceId, projectId, id, search }: { workspaceI
       <VStack gap={8} className={styles.main}>
         <section aria-labelledby="detail-body">
           <SectionHeader id="detail-body" title="설명" />
-          <div className={styles.prose}>
-            {item.description ? item.description.split(/\n{2,}/).map((paragraph, index) => <p key={index}>{paragraph}</p>) : <p className={styles.none}>설명이 없습니다.</p>}
-          </div>
+          <IssueDescription key={item.id} value={item.description ?? ''} canWrite={canWrite} onSave={description => patch({ description })} />
         </section>
       </VStack>
       <aside className={styles.aside} aria-label="속성">

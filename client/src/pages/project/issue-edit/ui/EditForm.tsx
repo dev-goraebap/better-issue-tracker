@@ -1,14 +1,15 @@
 import { useId, useState, type ReactNode } from 'react';
-import { Button, TextArea, TextInput, VStack } from '@astryxdesign/core';
+import { Button, TextInput, VStack } from '@astryxdesign/core';
 import { useQueryClient } from '@tanstack/react-query';
 import { useReturnTo } from '@/shared/lib/history-trail';
 import { authError } from '@/shared/api';
-import { FormMessage, PageFoot, PageFrame } from '@/shared/ui';
+import { FormMessage, MarkdownEditor, PageFoot, PageFrame } from '@/shared/ui';
 import { refreshItems, updateItem, type WorkItem } from '@/entities/work-item';
+import styles from './edit-form.module.css';
 
 /**
  * The edit page's form: the draft is the member's until saved, whatever is read again meanwhile, and it saves over the
- * version it opened with, so a save someone made since is a conflict (409) said under the form, never overwritten.
+ * version it opened with (the description in the Markdown editor, D-076; Ctrl + Enter saves from it), so a save someone made since is a conflict (409) said under the form, never overwritten.
  */
 export function EditForm({ item, back }: { item: WorkItem; back: ReactNode }) {
   const returnTo = useReturnTo();
@@ -39,7 +40,11 @@ export function EditForm({ item, back }: { item: WorkItem; back: ReactNode }) {
       <VStack gap={5}>
         <TextInput label="제목" value={title} onChange={setTitle} isRequired hasAutoFocus isDisabled={isBusy} placeholder="무엇을 해야 하나요?"
           status={titleError ? { type: 'error', message: titleError } : undefined} />
-        <TextArea label="설명" value={body} onChange={setBody} rows={10} isOptional isDisabled={isBusy} placeholder="배경과 완료 기준을 적어 주세요." />
+        <div className={styles.field}>
+          <span className={styles.label} aria-hidden="true">설명</span>
+          <MarkdownEditor value={body} onChange={setBody} label="설명" variant="field" minHeight="14rem" isDisabled={isBusy} onSubmit={() => { void save(); }}
+            placeholder="배경과 완료 기준을 적어 주세요. ( / 로 블록)" />
+        </div>
         <FormMessage message={error} />
       </VStack>
     </form>

@@ -2,7 +2,7 @@ import { useState, type KeyboardEvent } from 'react';
 import { Button, IconButton } from '@astryxdesign/core';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ApiError, authError } from '@/shared/api';
-import { FormMessage, MarkPicker, NavIcon, PanelDialog, type Mark } from '@/shared/ui';
+import { FormMessage, MarkdownEditor, MarkPicker, NavIcon, PanelDialog, type Mark } from '@/shared/ui';
 import { createProject, PROJECT_KEY as KEY, refreshProjects } from '@/entities/project';
 import { WorkspaceMark, workspaceQuery } from '@/entities/workspace';
 import styles from './create-project.module.css';
@@ -16,7 +16,7 @@ const FIRST_MARK: Mark = { icon: 'board', color: '#5e6ad2' };
  * A new project as Linear's (the new issue's quick form, D-070): the workspace › 새 프로젝트 with close at the head;
  * then the project's mark (an icon and a colour, picked as a view's) and its name in large type without a box; a pill
  * holding its key, offered from the name until typed (2–10 Latin capitals and digits, not one the workspace has had,
- * said under the pills on submit); under a hairline its description, room to write that grows with it; and the create
+ * said under the pills on submit); under a hairline its description in the Markdown editor (D-076), room to write that grows with it; and the create
  * button at the foot. Ctrl + Enter creates from anywhere in it. The member lands on the new project's page.
  */
 export function CreateProjectDialog({ workspaceId, isOpen, onClose, onCreated }: { workspaceId: string; isOpen: boolean; onClose: () => void; onCreated: (id: string) => void }) {
@@ -72,8 +72,10 @@ export function CreateProjectDialog({ workspaceId, isOpen, onClose, onCreated }:
           <span className={styles.hint}>이슈 번호가 {shownKey || 'APP'}-1처럼 붙습니다.</span>
         </div>
         <FormMessage message={problem || error} />
-        <textarea className={styles.description} value={description} placeholder="이 프로젝트가 하는 일, 목표, 모아 둘 생각을 적어 보세요…" aria-label="설명"
-          maxLength={20000} disabled={isBusy} onChange={event => setDescription(event.target.value)} />
+        <div className={styles.description}>
+          <MarkdownEditor value={description} label="설명" placeholder="이 프로젝트가 하는 일, 목표, 모아 둘 생각을 적어 보세요…" minHeight="10rem" isDisabled={isBusy}
+            onChange={setDescription} />
+        </div>
       </div>
       <footer className={styles.foot}>
         <Button label="취소" variant="ghost" size="sm" onClick={close} isDisabled={isBusy} />

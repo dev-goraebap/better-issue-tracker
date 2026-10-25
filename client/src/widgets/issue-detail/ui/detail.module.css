@@ -42,3 +42,6 @@
   .property { min-block-size: 2rem; padding-inline: var(--spacing-3); background: var(--color-background-muted); }
   .asideLabels { display: flex; align-items: center; padding-inline: 0; }
 }
+/* The description written in place: the editor fills the column; 저장 중 / 저장됨 sits at the section head's end. */
+.description { position: relative; }
+.saveState { position: absolute; inset-block-start: -1.75rem; inset-inline-end: 0; font-size: 0.75rem; color: var(--color-text-disabled); }

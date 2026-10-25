@@ -95,8 +95,9 @@ npm run astryx --prefix client -- docs tokens --dense
 
 ### 마크다운 렌더링
 - **데이터 계약**: 마크다운 데이터는 HTML로 변환하여 보관하지 않고, 원문(Markdown Raw Text) 계약을 유지하여 저장하고 송수신한다.
-- **뷰어**: 마크다운 본문 표시(결정·세션 본문, 산출물의 변환 텍스트, Git md 정본)는 Astryx의 `Markdown` 뷰어 컴포넌트를 표준으로 사용한다.
-- **편집기 없음**: 문서 편집기는 1차 범위 밖이다. 원본의 서식 편집기 규칙(문서상 Tiptap, 실제 Lexical)은 가져오지 않았다. 마크다운을 적는 칸의 부품은 아직 정하지 않았다(SKILL.md "BIT에서 정할 것").
+- **편집기**: 마크다운을 적는 칸(이슈·결정·세션 본문, 댓글)은 `MarkdownEditor`(`shared/ui/markdown-editor`, Tiptap)를 쓴다(D-076). `TextArea`로 적지 않는다. 값은 마크다운 원문이고 `onChange`로 돌려받는다. 페이지에 그대로 놓는 본문은 `variant="bare"`, 상자에 담는 칸(댓글, 양식의 설명)은 `variant="field"`다. Ctrl(⌘)+Enter로 보내는 칸은 `onSubmit`을 준다.
+- **뷰어**: 읽기 전용 본문은 같은 스키마의 `MarkdownView`로 그려 편집할 때와 읽을 때 모양이 같다(D-076). 산출물의 변환 텍스트·Git md 정본처럼 BIT가 쓰지 않는 긴 문서도 같은 뷰어를 쓴다.
+- **문서 편집기는 범위 밖**: 협업 편집·버전·위키 같은 문서 편집기는 1차 범위 밖이다.
 
 ### 파일 업로드 수명주기
 - **선택기 UI**: 파일 업로드는 shared/ui의 공통 컴포넌트 `useFileUploader`·`FileUploader`로 한다. 엔진은 Uppy 코어와 S3 플러그인을 화면 없이 쓰고(서버의 사전 서명 PUT → 확정 흐름, `docs/conventions.md` 4절), 첨부창은 Astryx 컴포넌트와 토큰으로 그린다. Uppy Dashboard는 쓰지 않는다.

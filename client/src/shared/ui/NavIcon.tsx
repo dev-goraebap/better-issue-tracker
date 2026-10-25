@@ -3,6 +3,7 @@ import {
   ChevronDown, ChevronLeft, ChevronRight, ChevronsUpDown, CircleCheck, CircleDot, Clock, Copy, Ellipsis, File, FileText, Filter, Flag, Folder, GitBranch, GripVertical, Hash, House,
   Inbox, KanbanSquare, LayoutGrid, LayoutList, Link, ListFilter, ListTodo, Lock, LogOut, Mail, Maximize2, MessageSquare, Milestone, PanelLeft, Paperclip,
   Pencil, Plus, RefreshCw, Repeat, Rows3, Scale, Search, Settings, Shield, SlidersHorizontal, Sparkles, Table2, Tag, Trash2, User, Users, Workflow, X,
+  ArrowUp, Bold, Code, Heading1, Heading2, Heading3, Italic, List, ListChecks, ListOrdered, Minus, Redo2, SquareCode, Strikethrough, TextQuote, Type, Undo2, Unlink,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -74,6 +75,25 @@ const icons: Record<string, LucideIcon> = {
   key: Hash,
   agent: Sparkles,
   'filter-funnel': Filter,
+  // The editor's blocks and marks (markdown-editor).
+  type: Type,
+  'heading-1': Heading1,
+  'heading-2': Heading2,
+  'heading-3': Heading3,
+  'list-bullet': List,
+  'list-ordered': ListOrdered,
+  'list-todo': ListChecks,
+  quote: TextQuote,
+  'square-code': SquareCode,
+  minus: Minus,
+  bold: Bold,
+  italic: Italic,
+  strike: Strikethrough,
+  code: Code,
+  undo: Undo2,
+  redo: Redo2,
+  unlink: Unlink,
+  send: ArrowUp,
 };
 
 /** A menu or action icon by name; an unknown name draws a plain file rather than nothing. */

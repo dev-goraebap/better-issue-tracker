@@ -5,7 +5,7 @@ import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-quer
 import { useRouter } from '@tanstack/react-router';
 import { MOBILE_QUERY } from '@/shared/config';
 import { authError } from '@/shared/api';
-import { BackLink, DuePicker, FormMessage, NavIcon, PageFoot, PageFrame, PropertyPicker, usePanelSurface } from '@/shared/ui';
+import { BackLink, DuePicker, FormMessage, MarkdownEditor, NavIcon, PageFoot, PageFrame, PropertyPicker, usePanelSurface } from '@/shared/ui';
 import { labelsQuery } from '@/entities/label';
 import { columnsQuery, ProjectMark, projectsQuery, type BoardColumn, type Project } from '@/entities/project';
 import { useMembers } from '@/entities/workspace';
@@ -81,8 +81,9 @@ export function NewIssue({ workspaceId, projectId, status }: { workspaceId: stri
       options={projects.map(each => ({ value: each.id, label: each.name, icon: mark(each) }))} />;
   const titleField = <input ref={titleBox} className={styles.title} value={draft.title} placeholder="이슈 제목" aria-label="이슈 제목" autoFocus data-autofocus
     onChange={event => set({ title: event.target.value })} />;
-  const descriptionField = <textarea className={styles.description} value={draft.body} placeholder="설명을 덧붙이세요…" aria-label="설명" rows={panel ? 3 : 8}
-    onChange={event => set({ body: event.target.value })} />;
+  const descriptionField = <div className={styles.description}>
+    <MarkdownEditor value={draft.body} label="설명" placeholder="설명을 덧붙이세요… ( / 로 블록)" minHeight={panel ? '3.5rem' : '12rem'} onChange={body => set({ body })} />
+  </div>;
   // On the page the project leads the pills, the head being the page's own title.
   const properties = (lead?: ReactNode) => <div className={styles.pills} role="group" aria-label="속성">
     {lead}

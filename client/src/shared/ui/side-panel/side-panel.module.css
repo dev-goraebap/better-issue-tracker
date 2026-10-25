@@ -5,12 +5,13 @@
  * everything under it, on a hairline with 16px corners and the dialog's shadow.
  * Its height is set in pixels by useModalHeight (at least 560px, or 440px
  * compact; at most 90% of the window) and eases when it changes; the frame inside fills it, so short content sits at
- * the top of the body and the footer stays at the foot.
+ * the top of the body and the footer stays at the foot. It rises in filling backwards only: a transform kept after the
+ * rise would make the modal the frame of what is fixed inside it (the editor's '/' menu), placing that off the caret.
  */
 .modal { position: fixed; inset: 0; display: flex; flex-direction: column; box-sizing: border-box; inline-size: min(832px, 100vw - 48px); max-inline-size: none;
   max-block-size: 90dvh; margin: auto; padding: 0; overflow: hidden; outline: none; color: var(--color-text-primary); background: var(--color-background-surface);
   border: 1px solid var(--bit-float-border); border-radius: 1rem; box-shadow: var(--shadow-high);
-  transition: height var(--duration-fast-max, 230ms) var(--ease-standard, ease-out); animation: modal-rise var(--duration-fast, 175ms) var(--ease-standard, ease-out) both; }
+  transition: height var(--duration-fast-max, 230ms) var(--ease-standard, ease-out); animation: modal-rise var(--duration-fast, 175ms) var(--ease-standard, ease-out) backwards; }
 .modal::backdrop { background: var(--color-overlay); animation: modal-fade var(--duration-fast, 175ms) ease-out both; }
 .modal:not([open]) { display: none; }
 .modal[data-size="compact"] { inline-size: min(560px, 100vw - 48px); }
