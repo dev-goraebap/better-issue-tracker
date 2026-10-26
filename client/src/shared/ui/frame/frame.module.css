@@ -10,6 +10,10 @@
 .title[data-wraps] { white-space: normal; word-break: keep-all; overflow-wrap: anywhere; }
 .actions { display: flex; align-items: center; gap: var(--spacing-1); }
 .close { display: inline-flex; }
+/* A panel's head (a detail's modal): its actions, 크게 보기 and close one set of 24px buttons with 16px icons, the expand
+   arrows a step smaller because they reach their box's corners (as 새 이슈's head). */
+.head[data-full] .actions svg, .head[data-full] .close svg { inline-size: 1rem; block-size: 1rem; }
+.head[data-full] .actions svg:global(.lucide-maximize-2) { inline-size: 0.875rem; block-size: 0.875rem; }
 .body { flex: 1; min-block-size: 0; padding: var(--spacing-4) var(--spacing-6); overflow-y: auto; }
 .foot { position: sticky; bottom: 0; display: flex; align-items: center; justify-content: space-between; gap: var(--spacing-2);
   padding: var(--spacing-4) var(--spacing-6); padding-block-end: max(var(--spacing-4), env(safe-area-inset-bottom));

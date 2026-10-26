@@ -1,7 +1,9 @@
 package io.github.goraebap.bit.module.view.application;
 
+import io.github.goraebap.bit.module.project.ProjectFacade;
 import io.github.goraebap.bit.module.view.ViewFacade;
 import io.github.goraebap.bit.module.view.domain.IssueView;
+import io.github.goraebap.bit.module.view.domain.ViewOrder;
 import io.github.goraebap.bit.module.view.domain.ViewRepository;
 import io.github.goraebap.bit.module.view.domain.ViewTweak;
 import io.github.goraebap.bit.module.workspace.WorkspaceCreatedEvent;
@@ -10,9 +12,11 @@ import io.github.goraebap.bit.shared.domain.Ids;
 import io.github.goraebap.bit.shared.error.CommonErrorCode;
 import io.github.goraebap.bit.shared.web.CurrentUser;
 import java.time.Clock;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -25,6 +29,7 @@ import org.springframework.transaction.event.TransactionalEventListener;
 public class ViewService implements ViewFacade {
     private final ViewRepository viewRepository;
     private final WorkspaceFacade workspaceFacade;
+    private final ProjectFacade projectFacade;
     private final Clock clock;
 
     @Override
@@ -64,6 +69,41 @@ public class ViewService implements ViewFacade {
                 .filter(t -> keys.contains(t.viewKey()))
                 .map(t -> new ViewViews.Tweak(t.viewKey(), t.layout(), sort(t.sort()), t.columns()))
                 .toList();
+    }
+
+    /** Each scope's order as the caller sees it: the views out of their sight are left out. */
+    @Transactional(readOnly = true)
+    public List<ViewViews.Order> orders(CurrentUser actor, String workspaceId) {
+        workspaceFacade.requireAccess(actor, workspaceId, WorkspaceFacade.Action.READ);
+        var seen = visibleKeys(workspaceId, actor.userId());
+        return viewRepository.findOrders(workspaceId).stream()
+                .map(order -> new ViewViews.Order(
+                        order.scope(),
+                        order.viewKeys().stream().filter(seen::contains).toList()))
+                .toList();
+    }
+
+    /**
+     * Puts a scope's views in a new order, its first the scope's default (D-088). The home's is the workspace's to
+     * set, so its admins'; a project's is the project's managers'. Only views the caller sees may be named; those it
+     * cannot see (another member's personal views) keep their places after them.
+     */
+    @Transactional
+    public void putOrder(CurrentUser actor, String workspaceId, String scope, ViewRequests.PutOrder request) {
+        if (!ViewOrder.validScope(scope)) throw ViewErrorCode.VIEW_NOT_FOUND.raise();
+        if (ViewOrder.HOME.equals(scope))
+            workspaceFacade.requireAccess(actor, workspaceId, WorkspaceFacade.Action.EDIT_SETTINGS);
+        else projectFacade.requireSettings(actor, workspaceId, scope, false, false);
+        var seen = visibleKeys(workspaceId, actor.userId());
+        var keys = request.viewKeys();
+        if (!ViewOrder.validKeys(keys) || !seen.containsAll(keys)) throw ViewErrorCode.VIEW_ORDER_INVALID.raise();
+        var next = new ArrayList<>(keys);
+        viewRepository.findOrder(workspaceId, scope).ifPresent(before -> before.viewKeys().stream()
+                .filter(key -> !seen.contains(key))
+                .forEach(next::add));
+        if (next.size() > ViewOrder.MAX_KEYS) throw ViewErrorCode.VIEW_ORDER_INVALID.raise();
+        viewRepository.saveOrder(
+                new ViewOrder(workspaceId, scope, next, clock.instant(), actor.userId(), agent(actor)));
     }
 
     @Transactional
@@ -153,6 +193,14 @@ public class ViewService implements ViewFacade {
     public void seed(WorkspaceCreatedEvent event) {
         viewRepository.saveAll(
                 IssueView.starters(event.workspaceId(), event.actorId(), event.actorAgent(), event.occurredAt()));
+    }
+
+    /** 전체 이슈 and the views the user sees, by key. */
+    private Set<String> visibleKeys(String workspaceId, String userId) {
+        var keys = new HashSet<String>();
+        keys.add(IssueView.ALL);
+        viewRepository.findAllVisible(workspaceId, userId).forEach(view -> keys.add(view.id()));
+        return keys;
     }
 
     private record Rights(String me, boolean writer, boolean admin) {

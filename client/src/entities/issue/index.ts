@@ -7,12 +7,13 @@ export { CATEGORIES, CATEGORY_LABELS, categoryOf, issueHref, PRIORITY_RANK, span
 export { ISSUE_TEMPLATES, templateLabel, type IssueTemplate } from './model/templates';
 export { parseIssueSearch, parseNewIssueSearch, type IssueSearch, type NewIssueSearch } from './model/search';
 export {
-  ALL_VIEW, addView, effectiveView, FILTER_KEYS, filterIssues, NO_FILTER, removeView, setViewTweak, updateView, useViews, useViewTweak,
+  ALL_VIEW, addView, effectiveView, FILTER_KEYS, filterIssues, HOME_SCOPE, NO_FILTER, removeView, setViewOrder, setViewTweak, updateView, useViews, useViewTweak,
   VIEW_COLUMNS, VIEW_ICONS, VIEW_LAYOUTS, VIEW_SORT_KEYS, type IssueView, type ViewColumn, type ViewFilters, type ViewLayout, type ViewSearch,
   type ViewSort, type ViewTweak,
 } from './model/views';
+export { orderViews } from './model/view-order';
 export { scopeItemsQuery, useScopeItems } from './model/use-scope-items';
-export { tweaksQuery, viewsQuery } from './api/view';
+export { tweaksQuery, viewOrdersQuery, viewsQuery } from './api/view';
 export { StatusBadge } from './ui/StatusBadge';
 export { PriorityMark } from './ui/PriorityMark';
 export { LabelTokens } from './ui/LabelTokens';

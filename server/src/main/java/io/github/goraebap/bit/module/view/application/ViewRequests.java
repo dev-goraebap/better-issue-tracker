@@ -2,6 +2,7 @@ package io.github.goraebap.bit.module.view.application;
 
 import com.fasterxml.jackson.annotation.JsonAnySetter;
 import io.github.goraebap.bit.module.view.domain.IssueView;
+import io.github.goraebap.bit.module.view.domain.ViewOrder;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -206,6 +207,16 @@ public final class ViewRequests {
         @JsonAnySetter
         public void unknown(String key, Object value) {
             throw new IllegalArgumentException("Unsupported view field");
+        }
+    }
+
+    /** A scope's views in their new order; a view left out follows them in the workspace's order (D-088). */
+    @Schema(name = "PutIssueViewOrder")
+    public record PutOrder(
+            @NotNull @Size(max = ViewOrder.MAX_KEYS) @Schema(description = "View ids, and all for 전체 이슈")
+            List<String> viewKeys) {
+        public PutOrder {
+            viewKeys = viewKeys == null ? null : Collections.unmodifiableList(new ArrayList<>(viewKeys));
         }
     }
 

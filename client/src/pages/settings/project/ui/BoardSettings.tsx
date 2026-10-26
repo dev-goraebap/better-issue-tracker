@@ -2,19 +2,20 @@ import { useState } from 'react';
 import { Button, VStack } from '@astryxdesign/core';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { authError } from '@/shared/api';
+import { rowReorderStyles as rows, useRowReorder } from '@/shared/lib/row-reorder';
 import { CompactDialog, FormMessage, NavIcon, QueryMessage, Select, SettingsAction, SettingsCard, SettingsHead, SettingsRow, StatusToken } from '@/shared/ui';
 import { columnsQuery, deleteColumn, projectQuery, refreshProjects, reorderColumns, type BoardColumn, type Project } from '@/entities/project';
 import { CATEGORY_LABELS, StatusBadge } from '@/entities/issue';
 import { ColumnDialog } from './ColumnDialog';
-import { useColumnReorder } from './useColumnReorder';
 import styles from './project-settings.module.css';
 
 const BACKLOG = 'backlog';
+const COLUMN = { word: '칸', object: '칸을', topic: '칸은' };
 
 /**
  * 보드 칸: the project's board columns in order, each its category's mark, name and category, the one that finishes work
  * marked (D-049: at least one, and never the last column removed). A column is put in its place by its grip
- * (useColumnReorder: carried by mouse or finger, or Alt + ↑ / ↓). 새 칸 and 고치기 open the same short dialog; 삭제 asks
+ * (useRowReorder: carried by mouse or finger, or Alt + ↑ / ↓). 새 칸 and 고치기 open the same short dialog; 삭제 asks
  * where the column's issues go (another column, or 상태 없음).
  */
 export function BoardSettings({ project, canManage }: { project: Project; canManage: boolean }) {
@@ -28,7 +29,7 @@ export function BoardSettings({ project, canManage }: { project: Project; canMan
   const editable = canManage && !project.archivedAt;
   const list = [...(columns.data ?? [])].sort((a, b) => a.position - b.position);
   // Each order goes with the project's version as last read: one saved before it has moved that on.
-  const reorder = useColumnReorder(list, styles.ghost, async order => {
+  const reorder = useRowReorder(list, COLUMN, rows.ghost, async order => {
     setError('');
     const version = client.getQueryData(projectQuery(project.workspaceId, project.id).queryKey)?.version ?? project.version;
     try { await reorderColumns(project.workspaceId, project.id, version, order); }
@@ -49,10 +50,10 @@ export function BoardSettings({ project, canManage }: { project: Project; canMan
     {!columns.data ? <QueryMessage pending={columns.isPending} error={columns.error} retry={() => { void columns.refetch(); }} />
       : <SettingsCard title={`칸 ${list.length}개`} id="board-columns"
         actions={editable ? <Button label="새 칸" variant="secondary" size="sm" icon={<NavIcon name="plus" />} onClick={() => setEditing('new')} /> : undefined}>
-        <div ref={reorder.list} className={styles.columns} role="list" aria-label="보드 칸 순서">
-          {shown.map(column => <div key={column.id} className={styles.column} role="listitem" {...reorder.rowProps(column.id)}>
+        <div ref={reorder.list} className={rows.list} role="list" aria-label="보드 칸 순서">
+          {shown.map(column => <div key={column.id} className={rows.row} role="listitem" {...reorder.rowProps(column.id)}>
             <SettingsRow lead={<span className={styles.lead}>
-              {editable && <button type="button" className={styles.grip} {...reorder.gripProps(column)}><NavIcon name="grip" /></button>}
+              {editable && <button type="button" className={rows.grip} {...reorder.gripProps(column)}><NavIcon name="grip" /></button>}
               <StatusBadge category={column.category} isLabelHidden />
             </span>}
             label={<>{column.name}{column.isFinal && <> <StatusToken label="완료 칸" color="green" /></>}</>} description={CATEGORY_LABELS[column.category]}>

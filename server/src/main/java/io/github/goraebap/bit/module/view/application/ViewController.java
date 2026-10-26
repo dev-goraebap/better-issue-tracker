@@ -68,6 +68,21 @@ class ViewController {
         return ResponseEntity.noContent().build();
     }
 
+    @GetMapping("/view-orders")
+    List<ViewViews.Order> orders(@AuthenticationPrincipal CurrentUser actor, @PathVariable String workspaceId) {
+        return viewService.orders(actor, workspaceId);
+    }
+
+    @PutMapping("/view-orders/{scope}")
+    ResponseEntity<Void> putOrder(
+            @AuthenticationPrincipal CurrentUser actor,
+            @PathVariable String workspaceId,
+            @PathVariable String scope,
+            @Valid @RequestBody ViewRequests.PutOrder request) {
+        viewService.putOrder(actor, workspaceId, scope, request);
+        return ResponseEntity.noContent().build();
+    }
+
     @GetMapping("/view-tweaks")
     List<ViewViews.Tweak> tweaks(@AuthenticationPrincipal CurrentUser actor, @PathVariable String workspaceId) {
         return viewService.tweaks(actor, workspaceId);

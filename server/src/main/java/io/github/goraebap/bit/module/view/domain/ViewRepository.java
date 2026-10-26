@@ -23,4 +23,11 @@ public interface ViewRepository {
     void deleteTweak(String workspaceId, String userId, String viewKey);
 
     void deleteAllTweaksByViewKey(String workspaceId, String viewKey);
+
+    /** Each scope's own order of the views (D-088), the home's and the projects' that have one. */
+    List<ViewOrder> findOrders(String workspaceId);
+
+    Optional<ViewOrder> findOrder(String workspaceId, String scope);
+
+    void saveOrder(ViewOrder order);
 }

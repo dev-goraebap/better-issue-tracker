@@ -10,14 +10,15 @@ import { PanelHostContext, useScreenPanel, withoutPanel } from '@/shared/lib/rou
 import { ConfirmDialog, PageFrame, PageState, RequestBoundary, RoutedPanel } from '@/shared/ui';
 import { labelsQuery } from '@/entities/label';
 import { columnsQuery, projectQuery, projectsQuery } from '@/entities/project';
-import { canWrite as canWriteIn, useMembers, workspaceQuery } from '@/entities/workspace';
+import { canManage, canWrite as canWriteIn, useMembers, workspaceQuery } from '@/entities/workspace';
 import {
-  ALL_VIEW, addView, effectiveView, removeView, updateView, useScopeItems, useViews, useViewTweak, type IssueSearch,
+  addView, effectiveView, HOME_SCOPE, removeView, updateView, useScopeItems, useViews, useViewTweak, type IssueSearch,
 } from '@/entities/issue';
 import type { Scope } from '../model/scope';
 import { IssuePanel, ISSUE_PATH, NEW_PATH } from './IssuePanel';
 import { IssuesView } from './IssuesView';
 import { ViewEditor, type ViewDraft } from './ViewEditor';
+import { ViewOrderDialog } from './ViewOrderDialog';
 import { ViewTabs } from './ViewTabs';
 
 type Editing = { mode: 'create' | 'edit'; initial: ViewDraft };
@@ -27,9 +28,10 @@ type Editing = { mode: 'create' | 'edit'; initial: ViewDraft };
  * seen through views the members make (D-066, D-068), read from the server: every live issue of the scope at once
  * (useScopeItems), filtered, ordered and grouped on the page.
  *
- * - The scope is the trail's switcher (전체 or a project); the views are the workspace's, the same in either scope,
- *   their chips in the tab row (ViewTabs) with 전체 이슈 first, the + to make one and the view's menu to change, copy or
- *   remove it. The view in sight is the address's (v; 전체 이슈 when left out).
+ * - The views are the workspace's, the same in either scope, but each scope (홈, each project) keeps its own order of
+ *   them and its first is the scope's default (D-088): their chips in the tab row (ViewTabs), the + to make one, 뷰 순서
+ *   for the workspace's admins, and the view's menu to change, copy or remove it. The view in sight is the address's
+ *   (v; the scope's default when left out, which is where the trail's 홈 or project name leads).
  * - A new view takes the list's conditions as they stand; its card (ViewEditor) opens over the list, as Linear's.
  * - 새 이슈 (the toolbar's action, a board lane's +, or the C key) opens at its own address in a modal near the top
  *   (NewIssue, D-070): …/issues/new in a project, …/issues/new in 전체, ?status= from a lane's +.
@@ -55,14 +57,16 @@ export function IssuesPage() {
   const scopeItems = useScopeItems(workspaceId, projectId);
   const client = useQueryClient();
   const toast = useToast();
-  const views = useViews(workspaceId);
-  const view = views.find(each => each.id === (search.v ?? ALL_VIEW)) ?? views[0]!;
+  const viewScope = projectId ?? HOME_SCOPE;
+  const views = useViews(workspaceId, viewScope);
+  const view = views.find(each => each.id === search.v) ?? views[0]!;
   const tweak = useViewTweak(workspaceId, view.id);
   const effective = useMemo(() => effectiveView(view, tweak, search), [view, tweak, search]);
   const canWrite = canWriteIn(role);
   const scope: Scope = { workspaceId, project: project.data, projects, firstProject: project.data ?? projects[0], columns, me, role, canWrite };
   const [editing, setEditing] = useState<Editing | null>(null);
   const [isRemoving, setRemoving] = useState(false);
+  const [isOrdering, setOrdering] = useState(false);
   // The page in view (전체 or the project) with its address's conditions changed, or a view's fresh start.
   const place = useCallback((next: IssueSearch, replace = false) => {
     if (projectId) void navigate({ to: '/workspaces/$workspaceId/projects/$projectId', params: { workspaceId, projectId }, search: next, replace });
@@ -70,7 +74,8 @@ export function IssuesPage() {
   }, [navigate, workspaceId, projectId]);
   const go = useCallback((patch: Partial<IssueSearch>, replace = false) => place(
     Object.fromEntries(Object.entries({ ...search, ...patch }).filter(([, value]) => value !== undefined)) as IssueSearch, replace), [place, search]);
-  const pick = (id: string) => { setEditing(null); place(id === ALL_VIEW ? {} : { v: id }); };
+  // The scope's default view keeps the bare address, so the trail's link and the first chip are one place.
+  const pick = (id: string) => { setEditing(null); place(id === views[0]!.id ? {} : { v: id }); };
   // 새 이슈 at its address: the project's, or 전체's; a board lane's + says where it starts.
   const openNew = (status?: string) => {
     if (!canWrite) return;
@@ -114,6 +119,7 @@ export function IssuesPage() {
   const panelPath = fullSearch.panel?.split('?')[0] ?? '';
   return <PanelHostContext.Provider value={host}><PageFrame title={project.data?.name ?? '홈'} icon={projectId ? 'board' : 'home'} chrome="header"
     tabs={<ViewTabs views={views} value={view.id} panelId={panelId} onPick={pick} onCreate={startCreate} onCopy={copy} onRemove={() => setRemoving(true)}
+      onOrder={canManage(role) ? () => setOrdering(true) : undefined}
       onEdit={() => setEditing({ mode: 'edit', initial: { name: view.name, description: view.description ?? '', icon: view.icon, color: view.color, isPersonal: view.isPersonal } })} />}>
     <div role="tabpanel" id={panelId} onClickCapture={peek}>
       {editing && <ViewEditor key={`${editing.mode}-${view.id}`} initial={editing.initial} mode={editing.mode} onCancel={() => setEditing(null)} onSave={saveView} />}
@@ -124,6 +130,7 @@ export function IssuesPage() {
     </div>
     {fullSearch.panel && <RoutedPanel label={NEW_PATH.test(panelPath) ? '새 이슈' : '이슈'} href={fullSearch.panel} depth={depth} host={host}
       size={NEW_PATH.test(panelPath) ? 'form' : 'content'}><IssuePanel href={fullSearch.panel} /></RoutedPanel>}
+    {isOrdering && <ViewOrderDialog workspaceId={workspaceId} scope={viewScope} scopeName={project.data?.name ?? '홈'} views={views} onClose={() => setOrdering(false)} />}
     {isRemoving && <ConfirmDialog title={`'${view.name}' 뷰를 지울까요?`} description={view.isPersonal ? '나만 보던 뷰가 사라집니다. 이슈는 그대로 남습니다.' : '워크스페이스의 모두에게서 이 뷰가 사라집니다. 이슈는 그대로 남습니다.'}
       confirmLabel="지우기" variant="destructive" onClose={() => setRemoving(false)}
       onConfirm={() => { setRemoving(false); void removeView(client, view).then(() => place({})).catch(failure => toast({ body: authError(failure) })); }} />}

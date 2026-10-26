@@ -10,6 +10,12 @@
 .spoken { position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .personal { display: inline-flex; margin-inline-start: 0.125rem; color: var(--color-icon-secondary); }
 .personal svg { inline-size: 0.75rem !important; block-size: 0.75rem !important; }
+/* 뷰 순서 (ViewOrderDialog): a row is its grip, the view's mark in its colour, its name, and 기본 on the first. */
+.order { margin-inline: calc(-1 * var(--spacing-2)); }
+.orderRow { display: flex; align-items: center; gap: var(--spacing-2); min-block-size: 2.5rem; padding-inline: var(--spacing-1); }
+.orderMark { display: inline-flex; }
+.orderMark svg { inline-size: 1rem; block-size: 1rem; }
+.orderName { flex: 1 1 auto; min-inline-size: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.8125rem; }
 .labelDot { display: inline-block; inline-size: 0.5rem; block-size: 0.5rem; border-radius: 50%; }
 
 /* The card: the view's mark, its name over its description, then 나만 보기, 취소 and the save; a hairline under it. */

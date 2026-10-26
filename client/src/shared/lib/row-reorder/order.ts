@@ -1,5 +1,5 @@
-// Ordering a project's board columns by hand (BoardSettings): where a carried column lands among the others, by
-// pointer or by Alt + arrow. A place counts among the other columns, so the carried one never takes one.
+// Ordering rows by hand (useRowReorder: a project's board columns, a scope's views): where a carried row lands among the
+// others, by pointer or by Alt + arrow. A place counts among the other rows, so the carried one never takes one.
 
 /** The order with the column taken out and put back at the place among the others (kept in range). */
 export function placeAt(order: readonly string[], id: string, index: number): string[] {

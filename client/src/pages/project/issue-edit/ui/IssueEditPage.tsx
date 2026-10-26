@@ -6,8 +6,8 @@ import { EditForm } from './EditForm';
 
 /**
  * PATTERN · 작성 양식, /workspaces/$workspaceId/projects/$projectId/issues/$issueId/edit. Editing one item's words on its own
- * address (not in a dialog): the title and the description. Its properties change in place on the issue (IssueDetail);
- * making one is 새 이슈 at its own address (NewIssue, D-070).
+ * address (not in a dialog): the title, the description and the properties, the issue's detail only reading them
+ * (BIT-22); making one is 새 이슈 at its own address (NewIssue, D-070), whose page this one is drawn as.
  *
  * - PageFrame width="narrow" with back: a phone gives the form the whole screen, no tab bar.
  * - The foot row is PageFoot: 취소 at its start, 저장 at its end, pointing at the form by id (form={formId}).

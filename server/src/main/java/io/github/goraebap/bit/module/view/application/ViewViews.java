@@ -74,6 +74,23 @@ public final class ViewViews {
         }
     }
 
+    /**
+     * A scope's order of the views (D-088): home's or a project's (its id), the views the caller sees in it, first the
+     * scope's default. A view not in it follows in the workspace's order.
+     */
+    @Schema(
+            name = "IssueViewOrder",
+            requiredProperties = {"scope", "viewKeys"})
+    public record Order(
+            @Schema(description = "home, or a project id") String scope,
+
+            @Schema(description = "View ids, and all for 전체 이슈")
+            List<String> viewKeys) {
+        public Order {
+            viewKeys = List.copyOf(viewKeys);
+        }
+    }
+
     /** The caller's own adjustments to a view; a part left out follows the view. */
     @Schema(
             name = "IssueViewTweak",

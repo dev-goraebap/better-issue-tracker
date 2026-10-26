@@ -1,6 +1,6 @@
 import { useEffect, useEffectEvent, useId, useLayoutEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type MouseEvent as ReactMouseEvent, type PointerEvent as ReactPointerEvent } from 'react';
 import { flushSync } from 'react-dom';
-import { placeAt, placeFor, stepBy } from '../model/column-order';
+import { placeAt, placeFor, stepBy } from './order';
 
 /** A press on a grip that moves this many pixels picks the row up; less is nothing. */
 const THRESHOLD = 4;
@@ -13,6 +13,8 @@ const SETTLE_MS = 220;
 const EASE = 'cubic-bezier(0.2, 0, 0, 1)';
 
 type Row = { id: string; name: string };
+/** What a row is called in what is read out: its word, and that word with 을/를 and 은/는 (칸: 칸을, 칸은). */
+export type RowNoun = { word: string; object: string; topic: string };
 type Carry = { id: string; isSettling: boolean };
 type Press = { id: string; pointerId: number; isTouch: boolean; x: number; y: number };
 type Ghost = { element: HTMLElement; dx: number; dy: number; height: number };
@@ -30,13 +32,13 @@ function scrollParent(element: HTMLElement): HTMLElement {
 }
 
 /**
- * Ordering rows by their grips, as a board's cards are carried (useBoardMove): a mouse, pen or finger on a grip lifts
+ * Ordering rows by their grips (a board's columns, a scope's views), as a board's cards are carried (useBoardMove): a mouse, pen or finger on a grip lifts
  * the row as a tilted copy that follows it while the row's place shows as an empty slot the others slide out of the way
  * of; letting go settles the copy into the slot, and Escape puts it back. With a grip focused, Alt + ↑ / ↓ moves the
  * row a place (D-080). The new order shows at once and is sent (send, one at a time, the latest wins); a refused one
  * shows the saved order again. Each step is read out. A reduced-motion setting keeps the order but drops the motion.
  */
-export function useColumnReorder(rows: readonly Row[], ghostClass: string, send: (order: string[]) => Promise<void>, onError: (failure: unknown) => void) {
+export function useRowReorder(rows: readonly Row[], noun: RowNoun, ghostClass: string, send: (order: string[]) => Promise<void>, onError: (failure: unknown) => void) {
   const list = useRef<HTMLDivElement>(null);
   const hint = useId();
   // The order just made, shown while carrying and until the saved one comes back.
@@ -109,10 +111,10 @@ export function useColumnReorder(rows: readonly Row[], ghostClass: string, send:
     flushSync(() => setMoved(next));
     settle(now.id);
     if (next.join() !== start.current.join()) {
-      setSaid(`'${nameOf(now.id)}' 칸을 ${next.indexOf(now.id) + 1}번째에 놓았습니다.`);
+      setSaid(`'${nameOf(now.id)}' ${noun.object} ${next.indexOf(now.id) + 1}번째에 놓았습니다.`);
       void commit(next);
     } else {
-      setSaid(`'${nameOf(now.id)}' 칸을 제자리에 두었습니다.`);
+      setSaid(`'${nameOf(now.id)}' ${noun.object} 제자리에 두었습니다.`);
       if (!isSending.current) setMoved(null);
     }
   };
@@ -161,7 +163,7 @@ export function useColumnReorder(rows: readonly Row[], ghostClass: string, send:
     grabbing(true);
     show(live.current);
     put({ id: at.id, isSettling: false });
-    setSaid(`'${nameOf(at.id)}' 칸을 집었습니다. ${live.current.indexOf(at.id) + 1}번째.`);
+    setSaid(`'${nameOf(at.id)}' ${noun.object} 집었습니다. ${live.current.indexOf(at.id) + 1}번째.`);
   };
 
   const onPointerMove = useEffectEvent((event: PointerEvent) => {
@@ -260,9 +262,9 @@ export function useColumnReorder(rows: readonly Row[], ghostClass: string, send:
     if (carried.current) return;
     const next = stepBy(live.current, id, event.key === 'ArrowUp' ? -1 : 1);
     const name = nameOf(id);
-    if (next.join() === live.current.join()) { setSaid(`'${name}' 칸은 이미 ${event.key === 'ArrowUp' ? '맨 위' : '맨 아래'}입니다.`); return; }
+    if (next.join() === live.current.join()) { setSaid(`'${name}' ${noun.topic} 이미 ${event.key === 'ArrowUp' ? '맨 위' : '맨 아래'}입니다.`); return; }
     keepsFocus.current = id;
-    setSaid(`'${name}' 칸을 ${next.indexOf(id) + 1}번째로 옮겼습니다.`);
+    setSaid(`'${name}' ${noun.object} ${next.indexOf(id) + 1}번째로 옮겼습니다.`);
     void commit(next);
   };
 
@@ -280,7 +282,7 @@ export function useColumnReorder(rows: readonly Row[], ghostClass: string, send:
     /** What a row's grip takes: the hands that carry it and what it says to a screen reader. */
     gripProps: (row: Row) => ({
       'data-grip': true,
-      'aria-label': `${row.name} 칸 순서 바꾸기`,
+      'aria-label': `${row.name} ${noun.word} 순서 바꾸기`,
       'aria-describedby': hint,
       title: '끌거나 Alt + ↑/↓로 순서를 바꿉니다',
       onPointerDown: (event: ReactPointerEvent<HTMLElement>) => onPointerDown(event, row.id),
