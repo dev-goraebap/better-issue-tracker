@@ -40,7 +40,8 @@ BIT/
  ├─ docs/              기획·결정 문서 (도그푸딩 전까지)
  ├─ deploy/            compose 파일
  ├─ scripts/           sync-skills.mjs 등
- ├─ .agents/skills/    에이전트 스킬 원본
+ ├─ .agents/skills/    에이전트 스킬 원본 (배포 스킬 설치본은 gitignore)
+ ├─ skills/           BIT가 배포하는 스킬 원본 (better-issue-tracker)
  ├─ Dockerfile         3단계 빌드 (node → jdk → jre)
  └─ dev.sh             로컬 실행
 ```
@@ -143,6 +144,7 @@ SandboxHr `AGENTS.md`, `skill-repair` 스킬, `scripts/sync-skills.mjs`를 그�
 
 - **원본과 사본**: `.agents/skills/`가 원본(다른 에이전트도 읽음), `.claude/skills/`는 사본이며 손으로 고치지 않는다.
   SessionStart 훅이 `scripts/sync-skills.mjs`로 동기화한다. `.claude/*`는 `settings.json`만 커밋, `skills-lock.json`은 gitignore.
+- **배포하는 스킬**: BIT가 사용자에게 주는 스킬(`skills/better-issue-tracker/`)은 `skills/`가 원본이다. 같은 스크립트가 `.agents/skills/`에 설치하고 거기서 `.claude/skills/`로 복사한다. 설치본은 gitignore라 원본은 한 곳뿐이고, 고칠 때는 `skills/`를 고친다.
 - **스킬 하나의 구조**
   - `SKILL.md`: 프론트매터 `name` + 실제 요청 문구가 든 `description`. 본문은 짧은 규칙, "작업 → 참고 파일" 표, 반증 가능한 완료 기준,
     마지막 줄 "결과가 틀리면 `skill-repair`로 이 스킬을 고친다".

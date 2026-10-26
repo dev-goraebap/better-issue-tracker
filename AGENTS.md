@@ -30,6 +30,7 @@ AI 네이티브 경량 ALM(Application Lifecycle Management). 제품 가칭은 b
 | `docs/08-design-language.md` | 디자인 언어: 리니어를 직접 재서 정리한 크기·색·부품과 BIT 적용 기준 |
 | `docs/tasks/` | 코드 작업 지시서 (Codex에게 넘기는 단위, D-033) |
 | `.agents/skills/` | 작업 방식 스킬 원본 (`bit-*` 등). `.claude/skills`는 사본 |
+| `skills/` | BIT가 배포하는 스킬 원본 (`better-issue-tracker`). `.agents/skills`·`.claude/skills`의 설치본은 gitignore |
 | `docs/conventions.md` | 기술 스택, 코드 구조, 에이전트 스킬 관리 방법 (SandboxHr 기준) |
 | `docs/decisions.md` | 지금까지의 결정 기록 (이 프로젝트도 자기 방식대로 기록한다) |
 | `docs/open-questions.md` | 미결 사항, 다음 할 일 |

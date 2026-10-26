@@ -17,6 +17,8 @@
 .claude/*
 !.claude/settings.json
 skills-lock.json
+# The skills BIT ships (skills/) are installed into .agents/skills by the same script; skills/ is the source.
+.agents/skills/better-issue-tracker/
 
 # Local SQLite database and uploaded files (server/data/bit.db, its WAL files, local object storage).
 server/data/
