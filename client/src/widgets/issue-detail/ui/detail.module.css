@@ -22,7 +22,7 @@
 .made { margin: var(--spacing-5) 0 0; padding-inline: var(--spacing-2); font-size: 0.75rem; color: var(--color-text-secondary); }
 .asideLabels > span { flex-wrap: wrap; }
 .person { display: inline-flex; align-items: center; gap: var(--spacing-1-5, 0.375rem); min-inline-size: 0; }
-.none { color: var(--color-text-secondary); }
+.none { font-size: 0.8125rem; color: var(--color-text-secondary); }
 .key { font-family: var(--font-family-code); font-size: 0.75rem; color: var(--color-text-secondary); }
 /* Sections' lists keep the page's column, not the card's edges. */
 .main ul[aria-label] > li { padding-inline: 0; }
@@ -42,9 +42,6 @@
   .property { min-block-size: 2rem; padding-inline: var(--spacing-3); background: var(--color-background-muted); }
   .asideLabels { display: flex; align-items: center; padding-inline: 0; }
 }
-/* The description written in place: the editor fills the column; 저장 중 / 저장됨 sits at the section head's end. */
-.description { position: relative; }
-.saveState { position: absolute; inset-block-start: -1.75rem; inset-inline-end: 0; font-size: 0.75rem; color: var(--color-text-disabled); }
 /* With a repository connected and nothing linked yet, how to link the work (D-087). */
 .codeHint { margin: 0; padding: var(--spacing-1) var(--spacing-2); font-size: 0.8125rem; line-height: 1.5; color: var(--color-text-secondary); }
 .codeHint code { font-family: var(--font-family-mono, ui-monospace, monospace); font-size: 0.75rem; color: var(--color-text-primary); }
