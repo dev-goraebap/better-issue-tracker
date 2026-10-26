@@ -1,29 +1,29 @@
 package io.github.goraebap.bit.module.link.domain;
 
 import io.github.goraebap.bit.module.link.TargetType;
+import io.github.goraebap.bit.shared.domain.Ids;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Objects;
-import java.util.UUID;
 
 public record Activity(
-        UUID id,
-        UUID workspaceId,
-        UUID projectId,
+        String id,
+        String workspaceId,
+        String projectId,
         TargetType targetType,
-        UUID targetId,
+        String targetId,
         String type,
-        UUID actorId,
+        String actorId,
         String actorAgent,
         String payload,
         Instant occurredAt) {
     public static Activity create(
-            UUID workspaceId,
-            UUID projectId,
+            String workspaceId,
+            String projectId,
             TargetType type,
-            UUID targetId,
+            String targetId,
             String action,
-            UUID actorId,
+            String actorId,
             String actorAgent,
             String payload,
             Instant now) {
@@ -34,7 +34,7 @@ public record Activity(
                 || payload.getBytes(StandardCharsets.UTF_8).length > 131072)
             throw new IllegalArgumentException("Invalid activity");
         return new Activity(
-                UUID.randomUUID(),
+                Ids.newId(),
                 Objects.requireNonNull(workspaceId),
                 projectId,
                 Objects.requireNonNull(type),

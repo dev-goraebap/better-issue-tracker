@@ -3,6 +3,7 @@ package io.github.goraebap.bit.module.project.application;
 import io.github.goraebap.bit.module.project.domain.BoardColumn;
 import io.github.goraebap.bit.module.project.domain.ProjectRepository;
 import io.github.goraebap.bit.module.workspace.WorkspaceFacade;
+import io.github.goraebap.bit.shared.domain.Ids;
 import io.github.goraebap.bit.shared.error.CommonErrorCode;
 import io.github.goraebap.bit.shared.web.CurrentUser;
 import io.github.goraebap.bit.shared.web.SecretTokens;
@@ -11,7 +12,6 @@ import java.time.Instant;
 import java.util.Base64;
 import java.util.List;
 import java.util.Set;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,7 +24,7 @@ public class ProjectQueryService {
     private final SecretTokens secretTokens;
 
     @Transactional(readOnly = true)
-    public ProjectViews.ProjectInfo get(CurrentUser actor, UUID workspaceId, UUID projectId) {
+    public ProjectViews.ProjectInfo get(CurrentUser actor, String workspaceId, String projectId) {
         workspaceFacade.requireAccess(actor, workspaceId, WorkspaceFacade.Action.READ);
         var p = projectRepository
                 .findById(workspaceId, projectId, false)
@@ -46,7 +46,7 @@ public class ProjectQueryService {
     @Transactional(readOnly = true)
     public ProjectViews.Projects list(
             CurrentUser actor,
-            UUID workspaceId,
+            String workspaceId,
             String status,
             String q,
             String cursor,
@@ -85,7 +85,7 @@ public class ProjectQueryService {
     }
 
     @Transactional(readOnly = true)
-    public List<ProjectViews.Column> columns(CurrentUser actor, UUID workspaceId, UUID projectId) {
+    public List<ProjectViews.Column> columns(CurrentUser actor, String workspaceId, String projectId) {
         get(actor, workspaceId, projectId);
         return projectRepository.findColumns(projectId).stream()
                 .map(ProjectQueryService::column)
@@ -93,7 +93,7 @@ public class ProjectQueryService {
     }
 
     @Transactional(readOnly = true)
-    public ProjectViews.Column column(CurrentUser actor, UUID workspaceId, UUID projectId, UUID columnId) {
+    public ProjectViews.Column column(CurrentUser actor, String workspaceId, String projectId, String columnId) {
         get(actor, workspaceId, projectId);
         var c = projectRepository
                 .findColumn(projectId, columnId)
@@ -126,7 +126,7 @@ public class ProjectQueryService {
                 a.updatedAt());
     }
 
-    private record Point(Instant time, Integer position, UUID id) {}
+    private record Point(Instant time, Integer position, String id) {}
 
     private static Point decode(String cursor, String scope, boolean byPosition) {
         if (cursor == null) return new Point(null, null, null);
@@ -135,14 +135,14 @@ public class ProjectQueryService {
             String[] parts = new String(Base64.getUrlDecoder().decode(cursor), StandardCharsets.UTF_8).split("\\|", -1);
             if (parts.length != 3 || !parts[0].equals(scope)) throw new IllegalArgumentException("cursor");
             return byPosition
-                    ? new Point(null, Integer.valueOf(parts[1]), UUID.fromString(parts[2]))
-                    : new Point(Instant.parse(parts[1]), null, UUID.fromString(parts[2]));
+                    ? new Point(null, Integer.valueOf(parts[1]), Ids.parse(parts[2]))
+                    : new Point(Instant.parse(parts[1]), null, Ids.parse(parts[2]));
         } catch (IllegalArgumentException | java.time.format.DateTimeParseException invalid) {
             throw CommonErrorCode.COMMON_INVALID_REQUEST.raise();
         }
     }
 
-    private static String encode(String scope, String value, UUID id) {
+    private static String encode(String scope, String value, String id) {
         return Base64.getUrlEncoder()
                 .withoutPadding()
                 .encodeToString((scope + "|" + value + "|" + id).getBytes(StandardCharsets.UTF_8));

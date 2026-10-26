@@ -4,62 +4,61 @@ import io.github.goraebap.bit.shared.domain.Audit;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 public interface ProjectRepository {
-    Optional<Project> findById(UUID workspaceId, UUID projectId, boolean includeDeleted);
+    Optional<Project> findById(String workspaceId, String projectId, boolean includeDeleted);
 
-    Optional<Key> findKey(UUID workspaceId, String key);
+    Optional<Key> findKey(String workspaceId, String key);
 
-    String currentKey(UUID projectId);
+    String currentKey(String projectId);
 
     /**
      * A page of the workspace's projects: newest first, after (time, id); or byPosition in the workspace's order, after
      * (position, id).
      */
     List<Row> findAll(
-            UUID workspaceId,
+            String workspaceId,
             String status,
             String query,
             boolean byPosition,
             Instant beforeTime,
             Integer afterPosition,
-            UUID cursorId,
+            String cursorId,
             int limit);
 
     /** The workspace's live, unarchived projects in its order. */
-    List<UUID> findActiveIds(UUID workspaceId);
+    List<String> findActiveIds(String workspaceId);
 
     /** Puts the given projects in this order (positions 0, 1, …); version and audit stay, the order not being an edit. */
-    void updateOrder(UUID workspaceId, List<UUID> orderedIds);
+    void updateOrder(String workspaceId, List<String> orderedIds);
 
-    int nextPosition(UUID workspaceId);
+    int nextPosition(String workspaceId);
 
     void save(Project project);
 
-    void switchKey(UUID workspaceId, UUID projectId, ProjectKey key, Instant now);
+    void switchKey(String workspaceId, String projectId, ProjectKey key, Instant now);
 
-    List<BoardColumn> findColumns(UUID projectId);
+    List<BoardColumn> findColumns(String projectId);
 
-    Optional<BoardColumn> findColumn(UUID projectId, UUID columnId);
+    Optional<BoardColumn> findColumn(String projectId, String columnId);
 
     void save(BoardColumn column);
 
     /** The projects' members in a workspace, live projects only (D-075). */
-    List<Membership> findMemberships(UUID workspaceId);
+    List<Membership> findMemberships(String workspaceId);
 
     /** Adds the member to the project unless already there. */
-    void addMember(UUID workspaceId, UUID projectId, UUID userId, UUID actor, Instant now);
+    void addMember(String workspaceId, String projectId, String userId, String actor, Instant now);
 
-    void removeMember(UUID projectId, UUID userId);
+    void removeMember(String projectId, String userId);
 
-    record Membership(UUID projectId, UUID userId) {}
+    record Membership(String projectId, String userId) {}
 
-    record Key(UUID projectId, boolean current) {}
+    record Key(String projectId, boolean current) {}
 
     record Row(
-            UUID id,
-            UUID workspaceId,
+            String id,
+            String workspaceId,
             String name,
             String key,
             String description,

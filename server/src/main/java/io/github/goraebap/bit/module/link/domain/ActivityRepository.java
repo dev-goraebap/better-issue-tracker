@@ -3,7 +3,6 @@ package io.github.goraebap.bit.module.link.domain;
 import io.github.goraebap.bit.module.link.TargetType;
 import java.time.Instant;
 import java.util.List;
-import java.util.UUID;
 
 public interface ActivityRepository {
     void saveAll(List<Activity> activities);
@@ -13,5 +12,5 @@ public interface ActivityRepository {
      * activity is left out, the comment itself being in the timeline.
      */
     List<Activity> findAllByTarget(
-            UUID workspaceId, TargetType type, UUID targetId, Instant afterTime, UUID afterId, int limit);
+            String workspaceId, TargetType type, String targetId, Instant afterTime, String afterId, int limit);
 }

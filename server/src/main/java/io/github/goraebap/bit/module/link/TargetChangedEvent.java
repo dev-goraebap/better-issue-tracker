@@ -2,17 +2,16 @@ package io.github.goraebap.bit.module.link;
 
 import java.time.Instant;
 import java.util.List;
-import java.util.UUID;
 
 /** Safe business facts only: never pass request bodies, credentials or headers here. */
 public record TargetChangedEvent(
-        UUID workspaceId,
-        UUID projectId,
+        String workspaceId,
+        String projectId,
         TargetType targetType,
-        UUID targetId,
+        String targetId,
         String action,
         long version,
-        UUID actorId,
+        String actorId,
         String actorAgent,
         Instant occurredAt,
         List<FieldChange> changes) {

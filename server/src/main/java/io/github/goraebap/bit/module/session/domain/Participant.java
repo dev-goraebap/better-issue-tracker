@@ -1,9 +1,7 @@
 package io.github.goraebap.bit.module.session.domain;
 
-import java.util.UUID;
-
-public record Participant(String kind, UUID userId, String displayName) {
-    public static Participant of(String kind, UUID userId, String displayName) {
+public record Participant(String kind, String userId, String displayName) {
+    public static Participant of(String kind, String userId, String displayName) {
         if (!("user".equals(kind) || "agent".equals(kind) || "guest".equals(kind))
                 || "user".equals(kind) != (userId != null)
                 || displayName == null

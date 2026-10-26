@@ -1,6 +1,7 @@
 package io.github.goraebap.bit.module.view.application;
 
 import io.github.goraebap.bit.module.view.ViewFacade;
+import io.github.goraebap.bit.shared.domain.Ids;
 import io.github.goraebap.bit.shared.error.BusinessException;
 import io.github.goraebap.bit.shared.error.CommonErrorCode;
 import io.github.goraebap.bit.shared.web.CurrentUser;
@@ -11,7 +12,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Set;
-import java.util.UUID;
 import java.util.regex.Pattern;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -38,10 +38,10 @@ final class ViewHttpAuthorizationFilter extends OncePerRequestFilter {
         try {
             var actor = (CurrentUser) request.getAttribute(CurrentUser.class.getName());
             boolean writing = !Set.of("GET", "HEAD", "OPTIONS").contains(request.getMethod());
-            UUID workspace = uuid(match.group(1));
+            String workspace = id(match.group(1));
             boolean view = match.group(2).equals("views");
             // Only tweaks may name the built-in view; /views/{id} needs a stored view's id.
-            if (view && !isUuid(match.group(3))) throw ViewErrorCode.VIEW_NOT_FOUND.raise();
+            if (view && !Ids.isId(match.group(3))) throw ViewErrorCode.VIEW_NOT_FOUND.raise();
             viewFacade.requireAccess(actor, workspace, match.group(3), view && writing);
             chain.doFilter(request, response);
         } catch (BusinessException failure) {
@@ -49,18 +49,9 @@ final class ViewHttpAuthorizationFilter extends OncePerRequestFilter {
         }
     }
 
-    private static boolean isUuid(String raw) {
+    private static String id(String raw) {
         try {
-            UUID.fromString(raw);
-            return true;
-        } catch (IllegalArgumentException invalid) {
-            return false;
-        }
-    }
-
-    private static UUID uuid(String raw) {
-        try {
-            return UUID.fromString(raw);
+            return Ids.parse(raw);
         } catch (IllegalArgumentException invalid) {
             throw CommonErrorCode.COMMON_INVALID_REQUEST.raise();
         }

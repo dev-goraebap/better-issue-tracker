@@ -1,11 +1,11 @@
 package io.github.goraebap.bit.module.workitem.domain;
 
 import io.github.goraebap.bit.shared.domain.Audit;
+import io.github.goraebap.bit.shared.domain.Ids;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Objects;
 import java.util.Set;
-import java.util.UUID;
 import lombok.Getter;
 
 @Getter
@@ -30,7 +30,7 @@ public final class WorkItem {
             String description,
             Priority priority,
             TriggerType triggerType,
-            UUID assigneeId,
+            String assigneeId,
             LocalDate startDate,
             LocalDate dueDate) {
         public static Details of(
@@ -38,7 +38,7 @@ public final class WorkItem {
                 String description,
                 Priority priority,
                 TriggerType triggerType,
-                UUID assigneeId,
+                String assigneeId,
                 LocalDate startDate,
                 LocalDate dueDate) {
             if (title == null || title.strip().isEmpty() || title.strip().length() > 200)
@@ -51,12 +51,12 @@ public final class WorkItem {
         }
     }
 
-    private final UUID id;
-    private final UUID projectId;
+    private final String id;
+    private final String projectId;
     private final long number;
     private Details details;
-    private Set<UUID> labelIds;
-    private UUID columnId;
+    private Set<String> labelIds;
+    private String columnId;
     private double position;
     private Instant closedAt;
     private Instant archivedAt;
@@ -64,12 +64,12 @@ public final class WorkItem {
     private Audit audit;
 
     private WorkItem(
-            UUID id,
-            UUID projectId,
+            String id,
+            String projectId,
             long number,
             Details details,
-            Set<UUID> labelIds,
-            UUID columnId,
+            Set<String> labelIds,
+            String columnId,
             double position,
             Instant closedAt,
             Instant archivedAt,
@@ -89,21 +89,21 @@ public final class WorkItem {
     }
 
     public static WorkItem create(
-            UUID projectId,
+            String projectId,
             long number,
             Details details,
-            Set<UUID> labelIds,
-            UUID columnId,
+            Set<String> labelIds,
+            String columnId,
             boolean finalColumn,
             double position,
-            UUID actor,
+            String actor,
             String agent,
             Instant now) {
         if (number < 1 || !Double.isFinite(position) || position < 0 || columnId == null && finalColumn)
             throw new IllegalArgumentException("Invalid work item position or number");
         Details valid = validate(details);
         return new WorkItem(
-                UUID.randomUUID(),
+                Ids.newId(),
                 projectId,
                 number,
                 valid,
@@ -117,12 +117,12 @@ public final class WorkItem {
     }
 
     public static WorkItem fromPersistence(
-            UUID id,
-            UUID projectId,
+            String id,
+            String projectId,
             long number,
             Details details,
-            Set<UUID> labelIds,
-            UUID columnId,
+            Set<String> labelIds,
+            String columnId,
             double position,
             Instant closedAt,
             Instant archivedAt,
@@ -132,21 +132,21 @@ public final class WorkItem {
                 id, projectId, number, details, labelIds, columnId, position, closedAt, archivedAt, version, audit);
     }
 
-    public void revise(Details next, UUID actor, String agent, Instant now) {
+    public void revise(Details next, String actor, String agent, Instant now) {
         revise(next, labelIds, actor, agent, now);
     }
 
     /** One revision for the fields and the label set together, so a combined edit is one version. */
-    public void revise(Details next, Set<UUID> nextLabelIds, UUID actor, String agent, Instant now) {
+    public void revise(Details next, Set<String> nextLabelIds, String actor, String agent, Instant now) {
         Details valid = validate(next);
-        Set<UUID> labels = Set.copyOf(Objects.requireNonNull(nextLabelIds, "labelIds"));
+        Set<String> labels = Set.copyOf(Objects.requireNonNull(nextLabelIds, "labelIds"));
         if (valid.equals(details) && labels.equals(labelIds)) return;
         this.details = valid;
         this.labelIds = labels;
         touch(actor, agent, now);
     }
 
-    public void move(UUID columnId, boolean finalColumn, double position, UUID actor, String agent, Instant now) {
+    public void move(String columnId, boolean finalColumn, double position, String actor, String agent, Instant now) {
         if (!Double.isFinite(position) || position < 0 || columnId == null && finalColumn)
             throw new IllegalArgumentException("Invalid work item move");
         Instant nextClosedAt = finalColumn ? (closedAt == null ? now : closedAt) : null;
@@ -159,19 +159,19 @@ public final class WorkItem {
         touch(actor, agent, now);
     }
 
-    public void archive(boolean archived, UUID actor, String agent, Instant now) {
+    public void archive(boolean archived, String actor, String agent, Instant now) {
         if (archived == (archivedAt != null)) return;
         archivedAt = archived ? now : null;
         touch(actor, agent, now);
     }
 
-    public void delete(UUID actor, String agent, Instant now) {
+    public void delete(String actor, String agent, Instant now) {
         if (audit.deletedAt() != null) return;
         audit = audit.delete(actor, agent, now);
         version++;
     }
 
-    public void restore(boolean columnStillExists, UUID actor, String agent, Instant now) {
+    public void restore(boolean columnStillExists, String actor, String agent, Instant now) {
         if (audit.deletedAt() == null) return;
         if (!columnStillExists) {
             columnId = null;
@@ -181,7 +181,7 @@ public final class WorkItem {
         version++;
     }
 
-    private void touch(UUID actor, String agent, Instant now) {
+    private void touch(String actor, String agent, Instant now) {
         audit = audit.touch(actor, agent, now);
         version++;
     }

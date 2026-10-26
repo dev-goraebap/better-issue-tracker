@@ -1,11 +1,10 @@
 package io.github.goraebap.bit.module.iam.domain;
 
 import java.time.Instant;
-import java.util.UUID;
 
 public record LoginSession(
-        UUID id,
-        UUID userId,
+        String id,
+        String userId,
         String hash,
         Instant expiresAt,
         Instant absoluteExpiresAt,

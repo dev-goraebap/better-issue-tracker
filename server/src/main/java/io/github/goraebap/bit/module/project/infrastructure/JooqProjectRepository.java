@@ -10,11 +10,11 @@ import io.github.goraebap.bit.module.project.domain.BoardColumn;
 import io.github.goraebap.bit.module.project.domain.Project;
 import io.github.goraebap.bit.module.project.domain.ProjectKey;
 import io.github.goraebap.bit.module.project.domain.ProjectRepository;
+import io.github.goraebap.bit.shared.domain.Ids;
 import io.github.goraebap.bit.shared.persistence.AuditRecords;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.jooq.DSLContext;
 import org.jooq.Record;
@@ -27,7 +27,7 @@ class JooqProjectRepository implements ProjectRepository {
     private final DSLContext dslContext;
 
     @Override
-    public Optional<Project> findById(UUID workspaceId, UUID projectId, boolean includeDeleted) {
+    public Optional<Project> findById(String workspaceId, String projectId, boolean includeDeleted) {
         return dslContext
                 .selectFrom(PROJECT)
                 .where(PROJECT.PROJECT_ID.eq(projectId))
@@ -37,7 +37,7 @@ class JooqProjectRepository implements ProjectRepository {
     }
 
     @Override
-    public Optional<Key> findKey(UUID workspaceId, String key) {
+    public Optional<Key> findKey(String workspaceId, String key) {
         return dslContext
                 .selectFrom(PROJECT_KEY)
                 .where(PROJECT_KEY.WORKSPACE_ID.eq(workspaceId))
@@ -46,7 +46,7 @@ class JooqProjectRepository implements ProjectRepository {
     }
 
     @Override
-    public String currentKey(UUID projectId) {
+    public String currentKey(String projectId) {
         return dslContext
                 .select(PROJECT_KEY.KEY)
                 .from(PROJECT_KEY)
@@ -57,13 +57,13 @@ class JooqProjectRepository implements ProjectRepository {
 
     @Override
     public List<Row> findAll(
-            UUID workspaceId,
+            String workspaceId,
             String status,
             String query,
             boolean byPosition,
             Instant time,
             Integer position,
-            UUID id,
+            String id,
             int limit) {
         var state =
                 switch (status) {
@@ -117,7 +117,7 @@ class JooqProjectRepository implements ProjectRepository {
     }
 
     @Override
-    public List<UUID> findActiveIds(UUID workspaceId) {
+    public List<String> findActiveIds(String workspaceId) {
         return dslContext
                 .select(PROJECT.PROJECT_ID)
                 .from(PROJECT)
@@ -129,7 +129,7 @@ class JooqProjectRepository implements ProjectRepository {
     }
 
     @Override
-    public void updateOrder(UUID workspaceId, List<UUID> orderedIds) {
+    public void updateOrder(String workspaceId, List<String> orderedIds) {
         var updates = new java.util.ArrayList<org.jooq.Query>();
         for (int i = 0; i < orderedIds.size(); i++)
             updates.add(dslContext
@@ -141,7 +141,7 @@ class JooqProjectRepository implements ProjectRepository {
     }
 
     @Override
-    public int nextPosition(UUID workspaceId) {
+    public int nextPosition(String workspaceId) {
         Integer max = dslContext
                 .select(DSL.max(PROJECT.POSITION))
                 .from(PROJECT)
@@ -151,7 +151,7 @@ class JooqProjectRepository implements ProjectRepository {
     }
 
     @Override
-    public List<Membership> findMemberships(UUID workspaceId) {
+    public List<Membership> findMemberships(String workspaceId) {
         return dslContext
                 .select(PROJECT_MEMBER.PROJECT_ID, PROJECT_MEMBER.IAM_USER_ID)
                 .from(PROJECT_MEMBER)
@@ -164,10 +164,10 @@ class JooqProjectRepository implements ProjectRepository {
     }
 
     @Override
-    public void addMember(UUID workspaceId, UUID projectId, UUID userId, UUID actor, Instant now) {
+    public void addMember(String workspaceId, String projectId, String userId, String actor, Instant now) {
         dslContext
                 .insertInto(PROJECT_MEMBER)
-                .set(PROJECT_MEMBER.PROJECT_MEMBER_ID, UUID.randomUUID())
+                .set(PROJECT_MEMBER.PROJECT_MEMBER_ID, Ids.newId())
                 .set(PROJECT_MEMBER.PROJECT_ID, projectId)
                 .set(PROJECT_MEMBER.WORKSPACE_ID, workspaceId)
                 .set(PROJECT_MEMBER.IAM_USER_ID, userId)
@@ -179,7 +179,7 @@ class JooqProjectRepository implements ProjectRepository {
     }
 
     @Override
-    public void removeMember(UUID projectId, UUID userId) {
+    public void removeMember(String projectId, String userId) {
         dslContext
                 .deleteFrom(PROJECT_MEMBER)
                 .where(PROJECT_MEMBER.PROJECT_ID.eq(projectId))
@@ -213,7 +213,7 @@ class JooqProjectRepository implements ProjectRepository {
     }
 
     @Override
-    public void switchKey(UUID workspaceId, UUID projectId, ProjectKey key, Instant now) {
+    public void switchKey(String workspaceId, String projectId, ProjectKey key, Instant now) {
         var existing = findKey(workspaceId, key.value());
         if (existing.isPresent()
                 && existing.get().projectId().equals(projectId)
@@ -236,7 +236,7 @@ class JooqProjectRepository implements ProjectRepository {
         } else {
             dslContext
                     .insertInto(PROJECT_KEY)
-                    .set(PROJECT_KEY.PROJECT_KEY_ID, UUID.randomUUID())
+                    .set(PROJECT_KEY.PROJECT_KEY_ID, Ids.newId())
                     .set(PROJECT_KEY.PROJECT_ID, projectId)
                     .set(PROJECT_KEY.WORKSPACE_ID, workspaceId)
                     .set(PROJECT_KEY.KEY, key.value())
@@ -247,7 +247,7 @@ class JooqProjectRepository implements ProjectRepository {
     }
 
     @Override
-    public List<BoardColumn> findColumns(UUID projectId) {
+    public List<BoardColumn> findColumns(String projectId) {
         return dslContext
                 .selectFrom(BOARD_COLUMN)
                 .where(BOARD_COLUMN.PROJECT_ID.eq(projectId))
@@ -257,7 +257,7 @@ class JooqProjectRepository implements ProjectRepository {
     }
 
     @Override
-    public Optional<BoardColumn> findColumn(UUID projectId, UUID columnId) {
+    public Optional<BoardColumn> findColumn(String projectId, String columnId) {
         return dslContext
                 .selectFrom(BOARD_COLUMN)
                 .where(BOARD_COLUMN.PROJECT_ID.eq(projectId))

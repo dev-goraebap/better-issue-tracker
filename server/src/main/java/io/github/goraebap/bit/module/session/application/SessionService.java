@@ -19,7 +19,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
-import java.util.UUID;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -41,14 +40,14 @@ public class SessionService implements SessionFacade {
 
     @Override
     @Transactional
-    public UUID record(
+    public String record(
             CurrentUser actor,
-            UUID workspaceId,
-            UUID projectId,
+            String workspaceId,
+            String projectId,
             Draft draft,
             List<Person> people,
             List<DecisionFacade.Draft> decisions,
-            List<UUID> workItemIds) {
+            List<String> workItemIds) {
         projectFacade.requireAccess(actor, workspaceId, projectId, true);
         var details = details(draft);
         var participants = participants(actor, workspaceId, people);
@@ -63,7 +62,7 @@ public class SessionService implements SessionFacade {
         var record = SessionRecord.create(projectId, number, details, participants, actor.userId(), agent(actor), now);
         sessionRepository.save(record);
         var ids = decisions.isEmpty()
-                ? List.<UUID>of()
+                ? List.<String>of()
                 : decisionFacade.createAll(actor, workspaceId, projectId, decisions);
         linkFacade.connectSessionRecord(
                 actor, workspaceId, projectId, record.id(), ids, List.copyOf(new LinkedHashSet<>(workItemIds)));
@@ -73,7 +72,7 @@ public class SessionService implements SessionFacade {
 
     @Override
     @Transactional(readOnly = true)
-    public Ref findByRef(CurrentUser actor, UUID workspaceId, UUID projectId, String reference) {
+    public Ref findByRef(CurrentUser actor, String workspaceId, String projectId, String reference) {
         var project = projectFacade.requireAccess(actor, workspaceId, projectId, false);
         var match = REFERENCE.matcher(reference == null ? "" : reference.strip().toUpperCase(Locale.ROOT));
         if (!match.matches()) throw SessionErrorCode.SESSION_RECORD_NOT_FOUND.raise();
@@ -97,9 +96,9 @@ public class SessionService implements SessionFacade {
     @Transactional
     public void revise(
             CurrentUser actor,
-            UUID workspaceId,
-            UUID projectId,
-            UUID id,
+            String workspaceId,
+            String projectId,
+            String id,
             Draft draft,
             List<Person> people,
             long expectedVersion) {
@@ -126,7 +125,7 @@ public class SessionService implements SessionFacade {
     }
 
     @Transactional
-    public void delete(CurrentUser actor, UUID workspaceId, UUID projectId, UUID id, long expectedVersion) {
+    public void delete(CurrentUser actor, String workspaceId, String projectId, String id, long expectedVersion) {
         var record = access(actor, workspaceId, projectId, id, true);
         version(record, expectedVersion);
         if (record.audit().deletedAt() != null) return;
@@ -136,7 +135,7 @@ public class SessionService implements SessionFacade {
     }
 
     @Transactional
-    public void restore(CurrentUser actor, UUID workspaceId, UUID projectId, UUID id, long expectedVersion) {
+    public void restore(CurrentUser actor, String workspaceId, String projectId, String id, long expectedVersion) {
         var record = access(actor, workspaceId, projectId, id, true);
         version(record, expectedVersion);
         if (record.audit().deletedAt() == null) return;
@@ -145,14 +144,14 @@ public class SessionService implements SessionFacade {
         changed(actor, workspaceId, record, "restored", List.of(new FieldChange("deleted", "true", "false")));
     }
 
-    private SessionRecord access(CurrentUser actor, UUID workspaceId, UUID projectId, UUID id, boolean deleted) {
+    private SessionRecord access(CurrentUser actor, String workspaceId, String projectId, String id, boolean deleted) {
         projectFacade.requireAccess(actor, workspaceId, projectId, true);
         return sessionRepository
                 .findById(projectId, id, deleted)
                 .orElseThrow(SessionErrorCode.SESSION_RECORD_NOT_FOUND::raise);
     }
 
-    private List<Participant> participants(CurrentUser actor, UUID workspaceId, List<Person> people) {
+    private List<Participant> participants(CurrentUser actor, String workspaceId, List<Person> people) {
         if (people == null || people.size() > 100 || people.stream().anyMatch(Objects::isNull))
             throw SessionErrorCode.SESSION_RECORD_INVALID_INPUT.raise();
         var userIds = people.stream()
@@ -177,7 +176,7 @@ public class SessionService implements SessionFacade {
     }
 
     private void changed(
-            CurrentUser actor, UUID workspaceId, SessionRecord record, String action, List<FieldChange> changes) {
+            CurrentUser actor, String workspaceId, SessionRecord record, String action, List<FieldChange> changes) {
         applicationEventPublisher.publishEvent(new TargetChangedEvent(
                 workspaceId,
                 record.projectId(),

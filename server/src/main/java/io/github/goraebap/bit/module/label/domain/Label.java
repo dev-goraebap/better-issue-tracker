@@ -1,9 +1,9 @@
 package io.github.goraebap.bit.module.label.domain;
 
 import io.github.goraebap.bit.shared.domain.Audit;
+import io.github.goraebap.bit.shared.domain.Ids;
 import java.time.Instant;
 import java.util.Locale;
-import java.util.UUID;
 import lombok.Getter;
 
 @Getter
@@ -14,15 +14,16 @@ public final class Label {
     public static final String DECISION_NAME = "결정기록";
     public static final String DECISION_COLOR = "#5e6ad2";
 
-    private final UUID id;
-    private final UUID workspaceId;
+    private final String id;
+    private final String workspaceId;
     private String name;
     private String color;
     private final String systemKey;
     private long version;
     private Audit audit;
 
-    private Label(UUID id, UUID workspaceId, String name, String color, String systemKey, long version, Audit audit) {
+    private Label(
+            String id, String workspaceId, String name, String color, String systemKey, long version, Audit audit) {
         this.id = id;
         this.workspaceId = workspaceId;
         this.name = name;
@@ -32,21 +33,15 @@ public final class Label {
         this.audit = audit;
     }
 
-    public static Label create(UUID workspaceId, String name, String color, UUID actor, String agent, Instant now) {
+    public static Label create(String workspaceId, String name, String color, String actor, String agent, Instant now) {
         return new Label(
-                UUID.randomUUID(),
-                workspaceId,
-                validName(name),
-                validColor(color),
-                null,
-                0,
-                Audit.create(actor, agent, now));
+                Ids.newId(), workspaceId, validName(name), validColor(color), null, 0, Audit.create(actor, agent, now));
     }
 
     /** The decision label every workspace has (D-066). Users may recolour it but not rename or delete it. */
-    public static Label decision(UUID workspaceId, UUID actor, String agent, Instant now) {
+    public static Label decision(String workspaceId, String actor, String agent, Instant now) {
         return new Label(
-                UUID.randomUUID(),
+                Ids.newId(),
                 workspaceId,
                 DECISION_NAME,
                 DECISION_COLOR,
@@ -56,7 +51,7 @@ public final class Label {
     }
 
     public static Label fromPersistence(
-            UUID id, UUID workspaceId, String name, String color, String systemKey, long version, Audit audit) {
+            String id, String workspaceId, String name, String color, String systemKey, long version, Audit audit) {
         return new Label(id, workspaceId, name, color, systemKey, version, audit);
     }
 
@@ -69,7 +64,7 @@ public final class Label {
         return next == null || !next.strip().equals(name);
     }
 
-    public void revise(String name, String color, UUID actor, String agent, Instant now) {
+    public void revise(String name, String color, String actor, String agent, Instant now) {
         String nextName = validName(name);
         String nextColor = validColor(color);
         if (system() && !nextName.equals(this.name)) throw new IllegalStateException("System labels keep their name");
@@ -80,7 +75,7 @@ public final class Label {
         version++;
     }
 
-    public void delete(UUID actor, String agent, Instant now) {
+    public void delete(String actor, String agent, Instant now) {
         if (system()) throw new IllegalStateException("System labels cannot be deleted");
         if (audit.deletedAt() != null) return;
         audit = audit.delete(actor, agent, now);

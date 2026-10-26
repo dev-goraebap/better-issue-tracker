@@ -2,6 +2,7 @@ package io.github.goraebap.bit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import io.github.goraebap.bit.shared.domain.Ids;
 import java.net.CookieManager;
 import java.net.CookiePolicy;
 import java.net.URI;
@@ -18,7 +19,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 import java.util.concurrent.Executors;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -68,8 +68,7 @@ class WorkspaceIntegrationTest {
     @DynamicPropertySource
     static void database(DynamicPropertyRegistry registry) {
         String url = "jdbc:sqlite:"
-                + Path.of("build/test-db/workspace-" + UUID.randomUUID() + ".db")
-                        .toAbsolutePath();
+                + Path.of("build/test-db/workspace-" + Ids.newId() + ".db").toAbsolutePath();
         registry.add("spring.datasource.url", () -> url);
     }
 
@@ -123,7 +122,7 @@ class WorkspaceIntegrationTest {
             String ownerKey = key(owner);
             expect(owner.bearer("POST", "/workspaces", ownerKey), 403);
             for (String role : List.of("admin", "member", "viewer")) {
-                UUID user = fixture(role + "@example.test", false);
+                String user = fixture(role + "@example.test", false);
                 member(id, user, role);
                 try (Client client = login(role + "@example.test")) {
                     expect(client.get(path), 200);
@@ -162,8 +161,8 @@ class WorkspaceIntegrationTest {
         try (Client owner = owner()) {
             String path = space(owner, "team-a");
             String id = id(path);
-            UUID admin = fixture("admin@example.test", false);
-            UUID viewer = fixture("viewer@example.test", false);
+            String admin = fixture("admin@example.test", false);
+            String viewer = fixture("viewer@example.test", false);
             member(id, admin, "admin");
             String viewerMember = member(id, viewer, "viewer");
             String ownMember = jdbc.queryForObject(
@@ -189,19 +188,14 @@ class WorkspaceIntegrationTest {
                         owner.write(
                                 "PUT",
                                 path + "/owner",
-                                Map.of("userId", viewer.toString(), "currentPassword", "incorrect password")),
+                                Map.of("userId", viewer, "currentPassword", "incorrect password")),
                         401);
                 assertThat(jdbc.queryForObject(
                                 "SELECT failed_count FROM iam_password WHERE iam_user_id=(SELECT iam_user_id FROM iam_user WHERE email=?)",
                                 Integer.class,
                                 EMAIL))
                         .isEqualTo(1);
-                expect(
-                        owner.write(
-                                "PUT",
-                                path + "/owner",
-                                Map.of("userId", viewer.toString(), "currentPassword", PASSWORD)),
-                        204);
+                expect(owner.write("PUT", path + "/owner", Map.of("userId", viewer, "currentPassword", PASSWORD)), 204);
                 expect(owner.write("PUT", path + "/owner", "{"), 403);
                 assertThat(jdbc.queryForObject(
                                 "SELECT count(*) FROM workspace_member WHERE workspace_id=? AND role='owner'",
@@ -256,7 +250,7 @@ class WorkspaceIntegrationTest {
     void acceptanceIsEmailBoundIdempotentAndCannotRejoinOrOverwriteRoles() throws Exception {
         try (Client owner = owner()) {
             String path = space(owner, "team-a");
-            UUID invited = fixture("invited@example.test", false);
+            String invited = fixture("invited@example.test", false);
             fixture("wrong@example.test", false);
             String raw = invite(owner, path, "invited@example.test", "member")
                     .path("token")
@@ -270,7 +264,7 @@ class WorkspaceIntegrationTest {
                         "SELECT workspace_member_id FROM workspace_member WHERE workspace_id=? AND iam_user_id=?",
                         String.class,
                         id(path),
-                        invited.toString());
+                        invited);
                 expect(owner.write("PATCH", path + "/members/" + memberId, Map.of("role", "admin")), 204);
                 expect(correct.write("POST", "/invitation-acceptances", Map.of("token", raw)), 204);
                 assertThat(tree(correct.get(path)).path("myRole").asText()).isEqualTo("admin");
@@ -280,7 +274,7 @@ class WorkspaceIntegrationTest {
                                 "SELECT count(*) FROM workspace_member WHERE workspace_id=? AND iam_user_id=?",
                                 Integer.class,
                                 id(path),
-                                invited.toString()))
+                                invited))
                         .isZero();
             }
         }
@@ -365,7 +359,7 @@ class WorkspaceIntegrationTest {
         try (Client owner = owner();
                 Client anonymous = new Client()) {
             String path = space(owner, "team-a");
-            UUID successor = fixture("successor@example.test", false);
+            String successor = fixture("successor@example.test", false);
             String successorMember = member(id(path), successor, "member");
             String admin = invite(owner, path, "admin-invite@example.test", "admin")
                     .path("token")
@@ -373,12 +367,7 @@ class WorkspaceIntegrationTest {
             String member = invite(owner, path, "member-invite@example.test", "member")
                     .path("token")
                     .asText();
-            expect(
-                    owner.write(
-                            "PUT",
-                            path + "/owner",
-                            Map.of("userId", successor.toString(), "currentPassword", PASSWORD)),
-                    204);
+            expect(owner.write("PUT", path + "/owner", Map.of("userId", successor, "currentPassword", PASSWORD)), 204);
             expect(anonymous.write("POST", "/invitation-previews", Map.of("token", admin)), 404);
             expect(anonymous.write("POST", "/invitation-previews", Map.of("token", member)), 200);
             String oldMember = jdbc.queryForObject(
@@ -399,7 +388,7 @@ class WorkspaceIntegrationTest {
         try (Client owner = owner()) {
             String a = space(owner, "team-a");
             String b = space(owner, "team-b");
-            UUID user = fixture("member@example.test", false);
+            String user = fixture("member@example.test", false);
             String membership = member(id(a), user, "admin");
             member(id(b), user, "member");
             try (Client first = login("member@example.test");
@@ -453,7 +442,7 @@ class WorkspaceIntegrationTest {
                 expect(other.get("/me/workspaces?cursor=" + cursor), 400);
             }
             for (int i = 0; i < 3; i++) {
-                UUID user = fixture("member" + i + "@example.test", false);
+                String user = fixture("member" + i + "@example.test", false);
                 member(id(a), user, "member");
             }
             var members = tree(owner.get(a + "/members?size=1"));
@@ -508,7 +497,7 @@ class WorkspaceIntegrationTest {
             assertThat(jdbc.queryForObject(
                             "SELECT count(*) FROM workspace_member WHERE workspace_id=?", Integer.class, id(path)))
                     .isEqualTo(2);
-            UUID existing = fixture("existing@example.test", false);
+            String existing = fixture("existing@example.test", false);
             String existingToken = invite(owner, path, "existing@example.test", "viewer")
                     .path("token")
                     .asText();
@@ -521,7 +510,7 @@ class WorkspaceIntegrationTest {
                                 "SELECT count(*) FROM workspace_member WHERE workspace_id=? AND iam_user_id=?",
                                 Integer.class,
                                 id(path),
-                                existing.toString()))
+                                existing))
                         .isEqualTo(1);
             }
         }
@@ -532,22 +521,19 @@ class WorkspaceIntegrationTest {
         try (Client owner = owner();
                 var pool = Executors.newVirtualThreadPerTaskExecutor()) {
             String path = space(owner, "team-a");
-            UUID candidate = fixture("candidate@example.test", false);
+            String candidate = fixture("candidate@example.test", false);
             member(id(path), candidate, "member");
             jdbc.execute(
                     "CREATE TRIGGER fail_transfer BEFORE UPDATE OF role ON workspace_member WHEN NEW.role='owner' BEGIN SELECT RAISE(ABORT,'fixture failure'); END");
             try {
                 expect(
-                        owner.write(
-                                "PUT",
-                                path + "/owner",
-                                Map.of("userId", candidate.toString(), "currentPassword", PASSWORD)),
+                        owner.write("PUT", path + "/owner", Map.of("userId", candidate, "currentPassword", PASSWORD)),
                         409);
                 assertThat(jdbc.queryForObject(
                                 "SELECT role FROM workspace_member WHERE workspace_id=? AND iam_user_id=?",
                                 String.class,
                                 id(path),
-                                candidate.toString()))
+                                candidate))
                         .isEqualTo("member");
                 assertThat(jdbc.queryForObject(
                                 "SELECT count(*) FROM workspace_member WHERE workspace_id=? AND role='owner'",
@@ -558,8 +544,8 @@ class WorkspaceIntegrationTest {
                 jdbc.execute("DROP TRIGGER fail_transfer");
             }
             try (Client leaving = login("candidate@example.test")) {
-                var transfer = pool.submit(() -> owner.write(
-                        "PUT", path + "/owner", Map.of("userId", candidate.toString(), "currentPassword", PASSWORD)));
+                var transfer = pool.submit(() ->
+                        owner.write("PUT", path + "/owner", Map.of("userId", candidate, "currentPassword", PASSWORD)));
                 var leave = pool.submit(() -> leaving.write("DELETE", path + "/members/me", null));
                 var results = List.of(transfer.get().statusCode(), leave.get().statusCode());
                 assertThat(results).contains(204).allMatch(status -> status == 204 || status == 404 || status == 409);
@@ -578,8 +564,8 @@ class WorkspaceIntegrationTest {
                 Client second = login(EMAIL);
                 var pool = Executors.newVirtualThreadPerTaskExecutor()) {
             String path = space(owner, "team-a");
-            UUID a = fixture("a@example.test", false);
-            UUID b = fixture("b@example.test", false);
+            String a = fixture("a@example.test", false);
+            String b = fixture("b@example.test", false);
             member(id(path), a, "member");
             member(id(path), b, "member");
             var x = pool.submit(() ->
@@ -599,7 +585,7 @@ class WorkspaceIntegrationTest {
     void deletedUsersAndForcedChangeCannotUseWorkspaceCapabilities() throws Exception {
         try (Client owner = owner()) {
             String path = space(owner, "team-a");
-            UUID user = fixture("member@example.test", false);
+            String user = fixture("member@example.test", false);
             member(id(path), user, "member");
             try (Client client = login("member@example.test")) {
                 String raw = key(client);
@@ -616,12 +602,12 @@ class WorkspaceIntegrationTest {
         }
     }
 
-    private UUID fixture(String email, boolean admin) {
-        UUID id = UUID.randomUUID();
+    private String fixture(String email, boolean admin) {
+        String id = Ids.newId();
         String now = "2026-10-22T00:00:00.000000Z";
         jdbc.update(
                 "INSERT INTO iam_user(iam_user_id,email,name,is_instance_admin,created_at,updated_at) VALUES(?,?,?,?,?,?)",
-                id.toString(),
+                id,
                 email,
                 email,
                 admin ? 1 : 0,
@@ -629,14 +615,14 @@ class WorkspaceIntegrationTest {
                 now);
         jdbc.update(
                 "INSERT INTO iam_password(iam_user_id,password_hash,changed_at) VALUES(?,?,?)",
-                id.toString(),
+                id,
                 encoder.encode(PASSWORD),
                 now);
         return id;
     }
 
-    private String member(String workspace, UUID user, String role) {
-        String id = UUID.randomUUID().toString();
+    private String member(String workspace, String user, String role) {
+        String id = Ids.newId();
         jdbc.update(
                 "INSERT INTO workspace_member(workspace_member_id,workspace_id,iam_user_id,role,joined_at) VALUES(?,?,?,?,?)",
                 id,

@@ -8,6 +8,7 @@ import io.github.goraebap.bit.module.link.domain.Activity;
 import io.github.goraebap.bit.module.link.domain.ActivityRepository;
 import io.github.goraebap.bit.module.link.domain.Comment;
 import io.github.goraebap.bit.module.link.domain.CommentRepository;
+import io.github.goraebap.bit.shared.domain.Ids;
 import io.github.goraebap.bit.shared.error.CommonErrorCode;
 import io.github.goraebap.bit.shared.web.CurrentUser;
 import java.nio.charset.StandardCharsets;
@@ -18,7 +19,6 @@ import java.util.Base64;
 import java.util.Comparator;
 import java.util.Map;
 import java.util.Objects;
-import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
@@ -42,7 +42,7 @@ public class TimelineService implements TimelineFacade {
 
     @Transactional(readOnly = true)
     public TimelineViews.Timeline list(
-            CurrentUser actor, UUID workspaceId, TargetType type, UUID targetId, String cursor, int size) {
+            CurrentUser actor, String workspaceId, TargetType type, String targetId, String cursor, int size) {
         if (type == null || type == TargetType.code_ref || size < 1 || size > 200)
             throw CommonErrorCode.COMMON_INVALID_REQUEST.raise();
         targetFacade.requireAccess(actor, workspaceId, type, targetId, false);
@@ -54,8 +54,7 @@ public class TimelineService implements TimelineFacade {
         // The same order the queries read in: time, then the id as the database compares it (its text).
         var lines = Stream.concat(
                         comments.stream().map(Merged::of), activity.stream().map(Merged::of))
-                .sorted(Comparator.comparing(Merged::at)
-                        .thenComparing(line -> line.id().toString()))
+                .sorted(Comparator.comparing(Merged::at).thenComparing(Merged::id))
                 .toList();
         var page = lines.stream().limit(size).toList();
         String next =
@@ -80,7 +79,7 @@ public class TimelineService implements TimelineFacade {
     @Override
     @Transactional(readOnly = true)
     public java.util.List<TimelineFacade.Line> lines(
-            CurrentUser actor, UUID workspaceId, TargetType type, UUID targetId, int limit) {
+            CurrentUser actor, String workspaceId, TargetType type, String targetId, int limit) {
         return list(actor, workspaceId, type, targetId, null, limit).items().stream()
                 .map(e -> new TimelineFacade.Line(
                         e.kind(),
@@ -97,7 +96,7 @@ public class TimelineService implements TimelineFacade {
                 .toList();
     }
 
-    private static TimelineViews.Entry comment(Comment c, Map<UUID, String> names) {
+    private static TimelineViews.Entry comment(Comment c, Map<String, String> names) {
         var a = c.audit();
         Instant edited = a.updatedAt().equals(a.createdAt()) ? null : a.updatedAt();
         return new TimelineViews.Entry(
@@ -117,7 +116,7 @@ public class TimelineService implements TimelineFacade {
     }
 
     /** An activity line; a long value's later parts (a decision's body split in chunks) are left out. */
-    private TimelineViews.Entry activity(Activity a, Map<UUID, String> names) {
+    private TimelineViews.Entry activity(Activity a, Map<String, String> names) {
         JsonNode payload = a.payload() == null ? null : jsonMapper.readTree(a.payload());
         if (payload != null && payload.path("part").asInt(0) > 0) return null;
         return new TimelineViews.Entry(
@@ -142,11 +141,11 @@ public class TimelineService implements TimelineFacade {
         return value == null || value.isNull() ? null : value.asString();
     }
 
-    private static String name(Map<UUID, String> names, UUID id) {
+    private static String name(Map<String, String> names, String id) {
         return id == null ? null : names.getOrDefault(id, "탈퇴한 사용자");
     }
 
-    private record Merged(Instant at, UUID id, UUID actorId, Comment comment, Activity activity) {
+    private record Merged(Instant at, String id, String actorId, Comment comment, Activity activity) {
         static Merged of(Comment c) {
             return new Merged(c.audit().createdAt(), c.id(), c.audit().createdBy(), c, null);
         }
@@ -156,7 +155,7 @@ public class TimelineService implements TimelineFacade {
         }
     }
 
-    private record Point(Instant time, UUID id) {}
+    private record Point(Instant time, String id) {}
 
     private static Point decode(String cursor) {
         if (cursor == null) return new Point(null, null);
@@ -164,13 +163,13 @@ public class TimelineService implements TimelineFacade {
         try {
             String[] parts = new String(Base64.getUrlDecoder().decode(cursor), StandardCharsets.UTF_8).split("\\|", -1);
             if (parts.length != 2) throw new IllegalArgumentException("cursor");
-            return new Point(Instant.parse(parts[0]), UUID.fromString(parts[1]));
+            return new Point(Instant.parse(parts[0]), Ids.parse(parts[1]));
         } catch (IllegalArgumentException | DateTimeParseException invalid) {
             throw CommonErrorCode.COMMON_INVALID_REQUEST.raise();
         }
     }
 
-    private static String encode(Instant time, UUID id) {
+    private static String encode(Instant time, String id) {
         return Base64.getUrlEncoder()
                 .withoutPadding()
                 .encodeToString((time + "|" + id).getBytes(StandardCharsets.UTF_8));

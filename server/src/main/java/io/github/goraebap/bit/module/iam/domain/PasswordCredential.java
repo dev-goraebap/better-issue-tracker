@@ -1,10 +1,9 @@
 package io.github.goraebap.bit.module.iam.domain;
 
 import java.time.Instant;
-import java.util.UUID;
 
 public record PasswordCredential(
-        UUID userId, String hash, int failures, Instant lockedUntil, boolean mustChange, Instant changedAt) {
+        String userId, String hash, int failures, Instant lockedUntil, boolean mustChange, Instant changedAt) {
     public boolean locked(Instant now) {
         return lockedUntil != null && lockedUntil.isAfter(now);
     }

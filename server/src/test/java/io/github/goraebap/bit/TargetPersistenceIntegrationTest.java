@@ -20,13 +20,14 @@ import io.github.goraebap.bit.module.session.domain.SessionRecord;
 import io.github.goraebap.bit.module.session.domain.SessionRepository;
 import io.github.goraebap.bit.module.workitem.application.WorkItemService;
 import io.github.goraebap.bit.module.workitem.domain.WorkItem;
+import io.github.goraebap.bit.shared.domain.Ids;
 import io.github.goraebap.bit.shared.error.BusinessException;
 import io.github.goraebap.bit.shared.persistence.InstantTextBinding;
 import io.github.goraebap.bit.shared.web.CurrentUser;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
-import java.util.UUID;
+import java.util.Locale;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -83,15 +84,15 @@ class TargetPersistenceIntegrationTest {
     @Autowired
     private PlatformTransactionManager transactionManager;
 
-    private UUID workspace;
-    private UUID project;
+    private String workspace;
+    private String project;
     private CurrentUser actor;
     private final Instant now = Instant.parse("2026-10-23T00:00:00Z");
 
     @DynamicPropertySource
     static void database(DynamicPropertyRegistry registry) {
         String url = "jdbc:sqlite:"
-                + Path.of("build/test-db/target-" + UUID.randomUUID() + ".db").toAbsolutePath();
+                + Path.of("build/test-db/target-" + Ids.newId() + ".db").toAbsolutePath();
         registry.add("spring.datasource.url", () -> url);
     }
 
@@ -123,27 +124,27 @@ class TargetPersistenceIntegrationTest {
                 "iam_session",
                 "iam_password",
                 "iam_user")) jdbc.update("DELETE FROM " + table);
-        UUID user = UUID.randomUUID();
-        UUID credential = UUID.randomUUID();
-        workspace = UUID.randomUUID();
+        String user = Ids.newId();
+        String credential = Ids.newId();
+        workspace = Ids.newId();
         Instant created = Instant.now();
         String time = InstantTextBinding.text(created);
         jdbc.update(
                 "INSERT INTO iam_user(iam_user_id,email,name,created_at,updated_at) VALUES(?,?,?,?,?)",
-                user.toString(),
+                user,
                 "target@example.test",
                 "Current owner",
                 time,
                 time);
         jdbc.update(
                 "INSERT INTO iam_password(iam_user_id,password_hash,changed_at) VALUES(?,?,?)",
-                user.toString(),
+                user,
                 "fixture-hash",
                 time);
         jdbc.update(
                 "INSERT INTO iam_session(iam_session_id,iam_user_id,token_hash,expires_at,absolute_expires_at,last_seen_at,created_at) VALUES(?,?,?,?,?,?,?)",
-                credential.toString(),
-                user.toString(),
+                credential,
+                user,
                 "target-fixture-session",
                 InstantTextBinding.text(created.plusSeconds(3600)),
                 InstantTextBinding.text(created.plusSeconds(7200)),
@@ -151,18 +152,18 @@ class TargetPersistenceIntegrationTest {
                 time);
         jdbc.update(
                 "INSERT INTO workspace(workspace_id,name,slug,created_at,created_by,updated_at,updated_by) VALUES(?,?,?,?,?,?,?)",
-                workspace.toString(),
+                workspace,
                 "Target workspace",
                 "target-test",
                 time,
-                user.toString(),
+                user,
                 time,
-                user.toString());
+                user);
         jdbc.update(
                 "INSERT INTO workspace_member(workspace_member_id,workspace_id,iam_user_id,role,joined_at) VALUES(?,?,?,?,?)",
-                UUID.randomUUID().toString(),
-                workspace.toString(),
-                user.toString(),
+                Ids.newId(),
+                workspace,
+                user,
                 "owner",
                 time);
         actor = new CurrentUser(user, true, CurrentUser.Method.SESSION, credential, null, false);
@@ -173,7 +174,7 @@ class TargetPersistenceIntegrationTest {
         return new TransactionTemplate(transactionManager);
     }
 
-    private UUID decision() {
+    private String decision() {
         return transaction().execute(status -> {
             var d = Decision.create(
                     project,
@@ -195,8 +196,8 @@ class TargetPersistenceIntegrationTest {
 
     @Test
     void repositoriesRoundTripDecisionAndParticipantSnapshotsAndTargetsAlwaysUseCurrentKey() {
-        UUID decision = decision();
-        UUID session = transaction().execute(status -> {
+        String decision = decision();
+        String session = transaction().execute(status -> {
             var record = SessionRecord.create(
                     project,
                     projects.allocateSessionNumber(actor, workspace, project),
@@ -227,9 +228,7 @@ class TargetPersistenceIntegrationTest {
                         .reference())
                 .isEqualTo("NEW S-001");
         assertThat(projects.findByKey(actor, workspace, "OLD").key()).isEqualTo("NEW");
-        jdbc.update(
-                "UPDATE iam_user SET name='Current renamed user' WHERE iam_user_id=?",
-                actor.userId().toString());
+        jdbc.update("UPDATE iam_user SET name='Current renamed user' WHERE iam_user_id=?", actor.userId());
         assertThat(sessions.findById(project, session, false).orElseThrow().participants())
                 .extracting(Participant::displayName)
                 .contains("Historical name");
@@ -237,25 +236,23 @@ class TargetPersistenceIntegrationTest {
 
     @Test
     void targetChecksUseCurrentRolesAndMustChangeStateAndNeverInventMissingTypes() {
-        UUID decision = decision();
-        jdbc.update("UPDATE workspace_member SET role='viewer' WHERE workspace_id=?", workspace.toString());
+        String decision = decision();
+        jdbc.update("UPDATE workspace_member SET role='viewer' WHERE workspace_id=?", workspace);
         assertThat(targets.requireAccess(actor, workspace, TargetType.decision, decision, false)
                         .title())
                 .isEqualTo("A decision");
         denied(() -> targets.requireAccess(actor, workspace, TargetType.decision, decision, true), 403);
-        denied(() -> targets.requireAccess(actor, workspace, TargetType.artifact, UUID.randomUUID(), false), 404);
-        denied(() -> targets.requireAccess(actor, workspace, TargetType.decision, UUID.randomUUID(), false), 404);
-        denied(() -> targets.requireAccess(actor, UUID.randomUUID(), TargetType.decision, decision, false), 404);
-        jdbc.update(
-                "UPDATE iam_password SET must_change=1 WHERE iam_user_id=?",
-                actor.userId().toString());
+        denied(() -> targets.requireAccess(actor, workspace, TargetType.artifact, Ids.newId(), false), 404);
+        denied(() -> targets.requireAccess(actor, workspace, TargetType.decision, Ids.newId(), false), 404);
+        denied(() -> targets.requireAccess(actor, Ids.newId(), TargetType.decision, decision, false), 404);
+        jdbc.update("UPDATE iam_password SET must_change=1 WHERE iam_user_id=?", actor.userId());
         denied(() -> targets.requireAccess(actor, workspace, TargetType.decision, decision, false), 403);
     }
 
     @Test
     void deletedTargetsAreHiddenAndArchivedProjectsRemainReadableButNotWritable() {
-        UUID decision = decision();
-        UUID item = workItems.create(
+        String decision = decision();
+        String item = workItems.create(
                 actor, workspace, project, new WorkItem.Details("Work", null, null, null, null, null, null), null);
         assertThat(targets.requireAccess(actor, workspace, TargetType.work_item, item, false)
                         .reference())
@@ -307,29 +304,29 @@ class TargetPersistenceIntegrationTest {
         assertThat(jdbc.queryForObject("SELECT count(*) FROM session_participant", Integer.class))
                 .isZero();
         assertThat(jdbc.queryForObject(
-                        "SELECT last_session_number FROM project WHERE project_id=?", Long.class, project.toString()))
+                        "SELECT last_session_number FROM project WHERE project_id=?", Long.class, project))
                 .isZero();
         jdbc.execute("DROP TRIGGER reject_guest_participant");
         assertThat(projects.allocateSessionNumber(actor, workspace, project)).isEqualTo(1);
     }
 
-    private UUID item(String title) {
+    private String item(String title) {
         return workItems.create(
                 actor, workspace, project, new WorkItem.Details(title, null, null, null, null, null, null), null);
     }
 
     @Test
     void symmetricLinksAreIdempotentAndReconnectingRetainsTheDisconnectedHistory() {
-        UUID a = item("A");
-        UUID b = item("B");
-        UUID first = links.connect(actor, workspace, TargetType.work_item, a, "relates_to", TargetType.work_item, b);
+        String a = item("A");
+        String b = item("B");
+        String first = links.connect(actor, workspace, TargetType.work_item, a, "relates_to", TargetType.work_item, b);
         assertThat(links.connect(actor, workspace, TargetType.work_item, b, "relates_to", TargetType.work_item, a))
                 .isEqualTo(first);
         assertThat(jdbc.queryForObject("SELECT count(*) FROM link", Integer.class))
                 .isEqualTo(1);
         links.disconnect(actor, workspace, first);
         links.disconnect(actor, workspace, first);
-        UUID next = links.connect(actor, workspace, TargetType.work_item, a, "relates_to", TargetType.work_item, b);
+        String next = links.connect(actor, workspace, TargetType.work_item, a, "relates_to", TargetType.work_item, b);
         assertThat(next).isNotEqualTo(first);
         assertThat(jdbc.queryForObject("SELECT count(*) FROM link", Integer.class))
                 .isEqualTo(2);
@@ -344,13 +341,12 @@ class TargetPersistenceIntegrationTest {
 
     @Test
     void cycleChecksIncludeHiddenNodesSoRestoringThemCannotIntroduceCycles() {
-        UUID a = item("A");
-        UUID b = item("B");
-        UUID c = item("C");
+        String a = item("A");
+        String b = item("B");
+        String c = item("C");
         links.connect(actor, workspace, TargetType.work_item, a, "blocks", TargetType.work_item, b);
         links.connect(actor, workspace, TargetType.work_item, b, "blocks", TargetType.work_item, c);
-        jdbc.update(
-                "UPDATE work_item SET deleted_at=? WHERE work_item_id=?", InstantTextBinding.text(now), b.toString());
+        jdbc.update("UPDATE work_item SET deleted_at=? WHERE work_item_id=?", InstantTextBinding.text(now), b);
         denied(() -> links.connect(actor, workspace, TargetType.work_item, c, "blocks", TargetType.work_item, a), 409);
         assertThat(jdbc.queryForObject("SELECT count(*) FROM link WHERE deleted_at IS NULL", Integer.class))
                 .isEqualTo(2);
@@ -359,9 +355,9 @@ class TargetPersistenceIntegrationTest {
 
     @Test
     void subtaskLinksHaveOneParentAndRejectTransitiveCycles() {
-        UUID a = item("A");
-        UUID b = item("B");
-        UUID c = item("C");
+        String a = item("A");
+        String b = item("B");
+        String c = item("C");
         links.connect(actor, workspace, TargetType.work_item, a, "subtask_of", TargetType.work_item, b);
         denied(
                 () -> links.connect(actor, workspace, TargetType.work_item, a, "subtask_of", TargetType.work_item, c),
@@ -374,9 +370,9 @@ class TargetPersistenceIntegrationTest {
 
     @Test
     void linkCommandsCannotCrossWorkspacesOrBypassChangedRoles() {
-        UUID a = item("A");
-        UUID b = item("B");
-        UUID other = UUID.randomUUID();
+        String a = item("A");
+        String b = item("B");
+        String other = Ids.newId();
         String time = InstantTextBinding.text(now);
         jdbc.update(
                 "INSERT INTO workspace(workspace_id,name,slug,created_at,created_by,updated_at,updated_by) VALUES(?,?,?,?,?,?,?)",
@@ -384,24 +380,24 @@ class TargetPersistenceIntegrationTest {
                 "Other",
                 "other-target",
                 time,
-                actor.userId().toString(),
+                actor.userId(),
                 time,
-                actor.userId().toString());
+                actor.userId());
         jdbc.update(
                 "INSERT INTO workspace_member(workspace_member_id,workspace_id,iam_user_id,role,joined_at) VALUES(?,?,?,?,?)",
-                UUID.randomUUID().toString(),
+                Ids.newId(),
                 other.toString(),
-                actor.userId().toString(),
+                actor.userId(),
                 "owner",
                 time);
-        UUID otherProject = projects.create(actor, other, "Other project", "OTH", null);
-        UUID foreign = workItems.create(
+        String otherProject = projects.create(actor, other, "Other project", "OTH", null);
+        String foreign = workItems.create(
                 actor, other, otherProject, new WorkItem.Details("Foreign", null, null, null, null, null, null), null);
         denied(
                 () -> links.connect(actor, workspace, TargetType.work_item, a, "blocks", TargetType.work_item, foreign),
                 404);
-        UUID link = links.connect(actor, workspace, TargetType.work_item, a, "blocks", TargetType.work_item, b);
-        jdbc.update("UPDATE workspace_member SET role='viewer' WHERE workspace_id=?", workspace.toString());
+        String link = links.connect(actor, workspace, TargetType.work_item, a, "blocks", TargetType.work_item, b);
+        jdbc.update("UPDATE workspace_member SET role='viewer' WHERE workspace_id=?", workspace);
         denied(() -> links.disconnect(actor, workspace, link), 403);
         denied(() -> links.connect(actor, workspace, TargetType.work_item, b, "blocks", TargetType.work_item, a), 403);
         assertThat(jdbc.queryForObject("SELECT count(*) FROM link WHERE deleted_at IS NULL", Integer.class))
@@ -410,14 +406,14 @@ class TargetPersistenceIntegrationTest {
 
     @Test
     void supersessionCannotBeCreatedOrRemovedThroughGenericLinksAndCoordinatedFailureRollsBack() {
-        UUID old = decision();
-        UUID replacement = decision();
+        String old = decision();
+        String replacement = decision();
         denied(
                 () -> links.connect(
                         actor, workspace, TargetType.decision, replacement, "supersedes", TargetType.decision, old),
                 409);
         transaction().executeWithoutResult(status -> {
-            for (UUID id : List.of(old, replacement)) {
+            for (String id : List.of(old, replacement)) {
                 var d = decisions.findById(project, id, false).orElseThrow();
                 d.accept(actor.userId(), null, now);
                 decisions.save(d);
@@ -435,8 +431,8 @@ class TargetPersistenceIntegrationTest {
                 .isEqualTo(Decision.State.ACCEPTED);
         assertThat(jdbc.queryForObject("SELECT count(*) FROM link", Integer.class))
                 .isZero();
-        UUID link = transaction().execute(status -> {
-            UUID id = links.connectSupersession(actor, workspace, replacement, old);
+        String link = transaction().execute(status -> {
+            String id = links.connectSupersession(actor, workspace, replacement, old);
             var d = decisions.findById(project, old, false).orElseThrow();
             d.supersede(actor.userId(), null, now);
             decisions.save(d);
@@ -448,8 +444,8 @@ class TargetPersistenceIntegrationTest {
     @Test
     void decisionCommandsPreserveAcceptanceAndCorrectionsAndProtectSupersededHistory() {
         var draft = new DecisionFacade.Draft("Original", "Reason", "Other choice", "planned");
-        UUID old = decisionService.create(actor, workspace, project, draft);
-        UUID replacement = decisionService.create(actor, workspace, project, draft);
+        String old = decisionService.create(actor, workspace, project, draft);
+        String replacement = decisionService.create(actor, workspace, project, draft);
         decisionService.accept(actor, workspace, project, old, 0);
         var acceptedAt = decisions.findById(project, old, false).orElseThrow().acceptedAt();
         decisionService.accept(actor, workspace, project, old, 1);
@@ -466,7 +462,7 @@ class TargetPersistenceIntegrationTest {
         assertThat(jdbc.queryForObject(
                         "SELECT json_extract(payload,'$.before') FROM activity WHERE target_id=? AND json_extract(payload,'$.field')='body'",
                         String.class,
-                        old.toString()))
+                        old))
                 .isEqualTo("Reason");
         denied(() -> decisionService.revise(actor, workspace, project, old, draft, 1), 409);
         denied(() -> decisionService.delete(actor, workspace, project, old, 2), 409);
@@ -479,9 +475,7 @@ class TargetPersistenceIntegrationTest {
         assertThat(superseded.supersededAt()).isNotNull();
         assertThat(superseded.version()).isEqualTo(3);
         assertThat(jdbc.queryForObject(
-                        "SELECT count(*) FROM link WHERE relation='supersedes' AND to_id=?",
-                        Integer.class,
-                        old.toString()))
+                        "SELECT count(*) FROM link WHERE relation='supersedes' AND to_id=?", Integer.class, old))
                 .isEqualTo(1);
         denied(() -> decisionService.revise(actor, workspace, project, old, draft, 3), 409);
         denied(() -> decisionService.accept(actor, workspace, project, old, 3), 409);
@@ -490,7 +484,7 @@ class TargetPersistenceIntegrationTest {
                         "SELECT count(*) FROM activity WHERE occurred_at<>? AND target_id=?",
                         Integer.class,
                         InstantTextBinding.text(superseded.audit().updatedAt()),
-                        old.toString()))
+                        old))
                 .isGreaterThan(0);
     }
 
@@ -503,9 +497,7 @@ class TargetPersistenceIntegrationTest {
         assertThat(jdbc.queryForObject("SELECT count(*) FROM decision", Integer.class))
                 .isZero();
         assertThat(jdbc.queryForObject(
-                        "SELECT last_decision_number FROM project WHERE project_id=?",
-                        Integer.class,
-                        project.toString()))
+                        "SELECT last_decision_number FROM project WHERE project_id=?", Integer.class, project))
                 .isZero();
         jdbc.execute("DROP TRIGGER reject_activity");
         var ids = decisionService.createAll(
@@ -515,7 +507,7 @@ class TargetPersistenceIntegrationTest {
                 List.of(
                         new DecisionFacade.Draft("Old", "Reason", null, null),
                         new DecisionFacade.Draft("New", "Reason", null, null)));
-        for (UUID id : ids) decisionService.accept(actor, workspace, project, id, 0);
+        for (String id : ids) decisionService.accept(actor, workspace, project, id, 0);
         int before = activityCount();
         rejectActivities();
         assertThatThrownBy(
@@ -535,7 +527,7 @@ class TargetPersistenceIntegrationTest {
     void largeEscapedDecisionCorrectionsAreLosslessAndEveryActivityStaysBelowTheByteLimit() {
         String before = "x" + "\u0001".repeat(19999);
         String after = "y" + "\u0002".repeat(19999);
-        UUID id = decisionService.create(
+        String id = decisionService.create(
                 actor, workspace, project, new DecisionFacade.Draft("Long", before, before, null));
         decisionService.accept(actor, workspace, project, id, 0);
         decisionService.revise(actor, workspace, project, id, new DecisionFacade.Draft("Long", after, after, null), 1);
@@ -543,7 +535,7 @@ class TargetPersistenceIntegrationTest {
             var rows = jdbc.queryForList(
                     "SELECT payload FROM activity WHERE target_id=? AND json_extract(payload,'$.field')=? ORDER BY json_extract(payload,'$.part')",
                     String.class,
-                    id.toString(),
+                    id,
                     field);
             var json = tools.jackson.databind.json.JsonMapper.builder().build();
             var oldText = new StringBuilder();
@@ -564,7 +556,7 @@ class TargetPersistenceIntegrationTest {
     @Test
     void proposedDeletionRestoreAndCurrentKeyReferencesRespectVersionsAndCurrentRoles() {
         var draft = new DecisionFacade.Draft("Proposed", "Reason", null, null);
-        UUID id = decisionService.create(actor, workspace, project, draft);
+        String id = decisionService.create(actor, workspace, project, draft);
         String oldKey = projects.findByKey(actor, workspace, "OLD").key();
         assertThat(decisionService.findByRef(actor, workspace, project, "D-001").id())
                 .isEqualTo(id);
@@ -578,7 +570,7 @@ class TargetPersistenceIntegrationTest {
         decisionService.restore(actor, workspace, project, id, 1);
         assertThat(decisionService.findByRef(actor, workspace, project, "D-001").id())
                 .isEqualTo(id);
-        jdbc.update("UPDATE workspace_member SET role='viewer' WHERE workspace_id=?", workspace.toString());
+        jdbc.update("UPDATE workspace_member SET role='viewer' WHERE workspace_id=?", workspace);
         assertThat(decisionService.findByRef(actor, workspace, project, "D-001").id())
                 .isEqualTo(id);
         denied(() -> decisionService.accept(actor, workspace, project, id, 2), 403);
@@ -589,11 +581,11 @@ class TargetPersistenceIntegrationTest {
     @Test
     void concurrentDecisionCreationAllocatesUniqueNumbersAndEvents() throws Exception {
         try (var executor = java.util.concurrent.Executors.newFixedThreadPool(4)) {
-            var jobs = new java.util.ArrayList<java.util.concurrent.Future<UUID>>();
+            var jobs = new java.util.ArrayList<java.util.concurrent.Future<String>>();
             for (int i = 0; i < 8; i++)
                 jobs.add(executor.submit(() -> decisionService.create(
                         actor, workspace, project, new DecisionFacade.Draft("Concurrent", "Reason", null, null))));
-            var ids = new java.util.HashSet<UUID>();
+            var ids = new java.util.HashSet<String>();
             for (var job : jobs) ids.add(job.get(20, java.util.concurrent.TimeUnit.SECONDS));
             assertThat(ids).hasSize(8);
         }
@@ -611,12 +603,12 @@ class TargetPersistenceIntegrationTest {
 
     @Test
     void apiKeyDecisionProvenanceUsesTheHumanOwnerAndAgentWithoutPersistingCredentials() {
-        UUID credential = UUID.randomUUID();
+        String credential = Ids.newId();
         String time = InstantTextBinding.text(Instant.now());
         jdbc.update(
                 "INSERT INTO iam_api_key(iam_api_key_id,iam_user_id,name,agent_name,prefix,key_hash,created_at) VALUES(?,?,?,?,?,?,?)",
-                credential.toString(),
-                actor.userId().toString(),
+                credential,
+                actor.userId(),
                 "Decision tool",
                 "Decision agent",
                 "fixture",
@@ -624,7 +616,7 @@ class TargetPersistenceIntegrationTest {
                 time);
         var agent =
                 new CurrentUser(actor.userId(), true, CurrentUser.Method.API_KEY, credential, "Decision agent", false);
-        UUID id = decisionService.create(
+        String id = decisionService.create(
                 agent, workspace, project, new DecisionFacade.Draft("Agent decision", "Reason", null, null));
         decisionService.accept(agent, workspace, project, id, 0);
         var decision = decisions.findById(project, id, false).orElseThrow();
@@ -633,15 +625,15 @@ class TargetPersistenceIntegrationTest {
         assertThat(jdbc.queryForList(
                         "SELECT actor_id FROM activity WHERE NOT (target_type='work_item' AND type NOT LIKE 'comment%')",
                         String.class))
-                .containsOnly(actor.userId().toString());
+                .containsOnly(actor.userId());
         assertThat(jdbc.queryForList(
                         "SELECT actor_agent FROM activity WHERE NOT (target_type='work_item' AND type NOT LIKE 'comment%')",
                         String.class))
                 .containsOnly("Decision agent");
         for (String payload : jdbc.queryForList(
                 "SELECT payload FROM activity WHERE NOT (target_type='work_item' AND type NOT LIKE 'comment%')",
-                String.class)) assertThat(payload).doesNotContain("never-log-fixture-key-hash", credential.toString());
-        jdbc.update("UPDATE iam_api_key SET revoked_at=? WHERE iam_api_key_id=?", time, credential.toString());
+                String.class)) assertThat(payload).doesNotContain("never-log-fixture-key-hash", credential);
+        jdbc.update("UPDATE iam_api_key SET revoked_at=? WHERE iam_api_key_id=?", time, credential);
         denied(
                 () -> decisionService.revise(
                         agent, workspace, project, id, new DecisionFacade.Draft("Revoked", "Reason", null, null), 1),
@@ -656,8 +648,8 @@ class TargetPersistenceIntegrationTest {
 
     @Test
     void sessionBundleSavesCanonicalParticipantSnapshotsDecisionsAndDeduplicatedLinks() {
-        UUID work = workItem("Related work");
-        UUID id = sessionService.record(
+        String work = workItem("Related work");
+        String id = sessionService.record(
                 actor,
                 workspace,
                 project,
@@ -686,7 +678,7 @@ class TargetPersistenceIntegrationTest {
                         project,
                         id,
                         jdbc.queryForList("SELECT decision_id FROM decision", String.class).stream()
-                                .map(UUID::fromString)
+                                .map(Ids::parse)
                                 .toList(),
                         List.of(work)));
         assertThat(jdbc.queryForObject("SELECT count(*) FROM link", Integer.class))
@@ -706,7 +698,7 @@ class TargetPersistenceIntegrationTest {
 
     @Test
     void failureAtParticipantsLinksOrActivitiesRollsBackTheEntireSessionBundleAndBothCounters() {
-        UUID work = workItem("Related work");
+        String work = workItem("Related work");
         for (String table : List.of("session_participant", "link", "activity")) {
             jdbc.execute("CREATE TRIGGER reject_bundle BEFORE INSERT ON " + table
                     + " BEGIN SELECT RAISE(ABORT,'forced bundle failure'); END");
@@ -729,7 +721,7 @@ class TargetPersistenceIntegrationTest {
                 assertThat(jdbc.queryForObject(
                                 "SELECT last_session_number+last_decision_number FROM project WHERE project_id=?",
                                 Integer.class,
-                                project.toString()))
+                                project))
                         .isZero();
                 assertThat(jdbc.queryForObject("SELECT count(*) FROM work_item", Integer.class))
                         .isEqualTo(1);
@@ -747,7 +739,7 @@ class TargetPersistenceIntegrationTest {
                         workspace,
                         project,
                         sessionDraft("Summary"),
-                        List.of(new SessionFacade.Person("user", UUID.randomUUID(), "Spoof")),
+                        List.of(new SessionFacade.Person("user", Ids.newId(), "Spoof")),
                         List.of(),
                         List.of()),
                 400);
@@ -771,8 +763,8 @@ class TargetPersistenceIntegrationTest {
                         List.of(),
                         List.of()),
                 400);
-        UUID another = projects.create(actor, workspace, "Other project", "OTH", null);
-        UUID otherWork = workItems.create(
+        String another = projects.create(actor, workspace, "Other project", "OTH", null);
+        String otherWork = workItems.create(
                 actor, workspace, another, new WorkItem.Details("Other", null, null, null, null, null, null), null);
         denied(
                 () -> sessionService.record(
@@ -784,7 +776,7 @@ class TargetPersistenceIntegrationTest {
                         List.of(new DecisionFacade.Draft("Decision", "Reason", null, null)),
                         List.of(otherWork)),
                 404);
-        UUID hidden = workItem("Hidden");
+        String hidden = workItem("Hidden");
         workItems.delete(actor, workspace, project, hidden, 0);
         denied(
                 () -> sessionService.record(
@@ -797,13 +789,13 @@ class TargetPersistenceIntegrationTest {
         assertThat(jdbc.queryForObject(
                         "SELECT last_session_number+last_decision_number FROM project WHERE project_id=?",
                         Integer.class,
-                        project.toString()))
+                        project))
                 .isZero();
     }
 
     @Test
     void summaryCorrectionPreservesHistoricalMembersAndDoesNotCopyTheSummaryIntoActivity() {
-        UUID id = sessionService.record(
+        String id = sessionService.record(
                 actor,
                 workspace,
                 project,
@@ -811,9 +803,7 @@ class TargetPersistenceIntegrationTest {
                 List.of(new SessionFacade.Person("user", actor.userId(), null)),
                 List.of(),
                 List.of());
-        jdbc.update(
-                "UPDATE iam_user SET name='Renamed owner' WHERE iam_user_id=?",
-                actor.userId().toString());
+        jdbc.update("UPDATE iam_user SET name='Renamed owner' WHERE iam_user_id=?", actor.userId());
         sessionService.revise(actor, workspace, project, id, sessionDraft("New private summary"), null, 0);
         assertThat(sessions.findById(project, id, false).orElseThrow().participants())
                 .extracting(Participant::displayName)
@@ -827,7 +817,7 @@ class TargetPersistenceIntegrationTest {
         sessionService.restore(actor, workspace, project, id, 2);
         assertThat(sessionService.findByRef(actor, workspace, project, "S-001").id())
                 .isEqualTo(id);
-        jdbc.update("UPDATE workspace_member SET role='viewer' WHERE workspace_id=?", workspace.toString());
+        jdbc.update("UPDATE workspace_member SET role='viewer' WHERE workspace_id=?", workspace);
         denied(() -> sessionService.delete(actor, workspace, project, id, 3), 403);
         assertThat(sessionService.findByRef(actor, workspace, project, "S-001").id())
                 .isEqualTo(id);
@@ -835,7 +825,7 @@ class TargetPersistenceIntegrationTest {
 
     @Test
     void sessionBundleSupportsTheFullParticipantDecisionAndWorkItemLimits() {
-        var work = new java.util.ArrayList<UUID>();
+        var work = new java.util.ArrayList<String>();
         var people = new java.util.ArrayList<SessionFacade.Person>();
         var drafts = new java.util.ArrayList<DecisionFacade.Draft>();
         for (int i = 0; i < 100; i++) {
@@ -843,7 +833,7 @@ class TargetPersistenceIntegrationTest {
             people.add(new SessionFacade.Person("guest", null, "Guest " + i));
         }
         for (int i = 0; i < 20; i++) drafts.add(new DecisionFacade.Draft("Decision " + i, "Reason", null, null));
-        UUID id = sessionService.record(actor, workspace, project, sessionDraft("Summary"), people, drafts, work);
+        String id = sessionService.record(actor, workspace, project, sessionDraft("Summary"), people, drafts, work);
         assertThat(sessions.findById(project, id, false).orElseThrow().participants())
                 .hasSize(100);
         assertThat(jdbc.queryForObject("SELECT count(*) FROM decision", Integer.class))
@@ -856,7 +846,7 @@ class TargetPersistenceIntegrationTest {
     @Test
     void concurrentSessionBundlesAllocateIndependentSessionAndDecisionNumbers() throws Exception {
         try (var executor = java.util.concurrent.Executors.newFixedThreadPool(4)) {
-            var jobs = new java.util.ArrayList<java.util.concurrent.Future<UUID>>();
+            var jobs = new java.util.ArrayList<java.util.concurrent.Future<String>>();
             for (int i = 0; i < 4; i++)
                 jobs.add(executor.submit(() -> sessionService.record(
                         actor,
@@ -868,7 +858,7 @@ class TargetPersistenceIntegrationTest {
                                 new DecisionFacade.Draft("A", "Reason", null, null),
                                 new DecisionFacade.Draft("B", "Reason", null, null)),
                         List.of())));
-            var ids = new java.util.HashSet<UUID>();
+            var ids = new java.util.HashSet<String>();
             for (var job : jobs) ids.add(job.get(20, java.util.concurrent.TimeUnit.SECONDS));
             assertThat(ids).hasSize(4);
         }
@@ -887,8 +877,8 @@ class TargetPersistenceIntegrationTest {
 
     @Test
     void authorCanCorrectDeleteAndRestoreCommentsWithVersionsAndBodyFreeActivities() {
-        UUID work = workItem("Discussion");
-        UUID id = comments.create(actor, workspace, TargetType.work_item, work, " Original private comment ");
+        String work = workItem("Discussion");
+        String id = comments.create(actor, workspace, TargetType.work_item, work, " Original private comment ");
         assertThat(commentRepository.findById(workspace, id).orElseThrow().body())
                 .isEqualTo("Original private comment");
         comments.revise(actor, workspace, id, "Corrected private comment", 0);
@@ -907,7 +897,7 @@ class TargetPersistenceIntegrationTest {
         for (String payload : jdbc.queryForList(
                 "SELECT payload FROM activity WHERE NOT (target_type='work_item' AND type NOT LIKE 'comment%')",
                 String.class))
-            assertThat(payload).contains(id.toString()).doesNotContain("private comment", "Original", "Corrected");
+            assertThat(payload).contains(id).doesNotContain("private comment", "Original", "Corrected");
     }
 
     @Test
@@ -915,8 +905,8 @@ class TargetPersistenceIntegrationTest {
         CurrentUser author = member("member");
         CurrentUser other = member("member");
         CurrentUser admin = member("admin");
-        UUID work = workItem("Discussion");
-        UUID id = comments.create(author, workspace, TargetType.work_item, work, "Author text");
+        String work = workItem("Discussion");
+        String id = comments.create(author, workspace, TargetType.work_item, work, "Author text");
         denied(() -> comments.revise(actor, workspace, id, "Owner rewrite", 0), 403);
         denied(() -> comments.revise(admin, workspace, id, "Admin rewrite", 0), 403);
         denied(() -> comments.revise(other, workspace, id, "Member rewrite", 0), 403);
@@ -936,21 +926,18 @@ class TargetPersistenceIntegrationTest {
     @Test
     void currentMembershipAndTargetLifecycleGovernCommentWritesAndInstanceAdminsCannotBypassThem() {
         CurrentUser author = member("member");
-        UUID work = workItem("Discussion");
-        UUID id = comments.create(author, workspace, TargetType.work_item, work, "Author text");
+        String work = workItem("Discussion");
+        String id = comments.create(author, workspace, TargetType.work_item, work, "Author text");
         jdbc.update(
                 "UPDATE workspace_member SET role='viewer' WHERE workspace_id=? AND iam_user_id=?",
-                workspace.toString(),
-                author.userId().toString());
+                workspace,
+                author.userId());
         denied(() -> comments.revise(author, workspace, id, "Viewer edit", 0), 403);
         denied(() -> comments.delete(author, workspace, id, 0), 403);
         denied(() -> comments.create(author, workspace, TargetType.work_item, work, "Viewer post"), 403);
-        jdbc.update(
-                "DELETE FROM workspace_member WHERE workspace_id=? AND iam_user_id=?",
-                workspace.toString(),
-                author.userId().toString());
+        jdbc.update("DELETE FROM workspace_member WHERE workspace_id=? AND iam_user_id=?", workspace, author.userId());
         denied(() -> comments.delete(author, workspace, id, 0), 404);
-        denied(() -> comments.delete(actor, UUID.randomUUID(), id, 0), 404);
+        denied(() -> comments.delete(actor, Ids.newId(), id, 0), 404);
         workItems.delete(actor, workspace, project, work, 0);
         denied(() -> comments.delete(actor, workspace, id, 0), 404);
         workItems.restore(actor, workspace, project, work, 1);
@@ -969,14 +956,14 @@ class TargetPersistenceIntegrationTest {
 
     @Test
     void failedCommentActivitiesRollBackCreationCorrectionsAndModeration() {
-        UUID work = workItem("Discussion");
+        String work = workItem("Discussion");
         rejectActivities();
         assertThatThrownBy(() -> comments.create(actor, workspace, TargetType.work_item, work, "Not persisted"))
                 .isInstanceOf(RuntimeException.class);
         assertThat(jdbc.queryForObject("SELECT count(*) FROM comment", Integer.class))
                 .isZero();
         jdbc.execute("DROP TRIGGER reject_activity");
-        UUID id = comments.create(actor, workspace, TargetType.work_item, work, "Original");
+        String id = comments.create(actor, workspace, TargetType.work_item, work, "Original");
         rejectActivities();
         assertThatThrownBy(() -> comments.revise(actor, workspace, id, "Not persisted", 0))
                 .isInstanceOf(RuntimeException.class);
@@ -1000,12 +987,13 @@ class TargetPersistenceIntegrationTest {
 
     @Test
     void commentsUseTheSameSafeTargetChecksForDecisionsSessionsAndUnimplementedTypes() {
-        UUID decision = decisionService.create(
+        String decision = decisionService.create(
                 actor, workspace, project, new DecisionFacade.Draft("Decision", "Reason", null, null));
-        UUID session = sessionService.record(
+        String session = sessionService.record(
                 actor, workspace, project, sessionDraft("Summary"), List.of(), List.of(), List.of());
-        UUID decisionComment = comments.create(actor, workspace, TargetType.decision, decision, "Decision discussion");
-        UUID sessionComment =
+        String decisionComment =
+                comments.create(actor, workspace, TargetType.decision, decision, "Decision discussion");
+        String sessionComment =
                 comments.create(actor, workspace, TargetType.session_record, session, "Session discussion");
         assertThat(commentRepository
                         .findById(workspace, decisionComment)
@@ -1017,50 +1005,50 @@ class TargetPersistenceIntegrationTest {
                         .orElseThrow()
                         .targetId())
                 .isEqualTo(session);
-        denied(() -> comments.create(actor, workspace, TargetType.artifact, UUID.randomUUID(), "Unimplemented"), 404);
-        denied(() -> comments.create(actor, workspace, TargetType.work_item, UUID.randomUUID(), "Missing"), 404);
-        denied(() -> comments.create(actor, workspace, TargetType.code_ref, UUID.randomUUID(), "Unsupported"), 404);
+        denied(() -> comments.create(actor, workspace, TargetType.artifact, Ids.newId(), "Unimplemented"), 404);
+        denied(() -> comments.create(actor, workspace, TargetType.work_item, Ids.newId(), "Missing"), 404);
+        denied(() -> comments.create(actor, workspace, TargetType.code_ref, Ids.newId(), "Unsupported"), 404);
         assertThat(jdbc.queryForObject("SELECT count(*) FROM comment", Integer.class))
                 .isEqualTo(2);
     }
 
     private CurrentUser member(String role) {
-        UUID user = UUID.randomUUID();
-        UUID credential = UUID.randomUUID();
+        String user = Ids.newId();
+        String credential = Ids.newId();
         Instant time = Instant.now();
         String text = InstantTextBinding.text(time);
         jdbc.update(
                 "INSERT INTO iam_user(iam_user_id,email,name,created_at,updated_at) VALUES(?,?,?,?,?)",
-                user.toString(),
-                user + "@example.test",
+                user,
+                user.toLowerCase(Locale.ROOT) + "@example.test",
                 "Other user",
                 text,
                 text);
         jdbc.update(
                 "INSERT INTO iam_password(iam_user_id,password_hash,changed_at) VALUES(?,?,?)",
-                user.toString(),
+                user,
                 "fixture-hash",
                 text);
         jdbc.update(
                 "INSERT INTO iam_session(iam_session_id,iam_user_id,token_hash,expires_at,absolute_expires_at,last_seen_at,created_at) VALUES(?,?,?,?,?,?,?)",
-                credential.toString(),
-                user.toString(),
-                credential.toString(),
+                credential,
+                user,
+                credential,
                 InstantTextBinding.text(time.plusSeconds(3600)),
                 InstantTextBinding.text(time.plusSeconds(7200)),
                 text,
                 text);
         jdbc.update(
                 "INSERT INTO workspace_member(workspace_member_id,workspace_id,iam_user_id,role,joined_at) VALUES(?,?,?,?,?)",
-                UUID.randomUUID().toString(),
-                workspace.toString(),
-                user.toString(),
+                Ids.newId(),
+                workspace,
+                user,
                 role,
                 text);
         return new CurrentUser(user, false, CurrentUser.Method.SESSION, credential, null, false);
     }
 
-    private UUID workItem(String title) {
+    private String workItem(String title) {
         return workItems.create(
                 actor, workspace, project, new WorkItem.Details(title, null, null, null, null, null, null), null);
     }

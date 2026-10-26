@@ -17,7 +17,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Set;
-import java.util.UUID;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -41,9 +40,9 @@ public class WorkItemService implements WorkItemFacade, ColumnWorkItemSpi {
     @Transactional(readOnly = true)
     public void requireAccess(
             CurrentUser actor,
-            UUID workspaceId,
-            UUID projectId,
-            UUID workItemId,
+            String workspaceId,
+            String projectId,
+            String workItemId,
             boolean writing,
             boolean includeDeleted) {
         access(actor, workspaceId, projectId, workItemId, writing, includeDeleted);
@@ -51,7 +50,7 @@ public class WorkItemService implements WorkItemFacade, ColumnWorkItemSpi {
 
     @Override
     @Transactional(readOnly = true)
-    public Ref findByRef(CurrentUser actor, UUID workspaceId, String reference) {
+    public Ref findByRef(CurrentUser actor, String workspaceId, String reference) {
         workspaceFacade.requireAccess(actor, workspaceId, WorkspaceFacade.Action.READ);
         var match = REFERENCE.matcher(reference == null ? "" : reference.strip().toUpperCase(Locale.ROOT));
         if (!match.matches()) throw WorkItemErrorCode.WORKITEM_NOT_FOUND.raise();
@@ -69,18 +68,19 @@ public class WorkItemService implements WorkItemFacade, ColumnWorkItemSpi {
     }
 
     @Transactional
-    public UUID create(CurrentUser actor, UUID workspaceId, UUID projectId, WorkItem.Details details, UUID columnId) {
+    public String create(
+            CurrentUser actor, String workspaceId, String projectId, WorkItem.Details details, String columnId) {
         return create(actor, workspaceId, projectId, details, columnId, Set.of());
     }
 
     @Transactional
-    public UUID create(
+    public String create(
             CurrentUser actor,
-            UUID workspaceId,
-            UUID projectId,
+            String workspaceId,
+            String projectId,
             WorkItem.Details details,
-            UUID columnId,
-            Set<UUID> labelIds) {
+            String columnId,
+            Set<String> labelIds) {
         projectFacade.requireAccess(actor, workspaceId, projectId, true);
         validateDates(details);
         assignee(actor, workspaceId, details.assigneeId());
@@ -109,7 +109,8 @@ public class WorkItemService implements WorkItemFacade, ColumnWorkItemSpi {
     }
 
     @Transactional
-    public void revise(CurrentUser actor, UUID workspaceId, UUID projectId, UUID id, WorkItemRequests.Update request) {
+    public void revise(
+            CurrentUser actor, String workspaceId, String projectId, String id, WorkItemRequests.Update request) {
         var w = access(actor, workspaceId, projectId, id, true, false);
         version(w, request.getExpectedVersion());
         var d = w.details();
@@ -146,19 +147,19 @@ public class WorkItemService implements WorkItemFacade, ColumnWorkItemSpi {
     @Transactional
     public void move(
             CurrentUser actor,
-            UUID workspaceId,
-            UUID projectId,
-            UUID id,
+            String workspaceId,
+            String projectId,
+            String id,
             long expectedVersion,
-            UUID targetColumnId,
-            UUID beforeItemId,
-            UUID afterItemId) {
+            String targetColumnId,
+            String beforeItemId,
+            String afterItemId) {
         var w = access(actor, workspaceId, projectId, id, true, false);
         version(w, expectedVersion);
         var target = projectFacade.requireColumn(actor, workspaceId, projectId, targetColumnId);
         if (id.equals(beforeItemId) || id.equals(afterItemId)) throw WorkItemErrorCode.WORKITEM_MOVE_INVALID.raise();
         if (Objects.equals(w.columnId(), targetColumnId) && beforeItemId == null && afterItemId == null) return;
-        UUID previous = w.columnId();
+        String previous = w.columnId();
         var ordered = new ArrayList<>(workItemRepository.findColumnItems(projectId, targetColumnId, false));
         ordered.removeIf(item -> item.id().equals(id));
         int before = index(ordered, beforeItemId);
@@ -185,7 +186,12 @@ public class WorkItemService implements WorkItemFacade, ColumnWorkItemSpi {
 
     @Transactional
     public void archive(
-            CurrentUser actor, UUID workspaceId, UUID projectId, UUID id, long expectedVersion, boolean archived) {
+            CurrentUser actor,
+            String workspaceId,
+            String projectId,
+            String id,
+            long expectedVersion,
+            boolean archived) {
         var w = access(actor, workspaceId, projectId, id, true, false);
         version(w, expectedVersion);
         boolean was = w.archivedAt() != null;
@@ -196,7 +202,7 @@ public class WorkItemService implements WorkItemFacade, ColumnWorkItemSpi {
     }
 
     @Transactional
-    public void delete(CurrentUser actor, UUID workspaceId, UUID projectId, UUID id, long expectedVersion) {
+    public void delete(CurrentUser actor, String workspaceId, String projectId, String id, long expectedVersion) {
         var w = access(actor, workspaceId, projectId, id, true, true);
         version(w, expectedVersion);
         w.delete(actor.userId(), agent(actor), clock.instant());
@@ -205,7 +211,7 @@ public class WorkItemService implements WorkItemFacade, ColumnWorkItemSpi {
     }
 
     @Transactional
-    public void restore(CurrentUser actor, UUID workspaceId, UUID projectId, UUID id, long expectedVersion) {
+    public void restore(CurrentUser actor, String workspaceId, String projectId, String id, long expectedVersion) {
         var w = access(actor, workspaceId, projectId, id, true, true);
         version(w, expectedVersion);
         var existing = projectFacade.findColumn(actor, workspaceId, projectId, w.columnId());
@@ -218,7 +224,8 @@ public class WorkItemService implements WorkItemFacade, ColumnWorkItemSpi {
 
     @Override
     @Transactional(propagation = Propagation.MANDATORY)
-    public void reclassify(CurrentUser actor, UUID workspaceId, UUID projectId, UUID columnId, boolean finalColumn) {
+    public void reclassify(
+            CurrentUser actor, String workspaceId, String projectId, String columnId, boolean finalColumn) {
         projectFacade.requireSettings(actor, workspaceId, projectId, false, false);
         applyOrder(actor, workItemRepository.findColumnItems(projectId, columnId, true), columnId, finalColumn);
     }
@@ -227,10 +234,10 @@ public class WorkItemService implements WorkItemFacade, ColumnWorkItemSpi {
     @Transactional(propagation = Propagation.MANDATORY)
     public void transfer(
             CurrentUser actor,
-            UUID workspaceId,
-            UUID projectId,
-            UUID sourceColumnId,
-            UUID targetColumnId,
+            String workspaceId,
+            String projectId,
+            String sourceColumnId,
+            String targetColumnId,
             boolean targetFinal) {
         projectFacade.requireSettings(actor, workspaceId, projectId, false, false);
         var ordered = new ArrayList<>(workItemRepository.findColumnItems(projectId, targetColumnId, false));
@@ -239,7 +246,7 @@ public class WorkItemService implements WorkItemFacade, ColumnWorkItemSpi {
     }
 
     private WorkItem access(
-            CurrentUser actor, UUID workspaceId, UUID projectId, UUID id, boolean writing, boolean deleted) {
+            CurrentUser actor, String workspaceId, String projectId, String id, boolean writing, boolean deleted) {
         projectFacade.requireAccess(actor, workspaceId, projectId, writing);
         if (deleted) workspaceFacade.requireAccess(actor, workspaceId, WorkspaceFacade.Action.WRITE_WORK);
         return workItemRepository
@@ -247,7 +254,7 @@ public class WorkItemService implements WorkItemFacade, ColumnWorkItemSpi {
                 .orElseThrow(WorkItemErrorCode.WORKITEM_NOT_FOUND::raise);
     }
 
-    private void applyOrder(CurrentUser actor, List<WorkItem> ordered, UUID columnId, boolean finalColumn) {
+    private void applyOrder(CurrentUser actor, List<WorkItem> ordered, String columnId, boolean finalColumn) {
         for (int i = 0; i < ordered.size(); i++) {
             var item = ordered.get(i);
             long before = item.version();
@@ -256,19 +263,19 @@ public class WorkItemService implements WorkItemFacade, ColumnWorkItemSpi {
         }
     }
 
-    private static int index(List<WorkItem> items, UUID id) {
+    private static int index(List<WorkItem> items, String id) {
         if (id == null) return -1;
         for (int i = 0; i < items.size(); i++) if (items.get(i).id().equals(id)) return i;
         return -1;
     }
 
-    private void assignee(CurrentUser actor, UUID workspaceId, UUID userId) {
+    private void assignee(CurrentUser actor, String workspaceId, String userId) {
         if (userId != null && !workspaceFacade.hasMember(actor, workspaceId, userId))
             throw WorkItemErrorCode.WORKITEM_ASSIGNEE_NOT_MEMBER.raise();
     }
 
     /** Every label must be a live label of this workspace; deleted or foreign ids are rejected as one error. */
-    private void labels(CurrentUser actor, UUID workspaceId, Set<UUID> labelIds) {
+    private void labels(CurrentUser actor, String workspaceId, Set<String> labelIds) {
         if (!labelIds.isEmpty()
                 && labelFacade.findAllById(actor, workspaceId, labelIds).size() != labelIds.size())
             throw WorkItemErrorCode.WORKITEM_LABEL_INVALID.raise();
@@ -282,7 +289,8 @@ public class WorkItemService implements WorkItemFacade, ColumnWorkItemSpi {
     }
 
     /** Records what happened to an issue in its activity (D-078): safe values only, ids for people, columns and labels. */
-    private void changed(CurrentUser actor, UUID workspaceId, WorkItem item, String action, List<FieldChange> changes) {
+    private void changed(
+            CurrentUser actor, String workspaceId, WorkItem item, String action, List<FieldChange> changes) {
         applicationEventPublisher.publishEvent(new TargetChangedEvent(
                 workspaceId,
                 item.projectId(),
@@ -305,8 +313,8 @@ public class WorkItemService implements WorkItemFacade, ColumnWorkItemSpi {
     }
 
     /** Label ids in a stable order, joined by commas; null for none. */
-    private static String ids(Set<UUID> ids) {
-        return ids.isEmpty() ? null : ids.stream().map(UUID::toString).sorted().collect(Collectors.joining(","));
+    private static String ids(Set<String> ids) {
+        return ids.isEmpty() ? null : ids.stream().sorted().collect(Collectors.joining(","));
     }
 
     private static void version(WorkItem item, long expected) {

@@ -6,7 +6,6 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import java.net.URI;
 import java.util.List;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -28,7 +27,7 @@ class ViewController {
     private final ViewService viewService;
 
     @GetMapping("/views")
-    List<ViewViews.View> list(@AuthenticationPrincipal CurrentUser actor, @PathVariable UUID workspaceId) {
+    List<ViewViews.View> list(@AuthenticationPrincipal CurrentUser actor, @PathVariable String workspaceId) {
         return viewService.list(actor, workspaceId);
     }
 
@@ -36,24 +35,24 @@ class ViewController {
     @ApiResponse(responseCode = "201", description = "뷰 생성")
     ResponseEntity<Void> create(
             @AuthenticationPrincipal CurrentUser actor,
-            @PathVariable UUID workspaceId,
+            @PathVariable String workspaceId,
             @Valid @RequestBody ViewRequests.Create request) {
-        UUID id = viewService.create(actor, workspaceId, request);
+        String id = viewService.create(actor, workspaceId, request);
         return ResponseEntity.created(URI.create("/api/v1/workspaces/" + workspaceId + "/views/" + id))
                 .build();
     }
 
     @GetMapping("/views/{viewId}")
     ViewViews.View get(
-            @AuthenticationPrincipal CurrentUser actor, @PathVariable UUID workspaceId, @PathVariable UUID viewId) {
+            @AuthenticationPrincipal CurrentUser actor, @PathVariable String workspaceId, @PathVariable String viewId) {
         return viewService.get(actor, workspaceId, viewId);
     }
 
     @PatchMapping("/views/{viewId}")
     ResponseEntity<Void> revise(
             @AuthenticationPrincipal CurrentUser actor,
-            @PathVariable UUID workspaceId,
-            @PathVariable UUID viewId,
+            @PathVariable String workspaceId,
+            @PathVariable String viewId,
             @Valid @RequestBody ViewRequests.Update request) {
         viewService.revise(actor, workspaceId, viewId, request);
         return ResponseEntity.noContent().build();
@@ -62,22 +61,22 @@ class ViewController {
     @DeleteMapping("/views/{viewId}")
     ResponseEntity<Void> delete(
             @AuthenticationPrincipal CurrentUser actor,
-            @PathVariable UUID workspaceId,
-            @PathVariable UUID viewId,
+            @PathVariable String workspaceId,
+            @PathVariable String viewId,
             @RequestParam @Min(0) long expectedVersion) {
         viewService.delete(actor, workspaceId, viewId, expectedVersion);
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/view-tweaks")
-    List<ViewViews.Tweak> tweaks(@AuthenticationPrincipal CurrentUser actor, @PathVariable UUID workspaceId) {
+    List<ViewViews.Tweak> tweaks(@AuthenticationPrincipal CurrentUser actor, @PathVariable String workspaceId) {
         return viewService.tweaks(actor, workspaceId);
     }
 
     @PutMapping("/view-tweaks/{viewKey}")
     ResponseEntity<Void> putTweak(
             @AuthenticationPrincipal CurrentUser actor,
-            @PathVariable UUID workspaceId,
+            @PathVariable String workspaceId,
             @PathVariable String viewKey,
             @Valid @RequestBody ViewRequests.PutTweak request) {
         viewService.putTweak(actor, workspaceId, viewKey, request);
@@ -86,7 +85,9 @@ class ViewController {
 
     @DeleteMapping("/view-tweaks/{viewKey}")
     ResponseEntity<Void> deleteTweak(
-            @AuthenticationPrincipal CurrentUser actor, @PathVariable UUID workspaceId, @PathVariable String viewKey) {
+            @AuthenticationPrincipal CurrentUser actor,
+            @PathVariable String workspaceId,
+            @PathVariable String viewKey) {
         viewService.deleteTweak(actor, workspaceId, viewKey);
         return ResponseEntity.noContent().build();
     }

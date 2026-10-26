@@ -7,7 +7,6 @@ import io.github.goraebap.bit.module.link.domain.Activity;
 import io.github.goraebap.bit.module.link.domain.ActivityRepository;
 import java.time.Instant;
 import java.util.List;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.jooq.DSLContext;
 import org.jooq.JSON;
@@ -42,7 +41,7 @@ class JooqActivityRepository implements ActivityRepository {
 
     @Override
     public List<Activity> findAllByTarget(
-            UUID workspaceId, TargetType type, UUID targetId, Instant afterTime, UUID afterId, int limit) {
+            String workspaceId, TargetType type, String targetId, Instant afterTime, String afterId, int limit) {
         return dslContext
                 .selectFrom(ACTIVITY)
                 .where(ACTIVITY.WORKSPACE_ID.eq(workspaceId))

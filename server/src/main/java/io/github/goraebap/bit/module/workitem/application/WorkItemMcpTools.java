@@ -20,7 +20,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -172,7 +171,7 @@ class WorkItemMcpTools implements McpToolProvider {
     }
 
     private Object list(CurrentUser actor, McpArguments args) {
-        UUID workspace =
+        String workspace =
                 workspaceFacade.resolve(actor, args.optionalString("workspace").orElse(null));
         var project = args.optionalString("project").map(key -> projectFacade.findByKey(actor, workspace, key));
         var filters =
@@ -190,7 +189,7 @@ class WorkItemMcpTools implements McpToolProvider {
                         actor, workspace, project.orElseThrow().id(), false, inProject)
                 : workItemQueryService.listWorkspace(actor, workspace, (WorkItemRequests.WorkspaceListRequest) filters);
         // Each project's columns read once, so every issue says its column by name.
-        var boards = new java.util.HashMap<UUID, List<ProjectFacade.ColumnInfo>>();
+        var boards = new java.util.HashMap<String, List<ProjectFacade.ColumnInfo>>();
         var result = new LinkedHashMap<String, Object>();
         result.put(
                 "items",
@@ -205,11 +204,11 @@ class WorkItemMcpTools implements McpToolProvider {
     }
 
     private Object create(CurrentUser actor, McpArguments args) {
-        UUID workspace =
+        String workspace =
                 workspaceFacade.resolve(actor, args.optionalString("workspace").orElse(null));
         var project = projectFacade.findByKey(actor, workspace, args.string("project"));
         var columns = projectFacade.boardColumns(actor, workspace, project.id());
-        UUID column = args.optionalString("status")
+        String column = args.optionalString("status")
                 .map(status -> column(columns, status))
                 .orElseGet(() -> columns.stream()
                         .filter(c -> c.category() != null
@@ -228,10 +227,10 @@ class WorkItemMcpTools implements McpToolProvider {
                         .orElse(null),
                 args.date("start_date").orElse(null),
                 args.date("due_date").orElse(null));
-        Set<UUID> labels = args.strings("labels")
+        Set<String> labels = args.strings("labels")
                 .map(names -> labelIds(actor, workspace, names))
                 .orElse(Set.of());
-        UUID id = workItemService.create(actor, workspace, project.id(), details, column, labels);
+        String id = workItemService.create(actor, workspace, project.id(), details, column, labels);
         var item = workItemQueryService.get(actor, workspace, project.id(), id);
         return summary(item, columns);
     }
@@ -303,7 +302,7 @@ class WorkItemMcpTools implements McpToolProvider {
         String ref = args.string("ref");
         var hint = args.optionalString("workspace");
         if (hint.isPresent()) {
-            UUID workspace = workspaceFacade.resolve(actor, hint.get());
+            String workspace = workspaceFacade.resolve(actor, hint.get());
             return located(workspace, workItemFacade.findByRef(actor, workspace, ref));
         }
         var found = new ArrayList<Located>();
@@ -319,7 +318,7 @@ class WorkItemMcpTools implements McpToolProvider {
         throw new IllegalArgumentException(ref + "가 여러 워크스페이스에 있습니다. workspace 인자로 고르세요.");
     }
 
-    private static Located located(UUID workspace, WorkItemFacade.Ref ref) {
+    private static Located located(String workspace, WorkItemFacade.Ref ref) {
         return new Located(workspace, ref.projectId(), ref.id(), ref.reference());
     }
 
@@ -328,7 +327,7 @@ class WorkItemMcpTools implements McpToolProvider {
     }
 
     /** A column by its name, else the first of a category, or backlog for none. */
-    private static UUID column(List<ProjectFacade.ColumnInfo> columns, String status) {
+    private static String column(List<ProjectFacade.ColumnInfo> columns, String status) {
         String wanted = status.strip();
         if (Set.of("backlog", "none", "상태 없음").contains(wanted.toLowerCase(Locale.ROOT))) return null;
         return columns.stream()
@@ -344,7 +343,7 @@ class WorkItemMcpTools implements McpToolProvider {
     }
 
     /** A member by me, their email or their name. */
-    private UUID person(CurrentUser actor, UUID workspace, String who) {
+    private String person(CurrentUser actor, String workspace, String who) {
         if ("me".equalsIgnoreCase(who) || "나".equals(who)) return actor.userId();
         var members = workspaceFacade.members(actor, workspace);
         return members.stream()
@@ -355,14 +354,14 @@ class WorkItemMcpTools implements McpToolProvider {
                         + members.stream().map(WorkspaceFacade.MemberRef::name).collect(Collectors.joining(", "))));
     }
 
-    private Set<UUID> labelIds(CurrentUser actor, UUID workspace, List<String> names) {
+    private Set<String> labelIds(CurrentUser actor, String workspace, List<String> names) {
         var labels = labelFacade.findAll(actor, workspace);
-        Map<String, UUID> byName = labels.stream()
+        Map<String, String> byName = labels.stream()
                 .collect(Collectors.toMap(
                         label -> label.name().toLowerCase(Locale.ROOT), LabelFacade.LabelRef::id, (a, b) -> a));
-        var ids = new java.util.LinkedHashSet<UUID>();
+        var ids = new java.util.LinkedHashSet<String>();
         for (String name : names) {
-            UUID id = byName.get(name.toLowerCase(Locale.ROOT));
+            String id = byName.get(name.toLowerCase(Locale.ROOT));
             if (id == null)
                 throw new IllegalArgumentException("'" + name + "' 라벨이 없습니다. 라벨: "
                         + labels.stream().map(LabelFacade.LabelRef::name).collect(Collectors.joining(", ")));
@@ -410,8 +409,8 @@ class WorkItemMcpTools implements McpToolProvider {
     private static Map<String, Object> line(
             TimelineFacade.Line line,
             List<ProjectFacade.ColumnInfo> columns,
-            Map<UUID, String> people,
-            Map<UUID, String> labels) {
+            Map<String, String> people,
+            Map<String, String> labels) {
         var view = new LinkedHashMap<String, Object>();
         view.put("at", line.at());
         view.put("who", line.actorName());
@@ -424,16 +423,16 @@ class WorkItemMcpTools implements McpToolProvider {
         Function<String, String> column = id -> id == null
                 ? "상태 없음"
                 : columns.stream()
-                        .filter(c -> c.id().toString().equals(id))
+                        .filter(c -> c.id().equals(id))
                         .map(ProjectFacade.ColumnInfo::name)
                         .findFirst()
                         .orElse("지워진 칸");
         Function<String, String> names = ids -> ids == null
                 ? "없음"
                 : java.util.Arrays.stream(ids.split(","))
-                        .map(id -> labels.getOrDefault(UUID.fromString(id), "지워진 라벨"))
+                        .map(id -> labels.getOrDefault(id, "지워진 라벨"))
                         .collect(Collectors.joining(", "));
-        Function<String, String> person = id -> id == null ? "없음" : people.getOrDefault(UUID.fromString(id), "지워진 구성원");
+        Function<String, String> person = id -> id == null ? "없음" : people.getOrDefault(id, "지워진 구성원");
         String text =
                 switch (Objects.requireNonNullElse(line.action(), "")) {
                     case "created" -> "이슈를 만듦";
@@ -457,5 +456,5 @@ class WorkItemMcpTools implements McpToolProvider {
         return view;
     }
 
-    private record Located(UUID workspaceId, UUID projectId, UUID id, String reference) {}
+    private record Located(String workspaceId, String projectId, String id, String reference) {}
 }

@@ -4,7 +4,6 @@ import io.github.goraebap.bit.module.project.ColumnCategory;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.Instant;
 import java.util.List;
-import java.util.UUID;
 
 public final class ProjectViews {
     private ProjectViews() {}
@@ -29,8 +28,8 @@ public final class ProjectViews {
                 "updatedAt"
             })
     public record ProjectInfo(
-            UUID id,
-            UUID workspaceId,
+            String id,
+            String workspaceId,
             String name,
             String key,
             @Schema(nullable = true) String description,
@@ -47,7 +46,7 @@ public final class ProjectViews {
 
             long version,
             Instant createdAt,
-            UUID createdBy,
+            String createdBy,
             @Schema(nullable = true) String createdByAgent,
             Instant updatedAt) {}
 
@@ -55,7 +54,7 @@ public final class ProjectViews {
     @Schema(
             name = "ProjectMembership",
             requiredProperties = {"projectId", "userId"})
-    public record Membership(UUID projectId, UUID userId) {}
+    public record Membership(String projectId, String userId) {}
 
     @Schema(
             name = "ProjectMemberships",
@@ -79,7 +78,7 @@ public final class ProjectViews {
             name = "BoardColumn",
             requiredProperties = {"id", "name", "color", "position", "isFinal", "category", "version"})
     public record Column(
-            UUID id,
+            String id,
             String name,
             @Schema(nullable = true) String color,
             int position,

@@ -6,13 +6,13 @@ import io.github.goraebap.bit.module.view.domain.ViewRepository;
 import io.github.goraebap.bit.module.view.domain.ViewTweak;
 import io.github.goraebap.bit.module.workspace.WorkspaceCreatedEvent;
 import io.github.goraebap.bit.module.workspace.WorkspaceFacade;
+import io.github.goraebap.bit.shared.domain.Ids;
 import io.github.goraebap.bit.shared.error.CommonErrorCode;
 import io.github.goraebap.bit.shared.web.CurrentUser;
 import java.time.Clock;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -29,7 +29,7 @@ public class ViewService implements ViewFacade {
 
     @Override
     @Transactional(readOnly = true)
-    public void requireAccess(CurrentUser actor, UUID workspaceId, String viewKey, boolean editing) {
+    public void requireAccess(CurrentUser actor, String workspaceId, String viewKey, boolean editing) {
         var rights = rights(actor, workspaceId);
         if (IssueView.ALL.equals(viewKey)) {
             if (editing) throw ViewErrorCode.VIEW_NOT_FOUND.raise();
@@ -40,7 +40,7 @@ public class ViewService implements ViewFacade {
     }
 
     @Transactional(readOnly = true)
-    public List<ViewViews.View> list(CurrentUser actor, UUID workspaceId) {
+    public List<ViewViews.View> list(CurrentUser actor, String workspaceId) {
         var rights = rights(actor, workspaceId);
         return viewRepository.findAllVisible(workspaceId, actor.userId()).stream()
                 .map(view -> view(view, rights))
@@ -48,17 +48,17 @@ public class ViewService implements ViewFacade {
     }
 
     @Transactional(readOnly = true)
-    public ViewViews.View get(CurrentUser actor, UUID workspaceId, UUID viewId) {
+    public ViewViews.View get(CurrentUser actor, String workspaceId, String viewId) {
         var rights = rights(actor, workspaceId);
         return view(visible(rights, workspaceId, viewId), rights);
     }
 
     @Transactional(readOnly = true)
-    public List<ViewViews.Tweak> tweaks(CurrentUser actor, UUID workspaceId) {
+    public List<ViewViews.Tweak> tweaks(CurrentUser actor, String workspaceId) {
         workspaceFacade.requireAccess(actor, workspaceId, WorkspaceFacade.Action.READ);
         var keys = new HashSet<String>();
         keys.add(IssueView.ALL);
-        viewRepository.findAllVisible(workspaceId, actor.userId()).forEach(v -> keys.add(v.id().toString()));
+        viewRepository.findAllVisible(workspaceId, actor.userId()).forEach(v -> keys.add(v.id()));
         // A view that became someone else's personal view or was deleted keeps no visible tweak.
         return viewRepository.findTweaks(workspaceId, actor.userId()).stream()
                 .filter(t -> keys.contains(t.viewKey()))
@@ -67,7 +67,7 @@ public class ViewService implements ViewFacade {
     }
 
     @Transactional
-    public UUID create(CurrentUser actor, UUID workspaceId, ViewRequests.Create request) {
+    public String create(CurrentUser actor, String workspaceId, ViewRequests.Create request) {
         workspaceFacade.requireAccess(
                 actor,
                 workspaceId,
@@ -94,7 +94,7 @@ public class ViewService implements ViewFacade {
     }
 
     @Transactional
-    public void revise(CurrentUser actor, UUID workspaceId, UUID viewId, ViewRequests.Update request) {
+    public void revise(CurrentUser actor, String workspaceId, String viewId, ViewRequests.Update request) {
         var rights = rights(actor, workspaceId);
         var view = visible(rights, workspaceId, viewId);
         if (!rights.edits(view)) throw CommonErrorCode.AUTH_FORBIDDEN.raise();
@@ -119,18 +119,18 @@ public class ViewService implements ViewFacade {
     }
 
     @Transactional
-    public void delete(CurrentUser actor, UUID workspaceId, UUID viewId, long expectedVersion) {
+    public void delete(CurrentUser actor, String workspaceId, String viewId, long expectedVersion) {
         var rights = rights(actor, workspaceId);
         var view = visible(rights, workspaceId, viewId);
         if (!rights.edits(view)) throw CommonErrorCode.AUTH_FORBIDDEN.raise();
         version(view, expectedVersion);
         view.delete(actor.userId(), agent(actor), clock.instant());
         viewRepository.save(view);
-        viewRepository.deleteAllTweaksByViewKey(workspaceId, viewId.toString());
+        viewRepository.deleteAllTweaksByViewKey(workspaceId, viewId);
     }
 
     @Transactional
-    public void putTweak(CurrentUser actor, UUID workspaceId, String viewKey, ViewRequests.PutTweak request) {
+    public void putTweak(CurrentUser actor, String workspaceId, String viewKey, ViewRequests.PutTweak request) {
         requireAccess(actor, workspaceId, viewKey, false);
         if (!ViewTweak.validColumns(request.columns())) throw ViewErrorCode.VIEW_COLUMNS_INVALID.raise();
         var sort = request.sort() == null ? null : domainSort(request.sort());
@@ -142,7 +142,7 @@ public class ViewService implements ViewFacade {
     }
 
     @Transactional
-    public void deleteTweak(CurrentUser actor, UUID workspaceId, String viewKey) {
+    public void deleteTweak(CurrentUser actor, String workspaceId, String viewKey) {
         requireAccess(actor, workspaceId, viewKey, false);
         viewRepository.deleteTweak(workspaceId, actor.userId(), key(viewKey));
     }
@@ -155,20 +155,20 @@ public class ViewService implements ViewFacade {
                 IssueView.starters(event.workspaceId(), event.actorId(), event.actorAgent(), event.occurredAt()));
     }
 
-    private record Rights(UUID me, boolean writer, boolean admin) {
+    private record Rights(String me, boolean writer, boolean admin) {
         boolean edits(IssueView view) {
             if (view.personal()) return view.ownerId().equals(me);
             return admin || writer && view.ownerId().equals(me);
         }
     }
 
-    private Rights rights(CurrentUser actor, UUID workspaceId) {
+    private Rights rights(CurrentUser actor, String workspaceId) {
         boolean writer = workspaceFacade.allows(actor, workspaceId, WorkspaceFacade.Action.WRITE_WORK);
         boolean admin = writer && workspaceFacade.allows(actor, workspaceId, WorkspaceFacade.Action.EDIT_SETTINGS);
         return new Rights(actor.userId(), writer, admin);
     }
 
-    private IssueView visible(Rights rights, UUID workspaceId, UUID viewId) {
+    private IssueView visible(Rights rights, String workspaceId, String viewId) {
         return viewRepository
                 .findById(workspaceId, viewId)
                 .filter(view -> view.visibleTo(rights.me()))
@@ -177,12 +177,12 @@ public class ViewService implements ViewFacade {
 
     /** Tweaks are stored under "all" or the view id's canonical text. */
     private static String key(String viewKey) {
-        return IssueView.ALL.equals(viewKey) ? IssueView.ALL : id(viewKey).toString();
+        return IssueView.ALL.equals(viewKey) ? IssueView.ALL : id(viewKey);
     }
 
-    private static UUID id(String viewKey) {
+    private static String id(String viewKey) {
         try {
-            return UUID.fromString(viewKey);
+            return Ids.parse(viewKey);
         } catch (IllegalArgumentException invalid) {
             throw ViewErrorCode.VIEW_NOT_FOUND.raise();
         }

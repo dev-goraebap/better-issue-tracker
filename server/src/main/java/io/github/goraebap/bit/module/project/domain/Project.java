@@ -1,14 +1,14 @@
 package io.github.goraebap.bit.module.project.domain;
 
 import io.github.goraebap.bit.shared.domain.Audit;
+import io.github.goraebap.bit.shared.domain.Ids;
 import java.time.Instant;
-import java.util.UUID;
 import lombok.Getter;
 
 @Getter
 public final class Project {
-    private final UUID id;
-    private final UUID workspaceId;
+    private final String id;
+    private final String workspaceId;
     private String name;
     private String description;
     private String icon;
@@ -22,8 +22,8 @@ public final class Project {
     private Audit audit;
 
     private Project(
-            UUID id,
-            UUID workspaceId,
+            String id,
+            String workspaceId,
             String name,
             String description,
             String icon,
@@ -51,17 +51,17 @@ public final class Project {
     }
 
     public static Project create(
-            UUID workspaceId,
+            String workspaceId,
             String name,
             String description,
             String icon,
             String color,
             int position,
-            UUID actor,
+            String actor,
             String agent,
             Instant now) {
         return new Project(
-                UUID.randomUUID(),
+                Ids.newId(),
                 workspaceId,
                 validName(name),
                 validDescription(description),
@@ -77,8 +77,8 @@ public final class Project {
     }
 
     public static Project fromPersistence(
-            UUID id,
-            UUID workspaceId,
+            String id,
+            String workspaceId,
             String name,
             String description,
             String icon,
@@ -107,7 +107,7 @@ public final class Project {
     }
 
     public void revise(
-            String name, String description, String icon, String color, UUID actor, String agent, Instant now) {
+            String name, String description, String icon, String color, String actor, String agent, Instant now) {
         String nextName = validName(name);
         String nextDescription = validDescription(description);
         String nextIcon = validIcon(icon);
@@ -119,19 +119,19 @@ public final class Project {
         touch(actor, agent, now);
     }
 
-    public void archive(boolean archived, UUID actor, String agent, Instant now) {
+    public void archive(boolean archived, String actor, String agent, Instant now) {
         if (archived == (archivedAt != null)) return;
         archivedAt = archived ? now : null;
         touch(actor, agent, now);
     }
 
-    public void delete(UUID actor, String agent, Instant now) {
+    public void delete(String actor, String agent, Instant now) {
         if (audit.deletedAt() != null) return;
         audit = audit.delete(actor, agent, now);
         version++;
     }
 
-    public void restore(UUID actor, String agent, Instant now) {
+    public void restore(String actor, String agent, Instant now) {
         if (audit.deletedAt() == null) return;
         audit = audit.restore(actor, agent, now);
         version++;
@@ -152,7 +152,7 @@ public final class Project {
         return lastWorkItemNumber;
     }
 
-    public void touch(UUID actor, String agent, Instant now) {
+    public void touch(String actor, String agent, Instant now) {
         audit = audit.touch(actor, agent, now);
         version = Math.incrementExact(version);
     }

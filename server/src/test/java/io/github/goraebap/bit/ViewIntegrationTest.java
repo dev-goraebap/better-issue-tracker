@@ -8,6 +8,7 @@ import io.github.goraebap.bit.module.view.application.ViewService;
 import io.github.goraebap.bit.module.view.application.ViewViews;
 import io.github.goraebap.bit.module.view.domain.IssueView;
 import io.github.goraebap.bit.module.workspace.application.WorkspaceService;
+import io.github.goraebap.bit.shared.domain.Ids;
 import io.github.goraebap.bit.shared.error.BusinessException;
 import io.github.goraebap.bit.shared.persistence.InstantTextBinding;
 import io.github.goraebap.bit.shared.web.CurrentUser;
@@ -20,8 +21,8 @@ import java.net.http.HttpResponse;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
-import java.util.UUID;
 import org.assertj.core.api.ThrowableAssert.ThrowingCallable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -66,12 +67,12 @@ class ViewIntegrationTest {
     private CurrentUser member;
     private CurrentUser other;
     private CurrentUser viewer;
-    private UUID workspace;
+    private String workspace;
 
     @DynamicPropertySource
     static void database(DynamicPropertyRegistry registry) {
         String url = "jdbc:sqlite:"
-                + Path.of("build/test-db/view-" + UUID.randomUUID() + ".db").toAbsolutePath();
+                + Path.of("build/test-db/view-" + Ids.newId() + ".db").toAbsolutePath();
         registry.add("spring.datasource.url", () -> url);
     }
 
@@ -89,7 +90,7 @@ class ViewIntegrationTest {
                 "iam_password",
                 "iam_user")) jdbcTemplate.update("DELETE FROM " + table);
         owner = identity("owner");
-        workspace = workspaceService.create(owner, "Views", "views-" + UUID.randomUUID());
+        workspace = workspaceService.create(owner, "Views", "views-" + Ids.newId());
         admin = member("admin");
         member = member("member");
         other = member("member");
@@ -123,7 +124,7 @@ class ViewIntegrationTest {
                 .isTrue();
         assertThat(viewService.list(viewer, workspace)).hasSize(4);
 
-        UUID shared = viewService.create(member, workspace, create("Team bugs", false, Map.of("label", "x")));
+        String shared = viewService.create(member, workspace, create("Team bugs", false, Map.of("label", "x")));
         assertThat(viewService.get(member, workspace, shared).canEdit()).isTrue();
         assertThat(viewService.get(other, workspace, shared).canEdit()).isFalse();
         assertThat(viewService.get(admin, workspace, shared).canEdit()).isTrue();
@@ -143,7 +144,7 @@ class ViewIntegrationTest {
 
     @Test
     void personalViewsAreInvisibleToEveryoneElseIncludingTheWorkspaceOwner() {
-        UUID mine = viewService.create(viewer, workspace, create("Mine", true, Map.of("assignee", "me")));
+        String mine = viewService.create(viewer, workspace, create("Mine", true, Map.of("assignee", "me")));
         assertThat(viewService.list(viewer, workspace).getLast().id()).isEqualTo(mine);
         assertThat(viewService.get(viewer, workspace, mine).canEdit()).isTrue();
         for (CurrentUser someone : List.of(owner, admin, member)) {
@@ -159,7 +160,7 @@ class ViewIntegrationTest {
         assertThat(code(() -> viewService.revise(viewer, workspace, mine, share)))
                 .isEqualTo("AUTH_FORBIDDEN");
 
-        UUID team = viewService.create(member, workspace, create("Team", false, Map.of()));
+        String team = viewService.create(member, workspace, create("Team", false, Map.of()));
         var hide = new ViewRequests.Update();
         hide.setExpectedVersion(0L);
         hide.setIsPersonal(true);
@@ -207,7 +208,7 @@ class ViewIntegrationTest {
         filters.put("status", " todo,none ");
         filters.put("priority", "");
         filters.put("label", null);
-        UUID id = viewService.create(member, workspace, create("  Spaced  ", false, filters));
+        String id = viewService.create(member, workspace, create("  Spaced  ", false, filters));
         var read = viewService.get(member, workspace, id);
         assertThat(read.name()).isEqualTo("Spaced");
         assertThat(read.filters()).isEqualTo(new ViewViews.Filters("todo,none", null, null, null));
@@ -244,35 +245,34 @@ class ViewIntegrationTest {
 
     @Test
     void tweaksAreEachMembersOwnAndFollowTheViewsTheyCanSee() {
-        UUID board = viewService.list(owner, workspace).get(1).id();
-        UUID mine = viewService.create(member, workspace, create("Mine", true, Map.of()));
+        String board = viewService.list(owner, workspace).get(1).id();
+        String mine = viewService.create(member, workspace, create("Mine", true, Map.of()));
         viewService.putTweak(member, workspace, "all", tweak(IssueView.Layout.cards, null, null));
         viewService.putTweak(
                 member,
                 workspace,
-                board.toString().toUpperCase(java.util.Locale.ROOT),
+                board,
                 tweak(null, new ViewViews.Sort(IssueView.SortKey.created, IssueView.Direction.asc), USUAL));
-        viewService.putTweak(member, workspace, mine.toString(), tweak(IssueView.Layout.timeline, null, null));
+        viewService.putTweak(member, workspace, mine, tweak(IssueView.Layout.timeline, null, null));
         assertThat(viewService.tweaks(member, workspace).stream().map(ViewViews.Tweak::viewKey))
-                .containsExactlyInAnyOrder("all", board.toString(), mine.toString());
+                .containsExactlyInAnyOrder("all", board, mine);
         var boardTweak = viewService.tweaks(member, workspace).stream()
-                .filter(t -> t.viewKey().equals(board.toString()))
+                .filter(t -> t.viewKey().equals(board))
                 .findFirst()
                 .orElseThrow();
         assertThat(boardTweak.layout()).isNull();
         assertThat(boardTweak.columns()).isEqualTo(USUAL);
         assertThat(boardTweak.sort().key()).isEqualTo(IssueView.SortKey.created);
-        viewService.putTweak(member, workspace, board.toString(), tweak(IssueView.Layout.list, null, null));
+        viewService.putTweak(member, workspace, board, tweak(IssueView.Layout.list, null, null));
         var replaced = viewService.tweaks(member, workspace).stream()
-                .filter(t -> t.viewKey().equals(board.toString()))
+                .filter(t -> t.viewKey().equals(board))
                 .findFirst()
                 .orElseThrow();
         assertThat(replaced.layout()).isEqualTo(IssueView.Layout.list);
         assertThat(replaced.sort()).isNull();
         assertThat(viewService.tweaks(other, workspace)).isEmpty();
 
-        assertThat(code(() -> viewService.putTweak(
-                        other, workspace, mine.toString(), tweak(IssueView.Layout.list, null, null))))
+        assertThat(code(() -> viewService.putTweak(other, workspace, mine, tweak(IssueView.Layout.list, null, null))))
                 .isEqualTo("VIEW_NOT_FOUND");
         assertThat(code(() ->
                         viewService.putTweak(other, workspace, "everything", tweak(IssueView.Layout.list, null, null))))
@@ -283,12 +283,12 @@ class ViewIntegrationTest {
                         "all",
                         tweak(null, null, List.of(IssueView.Column.due, IssueView.Column.due)))))
                 .isEqualTo("VIEW_COLUMNS_INVALID");
-        viewService.putTweak(viewer, workspace, board.toString(), tweak(IssueView.Layout.calendar, null, null));
+        viewService.putTweak(viewer, workspace, board, tweak(IssueView.Layout.calendar, null, null));
 
         viewService.putTweak(member, workspace, "all", tweak(null, null, null));
-        viewService.deleteTweak(member, workspace, mine.toString());
+        viewService.deleteTweak(member, workspace, mine);
         assertThat(viewService.tweaks(member, workspace).stream().map(ViewViews.Tweak::viewKey))
-                .containsExactly(board.toString());
+                .containsExactly(board);
         viewService.delete(owner, workspace, board, 0);
         assertThat(viewService.tweaks(member, workspace)).isEmpty();
         assertThat(viewService.tweaks(viewer, workspace)).isEmpty();
@@ -299,8 +299,8 @@ class ViewIntegrationTest {
     @Test
     void httpShowsTheClientShapeAndChecksAccessBeforeReadingTheBody() throws Exception {
         String base = "/api/v1/workspaces/" + workspace;
-        UUID starter = viewService.list(owner, workspace).getFirst().id();
-        UUID personal = viewService.create(other, workspace, create("Other's", true, Map.of()));
+        String starter = viewService.list(owner, workspace).getFirst().id();
+        String personal = viewService.create(other, workspace, create("Other's", true, Map.of()));
         CurrentUser outsider = identity("outsider");
         try (var client = login(outsider)) {
             expect(http(client, "GET", base + "/views", null), 404);
@@ -387,35 +387,35 @@ class ViewIntegrationTest {
         var actor = identity(role);
         jdbcTemplate.update(
                 "INSERT INTO workspace_member(workspace_member_id,workspace_id,iam_user_id,role,joined_at) VALUES (?,?,?,?,?)",
-                UUID.randomUUID().toString(),
-                workspace.toString(),
-                actor.userId().toString(),
+                Ids.newId(),
+                workspace,
+                actor.userId(),
                 role,
                 InstantTextBinding.text(Instant.now()));
         return actor;
     }
 
     private CurrentUser identity(String role) {
-        UUID user = UUID.randomUUID();
-        UUID credential = UUID.randomUUID();
+        String user = Ids.newId();
+        String credential = Ids.newId();
         String now = InstantTextBinding.text(Instant.now());
         jdbcTemplate.update(
                 "INSERT INTO iam_user(iam_user_id,email,name,created_at,updated_at) VALUES (?,?,?,?,?)",
-                user.toString(),
-                role + user + "@example.test",
+                user,
+                role + user.toLowerCase(Locale.ROOT) + "@example.test",
                 role,
                 now,
                 now);
         jdbcTemplate.update(
                 "INSERT INTO iam_password(iam_user_id,password_hash,changed_at) VALUES (?,?,?)",
-                user.toString(),
+                user,
                 passwordEncoder.encode(role + " password phrase for views"),
                 now);
         jdbcTemplate.update(
                 "INSERT INTO iam_session(iam_session_id,iam_user_id,token_hash,expires_at,absolute_expires_at,last_seen_at,created_at) VALUES (?,?,?,?,?,?,?)",
-                credential.toString(),
-                user.toString(),
-                credential.toString(),
+                credential,
+                user,
+                credential,
                 InstantTextBinding.text(Instant.now().plusSeconds(3600)),
                 InstantTextBinding.text(Instant.now().plusSeconds(7200)),
                 now,
@@ -424,9 +424,7 @@ class ViewIntegrationTest {
     }
 
     private HttpClient login(CurrentUser actor) throws Exception {
-        var row = jdbcTemplate.queryForMap(
-                "SELECT email,name FROM iam_user WHERE iam_user_id=?",
-                actor.userId().toString());
+        var row = jdbcTemplate.queryForMap("SELECT email,name FROM iam_user WHERE iam_user_id=?", actor.userId());
         var client = HttpClient.newBuilder()
                 .cookieHandler(new CookieManager(null, CookiePolicy.ACCEPT_ALL))
                 .build();

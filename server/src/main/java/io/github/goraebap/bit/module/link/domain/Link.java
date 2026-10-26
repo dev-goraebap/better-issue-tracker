@@ -1,15 +1,15 @@
 package io.github.goraebap.bit.module.link.domain;
 
 import io.github.goraebap.bit.module.link.TargetType;
+import io.github.goraebap.bit.shared.domain.Ids;
 import java.time.Instant;
 import java.util.Objects;
-import java.util.UUID;
 import lombok.Getter;
 
 @Getter
 public final class Link {
-    public record Edge(TargetType fromType, UUID fromId, String relation, TargetType toType, UUID toId) {
-        public static Edge of(TargetType fromType, UUID fromId, String relation, TargetType toType, UUID toId) {
+    public record Edge(TargetType fromType, String fromId, String relation, TargetType toType, String toId) {
+        public static Edge of(TargetType fromType, String fromId, String relation, TargetType toType, String toId) {
             Objects.requireNonNull(fromType);
             Objects.requireNonNull(toType);
             Objects.requireNonNull(fromId);
@@ -46,25 +46,25 @@ public final class Link {
         }
     }
 
-    private final UUID id;
-    private final UUID workspaceId;
+    private final String id;
+    private final String workspaceId;
     private final Edge edge;
     private final Instant createdAt;
-    private final UUID createdBy;
+    private final String createdBy;
     private final String createdByAgent;
     private Instant deletedAt;
-    private UUID deletedBy;
+    private String deletedBy;
     private String deletedByAgent;
 
     private Link(
-            UUID id,
-            UUID workspaceId,
+            String id,
+            String workspaceId,
             Edge edge,
             Instant createdAt,
-            UUID createdBy,
+            String createdBy,
             String createdByAgent,
             Instant deletedAt,
-            UUID deletedBy,
+            String deletedBy,
             String deletedByAgent) {
         this.id = id;
         this.workspaceId = workspaceId;
@@ -77,27 +77,26 @@ public final class Link {
         this.deletedByAgent = deletedByAgent;
     }
 
-    public static Link create(UUID workspaceId, Edge edge, UUID actor, String agent, Instant now) {
+    public static Link create(String workspaceId, Edge edge, String actor, String agent, Instant now) {
         var valid = Edge.of(edge.fromType(), edge.fromId(), edge.relation(), edge.toType(), edge.toId());
-        return new Link(
-                UUID.randomUUID(), Objects.requireNonNull(workspaceId), valid, now, actor, agent, null, null, null);
+        return new Link(Ids.newId(), Objects.requireNonNull(workspaceId), valid, now, actor, agent, null, null, null);
     }
 
     public static Link fromPersistence(
-            UUID id,
-            UUID workspaceId,
+            String id,
+            String workspaceId,
             Edge edge,
             Instant createdAt,
-            UUID createdBy,
+            String createdBy,
             String createdByAgent,
             Instant deletedAt,
-            UUID deletedBy,
+            String deletedBy,
             String deletedByAgent) {
         return new Link(
                 id, workspaceId, edge, createdAt, createdBy, createdByAgent, deletedAt, deletedBy, deletedByAgent);
     }
 
-    public void disconnect(UUID actor, String agent, Instant now) {
+    public void disconnect(String actor, String agent, Instant now) {
         if (deletedAt != null) return;
         deletedAt = now;
         deletedBy = actor;

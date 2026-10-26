@@ -3,22 +3,17 @@ package io.github.goraebap.bit.module.decision.domain;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import io.github.goraebap.bit.shared.domain.Ids;
 import java.time.Instant;
-import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
 class DecisionRulesTest {
-    private final UUID actor = UUID.randomUUID();
+    private final String actor = Ids.newId();
     private final Instant now = Instant.parse("2026-10-23T00:00:00Z");
 
     private Decision proposal() {
         return Decision.create(
-                UUID.randomUUID(),
-                1,
-                Decision.Details.of("Title", "Why", "Alternative", "planned"),
-                actor,
-                "codex",
-                now);
+                Ids.newId(), 1, Decision.Details.of("Title", "Why", "Alternative", "planned"), actor, "codex", now);
     }
 
     @Test

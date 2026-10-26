@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.jooq.DSLContext;
 import org.jooq.Record;
@@ -22,7 +21,7 @@ class JooqLabelRepository implements LabelRepository {
     private final DSLContext dslContext;
 
     @Override
-    public List<Label> findAllByWorkspaceId(UUID workspaceId) {
+    public List<Label> findAllByWorkspaceId(String workspaceId) {
         return dslContext
                 .selectFrom(LABEL)
                 .where(LABEL.WORKSPACE_ID.eq(workspaceId))
@@ -32,7 +31,7 @@ class JooqLabelRepository implements LabelRepository {
     }
 
     @Override
-    public List<Label> findAllById(UUID workspaceId, Set<UUID> ids) {
+    public List<Label> findAllById(String workspaceId, Set<String> ids) {
         if (ids.isEmpty()) return List.of();
         return dslContext
                 .selectFrom(LABEL)
@@ -43,7 +42,7 @@ class JooqLabelRepository implements LabelRepository {
     }
 
     @Override
-    public Optional<Label> findById(UUID workspaceId, UUID id) {
+    public Optional<Label> findById(String workspaceId, String id) {
         return dslContext
                 .selectFrom(LABEL)
                 .where(LABEL.WORKSPACE_ID.eq(workspaceId))
@@ -53,7 +52,7 @@ class JooqLabelRepository implements LabelRepository {
     }
 
     @Override
-    public boolean existsByNameAndIdNot(UUID workspaceId, String name, UUID id) {
+    public boolean existsByNameAndIdNot(String workspaceId, String name, String id) {
         return dslContext.fetchExists(
                 LABEL,
                 LABEL.WORKSPACE_ID

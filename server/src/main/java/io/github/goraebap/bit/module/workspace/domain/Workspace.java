@@ -1,31 +1,31 @@
 package io.github.goraebap.bit.module.workspace.domain;
 
+import io.github.goraebap.bit.shared.domain.Ids;
 import java.time.Instant;
-import java.util.UUID;
 
 public final class Workspace {
-    private final UUID id;
+    private final String id;
     private String name;
     private final String slug;
     private final Instant createdAt;
-    private final UUID createdBy;
+    private final String createdBy;
     private Instant updatedAt;
-    private UUID updatedBy;
+    private String updatedBy;
     private String updatedByAgent;
     private Instant deletedAt;
-    private UUID deletedBy;
+    private String deletedBy;
 
     private Workspace(
-            UUID id,
+            String id,
             String name,
             String slug,
             Instant createdAt,
-            UUID createdBy,
+            String createdBy,
             Instant updatedAt,
-            UUID updatedBy,
+            String updatedBy,
             String agent,
             Instant deletedAt,
-            UUID deletedBy) {
+            String deletedBy) {
         this.id = id;
         this.name = name;
         this.slug = slug;
@@ -38,33 +38,32 @@ public final class Workspace {
         this.deletedBy = deletedBy;
     }
 
-    public static Workspace create(String name, String slug, UUID actor, Instant now) {
-        return new Workspace(
-                UUID.randomUUID(), validName(name), validSlug(slug), now, actor, now, actor, null, null, null);
+    public static Workspace create(String name, String slug, String actor, Instant now) {
+        return new Workspace(Ids.newId(), validName(name), validSlug(slug), now, actor, now, actor, null, null, null);
     }
 
     public static Workspace fromPersistence(
-            UUID id,
+            String id,
             String name,
             String slug,
             Instant createdAt,
-            UUID createdBy,
+            String createdBy,
             Instant updatedAt,
-            UUID updatedBy,
+            String updatedBy,
             String agent,
             Instant deletedAt,
-            UUID deletedBy) {
+            String deletedBy) {
         return new Workspace(id, name, slug, createdAt, createdBy, updatedAt, updatedBy, agent, deletedAt, deletedBy);
     }
 
-    public void rename(String name, UUID actor, String agent, Instant now) {
+    public void rename(String name, String actor, String agent, Instant now) {
         this.name = validName(name);
         this.updatedBy = actor;
         this.updatedByAgent = agent;
         this.updatedAt = now;
     }
 
-    public void delete(UUID actor, Instant now) {
+    public void delete(String actor, Instant now) {
         this.deletedAt = now;
         this.deletedBy = actor;
         this.updatedAt = now;
@@ -86,7 +85,7 @@ public final class Workspace {
         return value;
     }
 
-    public UUID id() {
+    public String id() {
         return id;
     }
 
@@ -102,7 +101,7 @@ public final class Workspace {
         return createdAt;
     }
 
-    public UUID createdBy() {
+    public String createdBy() {
         return createdBy;
     }
 
@@ -110,7 +109,7 @@ public final class Workspace {
         return updatedAt;
     }
 
-    public UUID updatedBy() {
+    public String updatedBy() {
         return updatedBy;
     }
 
@@ -122,7 +121,7 @@ public final class Workspace {
         return deletedAt;
     }
 
-    public UUID deletedBy() {
+    public String deletedBy() {
         return deletedBy;
     }
 }

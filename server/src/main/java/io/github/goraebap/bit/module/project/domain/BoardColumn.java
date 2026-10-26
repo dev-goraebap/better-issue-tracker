@@ -2,14 +2,14 @@ package io.github.goraebap.bit.module.project.domain;
 
 import io.github.goraebap.bit.module.project.ColumnCategory;
 import io.github.goraebap.bit.shared.domain.Audit;
+import io.github.goraebap.bit.shared.domain.Ids;
 import java.time.Instant;
-import java.util.UUID;
 import lombok.Getter;
 
 @Getter
 public final class BoardColumn {
-    private final UUID id;
-    private final UUID projectId;
+    private final String id;
+    private final String projectId;
     private String name;
     private String color;
     private int position;
@@ -19,8 +19,8 @@ public final class BoardColumn {
     private Audit audit;
 
     private BoardColumn(
-            UUID id,
-            UUID projectId,
+            String id,
+            String projectId,
             String name,
             String color,
             int position,
@@ -40,17 +40,17 @@ public final class BoardColumn {
     }
 
     public static BoardColumn create(
-            UUID projectId,
+            String projectId,
             String name,
             String color,
             int position,
             boolean finalColumn,
             ColumnCategory category,
-            UUID actor,
+            String actor,
             String agent,
             Instant now) {
         return new BoardColumn(
-                UUID.randomUUID(),
+                Ids.newId(),
                 projectId,
                 validName(name),
                 validColor(color),
@@ -62,8 +62,8 @@ public final class BoardColumn {
     }
 
     public static BoardColumn fromPersistence(
-            UUID id,
-            UUID projectId,
+            String id,
+            String projectId,
             String name,
             String color,
             int position,
@@ -79,7 +79,7 @@ public final class BoardColumn {
             String color,
             boolean finalColumn,
             ColumnCategory category,
-            UUID actor,
+            String actor,
             String agent,
             Instant now) {
         String nextName = validName(name);
@@ -93,7 +93,7 @@ public final class BoardColumn {
         version++;
     }
 
-    public void reorder(int position, UUID actor, String agent, Instant now) {
+    public void reorder(int position, String actor, String agent, Instant now) {
         if (position < 0) throw new IllegalArgumentException("Invalid column position");
         if (this.position == position) return;
         this.position = position;
@@ -101,7 +101,7 @@ public final class BoardColumn {
         version++;
     }
 
-    public void delete(UUID actor, String agent, Instant now) {
+    public void delete(String actor, String agent, Instant now) {
         if (audit.deletedAt() != null) return;
         audit = audit.delete(actor, agent, now);
         version++;

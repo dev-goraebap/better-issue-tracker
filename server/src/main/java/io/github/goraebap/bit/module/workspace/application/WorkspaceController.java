@@ -5,7 +5,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.Valid;
 import java.net.URI;
 import java.util.List;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -46,7 +45,7 @@ class WorkspaceController {
     }
 
     @GetMapping("/workspaces/{id}")
-    WorkspaceViews.Space get(@AuthenticationPrincipal CurrentUser actor, @PathVariable UUID id) {
+    WorkspaceViews.Space get(@AuthenticationPrincipal CurrentUser actor, @PathVariable String id) {
         return workspaceService.get(actor, id);
     }
 
@@ -54,7 +53,7 @@ class WorkspaceController {
     @ApiResponse(responseCode = "204", description = "Workspace updated")
     ResponseEntity<Void> rename(
             @AuthenticationPrincipal CurrentUser actor,
-            @PathVariable UUID id,
+            @PathVariable String id,
             @RequestBody WorkspaceRequests.Rename body) {
         workspaceService.rename(actor, id, body.getName(), body.hasName());
         return ResponseEntity.noContent().build();
@@ -62,7 +61,7 @@ class WorkspaceController {
 
     @DeleteMapping("/workspaces/{id}")
     @ApiResponse(responseCode = "204", description = "Workspace deleted")
-    ResponseEntity<Void> delete(@AuthenticationPrincipal CurrentUser actor, @PathVariable UUID id) {
+    ResponseEntity<Void> delete(@AuthenticationPrincipal CurrentUser actor, @PathVariable String id) {
         workspaceService.delete(actor, id);
         return ResponseEntity.noContent().build();
     }
@@ -78,7 +77,7 @@ class WorkspaceController {
     @GetMapping("/workspaces/{id}/members")
     WorkspaceViews.Members members(
             @AuthenticationPrincipal CurrentUser actor,
-            @PathVariable UUID id,
+            @PathVariable String id,
             @RequestParam(required = false) String cursor,
             @RequestParam(defaultValue = "50") int size,
             @RequestParam(defaultValue = "joinedAt") String sort,
@@ -90,8 +89,8 @@ class WorkspaceController {
     @ApiResponse(responseCode = "204", description = "Member role changed")
     ResponseEntity<Void> role(
             @AuthenticationPrincipal CurrentUser actor,
-            @PathVariable UUID id,
-            @PathVariable UUID memberId,
+            @PathVariable String id,
+            @PathVariable String memberId,
             @Valid @RequestBody WorkspaceRequests.ChangeRole body) {
         workspaceService.role(actor, id, memberId, body.role());
         return ResponseEntity.noContent().build();
@@ -100,14 +99,14 @@ class WorkspaceController {
     @DeleteMapping("/workspaces/{id}/members/{memberId}")
     @ApiResponse(responseCode = "204", description = "Member removed")
     ResponseEntity<Void> remove(
-            @AuthenticationPrincipal CurrentUser actor, @PathVariable UUID id, @PathVariable UUID memberId) {
+            @AuthenticationPrincipal CurrentUser actor, @PathVariable String id, @PathVariable String memberId) {
         workspaceService.remove(actor, id, memberId);
         return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/workspaces/{id}/members/me")
     @ApiResponse(responseCode = "204", description = "Left workspace")
-    ResponseEntity<Void> leave(@AuthenticationPrincipal CurrentUser actor, @PathVariable UUID id) {
+    ResponseEntity<Void> leave(@AuthenticationPrincipal CurrentUser actor, @PathVariable String id) {
         workspaceService.leave(actor, id);
         return ResponseEntity.noContent().build();
     }
@@ -116,7 +115,7 @@ class WorkspaceController {
     @ApiResponse(responseCode = "204", description = "Ownership transferred")
     ResponseEntity<Void> transfer(
             @AuthenticationPrincipal CurrentUser actor,
-            @PathVariable UUID id,
+            @PathVariable String id,
             @Valid @RequestBody WorkspaceRequests.Transfer body) {
         workspaceEnrollmentService.transfer(actor, id, body.userId(), body.currentPassword());
         return ResponseEntity.noContent().build();
@@ -125,7 +124,7 @@ class WorkspaceController {
     @GetMapping("/workspaces/{id}/invitations")
     WorkspaceViews.Invites invitations(
             @AuthenticationPrincipal CurrentUser actor,
-            @PathVariable UUID id,
+            @PathVariable String id,
             @RequestParam(required = false) List<String> status,
             @RequestParam(required = false) String cursor,
             @RequestParam(defaultValue = "50") int size,
@@ -138,7 +137,7 @@ class WorkspaceController {
     @ApiResponse(responseCode = "201", description = "Invitation token shown once")
     ResponseEntity<WorkspaceViews.CreatedInvitation> invite(
             @AuthenticationPrincipal CurrentUser actor,
-            @PathVariable UUID id,
+            @PathVariable String id,
             @Valid @RequestBody WorkspaceRequests.Invite body) {
         var result = workspaceService.invite(actor, id, body.email(), body.role());
         return ResponseEntity.created(URI.create("/api/v1/workspaces/" + id + "/invitations/" + result.id()))
@@ -147,14 +146,14 @@ class WorkspaceController {
 
     @GetMapping("/workspaces/{id}/invitations/{invitationId}")
     WorkspaceViews.Invite invitation(
-            @AuthenticationPrincipal CurrentUser actor, @PathVariable UUID id, @PathVariable UUID invitationId) {
+            @AuthenticationPrincipal CurrentUser actor, @PathVariable String id, @PathVariable String invitationId) {
         return workspaceService.invitation(actor, id, invitationId);
     }
 
     @DeleteMapping("/workspaces/{id}/invitations/{invitationId}")
     @ApiResponse(responseCode = "204", description = "Invitation revoked")
     ResponseEntity<Void> revoke(
-            @AuthenticationPrincipal CurrentUser actor, @PathVariable UUID id, @PathVariable UUID invitationId) {
+            @AuthenticationPrincipal CurrentUser actor, @PathVariable String id, @PathVariable String invitationId) {
         workspaceService.revoke(actor, id, invitationId);
         return ResponseEntity.noContent().build();
     }
@@ -183,7 +182,7 @@ class WorkspaceController {
         return ResponseEntity.created(URI.create("/api/v1/me")).build();
     }
 
-    private static URI space(UUID id) {
+    private static URI space(String id) {
         return URI.create("/api/v1/workspaces/" + id);
     }
 }

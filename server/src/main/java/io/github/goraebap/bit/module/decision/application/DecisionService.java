@@ -14,7 +14,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
-import java.util.UUID;
 import java.util.regex.Pattern;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
@@ -33,14 +32,14 @@ public class DecisionService implements DecisionFacade {
 
     @Override
     @Transactional
-    public UUID create(CurrentUser actor, UUID workspaceId, UUID projectId, Draft draft) {
+    public String create(CurrentUser actor, String workspaceId, String projectId, Draft draft) {
         if (draft == null) throw DecisionErrorCode.DECISION_INVALID_INPUT.raise();
         return createAll(actor, workspaceId, projectId, List.of(draft)).getFirst();
     }
 
     @Override
     @Transactional
-    public List<UUID> createAll(CurrentUser actor, UUID workspaceId, UUID projectId, List<Draft> drafts) {
+    public List<String> createAll(CurrentUser actor, String workspaceId, String projectId, List<Draft> drafts) {
         projectFacade.requireAccess(actor, workspaceId, projectId, true);
         if (drafts == null || drafts.isEmpty() || drafts.size() > 20)
             throw DecisionErrorCode.DECISION_INVALID_INPUT.raise();
@@ -57,7 +56,7 @@ public class DecisionService implements DecisionFacade {
 
     @Override
     @Transactional(readOnly = true)
-    public Ref findByRef(CurrentUser actor, UUID workspaceId, UUID projectId, String reference) {
+    public Ref findByRef(CurrentUser actor, String workspaceId, String projectId, String reference) {
         var project = projectFacade.requireAccess(actor, workspaceId, projectId, false);
         var match = REFERENCE.matcher(reference == null ? "" : reference.strip().toUpperCase(Locale.ROOT));
         if (!match.matches()) throw DecisionErrorCode.DECISION_NOT_FOUND.raise();
@@ -80,7 +79,7 @@ public class DecisionService implements DecisionFacade {
 
     @Transactional
     public void revise(
-            CurrentUser actor, UUID workspaceId, UUID projectId, UUID id, Draft draft, long expectedVersion) {
+            CurrentUser actor, String workspaceId, String projectId, String id, Draft draft, long expectedVersion) {
         var decision = access(actor, workspaceId, projectId, id, false);
         version(decision, expectedVersion);
         writable(decision);
@@ -98,7 +97,7 @@ public class DecisionService implements DecisionFacade {
     }
 
     @Transactional
-    public void accept(CurrentUser actor, UUID workspaceId, UUID projectId, UUID id, long expectedVersion) {
+    public void accept(CurrentUser actor, String workspaceId, String projectId, String id, long expectedVersion) {
         var decision = access(actor, workspaceId, projectId, id, false);
         version(decision, expectedVersion);
         writable(decision);
@@ -111,11 +110,11 @@ public class DecisionService implements DecisionFacade {
     @Transactional
     public void supersede(
             CurrentUser actor,
-            UUID workspaceId,
-            UUID projectId,
-            UUID id,
+            String workspaceId,
+            String projectId,
+            String id,
             long expectedVersion,
-            UUID replacementId,
+            String replacementId,
             long replacementExpectedVersion) {
         var old = access(actor, workspaceId, projectId, id, false);
         var replacement = access(actor, workspaceId, projectId, replacementId, false);
@@ -135,11 +134,11 @@ public class DecisionService implements DecisionFacade {
                 "superseded",
                 List.of(
                         new FieldChange("status", "accepted", "superseded"),
-                        new FieldChange("replacementId", null, replacementId.toString())));
+                        new FieldChange("replacementId", null, replacementId)));
     }
 
     @Transactional
-    public void delete(CurrentUser actor, UUID workspaceId, UUID projectId, UUID id, long expectedVersion) {
+    public void delete(CurrentUser actor, String workspaceId, String projectId, String id, long expectedVersion) {
         var decision = access(actor, workspaceId, projectId, id, true);
         version(decision, expectedVersion);
         if (decision.state() != Decision.State.PROPOSED) throw DecisionErrorCode.DECISION_STATE_CONFLICT.raise();
@@ -150,7 +149,7 @@ public class DecisionService implements DecisionFacade {
     }
 
     @Transactional
-    public void restore(CurrentUser actor, UUID workspaceId, UUID projectId, UUID id, long expectedVersion) {
+    public void restore(CurrentUser actor, String workspaceId, String projectId, String id, long expectedVersion) {
         var decision = access(actor, workspaceId, projectId, id, true);
         version(decision, expectedVersion);
         if (decision.state() != Decision.State.PROPOSED) throw DecisionErrorCode.DECISION_STATE_CONFLICT.raise();
@@ -160,7 +159,8 @@ public class DecisionService implements DecisionFacade {
         changed(actor, workspaceId, decision, "restored", List.of(new FieldChange("deleted", "true", "false")));
     }
 
-    private Decision access(CurrentUser actor, UUID workspaceId, UUID projectId, UUID id, boolean includeDeleted) {
+    private Decision access(
+            CurrentUser actor, String workspaceId, String projectId, String id, boolean includeDeleted) {
         projectFacade.requireAccess(actor, workspaceId, projectId, true);
         return decisionRepository
                 .findById(projectId, id, includeDeleted)
@@ -168,7 +168,7 @@ public class DecisionService implements DecisionFacade {
     }
 
     private void changed(
-            CurrentUser actor, UUID workspaceId, Decision decision, String action, List<FieldChange> changes) {
+            CurrentUser actor, String workspaceId, Decision decision, String action, List<FieldChange> changes) {
         applicationEventPublisher.publishEvent(new TargetChangedEvent(
                 workspaceId,
                 decision.projectId(),

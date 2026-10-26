@@ -7,7 +7,6 @@ import io.github.goraebap.bit.module.workspace.WorkspaceFacade;
 import io.github.goraebap.bit.shared.web.CurrentUser;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -32,7 +31,7 @@ class LabelMcpTools implements McpToolProvider {
     }
 
     private Object list(CurrentUser actor, McpArguments args) {
-        UUID workspace =
+        String workspace =
                 workspaceFacade.resolve(actor, args.optionalString("workspace").orElse(null));
         return labelService.findAll(actor, workspace).stream()
                 .map(label -> Map.of("name", label.name(), "color", label.color(), "system", label.system()))

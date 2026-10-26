@@ -6,6 +6,7 @@ import io.github.goraebap.bit.module.iam.domain.IamRepository;
 import io.github.goraebap.bit.module.iam.domain.Identity;
 import io.github.goraebap.bit.module.iam.domain.LoginSession;
 import io.github.goraebap.bit.module.iam.domain.PasswordCredential;
+import io.github.goraebap.bit.shared.domain.Ids;
 import io.github.goraebap.bit.shared.error.CommonErrorCode;
 import io.github.goraebap.bit.shared.web.CurrentUser;
 import io.github.goraebap.bit.shared.web.SecretTokens;
@@ -13,7 +14,6 @@ import java.time.Clock;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -44,7 +44,7 @@ public class IamService {
     @Transactional
     public void bootstrap(String email, String name, String hash) {
         if (iamRepository.hasUsers()) throw AuthErrorCode.AUTH_BOOTSTRAP_CLOSED.raise();
-        iamRepository.createUser(new Identity(UUID.randomUUID(), email, name, true), hash, clock.instant());
+        iamRepository.createUser(new Identity(Ids.newId(), email, name, true), hash, clock.instant());
     }
 
     /** Return failure, rather than throw, so failed-attempt updates commit. */
@@ -163,7 +163,7 @@ public class IamService {
     }
 
     @Transactional
-    public void temporaryPassword(CurrentUser actor, UUID target, String expectedHash, String newHash) {
+    public void temporaryPassword(CurrentUser actor, String target, String expectedHash, String newHash) {
         Identity user = requirePasswordSnapshot(actor, expectedHash);
         if (!user.instanceAdmin() || actor.userId().equals(target)) throw AuthErrorCode.AUTH_FORBIDDEN.raise();
         iamRepository.findUser(target).orElseThrow(AuthErrorCode.AUTH_NOT_FOUND::raise);
@@ -179,7 +179,7 @@ public class IamService {
     }
 
     @Transactional(readOnly = true)
-    public List<AgentKey> keys(CurrentUser actor, Instant beforeTime, UUID beforeId, int limit) {
+    public List<AgentKey> keys(CurrentUser actor, Instant beforeTime, String beforeId, int limit) {
         requireActor(actor, true);
         if (iamRepository.findPassword(actor.userId()).orElseThrow().mustChange())
             throw AuthErrorCode.AUTH_FORBIDDEN.raise();
@@ -187,7 +187,7 @@ public class IamService {
     }
 
     @Transactional
-    public void revokeKey(CurrentUser actor, UUID id) {
+    public void revokeKey(CurrentUser actor, String id) {
         requireActor(actor, true);
         if (iamRepository.findPassword(actor.userId()).orElseThrow().mustChange())
             throw AuthErrorCode.AUTH_FORBIDDEN.raise();
@@ -207,7 +207,7 @@ public class IamService {
     }
 
     @Transactional(readOnly = true)
-    public Optional<IamFacade.User> user(UUID id) {
+    public Optional<IamFacade.User> user(String id) {
         return iamRepository.findUser(id).map(this::summary);
     }
 
@@ -217,7 +217,7 @@ public class IamService {
     }
 
     @Transactional(readOnly = true)
-    public List<IamFacade.User> users(List<UUID> ids) {
+    public List<IamFacade.User> users(List<String> ids) {
         return iamRepository.findAllById(ids).stream().map(this::summary).toList();
     }
 
@@ -238,13 +238,13 @@ public class IamService {
     }
 
     @Transactional
-    public void selectWorkspace(CurrentUser actor, UUID workspaceId) {
+    public void selectWorkspace(CurrentUser actor, String workspaceId) {
         actor(actor, true);
         iamRepository.selectWorkspace(actor.credentialId(), workspaceId);
     }
 
     @Transactional
-    public void clearWorkspace(UUID workspaceId, UUID userId) {
+    public void clearWorkspace(String workspaceId, String userId) {
         iamRepository.clearWorkspace(workspaceId, userId);
     }
 
@@ -283,16 +283,16 @@ public class IamService {
         return iamRepository.findUser(actor.userId()).orElseThrow(AuthErrorCode.AUTH_UNAUTHENTICATED::raise);
     }
 
-    private void replacePassword(UUID userId, String hash, boolean mustChange) {
+    private void replacePassword(String userId, String hash, boolean mustChange) {
         iamRepository.savePassword(
                 new PasswordCredential(userId, hash, 0, null, mustChange, clock.instant()), clock.instant());
         iamRepository.deleteSessions(userId);
         iamRepository.revokeKeys(userId, clock.instant());
     }
 
-    private LoginSession newSession(UUID userId, String hash) {
+    private LoginSession newSession(String userId, String hash) {
         Instant now = clock.instant();
         return new LoginSession(
-                UUID.randomUUID(), userId, hash, now.plusSeconds(7 * 86400), now.plusSeconds(30 * 86400), now, now);
+                Ids.newId(), userId, hash, now.plusSeconds(7 * 86400), now.plusSeconds(30 * 86400), now, now);
     }
 }

@@ -2,26 +2,25 @@ package io.github.goraebap.bit.module.view.domain;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 /** Views and the members' tweaks over them. View reads return live views only. */
 public interface ViewRepository {
     /** The shared views and the user's own personal views, by position. */
-    List<IssueView> findAllVisible(UUID workspaceId, UUID userId);
+    List<IssueView> findAllVisible(String workspaceId, String userId);
 
-    Optional<IssueView> findById(UUID workspaceId, UUID id);
+    Optional<IssueView> findById(String workspaceId, String id);
 
-    double nextPosition(UUID workspaceId);
+    double nextPosition(String workspaceId);
 
     void save(IssueView view);
 
     void saveAll(List<IssueView> views);
 
-    List<ViewTweak> findTweaks(UUID workspaceId, UUID userId);
+    List<ViewTweak> findTweaks(String workspaceId, String userId);
 
     void saveTweak(ViewTweak tweak);
 
-    void deleteTweak(UUID workspaceId, UUID userId, String viewKey);
+    void deleteTweak(String workspaceId, String userId, String viewKey);
 
-    void deleteAllTweaksByViewKey(UUID workspaceId, String viewKey);
+    void deleteAllTweaksByViewKey(String workspaceId, String viewKey);
 }

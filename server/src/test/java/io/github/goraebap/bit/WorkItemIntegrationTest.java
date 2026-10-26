@@ -9,6 +9,7 @@ import io.github.goraebap.bit.module.workitem.application.WorkItemRequests;
 import io.github.goraebap.bit.module.workitem.application.WorkItemService;
 import io.github.goraebap.bit.module.workitem.domain.WorkItem;
 import io.github.goraebap.bit.module.workitem.domain.WorkItemRepository;
+import io.github.goraebap.bit.shared.domain.Ids;
 import io.github.goraebap.bit.shared.persistence.InstantTextBinding;
 import io.github.goraebap.bit.shared.web.CurrentUser;
 import java.net.CookieManager;
@@ -22,8 +23,8 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
 import org.junit.jupiter.api.BeforeEach;
@@ -75,16 +76,16 @@ class WorkItemIntegrationTest {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
-    private UUID workspace;
-    private UUID project;
-    private UUID todo;
-    private UUID done;
+    private String workspace;
+    private String project;
+    private String todo;
+    private String done;
     private CurrentUser owner;
 
     @DynamicPropertySource
     static void database(DynamicPropertyRegistry registry) {
         String url = "jdbc:sqlite:"
-                + Path.of("build/test-db/workitem-" + UUID.randomUUID() + ".db").toAbsolutePath();
+                + Path.of("build/test-db/workitem-" + Ids.newId() + ".db").toAbsolutePath();
         registry.add("spring.datasource.url", () -> url);
     }
 
@@ -111,18 +112,18 @@ class WorkItemIntegrationTest {
                 "iam_session",
                 "iam_password",
                 "iam_user")) jdbcTemplate.update("DELETE FROM " + table);
-        workspace = UUID.randomUUID();
+        workspace = Ids.newId();
         owner = participant("owner");
         String now = InstantTextBinding.text(Instant.now());
         jdbcTemplate.update(
                 "INSERT INTO workspace(workspace_id,name,slug,created_at,created_by,updated_at,updated_by) VALUES (?,?,?,?,?,?,?)",
-                workspace.toString(),
+                workspace,
                 "Tasks",
                 "workitem-test",
                 now,
-                owner.userId().toString(),
+                owner.userId(),
                 now,
-                owner.userId().toString());
+                owner.userId());
         membership(owner, "owner");
         project = projectService.create(owner, workspace, "Project", "BIT", null);
         var columns = projectService.columns(owner, workspace, project);
@@ -136,11 +137,9 @@ class WorkItemIntegrationTest {
         jdbcTemplate.update(
                 "UPDATE iam_password SET password_hash=? WHERE iam_user_id=?",
                 passwordEncoder.encode(password),
-                owner.userId().toString());
+                owner.userId());
         String email = jdbcTemplate.queryForObject(
-                "SELECT email FROM iam_user WHERE iam_user_id=?",
-                String.class,
-                owner.userId().toString());
+                "SELECT email FROM iam_user WHERE iam_user_id=?", String.class, owner.userId());
         try (var client = HttpClient.newBuilder()
                 .cookieHandler(new CookieManager(null, CookiePolicy.ACCEPT_ALL))
                 .build()) {
@@ -278,13 +277,13 @@ class WorkItemIntegrationTest {
 
     @Test
     void anIssuesChangesAndCommentsReadAsOneTimelineOldestFirst() {
-        UUID id = create(owner, "Task", todo, null);
+        String id = create(owner, "Task", todo, null);
         var update = new WorkItemRequests.Update();
         update.setExpectedVersion(0L);
         update.setTitle("Renamed");
         update.setDescription("## Notes");
         workItemService.revise(owner, workspace, project, id, update);
-        UUID comment = commentService.create(
+        String comment = commentService.create(
                 owner, workspace, io.github.goraebap.bit.module.link.TargetType.work_item, id, "Looks right");
         workItemService.move(owner, workspace, project, id, 1, done, null, null);
         var lines = timelineService
@@ -312,7 +311,7 @@ class WorkItemIntegrationTest {
         assertThat(description.after()).isNull();
         assertThat(lines.get(3).id()).isEqualTo(comment);
         assertThat(lines.get(3).body()).isEqualTo("Looks right");
-        assertThat(lines.get(4).after()).isEqualTo(done.toString());
+        assertThat(lines.get(4).after()).isEqualTo(done);
         var first = timelineService.list(
                 owner, workspace, io.github.goraebap.bit.module.link.TargetType.work_item, id, null, 2);
         var rest = timelineService.list(
@@ -324,7 +323,7 @@ class WorkItemIntegrationTest {
 
     @Test
     void referencesSurviveKeyChangesAndCompletionOnlyChangesOnStateTransitions() {
-        UUID id = create(owner, "Task", todo, null);
+        String id = create(owner, "Task", todo, null);
         workItemService.move(owner, workspace, project, id, 0, done, null, null);
         var completed = workItemQueryService.get(owner, workspace, project, id);
         assertThat(completed.closedAt()).isNotNull();
@@ -350,24 +349,23 @@ class WorkItemIntegrationTest {
                 "CREATE TRIGGER reject_task BEFORE INSERT ON work_item WHEN NEW.title='FAIL' BEGIN SELECT RAISE(ABORT,'forced failure'); END");
         assertThatThrownBy(() -> create(owner, "FAIL", todo, null)).isInstanceOf(RuntimeException.class);
         assertThat(jdbcTemplate.queryForObject(
-                        "SELECT last_work_item_number FROM project WHERE project_id=?", Long.class, project.toString()))
+                        "SELECT last_work_item_number FROM project WHERE project_id=?", Long.class, project))
                 .isZero();
-        UUID other = projectService.create(owner, workspace, "Other", "OT", null);
-        UUID otherColumn =
+        String other = projectService.create(owner, workspace, "Other", "OT", null);
+        String otherColumn =
                 projectService.columns(owner, workspace, other).getFirst().id();
         assertThatThrownBy(() -> create(owner, "Foreign", otherColumn, null)).hasMessageContaining("컬럼");
-        assertThatThrownBy(() -> create(owner, "Unassigned", todo, UUID.randomUUID()))
-                .hasMessageContaining("멤버");
-        UUID id = create(owner, "Valid", todo, null);
+        assertThatThrownBy(() -> create(owner, "Unassigned", todo, Ids.newId())).hasMessageContaining("멤버");
+        String id = create(owner, "Valid", todo, null);
         assertThat(workItemQueryService.get(owner, workspace, project, id).number())
                 .isEqualTo(1);
     }
 
     @Test
     void neighborMovesAreScopedAndRenumberBothSourceAndDestination() {
-        UUID a = create(owner, "A", todo, null);
-        UUID b = create(owner, "B", todo, null);
-        UUID c = create(owner, "C", todo, null);
+        String a = create(owner, "A", todo, null);
+        String b = create(owner, "B", todo, null);
+        String c = create(owner, "C", todo, null);
         workItemService.move(owner, workspace, project, a, 0, todo, c, b);
         assertThat(workItemRepository.findColumnItems(project, todo, false).stream()
                         .map(WorkItem::id))
@@ -377,8 +375,8 @@ class WorkItemIntegrationTest {
                 .containsExactly(0d, 1d, 2d);
         assertThatThrownBy(() -> workItemService.move(owner, workspace, project, a, 0, done, null, null))
                 .hasMessageContaining("다른 변경");
-        UUID other = projectService.create(owner, workspace, "Other", "OT", null);
-        UUID foreign = workItemService.create(owner, workspace, other, details("Foreign", null), null);
+        String other = projectService.create(owner, workspace, "Other", "OT", null);
+        String foreign = workItemService.create(owner, workspace, other, details("Foreign", null), null);
         long version = workItemQueryService.get(owner, workspace, project, a).version();
         assertThatThrownBy(() -> workItemService.move(owner, workspace, project, a, version, todo, foreign, null))
                 .hasMessageContaining("위치");
@@ -392,7 +390,7 @@ class WorkItemIntegrationTest {
 
     @Test
     void finalReclassificationAndColumnTransferRollbackTogetherOnDatabaseFailure() {
-        UUID id = create(owner, "State", todo, null);
+        String id = create(owner, "State", todo, null);
         jdbcTemplate.execute(
                 "CREATE TRIGGER reject_close BEFORE UPDATE ON work_item WHEN NEW.closed_at IS NOT NULL BEGIN SELECT RAISE(ABORT,'forced failure'); END");
         assertThatThrownBy(() -> projectService.reviseColumn(owner, workspace, project, todo, 0, "Final", null, true))
@@ -418,9 +416,9 @@ class WorkItemIntegrationTest {
 
     @Test
     void columnDeletionMovesArchivedTasksButDeletedTasksRestoreToBacklog() {
-        UUID live = create(owner, "Live", todo, null);
-        UUID archived = create(owner, "Archived", todo, null);
-        UUID deleted = create(owner, "Deleted", todo, null);
+        String live = create(owner, "Live", todo, null);
+        String archived = create(owner, "Archived", todo, null);
+        String deleted = create(owner, "Deleted", todo, null);
         workItemService.archive(owner, workspace, project, archived, 0, true);
         workItemService.delete(owner, workspace, project, deleted, 0);
         projectService.deleteColumn(owner, workspace, project, todo, 0, done);
@@ -440,7 +438,7 @@ class WorkItemIntegrationTest {
 
     @Test
     void archivedProjectsBlockAllTaskWritesAndPreserveIndividualStatesOnRestoration() {
-        UUID id = create(owner, "Archive", todo, owner.userId());
+        String id = create(owner, "Archive", todo, owner.userId());
         workItemService.archive(owner, workspace, project, id, 0, true);
         projectService.archive(owner, workspace, project, 0, true);
         assertThatThrownBy(() -> workItemService.archive(owner, workspace, project, id, 1, false))
@@ -458,7 +456,7 @@ class WorkItemIntegrationTest {
     @Test
     void concurrentCreatesKeepUniqueNumbersAndCompetingEditsOnlyCommitOnce() throws Exception {
         try (var executor = Executors.newFixedThreadPool(4)) {
-            List<Callable<UUID>> tasks = new ArrayList<>();
+            List<Callable<String>> tasks = new ArrayList<>();
             for (int i = 0; i < 8; i++) {
                 int n = i;
                 tasks.add(() -> create(owner, "Task " + n, todo, null));
@@ -470,7 +468,7 @@ class WorkItemIntegrationTest {
                         .get(owner, workspace, project, f.get())
                         .number());
             assertThat(numbers).containsExactlyInAnyOrder(1L, 2L, 3L, 4L, 5L, 6L, 7L, 8L);
-            UUID id = futures.getFirst().get();
+            String id = futures.getFirst().get();
             List<Callable<Boolean>> edits = List.of(() -> edit(id, "One"), () -> edit(id, "Two"));
             int successes = 0;
             for (var f : executor.invokeAll(edits)) if (f.get()) successes++;
@@ -484,14 +482,12 @@ class WorkItemIntegrationTest {
         membership(member, "member");
         CurrentUser viewer = participant("viewer");
         membership(viewer, "viewer");
-        UUID id = create(member, "Member task", todo, member.userId());
+        String id = create(member, "Member task", todo, member.userId());
         assertThat(workItemQueryService.get(viewer, workspace, project, id).title())
                 .isEqualTo("Member task");
         assertThatThrownBy(() -> create(viewer, "Forbidden", todo, null)).hasMessageContaining("권한");
         jdbcTemplate.update(
-                "DELETE FROM workspace_member WHERE workspace_id=? AND iam_user_id=?",
-                workspace.toString(),
-                member.userId().toString());
+                "DELETE FROM workspace_member WHERE workspace_id=? AND iam_user_id=?", workspace, member.userId());
         assertThatThrownBy(() -> create(owner, "New assignment", todo, member.userId()))
                 .hasMessageContaining("멤버");
         assertThat(workItemQueryService.get(owner, workspace, project, id).assigneeId())
@@ -551,11 +547,9 @@ class WorkItemIntegrationTest {
         jdbcTemplate.update(
                 "UPDATE iam_password SET password_hash=? WHERE iam_user_id=?",
                 passwordEncoder.encode(password),
-                owner.userId().toString());
+                owner.userId());
         String email = jdbcTemplate.queryForObject(
-                "SELECT email FROM iam_user WHERE iam_user_id=?",
-                String.class,
-                owner.userId().toString());
+                "SELECT email FROM iam_user WHERE iam_user_id=?", String.class, owner.userId());
         try (var client = HttpClient.newBuilder()
                 .cookieHandler(new CookieManager(null, CookiePolicy.ACCEPT_ALL))
                 .build()) {
@@ -630,13 +624,13 @@ class WorkItemIntegrationTest {
                     .isTrue();
             expect(http(client, "POST", path + "/move", "{\"expectedVersion\":1}", null), 400);
             expect(http(client, "GET", base + "?priority=high,low,&priority=high", null, key), 200);
-            jdbcTemplate.update("UPDATE workspace_member SET role='viewer' WHERE workspace_id=?", workspace.toString());
+            jdbcTemplate.update("UPDATE workspace_member SET role='viewer' WHERE workspace_id=?", workspace);
             expect(http(client, "POST", base, "bad JSON", key), 403);
             expect(http(client, "PATCH", path, "bad JSON", null), 403);
             expect(http(client, "GET", base + "?deleted=1&q=" + "x".repeat(201), null, key), 403);
-            expect(http(client, "PATCH", base + "/" + UUID.randomUUID(), "bad JSON", key), 403);
-            jdbcTemplate.update("UPDATE workspace_member SET role='owner' WHERE workspace_id=?", workspace.toString());
-            expect(http(client, "PATCH", base + "/" + UUID.randomUUID(), "bad JSON", key), 404);
+            expect(http(client, "PATCH", base + "/" + Ids.newId(), "bad JSON", key), 403);
+            jdbcTemplate.update("UPDATE workspace_member SET role='owner' WHERE workspace_id=?", workspace);
+            expect(http(client, "PATCH", base + "/" + Ids.newId(), "bad JSON", key), 404);
             expect(http(client, "GET", "/api/v1/workspaces/" + workspace + "/work-items/by-ref/BIT-1", null, key), 200);
         }
     }
@@ -656,7 +650,7 @@ class WorkItemIntegrationTest {
                 project,
                 new WorkItem.Details("High", null, WorkItem.Priority.high, null, null, null, null),
                 todo);
-        UUID archived = create(owner, "Archive", todo, null);
+        String archived = create(owner, "Archive", todo, null);
         workItemService.archive(owner, workspace, project, archived, 0, true);
         var request = new WorkItemRequests.ListRequest();
         request.setSize(1);
@@ -696,26 +690,26 @@ class WorkItemIntegrationTest {
     void myTasksAndCursorsAreIsolatedEvenWhenTheSameUserBelongsToBothWorkspaces() {
         create(owner, "Mine A", todo, owner.userId());
         create(owner, "Mine B", todo, owner.userId());
-        UUID otherWorkspace = UUID.randomUUID();
+        String otherWorkspace = Ids.newId();
         String now = InstantTextBinding.text(Instant.now());
         jdbcTemplate.update(
                 "INSERT INTO workspace(workspace_id,name,slug,created_at,created_by,updated_at,updated_by) VALUES (?,?,?,?,?,?,?)",
-                otherWorkspace.toString(),
+                otherWorkspace,
                 "Other",
                 "other-tasks",
                 now,
-                owner.userId().toString(),
+                owner.userId(),
                 now,
-                owner.userId().toString());
+                owner.userId());
         jdbcTemplate.update(
                 "INSERT INTO workspace_member(workspace_member_id,workspace_id,iam_user_id,role,joined_at) VALUES (?,?,?,?,?)",
-                UUID.randomUUID().toString(),
-                otherWorkspace.toString(),
-                owner.userId().toString(),
+                Ids.newId(),
+                otherWorkspace,
+                owner.userId(),
                 "owner",
                 now);
-        UUID otherProject = projectService.create(owner, otherWorkspace, "Other", "BIT", null);
-        UUID otherTask = workItemService.create(
+        String otherProject = projectService.create(owner, otherWorkspace, "Other", "BIT", null);
+        String otherTask = workItemService.create(
                 owner, otherWorkspace, otherProject, details("Other space", owner.userId()), null);
         assertThat(workItemQueryService
                         .list(owner, workspace, null, true, new WorkItemRequests.ListRequest())
@@ -748,12 +742,12 @@ class WorkItemIntegrationTest {
         var due = start.plusDays(3);
         var details = new WorkItem.Details(
                 "Filtered", "body", WorkItem.Priority.high, WorkItem.TriggerType.finding, owner.userId(), start, due);
-        UUID id = workItemService.create(owner, workspace, project, details, todo);
+        String id = workItemService.create(owner, workspace, project, details, todo);
         var filter = new WorkItemRequests.ListRequest();
         filter.setPriority(List.of("high,low,"));
         filter.setTriggerType(List.of("finding"));
         filter.setAssigneeId(owner.userId());
-        filter.setColumn(todo.toString());
+        filter.setColumn(todo);
         filter.setFrom(start.plusDays(1));
         filter.setTo(due);
         filter.setQ("filter");
@@ -787,7 +781,7 @@ class WorkItemIntegrationTest {
 
     @Test
     void columnDeletionAndTaskMoveCannotLeaveLiveTasksInDeletedColumns() throws Exception {
-        UUID id = create(owner, "Race", null, null);
+        String id = create(owner, "Race", null, null);
         try (var executor = Executors.newFixedThreadPool(2)) {
             List<Callable<Boolean>> actions = List.of(
                     () -> {
@@ -818,7 +812,7 @@ class WorkItemIntegrationTest {
     void adminsCanWriteButInstanceAdministrationDoesNotGrantWorkspaceDataAccess() {
         CurrentUser admin = participant("admin");
         membership(admin, "admin");
-        UUID id = create(admin, "Admin task", todo, null);
+        String id = create(admin, "Admin task", todo, null);
         assertThat(workItemQueryService.get(admin, workspace, project, id).title())
                 .isEqualTo("Admin task");
         CurrentUser outsider = identity("instance-admin", true);
@@ -826,9 +820,7 @@ class WorkItemIntegrationTest {
                 .hasMessageContaining("찾을 수");
         assertThatThrownBy(() -> create(outsider, "No implicit access", todo, null))
                 .hasMessageContaining("찾을 수");
-        jdbcTemplate.update(
-                "UPDATE iam_password SET must_change=1 WHERE iam_user_id=?",
-                owner.userId().toString());
+        jdbcTemplate.update("UPDATE iam_password SET must_change=1 WHERE iam_user_id=?", owner.userId());
         assertThatThrownBy(() -> create(owner, "Stale principal", todo, null)).hasMessageContaining("권한");
         assertThatThrownBy(() -> workItemQueryService.get(owner, workspace, project, id))
                 .hasMessageContaining("권한");
@@ -836,7 +828,7 @@ class WorkItemIntegrationTest {
 
     @Test
     void deletedListingIncludesArchivedTasksAndDeletedNumbersAreNeverReused() {
-        UUID id = create(owner, "Deleted archive", todo, null);
+        String id = create(owner, "Deleted archive", todo, null);
         workItemService.archive(owner, workspace, project, id, 0, true);
         workItemService.delete(owner, workspace, project, id, 1);
         var filter = new WorkItemRequests.ListRequest();
@@ -844,7 +836,7 @@ class WorkItemIntegrationTest {
         var page = workItemQueryService.list(owner, workspace, project, false, filter);
         assertThat(page.items()).hasSize(1);
         assertThat(page.items().getFirst().archivedAt()).isNotNull();
-        UUID next = create(owner, "Next number", todo, null);
+        String next = create(owner, "Next number", todo, null);
         assertThat(workItemQueryService.get(owner, workspace, project, next).number())
                 .isEqualTo(2);
         workItemService.restore(owner, workspace, project, id, 2);
@@ -857,54 +849,53 @@ class WorkItemIntegrationTest {
     }
 
     private CurrentUser identity(String role, boolean instanceAdmin) {
-        UUID user = UUID.randomUUID();
-        UUID credential = UUID.randomUUID();
+        String user = Ids.newId();
+        String credential = Ids.newId();
         String now = InstantTextBinding.text(Instant.now());
         jdbcTemplate.update(
                 "INSERT INTO iam_user(iam_user_id,email,name,created_at,updated_at) VALUES (?,?,?,?,?)",
-                user.toString(),
-                role + user + "@example.test",
+                user,
+                role + user.toLowerCase(Locale.ROOT) + "@example.test",
                 role,
                 now,
                 now);
         jdbcTemplate.update(
                 "INSERT INTO iam_password(iam_user_id,password_hash,changed_at) VALUES (?,?,?)",
-                user.toString(),
+                user,
                 "fixture-hash",
                 now);
         jdbcTemplate.update(
                 "INSERT INTO iam_session(iam_session_id,iam_user_id,token_hash,expires_at,absolute_expires_at,last_seen_at,created_at) VALUES (?,?,?,?,?,?,?)",
-                credential.toString(),
-                user.toString(),
-                credential.toString(),
+                credential,
+                user,
+                credential,
                 InstantTextBinding.text(Instant.now().plusSeconds(3600)),
                 InstantTextBinding.text(Instant.now().plusSeconds(7200)),
                 now,
                 now);
-        if (instanceAdmin)
-            jdbcTemplate.update("UPDATE iam_user SET is_instance_admin=1 WHERE iam_user_id=?", user.toString());
+        if (instanceAdmin) jdbcTemplate.update("UPDATE iam_user SET is_instance_admin=1 WHERE iam_user_id=?", user);
         return new CurrentUser(user, instanceAdmin, CurrentUser.Method.SESSION, credential, null, false);
     }
 
     private void membership(CurrentUser actor, String role) {
         jdbcTemplate.update(
                 "INSERT INTO workspace_member(workspace_member_id,workspace_id,iam_user_id,role,joined_at) VALUES (?,?,?,?,?)",
-                UUID.randomUUID().toString(),
-                workspace.toString(),
-                actor.userId().toString(),
+                Ids.newId(),
+                workspace,
+                actor.userId(),
                 role,
                 InstantTextBinding.text(Instant.now()));
     }
 
-    private UUID create(CurrentUser actor, String title, UUID column, UUID assignee) {
+    private String create(CurrentUser actor, String title, String column, String assignee) {
         return workItemService.create(actor, workspace, project, details(title, assignee), column);
     }
 
-    private static WorkItem.Details details(String title, UUID assignee) {
+    private static WorkItem.Details details(String title, String assignee) {
         return new WorkItem.Details(title, null, null, null, assignee, null, null);
     }
 
-    private boolean edit(UUID id, String title) {
+    private boolean edit(String id, String title) {
         var update = new WorkItemRequests.Update();
         update.setExpectedVersion(0L);
         update.setTitle(title);

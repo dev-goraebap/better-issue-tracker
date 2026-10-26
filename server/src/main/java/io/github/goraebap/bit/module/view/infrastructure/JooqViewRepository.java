@@ -12,7 +12,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.jooq.DSLContext;
 import org.jooq.Record;
@@ -30,7 +29,7 @@ class JooqViewRepository implements ViewRepository {
     private final JsonMapper jsonMapper;
 
     @Override
-    public List<IssueView> findAllVisible(UUID workspaceId, UUID userId) {
+    public List<IssueView> findAllVisible(String workspaceId, String userId) {
         return dslContext
                 .selectFrom(ISSUE_VIEW)
                 .where(ISSUE_VIEW.WORKSPACE_ID.eq(workspaceId))
@@ -41,7 +40,7 @@ class JooqViewRepository implements ViewRepository {
     }
 
     @Override
-    public Optional<IssueView> findById(UUID workspaceId, UUID id) {
+    public Optional<IssueView> findById(String workspaceId, String id) {
         return dslContext
                 .selectFrom(ISSUE_VIEW)
                 .where(ISSUE_VIEW.WORKSPACE_ID.eq(workspaceId))
@@ -51,7 +50,7 @@ class JooqViewRepository implements ViewRepository {
     }
 
     @Override
-    public double nextPosition(UUID workspaceId) {
+    public double nextPosition(String workspaceId) {
         Double max = dslContext
                 .select(DSL.max(ISSUE_VIEW.POSITION))
                 .from(ISSUE_VIEW)
@@ -91,7 +90,7 @@ class JooqViewRepository implements ViewRepository {
     }
 
     @Override
-    public List<ViewTweak> findTweaks(UUID workspaceId, UUID userId) {
+    public List<ViewTweak> findTweaks(String workspaceId, String userId) {
         return dslContext
                 .selectFrom(ISSUE_VIEW_TWEAK)
                 .where(ISSUE_VIEW_TWEAK.WORKSPACE_ID.eq(workspaceId))
@@ -147,7 +146,7 @@ class JooqViewRepository implements ViewRepository {
     }
 
     @Override
-    public void deleteTweak(UUID workspaceId, UUID userId, String viewKey) {
+    public void deleteTweak(String workspaceId, String userId, String viewKey) {
         dslContext
                 .deleteFrom(ISSUE_VIEW_TWEAK)
                 .where(ISSUE_VIEW_TWEAK.WORKSPACE_ID.eq(workspaceId))
@@ -157,7 +156,7 @@ class JooqViewRepository implements ViewRepository {
     }
 
     @Override
-    public void deleteAllTweaksByViewKey(UUID workspaceId, String viewKey) {
+    public void deleteAllTweaksByViewKey(String workspaceId, String viewKey) {
         dslContext
                 .deleteFrom(ISSUE_VIEW_TWEAK)
                 .where(ISSUE_VIEW_TWEAK.WORKSPACE_ID.eq(workspaceId))

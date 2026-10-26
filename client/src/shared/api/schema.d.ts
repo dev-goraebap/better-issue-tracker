@@ -906,7 +906,6 @@ export interface components {
             order: string[];
         };
         Transfer: {
-            /** Format: uuid */
             userId: string;
             currentPassword: string;
         };
@@ -915,7 +914,6 @@ export interface components {
             newPassword: string;
         };
         Selection: {
-            /** Format: uuid */
             workspaceId: string;
         };
         Create: {
@@ -958,13 +956,11 @@ export interface components {
             priority?: "low" | "medium" | "high" | "urgent" | null;
             /** @enum {string|null} */
             triggerType?: "request" | "finding" | "external" | "improvement" | "planned" | null;
-            /** Format: uuid */
             assigneeId?: string | null;
             /** Format: date */
             startDate?: string | null;
             /** Format: date */
             dueDate?: string | null;
-            /** Format: uuid */
             columnId?: string | null;
             /** @description Workspace labels to attach; omitted or null attaches none */
             labelIds?: string[] | null;
@@ -976,11 +972,8 @@ export interface components {
         MoveWorkItem: {
             /** Format: int64 */
             expectedVersion: number;
-            /** Format: uuid */
             targetColumnId: string | null;
-            /** Format: uuid */
             beforeItemId?: string | null;
-            /** Format: uuid */
             afterItemId?: string | null;
         };
         ProjectVersion: {
@@ -988,7 +981,6 @@ export interface components {
             expectedVersion: number;
         };
         AddProjectMember: {
-            /** Format: uuid */
             userId: string;
         };
         CreateBoardColumn: {
@@ -1016,7 +1008,6 @@ export interface components {
         CreateComment: {
             /** @enum {string} */
             targetType: "work_item" | "decision" | "session_record" | "artifact";
-            /** Format: uuid */
             targetId: string;
             /** @description Markdown */
             body: string;
@@ -1028,7 +1019,6 @@ export interface components {
             role: "owner" | "admin" | "member" | "viewer";
         };
         CreatedInvitation: {
-            /** Format: uuid */
             id: string;
             token: string;
             /** Format: date-time */
@@ -1042,7 +1032,6 @@ export interface components {
             currentPassword: string;
         };
         CreatedKey: {
-            /** Format: uuid */
             id: string;
             key: string;
             prefix: string;
@@ -1058,7 +1047,6 @@ export interface components {
             token: string;
         };
         Preview: {
-            /** Format: uuid */
             workspaceId: string;
             workspaceName: string;
             email: string;
@@ -1117,7 +1105,6 @@ export interface components {
             priority?: "low" | "medium" | "high" | "urgent" | null;
             /** @enum {string|null} */
             triggerType?: "request" | "finding" | "external" | "improvement" | "planned" | null;
-            /** Format: uuid */
             assigneeId?: string | null;
             /** Format: date */
             startDate?: string | null;
@@ -1159,18 +1146,14 @@ export interface components {
             role: "owner" | "admin" | "member" | "viewer";
         };
         WorkItem: {
-            /** Format: uuid */
             id: string;
-            /** Format: uuid */
             workspaceId: string;
-            /** Format: uuid */
             projectId: string;
             /** Format: int64 */
             number: number;
             key: string;
             title: string;
             description: string | null;
-            /** Format: uuid */
             columnId: string | null;
             /**
              * @description Category of the column; null in the backlog
@@ -1185,7 +1168,6 @@ export interface components {
             priority: "low" | "medium" | "high" | "urgent" | null;
             /** @enum {string|null} */
             triggerType: "request" | "finding" | "external" | "improvement" | "planned" | null;
-            /** Format: uuid */
             assigneeId: string | null;
             assigneeName: string | null;
             /** Format: date */
@@ -1202,17 +1184,14 @@ export interface components {
             version: number;
             /** Format: date-time */
             createdAt: string;
-            /** Format: uuid */
             createdBy: string;
             createdByAgent: string | null;
             /** Format: date-time */
             updatedAt: string;
-            /** Format: uuid */
             updatedBy: string;
             updatedByAgent: string | null;
         };
         WorkItemLabel: {
-            /** Format: uuid */
             id: string;
             name: string;
             color: string;
@@ -1223,9 +1202,7 @@ export interface components {
             nextCursor: string | null;
         };
         IssueView: {
-            /** Format: uuid */
             id: string;
-            /** Format: uuid */
             workspaceId: string;
             name: string;
             description: string | null;
@@ -1236,7 +1213,6 @@ export interface components {
             filters: components["schemas"]["IssueViewFilters"];
             sort: components["schemas"]["IssueViewSort"];
             columns: ("status" | "priority" | "assignee" | "labels" | "due" | "updated" | "created")[];
-            /** Format: uuid */
             ownerId: string;
             isPersonal: boolean;
             /** @description Whether the caller may change or delete it (D-068) */
@@ -1265,11 +1241,9 @@ export interface components {
         TimelineEntry: {
             /** @enum {string} */
             kind: "comment" | "activity";
-            /** Format: uuid */
             id: string;
             /** Format: date-time */
             at: string;
-            /** Format: uuid */
             actorId: string | null;
             actorName: string | null;
             /** @description The API key's agent name when an agent did it */
@@ -1290,9 +1264,7 @@ export interface components {
             after: string | null;
         };
         Project: {
-            /** Format: uuid */
             id: string;
-            /** Format: uuid */
             workspaceId: string;
             name: string;
             key: string;
@@ -1313,7 +1285,6 @@ export interface components {
             version: number;
             /** Format: date-time */
             createdAt: string;
-            /** Format: uuid */
             createdBy: string;
             createdByAgent: string | null;
             /** Format: date-time */
@@ -1324,13 +1295,11 @@ export interface components {
             nextCursor: string | null;
         };
         WorkItemColumnCount: {
-            /** Format: uuid */
             columnId: string | null;
             /** Format: int64 */
             count: number;
         };
         BoardColumn: {
-            /** Format: uuid */
             id: string;
             name: string;
             color: string | null;
@@ -1343,18 +1312,14 @@ export interface components {
             version: number;
         };
         ProjectMembership: {
-            /** Format: uuid */
             projectId: string;
-            /** Format: uuid */
             userId: string;
         };
         ProjectMemberships: {
             items: components["schemas"]["ProjectMembership"][];
         };
         Label: {
-            /** Format: uuid */
             id: string;
-            /** Format: uuid */
             workspaceId: string;
             name: string;
             color: string;
@@ -1369,7 +1334,6 @@ export interface components {
             updatedAt: string;
         };
         Space: {
-            /** Format: uuid */
             id: string;
             name: string;
             slug: string;
@@ -1379,9 +1343,7 @@ export interface components {
             createdAt: string;
         };
         Member: {
-            /** Format: uuid */
             memberId: string;
-            /** Format: uuid */
             userId: string;
             name: string;
             email: string;
@@ -1399,7 +1361,6 @@ export interface components {
             nextCursor?: string | null;
         };
         WorkspaceInvitation: {
-            /** Format: uuid */
             id: string;
             email: string;
             /** @enum {string} */
@@ -1407,12 +1368,10 @@ export interface components {
             status: string;
             /** Format: date-time */
             expiresAt: string;
-            /** Format: uuid */
             invitedBy: string;
             inviterName: string;
             /** Format: date-time */
             createdAt: string;
-            /** Format: uuid */
             acceptedBy?: string | null;
             /** Format: date-time */
             acceptedAt?: string | null;
@@ -1420,7 +1379,6 @@ export interface components {
             revokedAt?: string | null;
         };
         Me: {
-            /** Format: uuid */
             id: string;
             email: string;
             name: string;
@@ -1435,7 +1393,6 @@ export interface components {
             nextCursor?: string | null;
         };
         Key: {
-            /** Format: uuid */
             id: string;
             name: string;
             agentName?: string | null;
@@ -1470,7 +1427,6 @@ export interface components {
             /** Format: date-time */
             absoluteExpiresAt: string;
             mustChangePassword: boolean;
-            /** Format: uuid */
             activeWorkspaceId?: string | null;
         };
         Csrf: {

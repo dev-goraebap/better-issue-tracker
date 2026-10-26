@@ -3,52 +3,51 @@ package io.github.goraebap.bit.module.iam.domain;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 public interface IamRepository {
-    List<Identity> findAllById(List<UUID> ids);
+    List<Identity> findAllById(List<String> ids);
 
-    UUID activeWorkspace(UUID sessionId);
+    String activeWorkspace(String sessionId);
 
-    void selectWorkspace(UUID sessionId, UUID workspaceId);
+    void selectWorkspace(String sessionId, String workspaceId);
 
-    void clearWorkspace(UUID workspaceId, UUID userId);
+    void clearWorkspace(String workspaceId, String userId);
 
     boolean hasUsers();
 
-    Optional<Identity> findUser(UUID id);
+    Optional<Identity> findUser(String id);
 
     Optional<Identity> findByEmail(String email);
 
-    Optional<PasswordCredential> findPassword(UUID userId);
+    Optional<PasswordCredential> findPassword(String userId);
 
     void createUser(Identity user, String hash, Instant now);
 
-    void renameUser(UUID id, String name, Instant now);
+    void renameUser(String id, String name, Instant now);
 
     void savePassword(PasswordCredential password, Instant now);
 
     Optional<LoginSession> findSessionByHash(String hash);
 
-    Optional<LoginSession> findSession(UUID id);
+    Optional<LoginSession> findSession(String id);
 
     void saveSession(LoginSession session);
 
-    void deleteSession(UUID id);
+    void deleteSession(String id);
 
-    void deleteSessions(UUID userId);
+    void deleteSessions(String userId);
 
     Optional<AgentKey> findKeyByHash(String hash);
 
-    Optional<AgentKey> findKey(UUID id);
+    Optional<AgentKey> findKey(String id);
 
-    List<AgentKey> findKeys(UUID userId, Instant beforeTime, UUID beforeId, int limit);
+    List<AgentKey> findKeys(String userId, Instant beforeTime, String beforeId, int limit);
 
     void createKey(AgentKey key);
 
-    void touchKey(UUID id, Instant now);
+    void touchKey(String id, Instant now);
 
-    void revokeKeys(UUID userId, Instant now);
+    void revokeKeys(String userId, Instant now);
 
-    void revokeKey(UUID id, Instant now);
+    void revokeKey(String id, Instant now);
 }

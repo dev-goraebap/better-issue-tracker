@@ -12,7 +12,6 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.UUID;
 import org.springframework.format.annotation.DateTimeFormat;
 
 public final class WorkItemRequests {
@@ -26,13 +25,13 @@ public final class WorkItemRequests {
             @Size(max = 20000) @Schema(nullable = true) String description,
             @Schema(nullable = true) WorkItem.Priority priority,
             @Schema(nullable = true) WorkItem.TriggerType triggerType,
-            @Schema(nullable = true) UUID assigneeId,
+            @Schema(nullable = true) String assigneeId,
             @Schema(nullable = true) LocalDate startDate,
             @Schema(nullable = true) LocalDate dueDate,
-            @Schema(nullable = true) UUID columnId,
+            @Schema(nullable = true) String columnId,
 
             @Size(max = MAX_LABELS) @Schema(nullable = true, description = "Workspace labels to attach; omitted or null attaches none")
-            List<@NotNull UUID> labelIds) {
+            List<@NotNull String> labelIds) {
         public Create {
             labelIds = labelIds == null ? null : List.copyOf(labelIds);
         }
@@ -41,7 +40,7 @@ public final class WorkItemRequests {
             return new WorkItem.Details(title, description, priority, triggerType, assigneeId, startDate, dueDate);
         }
 
-        Set<UUID> labels() {
+        Set<String> labels() {
             return labelIds == null ? Set.of() : Set.copyOf(labelIds);
         }
     }
@@ -57,11 +56,11 @@ public final class WorkItemRequests {
         private @Schema(nullable = true) String description;
         private @Schema(nullable = true) WorkItem.Priority priority;
         private @Schema(nullable = true) WorkItem.TriggerType triggerType;
-        private @Schema(nullable = true) UUID assigneeId;
+        private @Schema(nullable = true) String assigneeId;
         private @Schema(nullable = true) LocalDate startDate;
         private @Schema(nullable = true) LocalDate dueDate;
 
-        @Size(max = MAX_LABELS) private List<@NotNull UUID> labelIds;
+        @Size(max = MAX_LABELS) private List<@NotNull String> labelIds;
 
         private boolean hasTitle, hasDescription, hasPriority, hasTriggerType, hasAssigneeId, hasStartDate, hasDueDate;
         private boolean hasLabelIds;
@@ -110,11 +109,11 @@ public final class WorkItemRequests {
             hasTriggerType = true;
         }
 
-        public UUID getAssigneeId() {
+        public String getAssigneeId() {
             return assigneeId;
         }
 
-        public void setAssigneeId(UUID value) {
+        public void setAssigneeId(String value) {
             assigneeId = value;
             hasAssigneeId = true;
         }
@@ -140,11 +139,11 @@ public final class WorkItemRequests {
         @Schema(
                 nullable = true,
                 description = "Omitted: labels are kept. Present: the whole set is replaced; [] or null clears it")
-        public List<UUID> getLabelIds() {
+        public List<String> getLabelIds() {
             return labelIds == null ? null : java.util.Collections.unmodifiableList(labelIds);
         }
 
-        public void setLabelIds(List<UUID> value) {
+        public void setLabelIds(List<String> value) {
             labelIds = value == null ? null : new ArrayList<>(value);
             hasLabelIds = true;
         }
@@ -153,7 +152,7 @@ public final class WorkItemRequests {
             return hasLabelIds;
         }
 
-        Set<UUID> labels() {
+        Set<String> labels() {
             return labelIds == null ? Set.of() : Set.copyOf(labelIds);
         }
 
@@ -195,9 +194,9 @@ public final class WorkItemRequests {
     public static final class Move {
         @NotNull @Min(0) private Long expectedVersion;
 
-        private UUID targetColumnId;
-        private @Schema(nullable = true) UUID beforeItemId;
-        private @Schema(nullable = true) UUID afterItemId;
+        private String targetColumnId;
+        private @Schema(nullable = true) String beforeItemId;
+        private @Schema(nullable = true) String afterItemId;
         private boolean hasTarget;
 
         public Long getExpectedVersion() {
@@ -209,28 +208,28 @@ public final class WorkItemRequests {
         }
 
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED, nullable = true)
-        public UUID getTargetColumnId() {
+        public String getTargetColumnId() {
             return targetColumnId;
         }
 
-        public void setTargetColumnId(UUID value) {
+        public void setTargetColumnId(String value) {
             targetColumnId = value;
             hasTarget = true;
         }
 
-        public UUID getBeforeItemId() {
+        public String getBeforeItemId() {
             return beforeItemId;
         }
 
-        public void setBeforeItemId(UUID value) {
+        public void setBeforeItemId(String value) {
             beforeItemId = value;
         }
 
-        public UUID getAfterItemId() {
+        public String getAfterItemId() {
             return afterItemId;
         }
 
-        public void setAfterItemId(UUID value) {
+        public void setAfterItemId(String value) {
             afterItemId = value;
         }
 
@@ -246,8 +245,8 @@ public final class WorkItemRequests {
 
     /** Filters shared by the project, My Tasks and workspace lists. */
     public abstract static class Filters {
-        private @Schema(nullable = true) UUID assigneeId;
-        private List<UUID> labelId = List.of();
+        private @Schema(nullable = true) String assigneeId;
+        private List<String> labelId = List.of();
         private List<String> category = List.of();
         private Boolean hasDates;
         private List<String> priority = List.of();
@@ -271,20 +270,20 @@ public final class WorkItemRequests {
         private String sort = "createdAt";
         private String direction = "DESC";
 
-        public UUID getAssigneeId() {
+        public String getAssigneeId() {
             return assigneeId;
         }
 
-        public void setAssigneeId(UUID value) {
+        public void setAssigneeId(String value) {
             assigneeId = value;
         }
 
         @Schema(description = "Any of these labels (repeatable). Deleted labels match nothing")
-        public List<UUID> getLabelId() {
+        public List<String> getLabelId() {
             return List.copyOf(labelId);
         }
 
-        public void setLabelId(List<UUID> value) {
+        public void setLabelId(List<String> value) {
             labelId = value == null ? List.of() : List.copyOf(value);
         }
 
@@ -419,24 +418,24 @@ public final class WorkItemRequests {
     }
 
     public static final class WorkspaceListRequest extends Filters {
-        private List<UUID> projectId = List.of();
-        private List<UUID> columnId = List.of();
+        private List<String> projectId = List.of();
+        private List<String> columnId = List.of();
 
         @Schema(description = "Any of these projects (repeatable). Archived and deleted projects are always left out")
-        public List<UUID> getProjectId() {
+        public List<String> getProjectId() {
             return List.copyOf(projectId);
         }
 
-        public void setProjectId(List<UUID> value) {
+        public void setProjectId(List<String> value) {
             projectId = value == null ? List.of() : List.copyOf(value);
         }
 
         @Schema(description = "Any of these columns (repeatable); use category=none for items without a status")
-        public List<UUID> getColumnId() {
+        public List<String> getColumnId() {
             return List.copyOf(columnId);
         }
 
-        public void setColumnId(List<UUID> value) {
+        public void setColumnId(List<String> value) {
             columnId = value == null ? List.of() : List.copyOf(value);
         }
     }

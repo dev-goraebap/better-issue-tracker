@@ -79,7 +79,7 @@ BIT/
 ## 4. API 계약
 상세: SandboxHr `hohr-api-contract` 스킬
 
-- **URL**: `/api/v1`, 복수형 명사, UUID 경로 변수. 상태 전이는 하위 자원(`/decisions/{id}/acceptances` 같은 식).
+- **URL**: `/api/v1`, 복수형 명사, ID 경로 변수(10자, D-083). 상태 전이는 하위 자원(`/decisions/{id}/acceptances` 같은 식).
 - **응답 봉투 없음**: GET 200+본문 / POST 201+`Location`(빈 본문) / PUT·PATCH·DELETE 204.
 - **JSON**: null 필드도 키 유지. PATCH는 "생략"과 "null"을 구분. 시각은 UTC ISO(`Z`), 날짜 `YYYY-MM-DD`.
 - **목록**: 커서 페이징. 쿼리 `sort`, `direction`, `cursor`, `size` → 응답 `{items, nextCursor}`. 정렬 마지막 기준은 항상 고유 ID(jOOQ `seek`).
@@ -96,7 +96,7 @@ BIT/
 
 - **이름**: 테이블 단수 snake_case. PK 열 `<table>_id`, PK 제약 `<table>_pkey`.
   FK `<t>_<col>_<ref>_<refcol>_fk`, 고유 인덱스 `ux_`, 일반 인덱스 `ix_`, CHECK `ck_`.
-- **ID**: UUID v4를 애플리케이션에서 생성해 텍스트로 저장.
+- **ID**: 애플리케이션이 `Ids.newId()`로 만든 10자 글자(`A-Za-z0-9`, 첫 글자 영문)를 텍스트로 저장 (D-083).
   (작업항목 키 `PRJ-42` 같은 사람용 번호는 별도 열 — `02-domain-model.md`)
 - **감사 열**: 필요한 테이블에 `created_at/by`, `updated_at/by`, `deleted_at/by`. 시각은 UTC 텍스트, 소수 6자리 고정.
 - **소프트 삭제**: `deleted_at` 하나. 고유 제약은 `WHERE deleted_at IS NULL` 부분 인덱스.

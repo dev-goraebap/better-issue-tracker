@@ -1,7 +1,6 @@
 package io.github.goraebap.bit.module.view;
 
 import io.github.goraebap.bit.shared.web.CurrentUser;
-import java.util.UUID;
 
 public interface ViewFacade {
     /**
@@ -9,5 +8,5 @@ public interface ViewFacade {
      * read). Someone else's personal view does not exist for the caller; editing needs the view's owner, or the
      * workspace's owner or admin for a shared view (D-068).
      */
-    void requireAccess(CurrentUser actor, UUID workspaceId, String viewKey, boolean editing);
+    void requireAccess(CurrentUser actor, String workspaceId, String viewKey, boolean editing);
 }

@@ -8,7 +8,6 @@ import io.github.goraebap.bit.shared.web.CurrentUser;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -55,7 +54,7 @@ class WorkspaceMcpTools implements McpToolProvider {
     }
 
     private Object members(CurrentUser actor, McpArguments args) {
-        UUID workspace =
+        String workspace =
                 workspaceService.resolve(actor, args.optionalString("workspace").orElse(null));
         return workspaceService.members(actor, workspace).stream()
                 .map(member -> Map.of("name", member.name(), "email", member.email(), "role", member.role()))

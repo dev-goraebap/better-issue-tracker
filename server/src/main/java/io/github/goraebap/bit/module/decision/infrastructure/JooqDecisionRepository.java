@@ -8,7 +8,6 @@ import io.github.goraebap.bit.module.decision.domain.DecisionRepository;
 import io.github.goraebap.bit.shared.persistence.AuditRecords;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.jooq.DSLContext;
 import org.jooq.Record;
@@ -21,7 +20,7 @@ class JooqDecisionRepository implements DecisionRepository {
     private final DSLContext dslContext;
 
     @Override
-    public long countAllById(UUID projectId, java.util.Set<UUID> ids) {
+    public long countAllById(String projectId, java.util.Set<String> ids) {
         if (ids.isEmpty()) return 0;
         return dslContext.fetchCount(
                 DECISION,
@@ -32,7 +31,7 @@ class JooqDecisionRepository implements DecisionRepository {
     }
 
     @Override
-    public Optional<Decision> findById(UUID projectId, UUID id, boolean includeDeleted) {
+    public Optional<Decision> findById(String projectId, String id, boolean includeDeleted) {
         return dslContext
                 .selectFrom(DECISION)
                 .where(DECISION.PROJECT_ID.eq(projectId))
@@ -42,7 +41,7 @@ class JooqDecisionRepository implements DecisionRepository {
     }
 
     @Override
-    public Optional<Decision> findByNumber(UUID projectId, long number) {
+    public Optional<Decision> findByNumber(String projectId, long number) {
         return dslContext
                 .selectFrom(DECISION)
                 .where(DECISION.PROJECT_ID.eq(projectId))
@@ -52,7 +51,7 @@ class JooqDecisionRepository implements DecisionRepository {
     }
 
     @Override
-    public Optional<Decision> findTarget(UUID workspaceId, UUID id) {
+    public Optional<Decision> findTarget(String workspaceId, String id) {
         return dslContext
                 .select(DECISION.fields())
                 .from(DECISION)

@@ -4,14 +4,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import io.github.goraebap.bit.module.project.domain.Project;
+import io.github.goraebap.bit.shared.domain.Ids;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
 class SessionRulesTest {
-    private final UUID actor = UUID.randomUUID();
+    private final String actor = Ids.newId();
     private final Instant now = Instant.parse("2026-10-23T00:00:00Z");
 
     @Test
@@ -19,7 +19,7 @@ class SessionRulesTest {
         var person = Participant.of("user", actor, " Original name ");
         var people = new ArrayList<>(List.of(person, person, Participant.of("agent", null, "codex")));
         var record = SessionRecord.create(
-                UUID.randomUUID(),
+                Ids.newId(),
                 1,
                 SessionRecord.Details.of("meeting", "Title", "Summary", now),
                 people,
@@ -37,7 +37,7 @@ class SessionRulesTest {
     @Test
     void invalidParticipantsCannotPartiallyApplyNewSessionDetails() {
         var record = SessionRecord.create(
-                UUID.randomUUID(),
+                Ids.newId(),
                 1,
                 SessionRecord.Details.of("agent_session", "Original", "Summary", now),
                 List.of(),
@@ -61,7 +61,7 @@ class SessionRulesTest {
 
     @Test
     void projectCountersAreIndependentAndDoNotInvalidateSettingsVersion() {
-        var project = Project.create(UUID.randomUUID(), "Test", null, null, null, 0, actor, null, now);
+        var project = Project.create(Ids.newId(), "Test", null, null, null, 0, actor, null, now);
         assertThat(project.allocateDecisionNumber()).isEqualTo(1);
         assertThat(project.allocateDecisionNumber()).isEqualTo(2);
         assertThat(project.allocateSessionNumber()).isEqualTo(1);

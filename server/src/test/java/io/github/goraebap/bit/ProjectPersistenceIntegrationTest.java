@@ -8,6 +8,7 @@ import io.github.goraebap.bit.module.project.application.ProjectService;
 import io.github.goraebap.bit.module.project.application.ProjectViews;
 import io.github.goraebap.bit.module.project.domain.ProjectRepository;
 import io.github.goraebap.bit.module.workspace.WorkspaceFacade;
+import io.github.goraebap.bit.shared.domain.Ids;
 import io.github.goraebap.bit.shared.persistence.InstantTextBinding;
 import io.github.goraebap.bit.shared.web.CurrentUser;
 import java.net.CookieManager;
@@ -19,7 +20,6 @@ import java.net.http.HttpResponse;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
-import java.util.UUID;
 import java.util.concurrent.Executors;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -71,13 +71,13 @@ class ProjectPersistenceIntegrationTest {
     @Autowired
     private PlatformTransactionManager transactionManager;
 
-    private UUID workspace;
+    private String workspace;
     private CurrentUser actor;
 
     @DynamicPropertySource
     static void database(DynamicPropertyRegistry registry) {
         String url = "jdbc:sqlite:"
-                + Path.of("build/test-db/project-" + UUID.randomUUID() + ".db").toAbsolutePath();
+                + Path.of("build/test-db/project-" + Ids.newId() + ".db").toAbsolutePath();
         registry.add("spring.datasource.url", () -> url);
     }
 
@@ -102,27 +102,27 @@ class ProjectPersistenceIntegrationTest {
                 "iam_session",
                 "iam_password",
                 "iam_user")) jdbcTemplate.update("DELETE FROM " + table);
-        UUID user = UUID.randomUUID();
-        UUID credential = UUID.randomUUID();
-        workspace = UUID.randomUUID();
+        String user = Ids.newId();
+        String credential = Ids.newId();
+        workspace = Ids.newId();
         Instant now = Instant.now();
         String time = InstantTextBinding.text(now);
         jdbcTemplate.update(
                 "INSERT INTO iam_user(iam_user_id,email,name,created_at,updated_at) VALUES (?,?,?,?,?)",
-                user.toString(),
+                user,
                 "project@example.test",
                 "Project owner",
                 time,
                 time);
         jdbcTemplate.update(
                 "INSERT INTO iam_password(iam_user_id,password_hash,changed_at) VALUES (?,?,?)",
-                user.toString(),
+                user,
                 "fixture-hash",
                 time);
         jdbcTemplate.update(
                 "INSERT INTO iam_session(iam_session_id,iam_user_id,token_hash,expires_at,absolute_expires_at,last_seen_at,created_at) VALUES (?,?,?,?,?,?,?)",
-                credential.toString(),
-                user.toString(),
+                credential,
+                user,
                 "fixture-session-hash",
                 InstantTextBinding.text(now.plusSeconds(3600)),
                 InstantTextBinding.text(now.plusSeconds(7200)),
@@ -130,18 +130,18 @@ class ProjectPersistenceIntegrationTest {
                 time);
         jdbcTemplate.update(
                 "INSERT INTO workspace(workspace_id,name,slug,created_at,created_by,updated_at,updated_by) VALUES (?,?,?,?,?,?,?)",
-                workspace.toString(),
+                workspace,
                 "Workspace",
                 "project-test",
                 time,
-                user.toString(),
+                user,
                 time,
-                user.toString());
+                user);
         jdbcTemplate.update(
                 "INSERT INTO workspace_member(workspace_member_id,workspace_id,iam_user_id,role,joined_at) VALUES (?,?,?,?,?)",
-                UUID.randomUUID().toString(),
-                workspace.toString(),
-                user.toString(),
+                Ids.newId(),
+                workspace,
+                user,
                 "owner",
                 time);
         actor = new CurrentUser(user, false, CurrentUser.Method.SESSION, credential, null, false);
@@ -149,7 +149,7 @@ class ProjectPersistenceIntegrationTest {
 
     @Test
     void theMakerBelongsToANewProjectAndMembersComeAndGoOnlyFromTheWorkspace() {
-        UUID project = projectService.create(actor, workspace, "Members", "PM", null);
+        String project = projectService.create(actor, workspace, "Members", "PM", null);
         assertThat(projectService.memberships(actor, workspace).items())
                 .extracting(ProjectViews.Membership::projectId, ProjectViews.Membership::userId)
                 .contains(org.assertj.core.groups.Tuple.tuple(project, actor.userId()));
@@ -161,13 +161,13 @@ class ProjectPersistenceIntegrationTest {
         assertThat(projectService.memberships(actor, workspace).items())
                 .filteredOn(row -> row.projectId().equals(project))
                 .hasSize(1);
-        assertThatThrownBy(() -> projectService.addMember(actor, workspace, project, UUID.randomUUID()))
+        assertThatThrownBy(() -> projectService.addMember(actor, workspace, project, Ids.newId()))
                 .hasMessageContaining("워크스페이스 구성원만");
     }
 
     @Test
     void markIsStoredAndAPatchChangesOnlyThePartItNames() {
-        UUID marked = projectService.create(actor, workspace, "Marked", "MK", null, "rocket", "#5e6ad2");
+        String marked = projectService.create(actor, workspace, "Marked", "MK", null, "rocket", "#5e6ad2");
         assertThat(projectQueryService.get(actor, workspace, marked).icon()).isEqualTo("rocket");
         projectService.revise(
                 actor, workspace, marked, 0, null, false, null, false, null, false, null, false, "#26b5ce", true);
@@ -178,7 +178,7 @@ class ProjectPersistenceIntegrationTest {
 
     @Test
     void realRepositoryRoundTripsAuditAndKeepsAliasesAfterRenameArchiveAndRestore() {
-        UUID id = projectService.create(actor, workspace, "Project", " bit ", "body");
+        String id = projectService.create(actor, workspace, "Project", " bit ", "body");
         var created = projectRepository.findById(workspace, id, false).orElseThrow();
         assertThat(created.audit().createdBy()).isEqualTo(actor.userId());
         assertThat(created.audit().createdAt()).isNotNull();
@@ -209,7 +209,7 @@ class ProjectPersistenceIntegrationTest {
                 .isTrue();
         assertThatThrownBy(() -> projectService.create(actor, workspace, "Other", "NEW", null))
                 .hasMessageContaining("프로젝트 키");
-        assertThat(projectRepository.findById(UUID.randomUUID(), id, false)).isEmpty();
+        assertThat(projectRepository.findById(Ids.newId(), id, false)).isEmpty();
     }
 
     @Test
@@ -228,7 +228,7 @@ class ProjectPersistenceIntegrationTest {
 
     @Test
     void parallelNumberAllocationIsUniqueAndOuterFailureRollsBackTheCounter() throws Exception {
-        UUID id = projectService.create(actor, workspace, "Concurrent", "SEQ", null);
+        String id = projectService.create(actor, workspace, "Concurrent", "SEQ", null);
         try (var executor = Executors.newFixedThreadPool(4)) {
             var tasks = java.util.stream.IntStream.range(0, 8)
                     .<java.util.concurrent.Callable<Long>>mapToObj(
@@ -249,16 +249,16 @@ class ProjectPersistenceIntegrationTest {
 
     @Test
     void currentRoleIsRecheckedForWorkWritesAndSettingsAreSeparate() {
-        UUID id = projectService.create(actor, workspace, "Roles", "ROLE", null);
-        jdbcTemplate.update("UPDATE workspace_member SET role='member' WHERE workspace_id=?", workspace.toString());
+        String id = projectService.create(actor, workspace, "Roles", "ROLE", null);
+        jdbcTemplate.update("UPDATE workspace_member SET role='member' WHERE workspace_id=?", workspace);
         assertThat(projectService.allocateWorkItemNumber(actor, workspace, id)).isEqualTo(1);
         assertThatThrownBy(() -> projectService.create(actor, workspace, "Forbidden", "NO", null))
                 .hasMessageContaining("권한");
-        jdbcTemplate.update("UPDATE workspace_member SET role='viewer' WHERE workspace_id=?", workspace.toString());
+        jdbcTemplate.update("UPDATE workspace_member SET role='viewer' WHERE workspace_id=?", workspace);
         assertThatThrownBy(() -> projectService.allocateWorkItemNumber(actor, workspace, id))
                 .hasMessageContaining("권한");
         assertThat(workspaceFacade.hasMember(actor, workspace, actor.userId())).isTrue();
-        jdbcTemplate.update("DELETE FROM workspace_member WHERE workspace_id=?", workspace.toString());
+        jdbcTemplate.update("DELETE FROM workspace_member WHERE workspace_id=?", workspace);
         assertThatThrownBy(() -> projectService.requireAccess(actor, workspace, id, false))
                 .hasMessageContaining("찾을 수");
     }
@@ -310,7 +310,7 @@ class ProjectPersistenceIntegrationTest {
                     client, "GET", agentCreated.headers().firstValue("location").orElseThrow(), null, key);
             assertThat(JSON.readTree(agentDetail.body()).path("createdByAgent").asText())
                     .isEqualTo("project-http");
-            jdbcTemplate.update("UPDATE workspace_member SET role='viewer' WHERE workspace_id=?", workspace.toString());
+            jdbcTemplate.update("UPDATE workspace_member SET role='viewer' WHERE workspace_id=?", workspace);
             assertThat(http(client, "POST", projects, "invalid JSON", null).statusCode())
                     .isEqualTo(403);
             assertThat(http(client, "POST", projects, "invalid JSON", key).statusCode())
@@ -321,7 +321,7 @@ class ProjectPersistenceIntegrationTest {
             assertThat(http(client, "GET", projects + "?status=deleted", null, key)
                             .statusCode())
                     .isEqualTo(403);
-            jdbcTemplate.update("DELETE FROM workspace_member WHERE workspace_id=?", workspace.toString());
+            jdbcTemplate.update("DELETE FROM workspace_member WHERE workspace_id=?", workspace);
             assertThat(http(client, "PATCH", path, "invalid JSON", null).statusCode())
                     .isEqualTo(404);
         }
@@ -329,9 +329,9 @@ class ProjectPersistenceIntegrationTest {
 
     @Test
     void theWorkspacesProjectOrderIsSetWholeAndReadAPageAtATime() {
-        UUID a = projectService.create(actor, workspace, "Project A", "PA", null);
-        UUID b = projectService.create(actor, workspace, "Project B", "PB", null);
-        UUID c = projectService.create(actor, workspace, "Project C", "PC", null);
+        String a = projectService.create(actor, workspace, "Project A", "PA", null);
+        String b = projectService.create(actor, workspace, "Project B", "PB", null);
+        String c = projectService.create(actor, workspace, "Project C", "PC", null);
         var created = projectQueryService.list(actor, workspace, "active", "", null, 50, "position", "ASC");
         assertThat(created.items()).extracting(ProjectViews.ProjectInfo::id).containsExactly(a, b, c);
         projectService.reorder(actor, workspace, List.of(c, a, b));
@@ -353,7 +353,7 @@ class ProjectPersistenceIntegrationTest {
 
     @Test
     void projectCursorIsBoundToTheSearchAndHidesDeletedRowsByDefault() {
-        UUID first = projectService.create(actor, workspace, "Project A", "PA", null);
+        String first = projectService.create(actor, workspace, "Project A", "PA", null);
         projectService.create(actor, workspace, "Project B", "PB", null);
         var page = projectQueryService.list(actor, workspace, "active", "Project", null, 1, "createdAt", "DESC");
         assertThat(page.items()).hasSize(1);

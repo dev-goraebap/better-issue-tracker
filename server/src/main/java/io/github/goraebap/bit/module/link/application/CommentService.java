@@ -11,7 +11,6 @@ import io.github.goraebap.bit.module.workspace.WorkspaceFacade;
 import io.github.goraebap.bit.shared.error.CommonErrorCode;
 import io.github.goraebap.bit.shared.web.CurrentUser;
 import java.time.Clock;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -28,7 +27,7 @@ public class CommentService implements CommentFacade {
 
     @Override
     @Transactional
-    public UUID create(CurrentUser actor, UUID workspaceId, TargetType type, UUID id, String body) {
+    public String create(CurrentUser actor, String workspaceId, TargetType type, String id, String body) {
         var target = targetFacade.requireAccess(actor, workspaceId, type, id, true);
         Comment comment;
         try {
@@ -43,7 +42,7 @@ public class CommentService implements CommentFacade {
 
     @Override
     @Transactional
-    public void revise(CurrentUser actor, UUID workspaceId, UUID id, String body, long expectedVersion) {
+    public void revise(CurrentUser actor, String workspaceId, String id, String body, long expectedVersion) {
         var comment = access(actor, workspaceId, id);
         var target = targetFacade.requireAccess(actor, workspaceId, comment.targetType(), comment.targetId(), true);
         if (!comment.audit().createdBy().equals(actor.userId())) throw CommonErrorCode.AUTH_FORBIDDEN.raise();
@@ -62,7 +61,7 @@ public class CommentService implements CommentFacade {
 
     @Override
     @Transactional
-    public void delete(CurrentUser actor, UUID workspaceId, UUID id, long expectedVersion) {
+    public void delete(CurrentUser actor, String workspaceId, String id, long expectedVersion) {
         var comment = access(actor, workspaceId, id);
         var target = targetFacade.requireAccess(actor, workspaceId, comment.targetType(), comment.targetId(), true);
         removal(actor, comment);
@@ -75,7 +74,7 @@ public class CommentService implements CommentFacade {
 
     @Override
     @Transactional
-    public void restore(CurrentUser actor, UUID workspaceId, UUID id, long expectedVersion) {
+    public void restore(CurrentUser actor, String workspaceId, String id, long expectedVersion) {
         var comment = access(actor, workspaceId, id);
         var target = targetFacade.requireAccess(actor, workspaceId, comment.targetType(), comment.targetId(), true);
         removal(actor, comment);
@@ -86,7 +85,7 @@ public class CommentService implements CommentFacade {
         changed(actor, target, comment, "comment_restored");
     }
 
-    private Comment access(CurrentUser actor, UUID workspaceId, UUID id) {
+    private Comment access(CurrentUser actor, String workspaceId, String id) {
         workspaceFacade.requireAccess(actor, workspaceId, WorkspaceFacade.Action.READ);
         return commentRepository.findById(workspaceId, id).orElseThrow(CommentErrorCode.COMMENT_NOT_FOUND::raise);
     }

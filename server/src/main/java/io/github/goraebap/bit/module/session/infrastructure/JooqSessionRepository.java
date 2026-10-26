@@ -7,9 +7,9 @@ import static io.github.goraebap.bit.jooq.tables.SessionRecord.SESSION_RECORD;
 import io.github.goraebap.bit.module.session.domain.Participant;
 import io.github.goraebap.bit.module.session.domain.SessionRecord;
 import io.github.goraebap.bit.module.session.domain.SessionRepository;
+import io.github.goraebap.bit.shared.domain.Ids;
 import io.github.goraebap.bit.shared.persistence.AuditRecords;
 import java.util.Optional;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.jooq.DSLContext;
 import org.jooq.Record;
@@ -22,7 +22,7 @@ class JooqSessionRepository implements SessionRepository {
     private final DSLContext dslContext;
 
     @Override
-    public long countAllById(UUID projectId, java.util.Set<UUID> ids) {
+    public long countAllById(String projectId, java.util.Set<String> ids) {
         if (ids.isEmpty()) return 0;
         return dslContext.fetchCount(
                 SESSION_RECORD,
@@ -34,7 +34,7 @@ class JooqSessionRepository implements SessionRepository {
     }
 
     @Override
-    public Optional<SessionRecord> findById(UUID projectId, UUID id, boolean includeDeleted) {
+    public Optional<SessionRecord> findById(String projectId, String id, boolean includeDeleted) {
         return dslContext
                 .selectFrom(SESSION_RECORD)
                 .where(SESSION_RECORD.PROJECT_ID.eq(projectId))
@@ -44,7 +44,7 @@ class JooqSessionRepository implements SessionRepository {
     }
 
     @Override
-    public Optional<SessionRecord> findByNumber(UUID projectId, long number) {
+    public Optional<SessionRecord> findByNumber(String projectId, long number) {
         return dslContext
                 .selectFrom(SESSION_RECORD)
                 .where(SESSION_RECORD.PROJECT_ID.eq(projectId))
@@ -54,7 +54,7 @@ class JooqSessionRepository implements SessionRepository {
     }
 
     @Override
-    public Optional<SessionRecord> findTarget(UUID workspaceId, UUID id) {
+    public Optional<SessionRecord> findTarget(String workspaceId, String id) {
         return dslContext
                 .select(SESSION_RECORD.fields())
                 .from(SESSION_RECORD)
@@ -94,7 +94,7 @@ class JooqSessionRepository implements SessionRepository {
         var participants = session.participants().stream()
                 .map(participant -> {
                     var person = dslContext.newRecord(SESSION_PARTICIPANT);
-                    person.setSessionParticipantId(UUID.randomUUID());
+                    person.setSessionParticipantId(Ids.newId());
                     person.setSessionRecordId(session.id());
                     person.setKind(participant.kind());
                     person.setIamUserId(participant.userId());
@@ -107,7 +107,7 @@ class JooqSessionRepository implements SessionRepository {
     }
 
     private SessionRecord session(Record row) {
-        UUID id = row.get(SESSION_RECORD.SESSION_RECORD_ID);
+        String id = row.get(SESSION_RECORD.SESSION_RECORD_ID);
         var participants = dslContext
                 .selectFrom(SESSION_PARTICIPANT)
                 .where(SESSION_PARTICIPANT.SESSION_RECORD_ID.eq(id))

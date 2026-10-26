@@ -1,11 +1,11 @@
 package io.github.goraebap.bit.module.session.domain;
 
 import io.github.goraebap.bit.shared.domain.Audit;
+import io.github.goraebap.bit.shared.domain.Ids;
 import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Objects;
-import java.util.UUID;
 import lombok.Getter;
 
 @Getter
@@ -26,8 +26,8 @@ public final class SessionRecord {
         }
     }
 
-    private final UUID id;
-    private final UUID projectId;
+    private final String id;
+    private final String projectId;
     private final long number;
     private Details details;
     private List<Participant> participants;
@@ -35,8 +35,8 @@ public final class SessionRecord {
     private Audit audit;
 
     private SessionRecord(
-            UUID id,
-            UUID projectId,
+            String id,
+            String projectId,
             long number,
             Details details,
             List<Participant> participants,
@@ -52,16 +52,16 @@ public final class SessionRecord {
     }
 
     public static SessionRecord create(
-            UUID projectId,
+            String projectId,
             long number,
             Details details,
             List<Participant> participants,
-            UUID actor,
+            String actor,
             String agent,
             Instant now) {
         if (number < 1) throw new IllegalArgumentException("Invalid session number");
         return new SessionRecord(
-                UUID.randomUUID(),
+                Ids.newId(),
                 Objects.requireNonNull(projectId),
                 number,
                 validate(details),
@@ -71,8 +71,8 @@ public final class SessionRecord {
     }
 
     public static SessionRecord fromPersistence(
-            UUID id,
-            UUID projectId,
+            String id,
+            String projectId,
             long number,
             Details details,
             List<Participant> participants,
@@ -81,7 +81,7 @@ public final class SessionRecord {
         return new SessionRecord(id, projectId, number, details, participants, version, audit);
     }
 
-    public void revise(Details next, List<Participant> participants, UUID actor, String agent, Instant now) {
+    public void revise(Details next, List<Participant> participants, String actor, String agent, Instant now) {
         if (audit.deletedAt() != null) throw new IllegalStateException("Session is deleted");
         Details valid = validate(next);
         List<Participant> people = participants(participants);
@@ -91,13 +91,13 @@ public final class SessionRecord {
         version++;
     }
 
-    public void delete(UUID actor, String agent, Instant now) {
+    public void delete(String actor, String agent, Instant now) {
         if (audit.deletedAt() != null) return;
         audit = audit.delete(actor, agent, now);
         version++;
     }
 
-    public void restore(UUID actor, String agent, Instant now) {
+    public void restore(String actor, String agent, Instant now) {
         if (audit.deletedAt() == null) return;
         audit = audit.restore(actor, agent, now);
         version++;

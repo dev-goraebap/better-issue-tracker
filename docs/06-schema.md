@@ -10,7 +10,7 @@
 | 항목 | 규칙 |
 |---|---|
 | 테이블 | 단수 snake_case. 인증 계열만 `iam_` 접두사 |
-| 기본 키 | `<table>_id uuid` (앱이 UUID v4 생성), 제약 `<table>_pkey` |
+| 기본 키 | `<table>_id`, 값은 앱이 만드는 10자 ID `[A-Za-z][A-Za-z0-9]{9}`(D-083). V1~V8의 열은 타입 이름 `uuid`가 남아 있다. 제약 `<table>_pkey` |
 | 이름 | FK `<t>_<col>_<ref>_<refcol>_fk`, 고유 `ux_`, 인덱스 `ix_`, CHECK `ck_` |
 | 순간 | `timestamptz` — UTC 텍스트, 소수 6자리 고정 |
 | 참거짓 | `boolean` — `1`/`0` |

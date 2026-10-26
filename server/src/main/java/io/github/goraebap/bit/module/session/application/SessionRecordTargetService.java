@@ -7,7 +7,6 @@ import io.github.goraebap.bit.module.link.TargetType;
 import io.github.goraebap.bit.module.project.ProjectFacade;
 import io.github.goraebap.bit.module.session.domain.SessionRepository;
 import io.github.goraebap.bit.shared.web.CurrentUser;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,7 +20,7 @@ public class SessionRecordTargetService implements TargetSpi {
     @Override
     @Transactional(readOnly = true)
     public void requireAllInProject(
-            CurrentUser actor, UUID workspaceId, UUID projectId, java.util.Set<UUID> ids, boolean writing) {
+            CurrentUser actor, String workspaceId, String projectId, java.util.Set<String> ids, boolean writing) {
         projectFacade.requireAccess(actor, workspaceId, projectId, writing);
         if (repository.countAllById(projectId, ids) != ids.size()) throw new TargetNotFoundException();
     }
@@ -33,7 +32,7 @@ public class SessionRecordTargetService implements TargetSpi {
 
     @Override
     @Transactional(readOnly = true)
-    public TargetRef requireAccess(CurrentUser actor, UUID workspaceId, UUID id, boolean writing) {
+    public TargetRef requireAccess(CurrentUser actor, String workspaceId, String id, boolean writing) {
         var record = repository.findTarget(workspaceId, id).orElseThrow(TargetNotFoundException::new);
         var project = projectFacade.requireAccess(actor, workspaceId, record.projectId(), writing);
         return new TargetRef(

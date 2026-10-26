@@ -4,12 +4,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import io.github.goraebap.bit.module.project.ColumnCategory;
+import io.github.goraebap.bit.shared.domain.Ids;
 import java.time.Instant;
-import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
 class ProjectRulesTest {
-    private final UUID actor = UUID.randomUUID();
+    private final String actor = Ids.newId();
     private final Instant now = Instant.parse("2026-10-22T00:00:00Z");
 
     @Test
@@ -22,7 +22,7 @@ class ProjectRulesTest {
 
     @Test
     void invalidRevisionCannotPartiallyChangeProjectAndRestorePreservesArchiveAndCounter() {
-        var p = Project.create(UUID.randomUUID(), "Original", "body", null, null, 0, actor, "codex", now);
+        var p = Project.create(Ids.newId(), "Original", "body", null, null, 0, actor, "codex", now);
         assertThatThrownBy(() -> p.revise("New", "x".repeat(20001), null, null, actor, null, now))
                 .isInstanceOf(IllegalArgumentException.class);
         assertThat(p.name()).isEqualTo("Original");
@@ -39,7 +39,7 @@ class ProjectRulesTest {
 
     @Test
     void markKeepsAnIconNameAndAHexColorOrNothing() {
-        var p = Project.create(UUID.randomUUID(), "Marked", null, " rocket ", "#5E6AD2", 0, actor, null, now);
+        var p = Project.create(Ids.newId(), "Marked", null, " rocket ", "#5E6AD2", 0, actor, null, now);
         assertThat(p.icon()).isEqualTo("rocket");
         assertThat(p.color()).isEqualTo("#5E6AD2");
         assertThatThrownBy(() -> p.revise("Marked", null, "rocket", "blue", actor, null, now))
@@ -54,13 +54,13 @@ class ProjectRulesTest {
 
     @Test
     void columnConfigurationValidatesEverythingBeforeChangingState() {
-        var c = BoardColumn.create(UUID.randomUUID(), "Todo", null, 0, false, ColumnCategory.todo, actor, null, now);
+        var c = BoardColumn.create(Ids.newId(), "Todo", null, 0, false, ColumnCategory.todo, actor, null, now);
         assertThatThrownBy(() -> c.configure("New", "red", true, ColumnCategory.done, actor, null, now))
                 .isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> c.configure("New", null, true, ColumnCategory.doing, actor, null, now))
                 .isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> BoardColumn.create(
-                        UUID.randomUUID(), "Done", null, 1, true, ColumnCategory.todo, actor, null, now))
+        assertThatThrownBy(() ->
+                        BoardColumn.create(Ids.newId(), "Done", null, 1, true, ColumnCategory.todo, actor, null, now))
                 .isInstanceOf(IllegalArgumentException.class);
         assertThat(c.name()).isEqualTo("Todo");
         assertThat(c.finalColumn()).isFalse();

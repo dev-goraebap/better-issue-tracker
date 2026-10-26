@@ -4,7 +4,6 @@ import io.github.goraebap.bit.module.iam.IamFacade;
 import io.github.goraebap.bit.module.workspace.WorkspaceFacade;
 import io.github.goraebap.bit.shared.error.CommonErrorCode;
 import io.github.goraebap.bit.shared.web.CurrentUser;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -17,7 +16,7 @@ public class WorkspaceEnrollmentService {
     private final IamFacade iamFacade;
 
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
-    public UUID register(CurrentUser actor, String token, String name, String password) {
+    public String register(CurrentUser actor, String token, String name, String password) {
         if (actor != null) throw CommonErrorCode.AUTH_FORBIDDEN.raise();
         var preview = workspaceService.preview(token);
         if (iamFacade.userByEmail(preview.email()).isPresent())
@@ -27,7 +26,7 @@ public class WorkspaceEnrollmentService {
     }
 
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
-    public void transfer(CurrentUser actor, UUID workspace, UUID target, String password) {
+    public void transfer(CurrentUser actor, String workspace, String target, String password) {
         workspaceService.requireAccess(actor, workspace, WorkspaceFacade.Action.OWNER);
         var proof = iamFacade.reauthenticate(actor, password);
         workspaceService.transfer(actor, workspace, target, proof);

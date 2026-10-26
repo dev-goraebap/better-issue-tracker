@@ -8,6 +8,7 @@ import io.github.goraebap.bit.module.workitem.WorkItemFacade;
 import io.github.goraebap.bit.module.workitem.domain.WorkItem;
 import io.github.goraebap.bit.module.workitem.domain.WorkItemRepository;
 import io.github.goraebap.bit.module.workspace.WorkspaceFacade;
+import io.github.goraebap.bit.shared.domain.Ids;
 import io.github.goraebap.bit.shared.error.CommonErrorCode;
 import io.github.goraebap.bit.shared.web.CurrentUser;
 import io.github.goraebap.bit.shared.web.SecretTokens;
@@ -20,7 +21,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -39,7 +39,7 @@ public class WorkItemQueryService {
     private final SecretTokens secretTokens;
 
     @Transactional(readOnly = true)
-    public WorkItemViews.Item get(CurrentUser actor, UUID workspaceId, UUID projectId, UUID id) {
+    public WorkItemViews.Item get(CurrentUser actor, String workspaceId, String projectId, String id) {
         var p = projectFacade.requireAccess(actor, workspaceId, projectId, false);
         var w = workItemRepository
                 .findById(projectId, id, false)
@@ -73,7 +73,7 @@ public class WorkItemQueryService {
     }
 
     @Transactional(readOnly = true)
-    public WorkItemViews.Item byRef(CurrentUser actor, UUID workspaceId, String reference) {
+    public WorkItemViews.Item byRef(CurrentUser actor, String workspaceId, String reference) {
         var ref = workItemFacade.findByRef(actor, workspaceId, reference);
         return get(actor, workspaceId, ref.projectId(), ref.id());
     }
@@ -81,7 +81,11 @@ public class WorkItemQueryService {
     /** The project list ({@code projectId} set) or My Tasks ({@code mine}). */
     @Transactional(readOnly = true)
     public WorkItemViews.WorkItems list(
-            CurrentUser actor, UUID workspaceId, UUID projectId, boolean mine, WorkItemRequests.ListRequest request) {
+            CurrentUser actor,
+            String workspaceId,
+            String projectId,
+            boolean mine,
+            WorkItemRequests.ListRequest request) {
         var q = query(actor, workspaceId, projectId, mine, request);
         return page(actor, workspaceId, "workitem-list", q, request);
     }
@@ -89,7 +93,7 @@ public class WorkItemQueryService {
     /** Every project of the workspace that is neither archived nor deleted, with the same paging as a project list. */
     @Transactional(readOnly = true)
     public WorkItemViews.WorkItems listWorkspace(
-            CurrentUser actor, UUID workspaceId, WorkItemRequests.WorkspaceListRequest request) {
+            CurrentUser actor, String workspaceId, WorkItemRequests.WorkspaceListRequest request) {
         var q = query(
                 actor,
                 workspaceId,
@@ -105,7 +109,7 @@ public class WorkItemQueryService {
 
     @Transactional(readOnly = true)
     public List<WorkItemViews.ColumnCount> counts(
-            CurrentUser actor, UUID workspaceId, UUID projectId, WorkItemRequests.ListRequest request) {
+            CurrentUser actor, String workspaceId, String projectId, WorkItemRequests.ListRequest request) {
         var q = query(actor, workspaceId, projectId, false, request);
         return workItemRepository.countByColumn(q).stream()
                 .map(c -> new WorkItemViews.ColumnCount(c.columnId(), c.count()))
@@ -114,15 +118,15 @@ public class WorkItemQueryService {
 
     private WorkItemViews.WorkItems page(
             CurrentUser actor,
-            UUID workspaceId,
+            String workspaceId,
             String purpose,
             WorkItemRepository.Query q,
             WorkItemRequests.Filters request) {
         String sort = q.sort();
         String canonical = String.join(
                 "\n",
-                actor.userId().toString(),
-                workspaceId.toString(),
+                actor.userId(),
+                workspaceId,
                 String.valueOf(q.projectId()),
                 ids(q.projectIds()),
                 String.valueOf(q.assigneeId()),
@@ -154,12 +158,16 @@ public class WorkItemQueryService {
     }
 
     private WorkItemRepository.Query query(
-            CurrentUser actor, UUID workspaceId, UUID projectId, boolean mine, WorkItemRequests.ListRequest request) {
+            CurrentUser actor,
+            String workspaceId,
+            String projectId,
+            boolean mine,
+            WorkItemRequests.ListRequest request) {
         boolean backlog = "backlog".equals(request.getColumn());
-        UUID column = null;
+        String column = null;
         try {
             if (!backlog && request.getColumn() != null && !request.getColumn().isBlank())
-                column = UUID.fromString(request.getColumn());
+                column = Ids.parse(request.getColumn());
         } catch (IllegalArgumentException invalid) {
             throw CommonErrorCode.COMMON_INVALID_REQUEST.raise();
         }
@@ -168,14 +176,14 @@ public class WorkItemQueryService {
 
     private WorkItemRepository.Query query(
             CurrentUser actor,
-            UUID workspaceId,
-            UUID projectId,
+            String workspaceId,
+            String projectId,
             boolean mine,
             WorkItemRequests.Filters request,
-            UUID column,
+            String column,
             boolean backlog,
-            Set<UUID> projectIds,
-            Set<UUID> columnIds) {
+            Set<String> projectIds,
+            Set<String> columnIds) {
         workspaceFacade.requireAccess(
                 actor,
                 workspaceId,
@@ -205,7 +213,7 @@ public class WorkItemQueryService {
         if (projectIds.size() > 100
                 || columnIds.size() > 100
                 || request.getLabelId().size() > 100) throw CommonErrorCode.COMMON_INVALID_REQUEST.raise();
-        UUID assignee = mine ? actor.userId() : request.getAssigneeId();
+        String assignee = mine ? actor.userId() : request.getAssigneeId();
         return new WorkItemRepository.Query(
                 workspaceId,
                 projectId,
@@ -231,14 +239,14 @@ public class WorkItemQueryService {
     }
 
     /** One label lookup for every row shown together; deleted labels are absent and so disappear from the rows. */
-    private Map<UUID, LabelFacade.LabelRef> labels(
-            CurrentUser actor, UUID workspaceId, Collection<WorkItemRepository.Row> rows) {
+    private Map<String, LabelFacade.LabelRef> labels(
+            CurrentUser actor, String workspaceId, Collection<WorkItemRepository.Row> rows) {
         var ids = rows.stream().flatMap(r -> r.labelIds().stream()).collect(Collectors.toSet());
         return ids.isEmpty() ? Map.of() : labelFacade.findAllById(actor, workspaceId, ids);
     }
 
     private WorkItemViews.Item view(
-            UUID workspaceId, WorkItemRepository.Row row, Map<UUID, LabelFacade.LabelRef> labels) {
+            String workspaceId, WorkItemRepository.Row row, Map<String, LabelFacade.LabelRef> labels) {
         var d = row.details();
         var a = row.audit();
         return new WorkItemViews.Item(
@@ -296,8 +304,8 @@ public class WorkItemQueryService {
         return values.stream().map(Enum::name).sorted().collect(Collectors.joining(","));
     }
 
-    private static String ids(Set<UUID> values) {
-        return values.stream().map(UUID::toString).sorted().collect(Collectors.joining(","));
+    private static String ids(Set<String> values) {
+        return values.stream().sorted().collect(Collectors.joining(","));
     }
 
     private static WorkItemRepository.Point decode(String raw, String scope, String sort) {
@@ -309,9 +317,9 @@ public class WorkItemQueryService {
             if (sort.equals("position")) {
                 double position = Double.parseDouble(parts[1]);
                 if (!Double.isFinite(position) || position < 0) throw new IllegalArgumentException("cursor");
-                return new WorkItemRepository.Point(null, position, UUID.fromString(parts[2]));
+                return new WorkItemRepository.Point(null, position, Ids.parse(parts[2]));
             }
-            return new WorkItemRepository.Point(Instant.parse(parts[1]), null, UUID.fromString(parts[2]));
+            return new WorkItemRepository.Point(Instant.parse(parts[1]), null, Ids.parse(parts[2]));
         } catch (IllegalArgumentException | java.time.format.DateTimeParseException invalid) {
             throw CommonErrorCode.COMMON_INVALID_REQUEST.raise();
         }

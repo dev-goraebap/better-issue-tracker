@@ -1,6 +1,7 @@
 package io.github.goraebap.bit.module.view.domain;
 
 import io.github.goraebap.bit.shared.domain.Audit;
+import io.github.goraebap.bit.shared.domain.Ids;
 import java.time.Instant;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -9,7 +10,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.UUID;
 import lombok.Getter;
 
 /**
@@ -148,9 +148,9 @@ public final class IssueView {
         }
     }
 
-    private final UUID id;
-    private final UUID workspaceId;
-    private final UUID ownerId;
+    private final String id;
+    private final String workspaceId;
+    private final String ownerId;
     private boolean personal;
     private Definition definition;
     private final double position;
@@ -158,9 +158,9 @@ public final class IssueView {
     private Audit audit;
 
     private IssueView(
-            UUID id,
-            UUID workspaceId,
-            UUID ownerId,
+            String id,
+            String workspaceId,
+            String ownerId,
             boolean personal,
             Definition definition,
             double position,
@@ -177,8 +177,8 @@ public final class IssueView {
     }
 
     public static IssueView create(
-            UUID workspaceId,
-            UUID ownerId,
+            String workspaceId,
+            String ownerId,
             boolean personal,
             Definition definition,
             double position,
@@ -186,7 +186,7 @@ public final class IssueView {
             Instant now) {
         if (!Double.isFinite(position) || position < 0) throw new IllegalArgumentException("Invalid view position");
         return new IssueView(
-                UUID.randomUUID(),
+                Ids.newId(),
                 workspaceId,
                 ownerId,
                 personal,
@@ -197,7 +197,7 @@ public final class IssueView {
     }
 
     /** The shared views a workspace starts with, after the built-in '전체 이슈' (same as V6's backfill). */
-    public static List<IssueView> starters(UUID workspaceId, UUID ownerId, String agent, Instant now) {
+    public static List<IssueView> starters(String workspaceId, String ownerId, String agent, Instant now) {
         var usualSort = new Sort(SortKey.updated, Direction.desc);
         var usual = List.of(Column.status, Column.priority, Column.assignee, Column.labels, Column.updated);
         var definitions = List.of(
@@ -227,9 +227,9 @@ public final class IssueView {
     }
 
     public static IssueView fromPersistence(
-            UUID id,
-            UUID workspaceId,
-            UUID ownerId,
+            String id,
+            String workspaceId,
+            String ownerId,
             boolean personal,
             Definition definition,
             double position,
@@ -238,11 +238,11 @@ public final class IssueView {
         return new IssueView(id, workspaceId, ownerId, personal, definition, position, version, audit);
     }
 
-    public boolean visibleTo(UUID userId) {
+    public boolean visibleTo(String userId) {
         return !personal || ownerId.equals(userId);
     }
 
-    public void revise(Definition next, boolean nextPersonal, UUID actor, String agent, Instant now) {
+    public void revise(Definition next, boolean nextPersonal, String actor, String agent, Instant now) {
         Objects.requireNonNull(next, "definition");
         if (next.equals(definition) && nextPersonal == personal) return;
         definition = next;
@@ -251,7 +251,7 @@ public final class IssueView {
         version++;
     }
 
-    public void delete(UUID actor, String agent, Instant now) {
+    public void delete(String actor, String agent, Instant now) {
         if (audit.deletedAt() != null) return;
         audit = audit.delete(actor, agent, now);
         version++;

@@ -13,7 +13,6 @@ import io.github.goraebap.bit.module.iam.domain.PasswordCredential;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.jooq.DSLContext;
 import org.jooq.Record;
@@ -31,7 +30,7 @@ class JooqIamRepository implements IamRepository {
     }
 
     @Override
-    public Optional<Identity> findUser(UUID id) {
+    public Optional<Identity> findUser(String id) {
         return dslContext
                 .selectFrom(IAM_USER)
                 .where(IAM_USER.IAM_USER_ID.eq(id))
@@ -49,7 +48,7 @@ class JooqIamRepository implements IamRepository {
     }
 
     @Override
-    public Optional<PasswordCredential> findPassword(UUID userId) {
+    public Optional<PasswordCredential> findPassword(String userId) {
         return dslContext
                 .selectFrom(IAM_PASSWORD)
                 .where(IAM_PASSWORD.IAM_USER_ID.eq(userId))
@@ -63,7 +62,7 @@ class JooqIamRepository implements IamRepository {
     }
 
     @Override
-    public void renameUser(UUID id, String name, Instant now) {
+    public void renameUser(String id, String name, Instant now) {
         dslContext
                 .update(IAM_USER)
                 .set(IAM_USER.NAME, name)
@@ -114,7 +113,7 @@ class JooqIamRepository implements IamRepository {
     }
 
     @Override
-    public Optional<LoginSession> findSession(UUID id) {
+    public Optional<LoginSession> findSession(String id) {
         return dslContext
                 .selectFrom(IAM_SESSION)
                 .where(IAM_SESSION.IAM_SESSION_ID.eq(id))
@@ -140,7 +139,7 @@ class JooqIamRepository implements IamRepository {
     }
 
     @Override
-    public void deleteSession(UUID id) {
+    public void deleteSession(String id) {
         dslContext
                 .deleteFrom(IAM_SESSION)
                 .where(IAM_SESSION.IAM_SESSION_ID.eq(id))
@@ -148,7 +147,7 @@ class JooqIamRepository implements IamRepository {
     }
 
     @Override
-    public void deleteSessions(UUID userId) {
+    public void deleteSessions(String userId) {
         dslContext
                 .deleteFrom(IAM_SESSION)
                 .where(IAM_SESSION.IAM_USER_ID.eq(userId))
@@ -164,7 +163,7 @@ class JooqIamRepository implements IamRepository {
     }
 
     @Override
-    public Optional<AgentKey> findKey(UUID id) {
+    public Optional<AgentKey> findKey(String id) {
         return dslContext
                 .selectFrom(IAM_API_KEY)
                 .where(IAM_API_KEY.IAM_API_KEY_ID.eq(id))
@@ -172,7 +171,7 @@ class JooqIamRepository implements IamRepository {
     }
 
     @Override
-    public List<AgentKey> findKeys(UUID userId, Instant beforeTime, UUID beforeId, int limit) {
+    public List<AgentKey> findKeys(String userId, Instant beforeTime, String beforeId, int limit) {
         return dslContext
                 .selectFrom(IAM_API_KEY)
                 .where(IAM_API_KEY.IAM_USER_ID.eq(userId))
@@ -207,7 +206,7 @@ class JooqIamRepository implements IamRepository {
     }
 
     @Override
-    public void touchKey(UUID id, Instant now) {
+    public void touchKey(String id, Instant now) {
         dslContext
                 .update(IAM_API_KEY)
                 .set(IAM_API_KEY.LAST_USED_AT, now)
@@ -216,7 +215,7 @@ class JooqIamRepository implements IamRepository {
     }
 
     @Override
-    public void revokeKeys(UUID userId, Instant now) {
+    public void revokeKeys(String userId, Instant now) {
         dslContext
                 .update(IAM_API_KEY)
                 .set(IAM_API_KEY.REVOKED_AT, now)
@@ -226,7 +225,7 @@ class JooqIamRepository implements IamRepository {
     }
 
     @Override
-    public void revokeKey(UUID id, Instant now) {
+    public void revokeKey(String id, Instant now) {
         dslContext
                 .update(IAM_API_KEY)
                 .set(IAM_API_KEY.REVOKED_AT, now)
@@ -236,7 +235,7 @@ class JooqIamRepository implements IamRepository {
     }
 
     @Override
-    public List<Identity> findAllById(List<UUID> ids) {
+    public List<Identity> findAllById(List<String> ids) {
         return dslContext
                 .selectFrom(IAM_USER)
                 .where(IAM_USER.IAM_USER_ID.in(ids))
@@ -245,7 +244,7 @@ class JooqIamRepository implements IamRepository {
     }
 
     @Override
-    public UUID activeWorkspace(UUID sessionId) {
+    public String activeWorkspace(String sessionId) {
         return dslContext
                 .select(IAM_SESSION.ACTIVE_WORKSPACE_ID)
                 .from(IAM_SESSION)
@@ -254,7 +253,7 @@ class JooqIamRepository implements IamRepository {
     }
 
     @Override
-    public void selectWorkspace(UUID sessionId, UUID workspaceId) {
+    public void selectWorkspace(String sessionId, String workspaceId) {
         dslContext
                 .update(IAM_SESSION)
                 .set(IAM_SESSION.ACTIVE_WORKSPACE_ID, workspaceId)
@@ -263,7 +262,7 @@ class JooqIamRepository implements IamRepository {
     }
 
     @Override
-    public void clearWorkspace(UUID workspaceId, UUID userId) {
+    public void clearWorkspace(String workspaceId, String userId) {
         dslContext
                 .update(IAM_SESSION)
                 .setNull(IAM_SESSION.ACTIVE_WORKSPACE_ID)

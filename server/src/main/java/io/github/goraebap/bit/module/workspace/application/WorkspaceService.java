@@ -16,7 +16,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -35,7 +34,7 @@ public class WorkspaceService implements WorkspaceFacade {
 
     @Override
     @Transactional(readOnly = true)
-    public Map<UUID, String> memberNames(CurrentUser actor, UUID workspaceId, Set<UUID> userIds) {
+    public Map<String, String> memberNames(CurrentUser actor, String workspaceId, Set<String> userIds) {
         access(actor, workspaceId, Action.READ);
         var members = workspaceRepository.findMemberUserIds(workspaceId, userIds);
         if (members.isEmpty()) return Map.of();
@@ -45,7 +44,7 @@ public class WorkspaceService implements WorkspaceFacade {
 
     @Override
     @Transactional(readOnly = true)
-    public boolean hasMember(CurrentUser actor, UUID workspaceId, UUID userId) {
+    public boolean hasMember(CurrentUser actor, String workspaceId, String userId) {
         access(actor, workspaceId, Action.READ);
         return userId != null
                 && workspaceRepository.findMember(workspaceId, userId).isPresent()
@@ -54,30 +53,30 @@ public class WorkspaceService implements WorkspaceFacade {
 
     @Override
     @Transactional(readOnly = true)
-    public void requireAccess(CurrentUser actor, UUID workspaceId, Action action) {
+    public void requireAccess(CurrentUser actor, String workspaceId, Action action) {
         access(actor, workspaceId, action);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public boolean allows(CurrentUser actor, UUID workspaceId, Action action) {
+    public boolean allows(CurrentUser actor, String workspaceId, Action action) {
         return permits(access(actor, workspaceId, Action.READ).role(), action);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public void requireMemberManagement(CurrentUser actor, UUID workspaceId, UUID memberId) {
+    public void requireMemberManagement(CurrentUser actor, String workspaceId, String memberId) {
         var own = access(actor, workspaceId, Action.MANAGE_MEMBERS);
         if (!own.role().manages(target(workspaceId, memberId).role())) throw CommonErrorCode.AUTH_FORBIDDEN.raise();
     }
 
     @Override
     @Transactional(readOnly = true)
-    public void requireInvitationManagement(CurrentUser actor, UUID workspaceId, UUID invitationId) {
+    public void requireInvitationManagement(CurrentUser actor, String workspaceId, String invitationId) {
         managedInvitation(actor, workspaceId, invitationId);
     }
 
-    private Membership access(CurrentUser actor, UUID id, Action action) {
+    private Membership access(CurrentUser actor, String id, Action action) {
         iamFacade.actor(actor, action == Action.MANAGE_MEMBERS || action == Action.OWNER);
         space(id);
         Membership own = workspaceRepository
@@ -93,12 +92,12 @@ public class WorkspaceService implements WorkspaceFacade {
                 || (action == Action.EDIT_SETTINGS || action == Action.MANAGE_MEMBERS) && !role.editsSettings());
     }
 
-    private Workspace space(UUID id) {
+    private Workspace space(String id) {
         return workspaceRepository.findById(id).orElseThrow(WorkspaceErrorCode.WORKSPACE_NOT_FOUND::raise);
     }
 
     @Transactional
-    public UUID create(CurrentUser actor, String name, String slug) {
+    public String create(CurrentUser actor, String name, String slug) {
         iamFacade.actor(actor, true);
         Workspace w = Workspace.create(name, slug, actor.userId(), clock.instant());
         if (workspaceRepository.existsBySlug(w.slug())) throw WorkspaceErrorCode.WORKSPACE_SLUG_CONFLICT.raise();
@@ -125,7 +124,7 @@ public class WorkspaceService implements WorkspaceFacade {
 
     @Override
     @Transactional(readOnly = true)
-    public UUID resolve(CurrentUser actor, String hint) {
+    public String resolve(CurrentUser actor, String hint) {
         var spaces = mine(actor);
         String names = spaces.stream().map(SpaceRef::name).collect(Collectors.joining(", "));
         if (hint == null || hint.isBlank()) {
@@ -137,7 +136,7 @@ public class WorkspaceService implements WorkspaceFacade {
         }
         String wanted = hint.strip();
         return spaces.stream()
-                .filter(space -> space.id().toString().equals(wanted)
+                .filter(space -> space.id().equals(wanted)
                         || space.slug().equalsIgnoreCase(wanted)
                         || space.name().equalsIgnoreCase(wanted))
                 .map(SpaceRef::id)
@@ -148,10 +147,10 @@ public class WorkspaceService implements WorkspaceFacade {
 
     @Override
     @Transactional(readOnly = true)
-    public List<MemberRef> members(CurrentUser actor, UUID workspaceId) {
+    public List<MemberRef> members(CurrentUser actor, String workspaceId) {
         access(actor, workspaceId, Action.READ);
         var rows = workspaceRepository.findMembers(workspaceId, null, null, 1000);
-        Map<UUID, IamFacade.User> users =
+        Map<String, IamFacade.User> users =
                 iamFacade.users(rows.stream().map(Membership::userId).distinct().toList()).stream()
                         .collect(Collectors.toMap(IamFacade.User::id, Function.identity()));
         return rows.stream()
@@ -184,14 +183,14 @@ public class WorkspaceService implements WorkspaceFacade {
     }
 
     @Transactional(readOnly = true)
-    public WorkspaceViews.Space get(CurrentUser actor, UUID id) {
+    public WorkspaceViews.Space get(CurrentUser actor, String id) {
         var own = access(actor, id, Action.READ);
         var w = space(id);
         return new WorkspaceViews.Space(w.id(), w.name(), w.slug(), own.role(), w.createdAt());
     }
 
     @Transactional
-    public void rename(CurrentUser actor, UUID id, String name, boolean present) {
+    public void rename(CurrentUser actor, String id, String name, boolean present) {
         access(actor, id, Action.EDIT_SETTINGS);
         if (!present) return;
         var w = space(id);
@@ -204,7 +203,7 @@ public class WorkspaceService implements WorkspaceFacade {
     }
 
     @Transactional
-    public void delete(CurrentUser actor, UUID id) {
+    public void delete(CurrentUser actor, String id) {
         access(actor, id, Action.OWNER);
         var w = space(id);
         w.delete(actor.userId(), clock.instant());
@@ -214,7 +213,7 @@ public class WorkspaceService implements WorkspaceFacade {
     }
 
     @Transactional
-    public void select(CurrentUser actor, UUID id) {
+    public void select(CurrentUser actor, String id) {
         iamFacade.actor(actor, true);
         access(actor, id, Action.READ);
         iamFacade.selectWorkspace(actor, id);
@@ -222,14 +221,14 @@ public class WorkspaceService implements WorkspaceFacade {
 
     @Transactional(readOnly = true)
     public WorkspaceViews.Members members(
-            CurrentUser actor, UUID id, String cursor, int size, String sort, String direction) {
+            CurrentUser actor, String id, String cursor, int size, String sort, String direction) {
         access(actor, id, Action.READ);
         sort(sort, direction, "joinedAt", "ASC");
         String scope = actor.userId() + ":" + id + ":members:JOINED_ASC";
         var p = WorkspaceCursor.decode(cursor, scope, size);
         var rows = workspaceRepository.findMembers(id, p.time(), p.id(), size + 1);
         var page = rows.stream().limit(size).toList();
-        Map<UUID, IamFacade.User> users =
+        Map<String, IamFacade.User> users =
                 iamFacade.users(page.stream().map(Membership::userId).distinct().toList()).stream()
                         .collect(Collectors.toMap(IamFacade.User::id, Function.identity()));
         String next = rows.size() > size
@@ -247,7 +246,7 @@ public class WorkspaceService implements WorkspaceFacade {
                 next);
     }
 
-    private Membership target(UUID workspace, UUID member) {
+    private Membership target(String workspace, String member) {
         Membership m = workspaceRepository
                 .findMemberById(workspace, member)
                 .orElseThrow(WorkspaceErrorCode.WORKSPACE_NOT_FOUND::raise);
@@ -256,7 +255,7 @@ public class WorkspaceService implements WorkspaceFacade {
     }
 
     @Transactional
-    public void role(CurrentUser actor, UUID id, UUID memberId, WorkspaceRole next) {
+    public void role(CurrentUser actor, String id, String memberId, WorkspaceRole next) {
         var own = access(actor, id, Action.MANAGE_MEMBERS);
         var m = target(id, memberId);
         if (!own.role().manages(m.role()) || !own.role().manages(next)) throw CommonErrorCode.AUTH_FORBIDDEN.raise();
@@ -267,7 +266,7 @@ public class WorkspaceService implements WorkspaceFacade {
     }
 
     @Transactional
-    public void remove(CurrentUser actor, UUID id, UUID memberId) {
+    public void remove(CurrentUser actor, String id, String memberId) {
         var own = access(actor, id, Action.MANAGE_MEMBERS);
         var m = target(id, memberId);
         if (m.role() == WorkspaceRole.owner && own.role() == WorkspaceRole.owner)
@@ -278,14 +277,14 @@ public class WorkspaceService implements WorkspaceFacade {
     }
 
     @Transactional
-    public void leave(CurrentUser actor, UUID id) {
+    public void leave(CurrentUser actor, String id) {
         iamFacade.actor(actor, true);
         var m = access(actor, id, Action.READ);
         if (m.role() == WorkspaceRole.owner) throw WorkspaceErrorCode.WORKSPACE_OWNER_REQUIRED.raise();
         removeMember(actor, id, m);
     }
 
-    private void removeMember(CurrentUser actor, UUID id, Membership member) {
+    private void removeMember(CurrentUser actor, String id, Membership member) {
         workspaceRepository.deleteMember(member.id());
         workspaceRepository.revokePending(id, member.userId(), null, actor.userId(), clock.instant());
         iamFacade.clearWorkspace(id, member.userId());
@@ -293,7 +292,7 @@ public class WorkspaceService implements WorkspaceFacade {
     }
 
     @Transactional
-    public void transfer(CurrentUser actor, UUID id, UUID userId, IamFacade.Reauthentication proof) {
+    public void transfer(CurrentUser actor, String id, String userId, IamFacade.Reauthentication proof) {
         var own = access(actor, id, Action.OWNER);
         iamFacade.assertReauthentication(actor, proof);
         if (actor.userId().equals(userId) || iamFacade.user(userId).isEmpty())
@@ -307,13 +306,13 @@ public class WorkspaceService implements WorkspaceFacade {
         assertOwner(id);
     }
 
-    private void assertOwner(UUID id) {
+    private void assertOwner(String id) {
         if (workspaceRepository.countOwners(id) != 1)
             throw new IllegalStateException("Workspace owner invariant violated");
     }
 
     @Transactional
-    public WorkspaceViews.CreatedInvitation invite(CurrentUser actor, UUID id, String email, WorkspaceRole role) {
+    public WorkspaceViews.CreatedInvitation invite(CurrentUser actor, String id, String email, WorkspaceRole role) {
         var own = access(actor, id, Action.MANAGE_MEMBERS);
         if (!own.role().manages(role)) throw CommonErrorCode.AUTH_FORBIDDEN.raise();
         String normalized = email.strip().toLowerCase(Locale.ROOT);
@@ -333,7 +332,7 @@ public class WorkspaceService implements WorkspaceFacade {
 
     @Transactional(readOnly = true)
     public WorkspaceViews.Invites invitations(
-            CurrentUser actor, UUID id, List<String> status, String cursor, int size, String sort, String direction) {
+            CurrentUser actor, String id, List<String> status, String cursor, int size, String sort, String direction) {
         var own = access(actor, id, Action.MANAGE_MEMBERS);
         sort(sort, direction, "createdAt", "DESC");
         Set<String> statuses = status == null
@@ -364,12 +363,12 @@ public class WorkspaceService implements WorkspaceFacade {
     }
 
     @Transactional(readOnly = true)
-    public WorkspaceViews.Invite invitation(CurrentUser actor, UUID id, UUID invitationId) {
+    public WorkspaceViews.Invite invitation(CurrentUser actor, String id, String invitationId) {
         var i = managedInvitation(actor, id, invitationId);
         return view(i, iamFacade.user(i.invitedBy()).orElse(null));
     }
 
-    private Invitation managedInvitation(CurrentUser actor, UUID id, UUID invitationId) {
+    private Invitation managedInvitation(CurrentUser actor, String id, String invitationId) {
         var own = access(actor, id, Action.MANAGE_MEMBERS);
         var i = workspaceRepository
                 .findInvitation(id, invitationId)
@@ -379,7 +378,7 @@ public class WorkspaceService implements WorkspaceFacade {
     }
 
     @Transactional
-    public void revoke(CurrentUser actor, UUID id, UUID invitationId) {
+    public void revoke(CurrentUser actor, String id, String invitationId) {
         var i = managedInvitation(actor, id, invitationId);
         if (i.status().equals("accepted")) throw WorkspaceErrorCode.WORKSPACE_INVITATION_ALREADY_ACCEPTED.raise();
         if (i.pending(clock.instant())) {
@@ -446,7 +445,7 @@ public class WorkspaceService implements WorkspaceFacade {
     }
 
     @Transactional
-    public UUID register(String raw, IamFacade.PreparedIdentity prepared) {
+    public String register(String raw, IamFacade.PreparedIdentity prepared) {
         var i = lookup(raw);
         liveInvitation(i);
         if (!i.email().equals(prepared.email())) throw WorkspaceErrorCode.WORKSPACE_INVITATION_UNAVAILABLE.raise();
@@ -457,7 +456,7 @@ public class WorkspaceService implements WorkspaceFacade {
         return user.id();
     }
 
-    private void join(Invitation i, UUID user) {
+    private void join(Invitation i, String user) {
         if (workspaceRepository.findMember(i.workspaceId(), user).isPresent())
             throw WorkspaceErrorCode.WORKSPACE_MEMBER_EXISTS.raise();
         workspaceRepository.saveAll(List.of(Membership.create(i.workspaceId(), user, i.role(), clock.instant())));

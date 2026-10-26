@@ -2,6 +2,7 @@ package io.github.goraebap.bit.module.iam.application;
 
 import io.github.goraebap.bit.module.iam.IamFacade;
 import io.github.goraebap.bit.module.iam.domain.AgentKey;
+import io.github.goraebap.bit.shared.domain.Ids;
 import io.github.goraebap.bit.shared.error.CommonErrorCode;
 import io.github.goraebap.bit.shared.web.CurrentUser;
 import io.github.goraebap.bit.shared.web.SecretTokens;
@@ -13,7 +14,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
-import java.util.UUID;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -97,7 +97,7 @@ public class AuthService implements IamFacade {
         Instant now = clock.instant();
         Instant expires = days == 0 ? null : now.plusSeconds(days * 86400L);
         var key = new AgentKey(
-                UUID.randomUUID(),
+                Ids.newId(),
                 actor.userId(),
                 request.name().strip(),
                 request.agentName() == null || request.agentName().isBlank()
@@ -115,7 +115,7 @@ public class AuthService implements IamFacade {
 
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public IamViews.TemporaryPassword temporaryPassword(
-            CurrentUser actor, UUID target, IamRequests.Reauthenticate request) {
+            CurrentUser actor, String target, IamRequests.Reauthenticate request) {
         if (!actor.instanceAdmin() || actor.method() != CurrentUser.Method.SESSION)
             throw AuthErrorCode.AUTH_FORBIDDEN.raise();
         String expectedHash = reauthenticateHash(actor, request.currentPassword());
@@ -128,16 +128,15 @@ public class AuthService implements IamFacade {
     public IamViews.Keys keys(CurrentUser actor, String cursor, int size) {
         if (size < 1 || size > 100) throw CommonErrorCode.COMMON_INVALID_REQUEST.raise();
         Instant beforeTime = null;
-        UUID beforeId = null;
+        String beforeId = null;
         if (cursor != null) {
             try {
                 String[] values =
                         new String(Base64.getUrlDecoder().decode(cursor), StandardCharsets.UTF_8).split("\\|", -1);
-                if (values.length != 4
-                        || !values[0].equals("CREATED_DESC")
-                        || !values[1].equals(actor.userId().toString())) throw new IllegalArgumentException("cursor");
+                if (values.length != 4 || !values[0].equals("CREATED_DESC") || !values[1].equals(actor.userId()))
+                    throw new IllegalArgumentException("cursor");
                 beforeTime = Instant.parse(values[2]);
-                beforeId = UUID.fromString(values[3]);
+                beforeId = Ids.parse(values[3]);
             } catch (IllegalArgumentException | java.time.format.DateTimeParseException invalid) {
                 throw CommonErrorCode.COMMON_INVALID_REQUEST.raise();
             }
@@ -175,7 +174,7 @@ public class AuthService implements IamFacade {
 
     @Override
     @Transactional(readOnly = true)
-    public Optional<IamFacade.User> user(UUID id) {
+    public Optional<IamFacade.User> user(String id) {
         return iamService.user(id);
     }
 
@@ -187,7 +186,7 @@ public class AuthService implements IamFacade {
 
     @Override
     @Transactional(readOnly = true)
-    public List<IamFacade.User> users(List<UUID> ids) {
+    public List<IamFacade.User> users(List<String> ids) {
         return iamService.users(ids);
     }
 
@@ -196,7 +195,7 @@ public class AuthService implements IamFacade {
     public IamFacade.PreparedIdentity prepareIdentity(String email, String name, String password) {
         validatePassword(password);
         return new IamFacade.PreparedIdentity(
-                UUID.randomUUID(), normalize(email), name.strip(), passwordEncoder.encode(password));
+                Ids.newId(), normalize(email), name.strip(), passwordEncoder.encode(password));
     }
 
     @Override
@@ -220,13 +219,13 @@ public class AuthService implements IamFacade {
 
     @Override
     @Transactional
-    public void selectWorkspace(CurrentUser actor, UUID workspaceId) {
+    public void selectWorkspace(CurrentUser actor, String workspaceId) {
         iamService.selectWorkspace(actor, workspaceId);
     }
 
     @Override
     @Transactional
-    public void clearWorkspace(UUID workspaceId, UUID userId) {
+    public void clearWorkspace(String workspaceId, String userId) {
         iamService.clearWorkspace(workspaceId, userId);
     }
 

@@ -3,7 +3,6 @@ package io.github.goraebap.bit.module.link.application;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.Instant;
 import java.util.List;
-import java.util.UUID;
 
 public final class TimelineViews {
     private TimelineViews() {}
@@ -34,9 +33,9 @@ public final class TimelineViews {
             @Schema(allowableValues = {"comment", "activity"})
             String kind,
 
-            UUID id,
+            String id,
             Instant at,
-            @Schema(nullable = true) UUID actorId,
+            @Schema(nullable = true) String actorId,
             @Schema(nullable = true) String actorName,
 
             @Schema(nullable = true, description = "The API key's agent name when an agent did it")

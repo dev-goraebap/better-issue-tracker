@@ -4,7 +4,6 @@ import io.github.goraebap.bit.shared.web.CurrentUser;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.Instant;
 import java.util.List;
-import java.util.UUID;
 
 public final class IamViews {
     private IamViews() {}
@@ -14,7 +13,7 @@ public final class IamViews {
 
     @Schema(requiredProperties = {"id", "email", "name", "instanceAdmin", "mustChangePassword", "authenticationMethod"})
     public record Me(
-            UUID id,
+            String id,
             String email,
             String name,
             boolean instanceAdmin,
@@ -29,14 +28,11 @@ public final class IamViews {
             Instant absoluteExpiresAt,
             boolean mustChangePassword,
 
-            @Schema(
-                    types = {"string", "null"},
-                    format = "uuid")
-            UUID activeWorkspaceId) {}
+            @Schema(types = {"string", "null"}) String activeWorkspaceId) {}
 
     @Schema(requiredProperties = {"id", "name", "prefix", "createdAt"})
     public record Key(
-            UUID id,
+            String id,
             String name,
             @Schema(types = {"string", "null"}) String agentName,
             String prefix,
@@ -68,7 +64,7 @@ public final class IamViews {
 
     @Schema(requiredProperties = {"id", "key", "prefix"})
     public record CreatedKey(
-            UUID id,
+            String id,
             String key,
             String prefix,
 

@@ -15,6 +15,7 @@ import io.github.goraebap.bit.module.workitem.application.WorkItemService;
 import io.github.goraebap.bit.module.workitem.application.WorkItemViews;
 import io.github.goraebap.bit.module.workitem.domain.WorkItem;
 import io.github.goraebap.bit.module.workspace.application.WorkspaceService;
+import io.github.goraebap.bit.shared.domain.Ids;
 import io.github.goraebap.bit.shared.error.BusinessException;
 import io.github.goraebap.bit.shared.persistence.InstantTextBinding;
 import io.github.goraebap.bit.shared.web.CurrentUser;
@@ -28,9 +29,9 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 import org.assertj.core.api.ThrowableAssert.ThrowingCallable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -79,13 +80,13 @@ class LabelIntegrationTest {
     private PasswordEncoder passwordEncoder;
 
     private CurrentUser owner;
-    private UUID workspace;
-    private UUID decision;
+    private String workspace;
+    private String decision;
 
     @DynamicPropertySource
     static void database(DynamicPropertyRegistry registry) {
         String url = "jdbc:sqlite:"
-                + Path.of("build/test-db/label-" + UUID.randomUUID() + ".db").toAbsolutePath();
+                + Path.of("build/test-db/label-" + Ids.newId() + ".db").toAbsolutePath();
         registry.add("spring.datasource.url", () -> url);
     }
 
@@ -110,7 +111,7 @@ class LabelIntegrationTest {
                 "iam_password",
                 "iam_user")) jdbcTemplate.update("DELETE FROM " + table);
         owner = identity("owner");
-        workspace = workspaceService.create(owner, "Labels", "labels-" + UUID.randomUUID());
+        workspace = workspaceService.create(owner, "Labels", "labels-" + Ids.newId());
         decision = labelService.list(owner, workspace).getFirst().id();
     }
 
@@ -122,8 +123,8 @@ class LabelIntegrationTest {
         assertThat(system.name()).isEqualTo("결정기록");
         assertThat(system.system()).isTrue();
         assertThat(system.systemKey()).isEqualTo("decision");
-        UUID zebra = labelService.create(owner, workspace, "zebra", "#112233");
-        UUID alpha = labelService.create(owner, workspace, " Alpha ", "#AABBCC");
+        String zebra = labelService.create(owner, workspace, "zebra", "#112233");
+        String alpha = labelService.create(owner, workspace, " Alpha ", "#AABBCC");
         assertThat(labelService.list(owner, workspace).stream().map(LabelViews.Item::id))
                 .containsExactly(decision, alpha, zebra);
         var read = labelService.get(owner, workspace, alpha);
@@ -150,7 +151,7 @@ class LabelIntegrationTest {
         assertThat(jdbcTemplate.queryForObject(
                         "SELECT count(*) FROM label WHERE workspace_id=? AND system_key='decision'",
                         Integer.class,
-                        workspace.toString()))
+                        workspace))
                 .isEqualTo(1);
     }
 
@@ -161,7 +162,7 @@ class LabelIntegrationTest {
         CurrentUser viewer = identity("viewer");
         membership(viewer, "viewer");
         CurrentUser outsider = identity("outsider");
-        UUID label = labelService.create(member, workspace, "Bug", "#cc0000");
+        String label = labelService.create(member, workspace, "Bug", "#cc0000");
         assertThat(labelService.list(viewer, workspace)).hasSize(2);
         assertThat(code(() -> labelService.create(viewer, workspace, "No", "#000000")))
                 .isEqualTo("AUTH_FORBIDDEN");
@@ -193,18 +194,18 @@ class LabelIntegrationTest {
             expect(http(client, "DELETE", base + "/" + decision + "?expectedVersion=0", null), 409);
             expect(http(client, "DELETE", location + "?expectedVersion=1", null), 204);
             expect(http(client, "GET", location, null), 404);
-            expect(http(client, "PATCH", base + "/" + UUID.randomUUID(), "bad JSON", null), 404);
+            expect(http(client, "PATCH", base + "/" + Ids.newId(), "bad JSON", null), 404);
         }
     }
 
     @Test
     void workItemLabelsAreValidatedReplacedClearedAndHideDeletedLabels() throws Exception {
-        UUID project = projectService.create(owner, workspace, "Project", "LB", null);
-        UUID bug = labelService.create(owner, workspace, "bug", "#cc0000");
-        UUID api = labelService.create(owner, workspace, "API", "#0000cc");
-        UUID other = workspaceService.create(owner, "Other", "other-" + UUID.randomUUID());
-        UUID foreign = labelService.create(owner, other, "Foreign", "#123456");
-        UUID id = workItemService.create(
+        String project = projectService.create(owner, workspace, "Project", "LB", null);
+        String bug = labelService.create(owner, workspace, "bug", "#cc0000");
+        String api = labelService.create(owner, workspace, "API", "#0000cc");
+        String other = workspaceService.create(owner, "Other", "other-" + Ids.newId());
+        String foreign = labelService.create(owner, other, "Foreign", "#123456");
+        String id = workItemService.create(
                 owner, workspace, project, details("Labelled"), null, Set.of(bug, decision, api));
         assertThat(labels(workItemQueryService.get(owner, workspace, project, id)))
                 .containsExactly(decision, api, bug);
@@ -216,8 +217,8 @@ class LabelIntegrationTest {
                 .isTrue();
         assertThat(code(() -> workItemService.create(owner, workspace, project, details("X"), null, Set.of(foreign))))
                 .isEqualTo("WORKITEM_LABEL_INVALID");
-        assertThat(code(() -> workItemService.create(
-                        owner, workspace, project, details("X"), null, Set.of(UUID.randomUUID()))))
+        assertThat(code(() ->
+                        workItemService.create(owner, workspace, project, details("X"), null, Set.of(Ids.newId()))))
                 .isEqualTo("WORKITEM_LABEL_INVALID");
 
         var keep = new WorkItemRequests.Update();
@@ -251,10 +252,10 @@ class LabelIntegrationTest {
         assertThat(workItemQueryService.get(owner, workspace, project, id).labels())
                 .isEmpty();
         assertThat(jdbcTemplate.queryForObject(
-                        "SELECT count(*) FROM work_item_label WHERE work_item_id=?", Integer.class, id.toString()))
+                        "SELECT count(*) FROM work_item_label WHERE work_item_id=?", Integer.class, id))
                 .isZero();
 
-        UUID shown = workItemService.create(owner, workspace, project, details("Shown"), null, Set.of(bug, api));
+        String shown = workItemService.create(owner, workspace, project, details("Shown"), null, Set.of(bug, api));
         labelService.delete(owner, workspace, api, 0);
         assertThat(labels(workItemQueryService.get(owner, workspace, project, shown)))
                 .containsExactly(bug);
@@ -275,7 +276,7 @@ class LabelIntegrationTest {
         jdbcTemplate.update(
                 "UPDATE iam_password SET password_hash=? WHERE iam_user_id=?",
                 passwordEncoder.encode(password),
-                owner.userId().toString());
+                owner.userId());
         try (var client = login(owner, password)) {
             String base = "/api/v1/workspaces/" + workspace + "/projects/" + project + "/work-items";
             var created = http(
@@ -303,25 +304,25 @@ class LabelIntegrationTest {
 
     @Test
     void workspaceListFiltersAcrossProjectsByProjectLabelCategoryAndDates() throws Exception {
-        UUID p1 = projectService.create(owner, workspace, "One", "ONE", null);
-        UUID p2 = projectService.create(owner, workspace, "Two", "TWO", null);
-        UUID archivedProject = projectService.create(owner, workspace, "Archived", "ARC", null);
-        UUID deletedProject = projectService.create(owner, workspace, "Deleted", "DEL", null);
+        String p1 = projectService.create(owner, workspace, "One", "ONE", null);
+        String p2 = projectService.create(owner, workspace, "Two", "TWO", null);
+        String archivedProject = projectService.create(owner, workspace, "Archived", "ARC", null);
+        String deletedProject = projectService.create(owner, workspace, "Deleted", "DEL", null);
         var c1 = projectService.columns(owner, workspace, p1);
         var c2 = projectService.columns(owner, workspace, p2);
-        UUID bug = labelService.create(owner, workspace, "bug", "#cc0000");
+        String bug = labelService.create(owner, workspace, "bug", "#cc0000");
         var day = LocalDate.of(2026, 11, 10);
-        UUID todo = workItemService.create(
+        String todo = workItemService.create(
                 owner, workspace, p1, details("Todo one"), c1.getFirst().id(), Set.of(bug));
-        UUID doing = workItemService.create(
+        String doing = workItemService.create(
                 owner,
                 workspace,
                 p2,
                 dated("Doing two", day, day.plusDays(5)),
                 c2.get(1).id());
-        UUID done = workItemService.create(
+        String done = workItemService.create(
                 owner, workspace, p2, dated("Done two", null, day), c2.getLast().id());
-        UUID backlog = workItemService.create(
+        String backlog = workItemService.create(
                 owner, workspace, p1, dated("Backlog one", day.plusDays(20), null), null, Set.of(bug));
         workItemService.create(owner, workspace, archivedProject, details("Hidden archived"), null);
         workItemService.create(owner, workspace, deletedProject, details("Hidden deleted"), null);
@@ -400,7 +401,7 @@ class LabelIntegrationTest {
                             .get(0)
                             .path("id")
                             .asText())
-                    .isEqualTo(backlog.toString());
+                    .isEqualTo(backlog);
             expect(http(client, "GET", path + "?deleted=true", null), 403);
             expect(http(client, "GET", path + "?category=bogus", null), 400);
         }
@@ -411,16 +412,17 @@ class LabelIntegrationTest {
 
     @Test
     void columnCategoriesDefaultFollowFinalityAndRejectAFinalColumnOutsideDone() {
-        UUID project = projectService.create(owner, workspace, "Board", "BRD", null);
+        String project = projectService.create(owner, workspace, "Board", "BRD", null);
         var columns = projectService.columns(owner, workspace, project);
         assertThat(columns.stream().map(c -> c.category()))
                 .containsExactly(ColumnCategory.todo, ColumnCategory.doing, ColumnCategory.doing, ColumnCategory.done);
         assertThat(code(() -> projectService.addColumn(
                         owner, workspace, project, 0, "Shipped", null, true, ColumnCategory.todo)))
                 .isEqualTo("PROJECT_COLUMN_CATEGORY_INVALID");
-        UUID shipped = projectService.addColumn(owner, workspace, project, 0, "Shipped", null, true, null);
-        UUID waiting = projectService.addColumn(owner, workspace, project, 1, "Waiting", null, false, null);
-        UUID later = projectService.addColumn(owner, workspace, project, 2, "Later", null, false, ColumnCategory.todo);
+        String shipped = projectService.addColumn(owner, workspace, project, 0, "Shipped", null, true, null);
+        String waiting = projectService.addColumn(owner, workspace, project, 1, "Waiting", null, false, null);
+        String later =
+                projectService.addColumn(owner, workspace, project, 2, "Later", null, false, ColumnCategory.todo);
         assertThat(category(project, shipped)).isEqualTo(ColumnCategory.done);
         assertThat(category(project, waiting)).isEqualTo(ColumnCategory.doing);
         assertThat(category(project, later)).isEqualTo(ColumnCategory.todo);
@@ -448,12 +450,12 @@ class LabelIntegrationTest {
         cleared.setCategory(null);
         assertThat(code(() -> projectService.reviseColumn(owner, workspace, project, waiting, cleared)))
                 .isEqualTo("COMMON_INVALID_REQUEST");
-        UUID item = workItemService.create(owner, workspace, project, details("Moved"), waiting);
+        String item = workItemService.create(owner, workspace, project, details("Moved"), waiting);
         assertThat(workItemQueryService.get(owner, workspace, project, item).columnCategory())
                 .isEqualTo(ColumnCategory.todo);
     }
 
-    private ColumnCategory category(UUID project, UUID column) {
+    private ColumnCategory category(String project, String column) {
         return projectService.columns(owner, workspace, project).stream()
                 .filter(c -> c.id().equals(column))
                 .findFirst()
@@ -461,13 +463,13 @@ class LabelIntegrationTest {
                 .category();
     }
 
-    private List<UUID> ids(WorkItemRequests.WorkspaceListRequest request) {
+    private List<String> ids(WorkItemRequests.WorkspaceListRequest request) {
         return workItemQueryService.listWorkspace(owner, workspace, request).items().stream()
                 .map(WorkItemViews.Item::id)
                 .toList();
     }
 
-    private static List<UUID> labels(WorkItemViews.Item item) {
+    private static List<String> labels(WorkItemViews.Item item) {
         return item.labels().stream().map(WorkItemViews.Label::id).toList();
     }
 
@@ -492,26 +494,26 @@ class LabelIntegrationTest {
     }
 
     private CurrentUser identity(String role) {
-        UUID user = UUID.randomUUID();
-        UUID credential = UUID.randomUUID();
+        String user = Ids.newId();
+        String credential = Ids.newId();
         String now = InstantTextBinding.text(Instant.now());
         jdbcTemplate.update(
                 "INSERT INTO iam_user(iam_user_id,email,name,created_at,updated_at) VALUES (?,?,?,?,?)",
-                user.toString(),
-                role + user + "@example.test",
+                user,
+                role + user.toLowerCase(Locale.ROOT) + "@example.test",
                 role,
                 now,
                 now);
         jdbcTemplate.update(
                 "INSERT INTO iam_password(iam_user_id,password_hash,changed_at) VALUES (?,?,?)",
-                user.toString(),
+                user,
                 passwordEncoder.encode(role + " password phrase for labels"),
                 now);
         jdbcTemplate.update(
                 "INSERT INTO iam_session(iam_session_id,iam_user_id,token_hash,expires_at,absolute_expires_at,last_seen_at,created_at) VALUES (?,?,?,?,?,?,?)",
-                credential.toString(),
-                user.toString(),
-                credential.toString(),
+                credential,
+                user,
+                credential,
                 InstantTextBinding.text(Instant.now().plusSeconds(3600)),
                 InstantTextBinding.text(Instant.now().plusSeconds(7200)),
                 now,
@@ -522,26 +524,22 @@ class LabelIntegrationTest {
     private void membership(CurrentUser actor, String role) {
         jdbcTemplate.update(
                 "INSERT INTO workspace_member(workspace_member_id,workspace_id,iam_user_id,role,joined_at) VALUES (?,?,?,?,?)",
-                UUID.randomUUID().toString(),
-                workspace.toString(),
-                actor.userId().toString(),
+                Ids.newId(),
+                workspace,
+                actor.userId(),
                 role,
                 InstantTextBinding.text(Instant.now()));
     }
 
     private HttpClient login(CurrentUser actor) throws Exception {
         String role = jdbcTemplate.queryForObject(
-                "SELECT name FROM iam_user WHERE iam_user_id=?",
-                String.class,
-                actor.userId().toString());
+                "SELECT name FROM iam_user WHERE iam_user_id=?", String.class, actor.userId());
         return login(actor, role + " password phrase for labels");
     }
 
     private HttpClient login(CurrentUser actor, String password) throws Exception {
         String email = jdbcTemplate.queryForObject(
-                "SELECT email FROM iam_user WHERE iam_user_id=?",
-                String.class,
-                actor.userId().toString());
+                "SELECT email FROM iam_user WHERE iam_user_id=?", String.class, actor.userId());
         var client = HttpClient.newBuilder()
                 .cookieHandler(new CookieManager(null, CookiePolicy.ACCEPT_ALL))
                 .build();

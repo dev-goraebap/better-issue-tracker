@@ -52,6 +52,6 @@ final class SignedCsrfTokens implements CsrfTokenRepository {
 
     private static String binding(HttpServletRequest request) {
         Object value = request.getAttribute(PRINCIPAL);
-        return value instanceof CurrentUser user ? user.credentialId().toString() : "anonymous";
+        return value instanceof CurrentUser user ? user.credentialId() : "anonymous";
     }
 }

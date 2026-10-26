@@ -10,6 +10,7 @@ import static io.github.goraebap.bit.jooq.tables.WorkItemLabel.WORK_ITEM_LABEL;
 
 import io.github.goraebap.bit.module.workitem.domain.WorkItem;
 import io.github.goraebap.bit.module.workitem.domain.WorkItemRepository;
+import io.github.goraebap.bit.shared.domain.Ids;
 import io.github.goraebap.bit.shared.persistence.AuditRecords;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -17,7 +18,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.jooq.Condition;
@@ -32,7 +32,7 @@ class JooqWorkItemRepository implements WorkItemRepository {
     private final DSLContext dslContext;
 
     @Override
-    public long countAllById(UUID projectId, Set<UUID> ids) {
+    public long countAllById(String projectId, Set<String> ids) {
         if (ids.isEmpty()) return 0;
         return dslContext.fetchCount(
                 WORK_ITEM,
@@ -44,7 +44,7 @@ class JooqWorkItemRepository implements WorkItemRepository {
     }
 
     @Override
-    public Optional<WorkItem> findById(UUID projectId, UUID id, boolean includeDeleted) {
+    public Optional<WorkItem> findById(String projectId, String id, boolean includeDeleted) {
         return single(dslContext
                 .selectFrom(WORK_ITEM)
                 .where(WORK_ITEM.PROJECT_ID.eq(projectId))
@@ -54,7 +54,7 @@ class JooqWorkItemRepository implements WorkItemRepository {
     }
 
     @Override
-    public Optional<WorkItem> findTarget(UUID workspaceId, UUID id) {
+    public Optional<WorkItem> findTarget(String workspaceId, String id) {
         return single(dslContext
                 .select(WORK_ITEM.fields())
                 .from(WORK_ITEM)
@@ -68,7 +68,7 @@ class JooqWorkItemRepository implements WorkItemRepository {
     }
 
     @Override
-    public Optional<WorkItem> findByNumber(UUID projectId, long number) {
+    public Optional<WorkItem> findByNumber(String projectId, long number) {
         return single(dslContext
                 .selectFrom(WORK_ITEM)
                 .where(WORK_ITEM.PROJECT_ID.eq(projectId))
@@ -78,7 +78,7 @@ class JooqWorkItemRepository implements WorkItemRepository {
     }
 
     @Override
-    public List<WorkItem> findColumnItems(UUID projectId, UUID columnId, boolean includeDeleted) {
+    public List<WorkItem> findColumnItems(String projectId, String columnId, boolean includeDeleted) {
         return items(dslContext
                 .selectFrom(WORK_ITEM)
                 .where(WORK_ITEM.PROJECT_ID.eq(projectId))
@@ -189,8 +189,8 @@ class JooqWorkItemRepository implements WorkItemRepository {
                 WORK_ITEM_LABEL.CREATED_BY,
                 WORK_ITEM_LABEL.CREATED_BY_AGENT);
         var a = w.audit();
-        for (UUID label : w.labelIds())
-            insert = insert.values(UUID.randomUUID(), w.id(), label, a.updatedAt(), a.updatedBy(), a.updatedByAgent());
+        for (String label : w.labelIds())
+            insert = insert.values(Ids.newId(), w.id(), label, a.updatedAt(), a.updatedBy(), a.updatedByAgent());
         insert.onConflictDoNothing().execute();
     }
 
@@ -272,9 +272,9 @@ class JooqWorkItemRepository implements WorkItemRepository {
     }
 
     /** One query for the label links of every item read together. */
-    private Map<UUID, Set<UUID>> labels(Set<UUID> workItemIds) {
+    private Map<String, Set<String>> labels(Set<String> workItemIds) {
         if (workItemIds.isEmpty()) return Map.of();
-        Map<UUID, Set<UUID>> labels = new HashMap<>();
+        Map<String, Set<String>> labels = new HashMap<>();
         dslContext
                 .select(WORK_ITEM_LABEL.WORK_ITEM_ID, WORK_ITEM_LABEL.LABEL_ID)
                 .from(WORK_ITEM_LABEL)
@@ -284,7 +284,7 @@ class JooqWorkItemRepository implements WorkItemRepository {
         return labels;
     }
 
-    private WorkItem item(Record r, Set<UUID> labelIds) {
+    private WorkItem item(Record r, Set<String> labelIds) {
         return WorkItem.fromPersistence(
                 r.get(WORK_ITEM.WORK_ITEM_ID),
                 r.get(WORK_ITEM.PROJECT_ID),

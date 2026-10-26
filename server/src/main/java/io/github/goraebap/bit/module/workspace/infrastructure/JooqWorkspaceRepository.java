@@ -14,7 +14,6 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.jooq.Condition;
 import org.jooq.DSLContext;
@@ -29,7 +28,7 @@ class JooqWorkspaceRepository implements WorkspaceRepository {
     private final DSLContext dslContext;
 
     @Override
-    public Set<UUID> findMemberUserIds(UUID workspaceId, Set<UUID> userIds) {
+    public Set<String> findMemberUserIds(String workspaceId, Set<String> userIds) {
         if (userIds.isEmpty()) return Set.of();
         return Set.copyOf(dslContext
                 .select(WORKSPACE_MEMBER.IAM_USER_ID)
@@ -40,7 +39,7 @@ class JooqWorkspaceRepository implements WorkspaceRepository {
     }
 
     @Override
-    public Optional<Workspace> findById(UUID id) {
+    public Optional<Workspace> findById(String id) {
         return dslContext
                 .selectFrom(WORKSPACE)
                 .where(WORKSPACE.WORKSPACE_ID.eq(id))
@@ -79,7 +78,7 @@ class JooqWorkspaceRepository implements WorkspaceRepository {
     }
 
     @Override
-    public List<WorkspaceRow> findAllByUserId(UUID userId, Instant time, UUID id, int limit) {
+    public List<WorkspaceRow> findAllByUserId(String userId, Instant time, String id, int limit) {
         return dslContext
                 .select(
                         WORKSPACE.WORKSPACE_ID,
@@ -104,7 +103,7 @@ class JooqWorkspaceRepository implements WorkspaceRepository {
     }
 
     @Override
-    public Optional<Membership> findMember(UUID workspace, UUID user) {
+    public Optional<Membership> findMember(String workspace, String user) {
         return dslContext
                 .selectFrom(WORKSPACE_MEMBER)
                 .where(WORKSPACE_MEMBER.WORKSPACE_ID.eq(workspace))
@@ -113,7 +112,7 @@ class JooqWorkspaceRepository implements WorkspaceRepository {
     }
 
     @Override
-    public Optional<Membership> findMemberById(UUID workspace, UUID id) {
+    public Optional<Membership> findMemberById(String workspace, String id) {
         return dslContext
                 .selectFrom(WORKSPACE_MEMBER)
                 .where(WORKSPACE_MEMBER.WORKSPACE_ID.eq(workspace))
@@ -122,7 +121,7 @@ class JooqWorkspaceRepository implements WorkspaceRepository {
     }
 
     @Override
-    public List<Membership> findMembers(UUID workspace, Instant time, UUID id, int limit) {
+    public List<Membership> findMembers(String workspace, Instant time, String id, int limit) {
         return dslContext
                 .select(WORKSPACE_MEMBER.fields())
                 .from(WORKSPACE_MEMBER)
@@ -163,7 +162,7 @@ class JooqWorkspaceRepository implements WorkspaceRepository {
     }
 
     @Override
-    public void deleteMember(UUID id) {
+    public void deleteMember(String id) {
         dslContext
                 .deleteFrom(WORKSPACE_MEMBER)
                 .where(WORKSPACE_MEMBER.WORKSPACE_MEMBER_ID.eq(id))
@@ -171,13 +170,13 @@ class JooqWorkspaceRepository implements WorkspaceRepository {
     }
 
     @Override
-    public int countOwners(UUID workspace) {
+    public int countOwners(String workspace) {
         return dslContext.fetchCount(
                 WORKSPACE_MEMBER, WORKSPACE_MEMBER.WORKSPACE_ID.eq(workspace).and(WORKSPACE_MEMBER.ROLE.eq("owner")));
     }
 
     @Override
-    public Optional<Invitation> findInvitation(UUID workspace, UUID id) {
+    public Optional<Invitation> findInvitation(String workspace, String id) {
         return dslContext
                 .selectFrom(WORKSPACE_INVITATION)
                 .where(WORKSPACE_INVITATION.WORKSPACE_ID.eq(workspace))
@@ -194,7 +193,7 @@ class JooqWorkspaceRepository implements WorkspaceRepository {
     }
 
     @Override
-    public boolean existsPending(UUID workspace, String email) {
+    public boolean existsPending(String workspace, String email) {
         return dslContext.fetchExists(
                 WORKSPACE_INVITATION,
                 WORKSPACE_INVITATION
@@ -205,7 +204,7 @@ class JooqWorkspaceRepository implements WorkspaceRepository {
     }
 
     @Override
-    public void expirePending(UUID workspace, String email, Instant now) {
+    public void expirePending(String workspace, String email, Instant now) {
         dslContext
                 .update(WORKSPACE_INVITATION)
                 .set(WORKSPACE_INVITATION.STATUS, "expired")
@@ -245,7 +244,7 @@ class JooqWorkspaceRepository implements WorkspaceRepository {
 
     @Override
     public List<Invitation> findInvitations(
-            UUID workspace, boolean owner, Set<String> statuses, Instant now, Instant time, UUID id, int limit) {
+            String workspace, boolean owner, Set<String> statuses, Instant now, Instant time, String id, int limit) {
         Field<String> effective = DSL.when(
                         WORKSPACE_INVITATION.STATUS.eq("pending").and(WORKSPACE_INVITATION.EXPIRES_AT.le(now)),
                         "expired")
@@ -262,7 +261,7 @@ class JooqWorkspaceRepository implements WorkspaceRepository {
     }
 
     @Override
-    public void revokePending(UUID workspace, UUID issuer, WorkspaceRole retainedRole, UUID actor, Instant now) {
+    public void revokePending(String workspace, String issuer, WorkspaceRole retainedRole, String actor, Instant now) {
         Condition invalid = retainedRole == null || !retainedRole.editsSettings()
                 ? DSL.trueCondition()
                 : retainedRole == WorkspaceRole.admin ? WORKSPACE_INVITATION.ROLE.eq("admin") : DSL.falseCondition();
@@ -278,7 +277,7 @@ class JooqWorkspaceRepository implements WorkspaceRepository {
                 .execute();
     }
 
-    private Condition before(Field<Instant> timeField, Field<UUID> idField, Instant time, UUID id) {
+    private Condition before(Field<Instant> timeField, Field<String> idField, Instant time, String id) {
         return time == null
                 ? DSL.noCondition()
                 : timeField.lt(time).or(timeField.eq(time).and(idField.lt(id)));

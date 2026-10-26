@@ -5,7 +5,6 @@ import io.github.goraebap.bit.module.view.domain.IssueView;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.Instant;
 import java.util.List;
-import java.util.UUID;
 
 public final class ViewViews {
     private ViewViews() {}
@@ -50,8 +49,8 @@ public final class ViewViews {
                 "updatedAt"
             })
     public record View(
-            UUID id,
-            UUID workspaceId,
+            String id,
+            String workspaceId,
             String name,
             @Schema(nullable = true) String description,
             String icon,
@@ -60,7 +59,7 @@ public final class ViewViews {
             Filters filters,
             Sort sort,
             List<IssueView.Column> columns,
-            UUID ownerId,
+            String ownerId,
             boolean isPersonal,
 
             @Schema(description = "Whether the caller may change or delete it (D-068)")

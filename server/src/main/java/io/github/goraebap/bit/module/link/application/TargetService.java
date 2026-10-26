@@ -12,7 +12,6 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,7 +38,7 @@ public class TargetService implements TargetFacade {
 
     @Override
     @Transactional(readOnly = true)
-    public TargetRef requireAccess(CurrentUser actor, UUID workspaceId, TargetType type, UUID id, boolean writing) {
+    public TargetRef requireAccess(CurrentUser actor, String workspaceId, TargetType type, String id, boolean writing) {
         workspaceFacade.requireAccess(actor, workspaceId, WorkspaceFacade.Action.READ);
         var resolver = type == null ? null : targets.get(type);
         if (resolver == null || id == null) throw LinkErrorCode.LINK_TARGET_NOT_FOUND.raise();
@@ -53,7 +52,12 @@ public class TargetService implements TargetFacade {
     @Override
     @Transactional(readOnly = true)
     public void requireAllInProject(
-            CurrentUser actor, UUID workspaceId, UUID projectId, TargetType type, Set<UUID> ids, boolean writing) {
+            CurrentUser actor,
+            String workspaceId,
+            String projectId,
+            TargetType type,
+            Set<String> ids,
+            boolean writing) {
         workspaceFacade.requireAccess(actor, workspaceId, WorkspaceFacade.Action.READ);
         var resolver = type == null ? null : targets.get(type);
         if (resolver == null || ids == null || ids.stream().anyMatch(java.util.Objects::isNull) || ids.size() > 120)

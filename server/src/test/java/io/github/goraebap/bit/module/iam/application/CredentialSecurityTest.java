@@ -3,12 +3,12 @@ package io.github.goraebap.bit.module.iam.application;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import io.github.goraebap.bit.shared.domain.Ids;
 import io.github.goraebap.bit.shared.web.CurrentUser;
 import io.github.goraebap.bit.shared.web.SecretTokens;
 import jakarta.servlet.http.Cookie;
 import java.time.Clock;
 import java.time.Duration;
-import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
@@ -48,7 +48,7 @@ class CredentialSecurityTest {
         var first = new MockHttpServletRequest();
         first.setAttribute(
                 SignedCsrfTokens.PRINCIPAL,
-                new CurrentUser(UUID.randomUUID(), false, CurrentUser.Method.SESSION, UUID.randomUUID(), null, false));
+                new CurrentUser(Ids.newId(), false, CurrentUser.Method.SESSION, Ids.newId(), null, false));
         String raw = tokens.generateToken(first).getToken();
         first.setCookies(new Cookie("bit_csrf", raw));
         assertThat(tokens.loadToken(first)).isNotNull();

@@ -7,7 +7,6 @@ import io.github.goraebap.bit.module.link.domain.Link;
 import io.github.goraebap.bit.module.link.domain.LinkRepository;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.jooq.DSLContext;
 import org.jooq.Record;
@@ -20,7 +19,7 @@ class JooqLinkRepository implements LinkRepository {
     private final DSLContext dslContext;
 
     @Override
-    public Optional<Link> findById(UUID workspaceId, UUID id) {
+    public Optional<Link> findById(String workspaceId, String id) {
         return dslContext
                 .selectFrom(LINK)
                 .where(LINK.WORKSPACE_ID.eq(workspaceId))
@@ -29,7 +28,7 @@ class JooqLinkRepository implements LinkRepository {
     }
 
     @Override
-    public Optional<Link> findActive(UUID workspaceId, Link.Edge edge) {
+    public Optional<Link> findActive(String workspaceId, Link.Edge edge) {
         return dslContext
                 .selectFrom(LINK)
                 .where(LINK.WORKSPACE_ID.eq(workspaceId))
@@ -43,7 +42,7 @@ class JooqLinkRepository implements LinkRepository {
     }
 
     @Override
-    public List<Link> findAllActive(UUID workspaceId, List<Link.Edge> edges) {
+    public List<Link> findAllActive(String workspaceId, List<Link.Edge> edges) {
         if (edges.isEmpty()) return List.of();
         org.jooq.Condition condition = DSL.falseCondition();
         for (var edge : edges)
@@ -62,7 +61,7 @@ class JooqLinkRepository implements LinkRepository {
     }
 
     @Override
-    public boolean hasParent(UUID workspaceId, UUID id) {
+    public boolean hasParent(String workspaceId, String id) {
         return dslContext.fetchExists(dslContext
                 .selectOne()
                 .from(LINK)
@@ -73,7 +72,7 @@ class JooqLinkRepository implements LinkRepository {
     }
 
     @Override
-    public boolean hasReplacement(UUID workspaceId, UUID id) {
+    public boolean hasReplacement(String workspaceId, String id) {
         return dslContext.fetchExists(dslContext
                 .selectOne()
                 .from(LINK)
@@ -84,24 +83,17 @@ class JooqLinkRepository implements LinkRepository {
     }
 
     @Override
-    public boolean pathExists(UUID workspaceId, String relation, UUID fromId, UUID toId) {
+    public boolean pathExists(String workspaceId, String relation, String fromId, String toId) {
         // UNION (not UNION ALL) also terminates if imported data already contains a cycle.
         return Boolean.TRUE.equals(dslContext
-                .fetchSingle(
-                        """
+                .fetchSingle("""
             WITH RECURSIVE reachable(id) AS (
                 SELECT to_id FROM link WHERE workspace_id=? AND relation=? AND from_id=? AND deleted_at IS NULL
                 UNION
                 SELECT edge.to_id FROM link edge JOIN reachable r ON edge.from_id=r.id
                 WHERE edge.workspace_id=? AND edge.relation=? AND edge.deleted_at IS NULL
             ) SELECT EXISTS(SELECT 1 FROM reachable WHERE id=?) AS found
-            """,
-                        workspaceId.toString(),
-                        relation,
-                        fromId.toString(),
-                        workspaceId.toString(),
-                        relation,
-                        toId.toString())
+            """, workspaceId, relation, fromId, workspaceId, relation, toId)
                 .get("found", Boolean.class));
     }
 

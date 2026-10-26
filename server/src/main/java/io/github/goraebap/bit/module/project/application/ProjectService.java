@@ -14,7 +14,6 @@ import java.time.Clock;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.ObjectProvider;
@@ -32,20 +31,20 @@ public class ProjectService implements ProjectFacade {
     @Override
     @Transactional(readOnly = true)
     public void requireSettings(
-            CurrentUser actor, UUID workspaceId, UUID projectId, boolean includeDeleted, boolean allowArchived) {
+            CurrentUser actor, String workspaceId, String projectId, boolean includeDeleted, boolean allowArchived) {
         settings(actor, workspaceId, projectId, includeDeleted, allowArchived);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public ProjectRef requireAccess(CurrentUser actor, UUID workspaceId, UUID projectId, boolean writing) {
+    public ProjectRef requireAccess(CurrentUser actor, String workspaceId, String projectId, boolean writing) {
         var p = access(actor, workspaceId, projectId, writing, false);
         return ref(p);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public ProjectRef findByKey(CurrentUser actor, UUID workspaceId, String key) {
+    public ProjectRef findByKey(CurrentUser actor, String workspaceId, String key) {
         workspaceFacade.requireAccess(actor, workspaceId, WorkspaceFacade.Action.READ);
         var found = projectRepository
                 .findKey(workspaceId, ProjectKey.of(key).value())
@@ -55,7 +54,7 @@ public class ProjectService implements ProjectFacade {
 
     @Override
     @Transactional
-    public long allocateWorkItemNumber(CurrentUser actor, UUID workspaceId, UUID projectId) {
+    public long allocateWorkItemNumber(CurrentUser actor, String workspaceId, String projectId) {
         var p = access(actor, workspaceId, projectId, true, false);
         long number = p.allocateWorkItemNumber();
         projectRepository.save(p);
@@ -64,13 +63,13 @@ public class ProjectService implements ProjectFacade {
 
     @Override
     @Transactional
-    public long allocateDecisionNumber(CurrentUser actor, UUID workspaceId, UUID projectId) {
+    public long allocateDecisionNumber(CurrentUser actor, String workspaceId, String projectId) {
         return allocateDecisionNumbers(actor, workspaceId, projectId, 1);
     }
 
     @Override
     @Transactional
-    public long allocateDecisionNumbers(CurrentUser actor, UUID workspaceId, UUID projectId, int count) {
+    public long allocateDecisionNumbers(CurrentUser actor, String workspaceId, String projectId, int count) {
         if (count < 1 || count > 20) throw new IllegalArgumentException("Invalid decision count");
         var p = access(actor, workspaceId, projectId, true, false);
         long number = p.allocateDecisionNumber();
@@ -81,7 +80,7 @@ public class ProjectService implements ProjectFacade {
 
     @Override
     @Transactional
-    public long allocateSessionNumber(CurrentUser actor, UUID workspaceId, UUID projectId) {
+    public long allocateSessionNumber(CurrentUser actor, String workspaceId, String projectId) {
         var p = access(actor, workspaceId, projectId, true, false);
         long number = p.allocateSessionNumber();
         projectRepository.save(p);
@@ -90,14 +89,14 @@ public class ProjectService implements ProjectFacade {
 
     @Override
     @Transactional(readOnly = true)
-    public ColumnRef requireColumn(CurrentUser actor, UUID workspaceId, UUID projectId, UUID columnId) {
+    public ColumnRef requireColumn(CurrentUser actor, String workspaceId, String projectId, String columnId) {
         return findColumn(actor, workspaceId, projectId, columnId)
                 .orElseThrow(ProjectErrorCode.PROJECT_COLUMN_NOT_FOUND::raise);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Optional<ColumnRef> findColumn(CurrentUser actor, UUID workspaceId, UUID projectId, UUID columnId) {
+    public Optional<ColumnRef> findColumn(CurrentUser actor, String workspaceId, String projectId, String columnId) {
         access(actor, workspaceId, projectId, false, false);
         if (columnId == null) return Optional.of(new ColumnRef(null, false, null));
         return projectRepository
@@ -107,7 +106,7 @@ public class ProjectService implements ProjectFacade {
 
     @Override
     @Transactional(readOnly = true)
-    public List<ColumnInfo> boardColumns(CurrentUser actor, UUID workspaceId, UUID projectId) {
+    public List<ColumnInfo> boardColumns(CurrentUser actor, String workspaceId, String projectId) {
         access(actor, workspaceId, projectId, false, false);
         return projectRepository.findColumns(projectId).stream()
                 .sorted(java.util.Comparator.comparingInt(BoardColumn::position))
@@ -116,14 +115,14 @@ public class ProjectService implements ProjectFacade {
     }
 
     @Transactional
-    public UUID create(CurrentUser actor, UUID workspaceId, String name, String key, String description) {
+    public String create(CurrentUser actor, String workspaceId, String name, String key, String description) {
         return create(actor, workspaceId, name, key, description, null, null);
     }
 
     @Transactional
-    public UUID create(
+    public String create(
             CurrentUser actor,
-            UUID workspaceId,
+            String workspaceId,
             String name,
             String key,
             String description,
@@ -166,8 +165,8 @@ public class ProjectService implements ProjectFacade {
     @Transactional
     public void revise(
             CurrentUser actor,
-            UUID workspaceId,
-            UUID projectId,
+            String workspaceId,
+            String projectId,
             long version,
             String name,
             boolean hasName,
@@ -195,8 +194,8 @@ public class ProjectService implements ProjectFacade {
     @Transactional
     public void revise(
             CurrentUser actor,
-            UUID workspaceId,
-            UUID projectId,
+            String workspaceId,
+            String projectId,
             long version,
             String name,
             boolean hasName,
@@ -233,7 +232,7 @@ public class ProjectService implements ProjectFacade {
 
     /** Every live project's members who are still in the workspace (D-075); any member reads them. */
     @Transactional(readOnly = true)
-    public ProjectViews.Memberships memberships(CurrentUser actor, UUID workspaceId) {
+    public ProjectViews.Memberships memberships(CurrentUser actor, String workspaceId) {
         workspaceFacade.requireAccess(actor, workspaceId, WorkspaceFacade.Action.READ);
         var rows = projectRepository.findMemberships(workspaceId);
         var members = workspaceFacade
@@ -250,7 +249,7 @@ public class ProjectService implements ProjectFacade {
 
     /** Adds a workspace member to a project; those who manage members do it (D-075). */
     @Transactional
-    public void addMember(CurrentUser actor, UUID workspaceId, UUID projectId, UUID userId) {
+    public void addMember(CurrentUser actor, String workspaceId, String projectId, String userId) {
         workspaceFacade.requireAccess(actor, workspaceId, WorkspaceFacade.Action.MANAGE_MEMBERS);
         settings(actor, workspaceId, projectId, false, true);
         if (!workspaceFacade.hasMember(actor, workspaceId, userId))
@@ -260,14 +259,14 @@ public class ProjectService implements ProjectFacade {
 
     /** Takes a member off a project; they still read it, as every member of the workspace does. */
     @Transactional
-    public void removeMember(CurrentUser actor, UUID workspaceId, UUID projectId, UUID userId) {
+    public void removeMember(CurrentUser actor, String workspaceId, String projectId, String userId) {
         workspaceFacade.requireAccess(actor, workspaceId, WorkspaceFacade.Action.MANAGE_MEMBERS);
         settings(actor, workspaceId, projectId, false, true);
         projectRepository.removeMember(projectId, userId);
     }
 
     @Transactional
-    public void archive(CurrentUser actor, UUID workspaceId, UUID projectId, long version, boolean archived) {
+    public void archive(CurrentUser actor, String workspaceId, String projectId, long version, boolean archived) {
         var p = settings(actor, workspaceId, projectId, false, true);
         version(p.version(), version);
         p.archive(archived, actor.userId(), agent(actor), clock.instant());
@@ -275,7 +274,7 @@ public class ProjectService implements ProjectFacade {
     }
 
     @Transactional
-    public void delete(CurrentUser actor, UUID workspaceId, UUID projectId, long version) {
+    public void delete(CurrentUser actor, String workspaceId, String projectId, long version) {
         var p = settings(actor, workspaceId, projectId, true, true);
         version(p.version(), version);
         p.delete(actor.userId(), agent(actor), clock.instant());
@@ -283,7 +282,7 @@ public class ProjectService implements ProjectFacade {
     }
 
     @Transactional
-    public void restore(CurrentUser actor, UUID workspaceId, UUID projectId, long version) {
+    public void restore(CurrentUser actor, String workspaceId, String projectId, long version) {
         var p = settings(actor, workspaceId, projectId, true, true);
         version(p.version(), version);
         p.restore(actor.userId(), agent(actor), clock.instant());
@@ -291,16 +290,16 @@ public class ProjectService implements ProjectFacade {
     }
 
     @Transactional(readOnly = true)
-    public List<BoardColumn> columns(CurrentUser actor, UUID workspaceId, UUID projectId) {
+    public List<BoardColumn> columns(CurrentUser actor, String workspaceId, String projectId) {
         access(actor, workspaceId, projectId, false, false);
         return projectRepository.findColumns(projectId);
     }
 
     @Transactional
-    public UUID addColumn(
+    public String addColumn(
             CurrentUser actor,
-            UUID workspaceId,
-            UUID projectId,
+            String workspaceId,
+            String projectId,
             long version,
             String name,
             String color,
@@ -323,7 +322,11 @@ public class ProjectService implements ProjectFacade {
 
     @Transactional
     public void reviseColumn(
-            CurrentUser actor, UUID workspaceId, UUID projectId, UUID columnId, ProjectRequests.ReviseColumn request) {
+            CurrentUser actor,
+            String workspaceId,
+            String projectId,
+            String columnId,
+            ProjectRequests.ReviseColumn request) {
         settings(actor, workspaceId, projectId, false, false);
         var c = column(projectId, columnId);
         version(c.version(), request.getExpectedVersion());
@@ -346,9 +349,9 @@ public class ProjectService implements ProjectFacade {
     @Transactional
     public void reviseColumn(
             CurrentUser actor,
-            UUID workspaceId,
-            UUID projectId,
-            UUID columnId,
+            String workspaceId,
+            String projectId,
+            String columnId,
             long version,
             String name,
             String color,
@@ -360,9 +363,9 @@ public class ProjectService implements ProjectFacade {
     @Transactional
     public void reviseColumn(
             CurrentUser actor,
-            UUID workspaceId,
-            UUID projectId,
-            UUID columnId,
+            String workspaceId,
+            String projectId,
+            String columnId,
             long version,
             String name,
             String color,
@@ -383,7 +386,12 @@ public class ProjectService implements ProjectFacade {
 
     @Transactional
     public void deleteColumn(
-            CurrentUser actor, UUID workspaceId, UUID projectId, UUID columnId, long version, UUID targetColumnId) {
+            CurrentUser actor,
+            String workspaceId,
+            String projectId,
+            String columnId,
+            long version,
+            String targetColumnId) {
         var p = settings(actor, workspaceId, projectId, false, false);
         var c = column(projectId, columnId);
         version(c.version(), version);
@@ -407,7 +415,8 @@ public class ProjectService implements ProjectFacade {
     }
 
     @Transactional
-    public void reorderColumns(CurrentUser actor, UUID workspaceId, UUID projectId, long version, List<UUID> order) {
+    public void reorderColumns(
+            CurrentUser actor, String workspaceId, String projectId, long version, List<String> order) {
         var p = settings(actor, workspaceId, projectId, false, false);
         version(p.version(), version);
         var columns = projectRepository.findColumns(projectId);
@@ -430,7 +439,7 @@ public class ProjectService implements ProjectFacade {
      * its settings may, and the order must name each live, unarchived project once.
      */
     @Transactional
-    public void reorder(CurrentUser actor, UUID workspaceId, List<UUID> order) {
+    public void reorder(CurrentUser actor, String workspaceId, List<String> order) {
         workspaceFacade.requireAccess(actor, workspaceId, WorkspaceFacade.Action.EDIT_SETTINGS);
         var active = projectRepository.findActiveIds(workspaceId);
         if (order == null || order.size() != active.size() || !new HashSet<>(order).equals(new HashSet<>(active)))
@@ -438,7 +447,7 @@ public class ProjectService implements ProjectFacade {
         projectRepository.updateOrder(workspaceId, order);
     }
 
-    private Project access(CurrentUser actor, UUID workspaceId, UUID projectId, boolean writing, boolean deleted) {
+    private Project access(CurrentUser actor, String workspaceId, String projectId, boolean writing, boolean deleted) {
         workspaceFacade.requireAccess(
                 actor, workspaceId, writing ? WorkspaceFacade.Action.WRITE_WORK : WorkspaceFacade.Action.READ);
         var p = project(workspaceId, projectId, deleted);
@@ -447,20 +456,20 @@ public class ProjectService implements ProjectFacade {
     }
 
     private Project settings(
-            CurrentUser actor, UUID workspaceId, UUID projectId, boolean deleted, boolean allowArchived) {
+            CurrentUser actor, String workspaceId, String projectId, boolean deleted, boolean allowArchived) {
         workspaceFacade.requireAccess(actor, workspaceId, WorkspaceFacade.Action.EDIT_SETTINGS);
         var p = project(workspaceId, projectId, deleted);
         if (!allowArchived && p.archivedAt() != null) throw ProjectErrorCode.PROJECT_ARCHIVED.raise();
         return p;
     }
 
-    private Project project(UUID workspaceId, UUID projectId, boolean deleted) {
+    private Project project(String workspaceId, String projectId, boolean deleted) {
         return projectRepository
                 .findById(workspaceId, projectId, deleted)
                 .orElseThrow(ProjectErrorCode.PROJECT_NOT_FOUND::raise);
     }
 
-    private BoardColumn column(UUID projectId, UUID columnId) {
+    private BoardColumn column(String projectId, String columnId) {
         return projectRepository
                 .findColumn(projectId, columnId)
                 .orElseThrow(ProjectErrorCode.PROJECT_COLUMN_NOT_FOUND::raise);
@@ -471,7 +480,7 @@ public class ProjectService implements ProjectFacade {
                 p.id(), p.workspaceId(), projectRepository.currentKey(p.id()), p.version(), p.archivedAt() != null);
     }
 
-    private void assertKeyAvailable(UUID workspaceId, ProjectKey key, UUID projectId) {
+    private void assertKeyAvailable(String workspaceId, ProjectKey key, String projectId) {
         var existing = projectRepository.findKey(workspaceId, key.value());
         if (existing.isPresent() && !existing.get().projectId().equals(projectId))
             throw ProjectErrorCode.PROJECT_KEY_CONFLICT.raise();
@@ -488,7 +497,7 @@ public class ProjectService implements ProjectFacade {
         return current.category();
     }
 
-    private void assertAnotherFinal(UUID projectId, UUID columnId) {
+    private void assertAnotherFinal(String projectId, String columnId) {
         if (projectRepository.findColumns(projectId).stream()
                 .noneMatch(c -> c.finalColumn() && !c.id().equals(columnId)))
             throw ProjectErrorCode.PROJECT_FINAL_COLUMN_REQUIRED.raise();

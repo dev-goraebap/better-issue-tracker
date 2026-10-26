@@ -2,7 +2,6 @@ package io.github.goraebap.bit.module.label.application;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.Instant;
-import java.util.UUID;
 
 public final class LabelViews {
     private LabelViews() {}
@@ -21,8 +20,8 @@ public final class LabelViews {
                 "updatedAt"
             })
     public record Item(
-            UUID id,
-            UUID workspaceId,
+            String id,
+            String workspaceId,
             String name,
             String color,
             boolean system,

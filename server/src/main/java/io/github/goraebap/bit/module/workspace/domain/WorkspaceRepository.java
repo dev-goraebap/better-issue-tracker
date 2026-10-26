@@ -4,51 +4,50 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.UUID;
 
 public interface WorkspaceRepository {
-    Optional<Workspace> findById(UUID id);
+    Optional<Workspace> findById(String id);
 
     boolean existsBySlug(String slug);
 
     void save(Workspace workspace);
 
-    List<WorkspaceRow> findAllByUserId(UUID userId, Instant beforeTime, UUID beforeId, int limit);
+    List<WorkspaceRow> findAllByUserId(String userId, Instant beforeTime, String beforeId, int limit);
 
-    Optional<Membership> findMember(UUID workspaceId, UUID userId);
+    Optional<Membership> findMember(String workspaceId, String userId);
 
-    Set<UUID> findMemberUserIds(UUID workspaceId, Set<UUID> userIds);
+    Set<String> findMemberUserIds(String workspaceId, Set<String> userIds);
 
-    Optional<Membership> findMemberById(UUID workspaceId, UUID id);
+    Optional<Membership> findMemberById(String workspaceId, String id);
 
-    List<Membership> findMembers(UUID workspaceId, Instant afterTime, UUID afterId, int limit);
+    List<Membership> findMembers(String workspaceId, Instant afterTime, String afterId, int limit);
 
     void saveAll(List<Membership> members);
 
-    void deleteMember(UUID id);
+    void deleteMember(String id);
 
-    int countOwners(UUID workspaceId);
+    int countOwners(String workspaceId);
 
-    Optional<Invitation> findInvitation(UUID workspaceId, UUID id);
+    Optional<Invitation> findInvitation(String workspaceId, String id);
 
     Optional<Invitation> findInvitationByHash(String hash);
 
-    boolean existsPending(UUID workspaceId, String email);
+    boolean existsPending(String workspaceId, String email);
 
-    void expirePending(UUID workspaceId, String email, Instant now);
+    void expirePending(String workspaceId, String email, Instant now);
 
     void save(Invitation invitation);
 
     List<Invitation> findInvitations(
-            UUID workspaceId,
+            String workspaceId,
             boolean owner,
             Set<String> statuses,
             Instant now,
             Instant beforeTime,
-            UUID beforeId,
+            String beforeId,
             int limit);
 
-    void revokePending(UUID workspaceId, UUID issuer, WorkspaceRole retainedRole, UUID actor, Instant now);
+    void revokePending(String workspaceId, String issuer, WorkspaceRole retainedRole, String actor, Instant now);
 
-    record WorkspaceRow(UUID id, String name, String slug, WorkspaceRole myRole, Instant createdAt) {}
+    record WorkspaceRow(String id, String name, String slug, WorkspaceRole myRole, Instant createdAt) {}
 }

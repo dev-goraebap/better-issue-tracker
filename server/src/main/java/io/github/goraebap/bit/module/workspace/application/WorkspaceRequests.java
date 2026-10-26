@@ -6,7 +6,6 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-import java.util.UUID;
 
 public final class WorkspaceRequests {
     private WorkspaceRequests() {}
@@ -66,7 +65,7 @@ public final class WorkspaceRequests {
     }
 
     public record Transfer(
-            @NotNull UUID userId,
+            @NotNull String userId,
             @NotNull @Size(min = 1, max = 128) String currentPassword) {
         @Override
         public String toString() {
@@ -74,5 +73,5 @@ public final class WorkspaceRequests {
         }
     }
 
-    public record Selection(@NotNull UUID workspaceId) {}
+    public record Selection(@NotNull String workspaceId) {}
 }

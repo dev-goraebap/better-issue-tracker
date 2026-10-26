@@ -1,6 +1,7 @@
 package io.github.goraebap.bit.module.workspace.application;
 
 import io.github.goraebap.bit.module.workspace.WorkspaceFacade;
+import io.github.goraebap.bit.shared.domain.Ids;
 import io.github.goraebap.bit.shared.error.BusinessException;
 import io.github.goraebap.bit.shared.error.CommonErrorCode;
 import io.github.goraebap.bit.shared.web.CurrentUser;
@@ -10,7 +11,6 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.UUID;
 import java.util.regex.Pattern;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -31,9 +31,9 @@ final class WorkspaceHttpAuthorizationFilter extends OncePerRequestFilter {
             return;
         }
         try {
-            UUID id;
+            String id;
             try {
-                id = UUID.fromString(match.group(1));
+                id = Ids.parse(match.group(1));
             } catch (IllegalArgumentException invalid) {
                 throw CommonErrorCode.COMMON_INVALID_REQUEST.raise();
             }
@@ -60,9 +60,9 @@ final class WorkspaceHttpAuthorizationFilter extends OncePerRequestFilter {
         }
     }
 
-    private UUID resourceId(String suffix) {
+    private String resourceId(String suffix) {
         try {
-            return UUID.fromString(suffix.substring(suffix.indexOf('/') + 1));
+            return Ids.parse(suffix.substring(suffix.indexOf('/') + 1));
         } catch (IllegalArgumentException invalid) {
             throw CommonErrorCode.COMMON_INVALID_REQUEST.raise();
         }

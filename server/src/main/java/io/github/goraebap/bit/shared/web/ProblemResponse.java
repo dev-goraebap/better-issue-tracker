@@ -1,12 +1,12 @@
 package io.github.goraebap.bit.shared.web;
 
+import io.github.goraebap.bit.shared.domain.Ids;
 import io.github.goraebap.bit.shared.error.CommonErrorCode;
 import io.github.goraebap.bit.shared.error.ErrorCode;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.UUID;
 import org.slf4j.MDC;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -68,7 +68,7 @@ public final class ProblemResponse {
         String traceId = MDC.get(TraceIdFilter.MDC_KEY);
         if (traceId == null) traceId = response.getHeader(TraceIdFilter.HEADER);
         if (traceId == null) {
-            traceId = UUID.randomUUID().toString();
+            traceId = Ids.newId();
             response.setHeader(TraceIdFilter.HEADER, traceId);
         }
         return traceId;

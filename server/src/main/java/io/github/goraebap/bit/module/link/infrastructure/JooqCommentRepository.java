@@ -9,7 +9,6 @@ import io.github.goraebap.bit.shared.persistence.AuditRecords;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.jooq.DSLContext;
 import org.jooq.impl.DSL;
@@ -21,7 +20,7 @@ class JooqCommentRepository implements CommentRepository {
     private final DSLContext dslContext;
 
     @Override
-    public Optional<Comment> findById(UUID workspaceId, UUID id) {
+    public Optional<Comment> findById(String workspaceId, String id) {
         return dslContext
                 .selectFrom(COMMENT)
                 .where(COMMENT.WORKSPACE_ID.eq(workspaceId))
@@ -31,7 +30,7 @@ class JooqCommentRepository implements CommentRepository {
 
     @Override
     public List<Comment> findAllByTarget(
-            UUID workspaceId, TargetType type, UUID targetId, Instant afterTime, UUID afterId, int limit) {
+            String workspaceId, TargetType type, String targetId, Instant afterTime, String afterId, int limit) {
         return dslContext
                 .selectFrom(COMMENT)
                 .where(COMMENT.WORKSPACE_ID.eq(workspaceId))

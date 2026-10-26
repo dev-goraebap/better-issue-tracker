@@ -1,36 +1,36 @@
 package io.github.goraebap.bit.module.workspace.domain;
 
+import io.github.goraebap.bit.shared.domain.Ids;
 import java.time.Instant;
-import java.util.UUID;
 
 public final class Invitation {
-    private final UUID id;
-    private final UUID workspaceId;
+    private final String id;
+    private final String workspaceId;
     private final String email;
     private final WorkspaceRole role;
     private final String tokenHash;
     private String status;
     private final Instant expiresAt;
-    private final UUID invitedBy;
+    private final String invitedBy;
     private final Instant createdAt;
-    private UUID acceptedBy;
+    private String acceptedBy;
     private Instant acceptedAt;
-    private UUID revokedBy;
+    private String revokedBy;
     private Instant revokedAt;
 
     private Invitation(
-            UUID id,
-            UUID workspaceId,
+            String id,
+            String workspaceId,
             String email,
             WorkspaceRole role,
             String tokenHash,
             String status,
             Instant expiresAt,
-            UUID invitedBy,
+            String invitedBy,
             Instant createdAt,
-            UUID acceptedBy,
+            String acceptedBy,
             Instant acceptedAt,
-            UUID revokedBy,
+            String revokedBy,
             Instant revokedAt) {
         this.id = id;
         this.workspaceId = workspaceId;
@@ -48,10 +48,10 @@ public final class Invitation {
     }
 
     public static Invitation create(
-            UUID workspaceId, String email, WorkspaceRole role, String hash, UUID actor, Instant now) {
+            String workspaceId, String email, WorkspaceRole role, String hash, String actor, Instant now) {
         if (role == WorkspaceRole.owner) throw new IllegalArgumentException("Invalid invitation role");
         return new Invitation(
-                UUID.randomUUID(),
+                Ids.newId(),
                 workspaceId,
                 email.strip().toLowerCase(java.util.Locale.ROOT),
                 role,
@@ -67,18 +67,18 @@ public final class Invitation {
     }
 
     public static Invitation fromPersistence(
-            UUID id,
-            UUID workspaceId,
+            String id,
+            String workspaceId,
             String email,
             WorkspaceRole role,
             String hash,
             String status,
             Instant expiresAt,
-            UUID actor,
+            String actor,
             Instant createdAt,
-            UUID acceptedBy,
+            String acceptedBy,
             Instant acceptedAt,
-            UUID revokedBy,
+            String revokedBy,
             Instant revokedAt) {
         return new Invitation(
                 id,
@@ -104,25 +104,25 @@ public final class Invitation {
         return effectiveStatus(now).equals("pending");
     }
 
-    public void accept(UUID userId, Instant now) {
+    public void accept(String userId, Instant now) {
         if (!pending(now)) throw new IllegalArgumentException("Invitation unavailable");
         status = "accepted";
         acceptedBy = userId;
         acceptedAt = now;
     }
 
-    public void revoke(UUID actor, Instant now) {
+    public void revoke(String actor, Instant now) {
         if (!pending(now)) throw new IllegalArgumentException("Invitation unavailable");
         status = "revoked";
         revokedBy = actor;
         revokedAt = now;
     }
 
-    public UUID id() {
+    public String id() {
         return id;
     }
 
-    public UUID workspaceId() {
+    public String workspaceId() {
         return workspaceId;
     }
 
@@ -146,7 +146,7 @@ public final class Invitation {
         return expiresAt;
     }
 
-    public UUID invitedBy() {
+    public String invitedBy() {
         return invitedBy;
     }
 
@@ -154,7 +154,7 @@ public final class Invitation {
         return createdAt;
     }
 
-    public UUID acceptedBy() {
+    public String acceptedBy() {
         return acceptedBy;
     }
 
@@ -162,7 +162,7 @@ public final class Invitation {
         return acceptedAt;
     }
 
-    public UUID revokedBy() {
+    public String revokedBy() {
         return revokedBy;
     }
 

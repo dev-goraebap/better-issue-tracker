@@ -8,7 +8,6 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import java.util.List;
-import java.util.UUID;
 
 public final class ProjectRequests {
     private ProjectRequests() {}
@@ -22,7 +21,7 @@ public final class ProjectRequests {
             @Schema(nullable = true) String color) {}
 
     @Schema(name = "AddProjectMember")
-    public record AddMember(@NotNull UUID userId) {}
+    public record AddMember(@NotNull String userId) {}
 
     @Schema(name = "ProjectVersion")
     public record Version(@NotNull @Min(0) Long expectedVersion) {}
@@ -123,7 +122,7 @@ public final class ProjectRequests {
 
     /** The workspace's live, unarchived projects in the order they should read (D-080). */
     @Schema(name = "ProjectOrder")
-    public record Order(@NotNull List<@NotNull UUID> order) {
+    public record Order(@NotNull List<@NotNull String> order) {
         public Order {
             order = List.copyOf(order);
         }
@@ -131,7 +130,7 @@ public final class ProjectRequests {
 
     @Schema(name = "ReorderBoardColumns")
     public record Reorder(
-            @NotNull @Min(0) Long expectedVersion, @NotNull List<@NotNull UUID> order) {
+            @NotNull @Min(0) Long expectedVersion, @NotNull List<@NotNull String> order) {
         public Reorder {
             order = List.copyOf(order);
         }

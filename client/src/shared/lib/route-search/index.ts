@@ -11,8 +11,8 @@ export function ownSearch<Parse extends (raw: Record<string, unknown>) => object
 export const oneOf = <T extends string>(value: unknown, allowed: readonly T[]): T | undefined =>
   (allowed.includes(value as T) ? value as T : undefined);
 
-/** Whether a search value is an id (a UUID). */
+/** Whether a search value is an id: ten letters and digits, the first a letter (D-083). Ids are case-sensitive. */
 export const isId = (value: unknown): value is string =>
-  typeof value === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
+  typeof value === 'string' && /^[A-Za-z][A-Za-z0-9]{9}$/.test(value);
 
 export { findingOf, useSearchScreen } from './search-screen';

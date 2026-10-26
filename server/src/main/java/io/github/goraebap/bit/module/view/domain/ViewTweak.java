@@ -3,12 +3,11 @@ package io.github.goraebap.bit.module.view.domain;
 import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
-import java.util.UUID;
 
 /** A member's own layout, order and columns over a view; any part left null follows the view. */
 public record ViewTweak(
-        UUID workspaceId,
-        UUID userId,
+        String workspaceId,
+        String userId,
         String viewKey,
         IssueView.Layout layout,
         IssueView.Sort sort,

@@ -1,16 +1,16 @@
 package io.github.goraebap.bit.module.workspace.domain;
 
+import io.github.goraebap.bit.shared.domain.Ids;
 import java.time.Instant;
-import java.util.UUID;
 
 public final class Membership {
-    private final UUID id;
-    private final UUID workspaceId;
-    private final UUID userId;
+    private final String id;
+    private final String workspaceId;
+    private final String userId;
     private WorkspaceRole role;
     private final Instant joinedAt;
 
-    private Membership(UUID id, UUID workspaceId, UUID userId, WorkspaceRole role, Instant joinedAt) {
+    private Membership(String id, String workspaceId, String userId, WorkspaceRole role, Instant joinedAt) {
         this.id = id;
         this.workspaceId = workspaceId;
         this.userId = userId;
@@ -18,12 +18,12 @@ public final class Membership {
         this.joinedAt = joinedAt;
     }
 
-    public static Membership create(UUID workspaceId, UUID userId, WorkspaceRole role, Instant now) {
-        return new Membership(UUID.randomUUID(), workspaceId, userId, role, now);
+    public static Membership create(String workspaceId, String userId, WorkspaceRole role, Instant now) {
+        return new Membership(Ids.newId(), workspaceId, userId, role, now);
     }
 
     public static Membership fromPersistence(
-            UUID id, UUID workspaceId, UUID userId, WorkspaceRole role, Instant joinedAt) {
+            String id, String workspaceId, String userId, WorkspaceRole role, Instant joinedAt) {
         return new Membership(id, workspaceId, userId, role, joinedAt);
     }
 
@@ -42,15 +42,15 @@ public final class Membership {
         next.role = WorkspaceRole.owner;
     }
 
-    public UUID id() {
+    public String id() {
         return id;
     }
 
-    public UUID workspaceId() {
+    public String workspaceId() {
         return workspaceId;
     }
 
-    public UUID userId() {
+    public String userId() {
         return userId;
     }
 

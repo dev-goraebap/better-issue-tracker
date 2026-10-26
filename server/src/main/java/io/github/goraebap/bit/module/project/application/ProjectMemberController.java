@@ -3,7 +3,6 @@ package io.github.goraebap.bit.module.project.application;
 import io.github.goraebap.bit.shared.web.CurrentUser;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.Valid;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -31,14 +30,14 @@ class ProjectMemberController {
     @ApiResponse(responseCode = "204", description = "Projects reordered")
     ResponseEntity<Void> reorder(
             @AuthenticationPrincipal CurrentUser actor,
-            @PathVariable UUID workspaceId,
+            @PathVariable String workspaceId,
             @Valid @RequestBody ProjectRequests.Order body) {
         projectService.reorder(actor, workspaceId, body.order());
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/project-members")
-    ProjectViews.Memberships list(@AuthenticationPrincipal CurrentUser actor, @PathVariable UUID workspaceId) {
+    ProjectViews.Memberships list(@AuthenticationPrincipal CurrentUser actor, @PathVariable String workspaceId) {
         return projectService.memberships(actor, workspaceId);
     }
 
@@ -46,8 +45,8 @@ class ProjectMemberController {
     @ApiResponse(responseCode = "204", description = "Member added (or already there)")
     ResponseEntity<Void> add(
             @AuthenticationPrincipal CurrentUser actor,
-            @PathVariable UUID workspaceId,
-            @PathVariable UUID projectId,
+            @PathVariable String workspaceId,
+            @PathVariable String projectId,
             @Valid @RequestBody ProjectRequests.AddMember body) {
         projectService.addMember(actor, workspaceId, projectId, body.userId());
         return ResponseEntity.noContent().build();
@@ -57,9 +56,9 @@ class ProjectMemberController {
     @ApiResponse(responseCode = "204", description = "Member taken off")
     ResponseEntity<Void> remove(
             @AuthenticationPrincipal CurrentUser actor,
-            @PathVariable UUID workspaceId,
-            @PathVariable UUID projectId,
-            @PathVariable UUID userId) {
+            @PathVariable String workspaceId,
+            @PathVariable String projectId,
+            @PathVariable String userId) {
         projectService.removeMember(actor, workspaceId, projectId, userId);
         return ResponseEntity.noContent().build();
     }

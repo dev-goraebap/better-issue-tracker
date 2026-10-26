@@ -3,15 +3,15 @@ package io.github.goraebap.bit.module.workitem.domain;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import io.github.goraebap.bit.shared.domain.Ids;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Set;
-import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
 class WorkItemRulesTest {
-    private final UUID actor = UUID.randomUUID();
-    private final UUID project = UUID.randomUUID();
+    private final String actor = Ids.newId();
+    private final String project = Ids.newId();
     private final Instant now = Instant.parse("2026-10-22T00:00:00Z");
 
     private WorkItem item() {
@@ -31,7 +31,7 @@ class WorkItemRulesTest {
     @Test
     void completionIsStableAcrossRetriesAndReopeningClearsIt() {
         var task = item();
-        UUID done = UUID.randomUUID();
+        String done = Ids.newId();
         task.move(done, true, 0, actor, "codex", now);
         long version = task.version();
         task.move(done, true, 0, actor, "codex", now.plusSeconds(30));
@@ -58,7 +58,7 @@ class WorkItemRulesTest {
     @Test
     void restoringWithMissingColumnReturnsToBacklogWithoutClearingIndividualArchive() {
         var task = item();
-        task.move(UUID.randomUUID(), true, 1, actor, null, now);
+        task.move(Ids.newId(), true, 1, actor, null, now);
         task.archive(true, actor, "codex", now);
         task.delete(actor, "codex", now.plusSeconds(1));
         task.restore(false, actor, "codex", now.plusSeconds(2));

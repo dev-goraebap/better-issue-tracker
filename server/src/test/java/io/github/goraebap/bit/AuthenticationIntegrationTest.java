@@ -2,6 +2,7 @@ package io.github.goraebap.bit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import io.github.goraebap.bit.shared.domain.Ids;
 import java.io.IOException;
 import java.net.CookieManager;
 import java.net.CookiePolicy;
@@ -17,7 +18,6 @@ import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.Executors;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -64,7 +64,7 @@ class AuthenticationIntegrationTest {
     @DynamicPropertySource
     static void database(DynamicPropertyRegistry registry) {
         String url = "jdbc:sqlite:"
-                + Path.of("build/test-db/auth-" + UUID.randomUUID() + ".db").toAbsolutePath();
+                + Path.of("build/test-db/auth-" + Ids.newId() + ".db").toAbsolutePath();
         registry.add("spring.datasource.url", () -> url);
     }
 
@@ -228,7 +228,7 @@ class AuthenticationIntegrationTest {
                 assertThat(client.bearer("GET", path, raw).statusCode()).isEqualTo(403);
             assertThat(client.bearer("POST", "/me/api-keys", raw).statusCode()).isEqualTo(403);
             assertThat(client.bearer("PUT", "/me/password", raw).statusCode()).isEqualTo(403);
-            assertThat(client.bearer("POST", "/admin/users/" + UUID.randomUUID() + "/temporary-passwords", raw)
+            assertThat(client.bearer("POST", "/admin/users/" + Ids.newId() + "/temporary-passwords", raw)
                             .statusCode())
                     .isEqualTo(403);
             String used = jdbcTemplate.queryForObject("SELECT last_used_at FROM iam_api_key", String.class);
@@ -307,7 +307,7 @@ class AuthenticationIntegrationTest {
     void adminResetRestrictsTemporarySessionsAndCannotBeCalledByMember() throws Exception {
         try (Client admin = signedIn();
                 Client member = new Client()) {
-            UUID userId = fixtureUser("member@example.test");
+            String userId = fixtureUser("member@example.test");
             member.login("member@example.test", PASSWORD);
             String key = createKey(member, 0).path("key").asText();
             member.csrf();
@@ -433,19 +433,19 @@ class AuthenticationIntegrationTest {
         return JSON.readTree(response.body());
     }
 
-    private UUID fixtureUser(String email) {
-        UUID id = UUID.randomUUID();
+    private String fixtureUser(String email) {
+        String id = Ids.newId();
         String now = "2026-10-22T00:00:00.000000Z";
         jdbcTemplate.update(
                 "INSERT INTO iam_user(iam_user_id,email,name,is_instance_admin,created_at,updated_at) VALUES(?,?,?,0,?,?)",
-                id.toString(),
+                id,
                 email,
                 "Member",
                 now,
                 now);
         jdbcTemplate.update(
                 "INSERT INTO iam_password(iam_user_id,password_hash,changed_at) VALUES(?,?,?)",
-                id.toString(),
+                id,
                 passwordEncoder.encode(PASSWORD),
                 now);
         return id;

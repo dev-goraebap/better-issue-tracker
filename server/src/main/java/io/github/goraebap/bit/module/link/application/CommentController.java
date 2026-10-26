@@ -7,7 +7,6 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import java.net.URI;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -32,9 +31,9 @@ class CommentController {
     @GetMapping("/timeline")
     TimelineViews.Timeline timeline(
             @AuthenticationPrincipal CurrentUser actor,
-            @PathVariable UUID workspaceId,
+            @PathVariable String workspaceId,
             @RequestParam TargetType targetType,
-            @RequestParam UUID targetId,
+            @RequestParam String targetId,
             @RequestParam(required = false) String cursor,
             @RequestParam(defaultValue = "100") @Min(1) @Max(200) int size) {
         return timelineService.list(actor, workspaceId, targetType, targetId, cursor, size);
@@ -44,9 +43,9 @@ class CommentController {
     @ApiResponse(responseCode = "201", description = "댓글 작성")
     ResponseEntity<Void> create(
             @AuthenticationPrincipal CurrentUser actor,
-            @PathVariable UUID workspaceId,
+            @PathVariable String workspaceId,
             @Valid @RequestBody CommentRequests.Create request) {
-        UUID id = commentService.create(actor, workspaceId, request.targetType(), request.targetId(), request.body());
+        String id = commentService.create(actor, workspaceId, request.targetType(), request.targetId(), request.body());
         return ResponseEntity.created(URI.create("/api/v1/workspaces/" + workspaceId + "/comments/" + id))
                 .build();
     }
@@ -54,8 +53,8 @@ class CommentController {
     @PatchMapping("/comments/{commentId}")
     ResponseEntity<Void> revise(
             @AuthenticationPrincipal CurrentUser actor,
-            @PathVariable UUID workspaceId,
-            @PathVariable UUID commentId,
+            @PathVariable String workspaceId,
+            @PathVariable String commentId,
             @Valid @RequestBody CommentRequests.Update request) {
         commentService.revise(actor, workspaceId, commentId, request.body(), request.expectedVersion());
         return ResponseEntity.noContent().build();
@@ -64,8 +63,8 @@ class CommentController {
     @DeleteMapping("/comments/{commentId}")
     ResponseEntity<Void> delete(
             @AuthenticationPrincipal CurrentUser actor,
-            @PathVariable UUID workspaceId,
-            @PathVariable UUID commentId,
+            @PathVariable String workspaceId,
+            @PathVariable String commentId,
             @RequestParam @Min(0) long expectedVersion) {
         commentService.delete(actor, workspaceId, commentId, expectedVersion);
         return ResponseEntity.noContent().build();

@@ -9,6 +9,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import io.github.goraebap.bit.shared.domain.Ids;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -16,7 +17,6 @@ import java.net.http.HttpResponse;
 import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.UUID;
 import javax.sql.DataSource;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -50,7 +50,7 @@ class BootstrapIntegrationTest {
 
     @DynamicPropertySource
     static void database(DynamicPropertyRegistry registry) {
-        String path = Path.of("build", "test-db", UUID.randomUUID() + ".db")
+        String path = Path.of("build", "test-db", Ids.newId() + ".db")
                 .toAbsolutePath()
                 .toString();
         registry.add("spring.datasource.url", () -> "jdbc:sqlite:" + path);

@@ -2,27 +2,26 @@ package io.github.goraebap.bit.module.link;
 
 import io.github.goraebap.bit.shared.web.CurrentUser;
 import java.util.List;
-import java.util.UUID;
 
 public interface LinkFacade {
-    UUID connect(
+    String connect(
             CurrentUser actor,
-            UUID workspaceId,
+            String workspaceId,
             TargetType fromType,
-            UUID fromId,
+            String fromId,
             String relation,
             TargetType toType,
-            UUID toId);
+            String toId);
 
-    void disconnect(CurrentUser actor, UUID workspaceId, UUID linkId);
+    void disconnect(CurrentUser actor, String workspaceId, String linkId);
 
     void connectSessionRecord(
             CurrentUser actor,
-            UUID workspaceId,
-            UUID projectId,
-            UUID sessionId,
-            List<UUID> decisionIds,
-            List<UUID> workItemIds);
+            String workspaceId,
+            String projectId,
+            String sessionId,
+            List<String> decisionIds,
+            List<String> workItemIds);
     /** Only the decision state-transition transaction coordinates this protected relation. */
-    UUID connectSupersession(CurrentUser actor, UUID workspaceId, UUID replacementId, UUID oldDecisionId);
+    String connectSupersession(CurrentUser actor, String workspaceId, String replacementId, String oldDecisionId);
 }

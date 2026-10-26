@@ -3,16 +3,15 @@ package io.github.goraebap.bit.module.decision.domain;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.UUID;
 
 public interface DecisionRepository {
-    Optional<Decision> findById(UUID projectId, UUID id, boolean includeDeleted);
+    Optional<Decision> findById(String projectId, String id, boolean includeDeleted);
 
-    Optional<Decision> findByNumber(UUID projectId, long number);
+    Optional<Decision> findByNumber(String projectId, long number);
 
-    Optional<Decision> findTarget(UUID workspaceId, UUID id);
+    Optional<Decision> findTarget(String workspaceId, String id);
 
-    long countAllById(UUID projectId, Set<UUID> ids);
+    long countAllById(String projectId, Set<String> ids);
 
     void save(Decision decision);
 

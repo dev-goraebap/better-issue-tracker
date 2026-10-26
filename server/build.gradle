@@ -63,6 +63,11 @@ jooq {
                         name = 'DOUBLE'
                         includeExpression = '(?i:.*(work_item|issue_view)\\.position)'
                     }
+                    // Ids are ten-character text (D-083); the columns V1-V8 declared uuid keep that type name in SQLite.
+                    forcedType {
+                        name = 'VARCHAR'
+                        includeTypes = 'UUID'
+                    }
                     forcedType {
                         userType = 'java.time.Instant'
                         binding = 'io.github.goraebap.bit.shared.persistence.InstantTextBinding'

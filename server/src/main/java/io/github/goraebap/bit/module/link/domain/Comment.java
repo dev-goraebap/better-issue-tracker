@@ -2,23 +2,29 @@ package io.github.goraebap.bit.module.link.domain;
 
 import io.github.goraebap.bit.module.link.TargetType;
 import io.github.goraebap.bit.shared.domain.Audit;
+import io.github.goraebap.bit.shared.domain.Ids;
 import java.time.Instant;
 import java.util.Objects;
-import java.util.UUID;
 import lombok.Getter;
 
 @Getter
 public final class Comment {
-    private final UUID id;
-    private final UUID workspaceId;
+    private final String id;
+    private final String workspaceId;
     private final TargetType targetType;
-    private final UUID targetId;
+    private final String targetId;
     private String body;
     private long version;
     private Audit audit;
 
     private Comment(
-            UUID id, UUID workspaceId, TargetType targetType, UUID targetId, String body, long version, Audit audit) {
+            String id,
+            String workspaceId,
+            TargetType targetType,
+            String targetId,
+            String body,
+            long version,
+            Audit audit) {
         this.id = id;
         this.workspaceId = workspaceId;
         this.targetType = targetType;
@@ -29,11 +35,17 @@ public final class Comment {
     }
 
     public static Comment create(
-            UUID workspaceId, TargetType type, UUID targetId, String body, UUID actor, String agent, Instant now) {
+            String workspaceId,
+            TargetType type,
+            String targetId,
+            String body,
+            String actor,
+            String agent,
+            Instant now) {
         if (type == null || type == TargetType.code_ref)
             throw new IllegalArgumentException("Unsupported comment target");
         return new Comment(
-                UUID.randomUUID(),
+                Ids.newId(),
                 Objects.requireNonNull(workspaceId),
                 type,
                 Objects.requireNonNull(targetId),
@@ -43,11 +55,11 @@ public final class Comment {
     }
 
     public static Comment fromPersistence(
-            UUID id, UUID workspaceId, TargetType type, UUID targetId, String body, long version, Audit audit) {
+            String id, String workspaceId, TargetType type, String targetId, String body, long version, Audit audit) {
         return new Comment(id, workspaceId, type, targetId, body, version, audit);
     }
 
-    public void revise(String body, UUID actor, String agent, Instant now) {
+    public void revise(String body, String actor, String agent, Instant now) {
         if (!audit.createdBy().equals(actor)) throw new IllegalStateException("Only author can revise");
         if (audit.deletedAt() != null) throw new IllegalStateException("Comment is deleted");
         String valid = body(body);
@@ -57,13 +69,13 @@ public final class Comment {
         version++;
     }
 
-    public void delete(UUID actor, String agent, Instant now) {
+    public void delete(String actor, String agent, Instant now) {
         if (audit.deletedAt() != null) return;
         audit = audit.delete(actor, agent, now);
         version++;
     }
 
-    public void restore(UUID actor, String agent, Instant now) {
+    public void restore(String actor, String agent, Instant now) {
         if (audit.deletedAt() == null) return;
         audit = audit.restore(actor, agent, now);
         version++;

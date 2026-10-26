@@ -7,7 +7,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import java.net.URI;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -130,7 +129,7 @@ class AuthController {
 
     @DeleteMapping("/me/api-keys/{keyId}")
     @ApiResponse(responseCode = "204", description = "Key revoked")
-    ResponseEntity<Void> revoke(@AuthenticationPrincipal CurrentUser actor, @PathVariable UUID keyId) {
+    ResponseEntity<Void> revoke(@AuthenticationPrincipal CurrentUser actor, @PathVariable String keyId) {
         iamService.revokeKey(actor, keyId);
         return ResponseEntity.noContent().build();
     }
@@ -138,7 +137,7 @@ class AuthController {
     @PostMapping("/admin/users/{userId}/temporary-passwords")
     IamViews.TemporaryPassword temporaryPassword(
             @AuthenticationPrincipal CurrentUser actor,
-            @PathVariable UUID userId,
+            @PathVariable String userId,
             @Valid @RequestBody IamRequests.Reauthenticate body) {
         return authService.temporaryPassword(actor, userId, body);
     }

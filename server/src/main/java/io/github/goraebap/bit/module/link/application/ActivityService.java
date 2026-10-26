@@ -5,12 +5,12 @@ import io.github.goraebap.bit.module.link.TargetChangedEvent;
 import io.github.goraebap.bit.module.link.TargetType;
 import io.github.goraebap.bit.module.link.domain.Activity;
 import io.github.goraebap.bit.module.link.domain.ActivityRepository;
+import io.github.goraebap.bit.shared.domain.Ids;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -54,7 +54,7 @@ public class ActivityService {
     public void recordComment(CommentChangedEvent event) {
         if (!Set.of("comment_created", "comment_changed", "comment_deleted", "comment_restored")
                 .contains(event.action())) throw new IllegalArgumentException("Unsupported comment activity");
-        var payload = Map.of("commentId", event.commentId().toString(), "version", event.version());
+        var payload = Map.of("commentId", event.commentId(), "version", event.version());
         activityRepository.saveAll(List.of(Activity.create(
                 event.workspaceId(),
                 event.projectId(),
@@ -72,9 +72,9 @@ public class ActivityService {
     public void record(TargetChangedEvent event) {
         if (!ACTIONS.contains(event.action())) throw new IllegalArgumentException("Unsupported activity action");
         var rows = new ArrayList<Activity>();
-        UUID changeId = UUID.randomUUID();
+        String changeId = Ids.newId();
         if (event.changes().isEmpty()) {
-            rows.add(activity(event, Map.of("version", event.version(), "changeId", changeId.toString())));
+            rows.add(activity(event, Map.of("version", event.version(), "changeId", changeId)));
         }
         for (var change : event.changes()) {
             if (!FIELDS.getOrDefault(event.targetType(), Set.of()).contains(change.field()))
@@ -85,7 +85,7 @@ public class ActivityService {
             for (int part = 0; part < parts; part++) {
                 Map<String, Object> payload = new LinkedHashMap<>();
                 payload.put("version", event.version());
-                payload.put("changeId", changeId.toString());
+                payload.put("changeId", changeId);
                 payload.put("field", change.field());
                 payload.put("part", part);
                 payload.put("parts", parts);
