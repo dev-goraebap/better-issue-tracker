@@ -3,6 +3,7 @@ import { Button, TextArea, TextInput, VStack } from '@astryxdesign/core';
 import { useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { ApiError, authError } from '@/shared/api';
+import { useAutoGrow } from '@/shared/lib/auto-grow';
 import { ConfirmDialog, FormMessage, MarkPicker, SettingsCard, SettingsHead, SettingsRow } from '@/shared/ui';
 import { archiveProject, deleteProject, PROJECT_KEY as KEY, ProjectMark, refreshProjects, updateProject, type Project } from '@/entities/project';
 
@@ -19,6 +20,7 @@ export function ProjectGeneralSettings({ project, canManage }: { project: Projec
   const [name, setName] = useState(project.name);
   const [key, setKey] = useState(project.key);
   const [description, setDescription] = useState(project.description ?? '');
+  const descriptionBox = useAutoGrow(description);
   const [isChecked, setChecked] = useState(false);
   const [takenKey, setTakenKey] = useState('');
   const [isBusy, setBusy] = useState(false);
@@ -73,8 +75,9 @@ export function ProjectGeneralSettings({ project, canManage }: { project: Projec
           {editable ? <TextInput label="키" isLabelHidden size="sm" value={key} onChange={value => setKey(value.toUpperCase())} isRequired isDisabled={isBusy}
             status={keyError ? { type: 'error', message: keyError } : undefined} /> : project.key}
         </SettingsRow>
-        <SettingsRow label="설명">
-          {editable ? <TextArea label="설명" isLabelHidden value={description} onChange={setDescription} rows={2} isDisabled={isBusy} placeholder="이 프로젝트가 하는 일을 한 줄로" />
+        <SettingsRow label="설명" isStacked>
+          {editable ? <TextArea ref={descriptionBox} label="설명" isLabelHidden value={description} onChange={setDescription} rows={3} size="sm" width="100%"
+            isDisabled={isBusy} placeholder="이 프로젝트가 하는 일을 적어 주세요" />
             : project.description || '설명이 없습니다.'}
         </SettingsRow>
       </SettingsCard>

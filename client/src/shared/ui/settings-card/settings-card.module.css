@@ -10,6 +10,10 @@
 .label { font-size: 0.875rem; font-weight: 500; color: var(--color-text-primary); }
 .description { font-size: 0.75rem; line-height: 1.5; color: var(--color-text-secondary); }
 .control { display: flex; align-items: center; justify-content: flex-end; gap: var(--spacing-2); flex-shrink: 0; max-inline-size: 60%; }
+/* A value of several lines: the label above, the control under it at the line's full width. */
+.row[data-stacked] { flex-wrap: wrap; align-items: flex-start; row-gap: var(--spacing-2); }
+.row[data-stacked] .control { flex-basis: 100%; max-inline-size: none; justify-content: stretch; }
+.row[data-stacked] .control > * { flex: 1; min-inline-size: 0; }
 @media (width < 40rem) {
   .row { flex-wrap: wrap; }
   .control { flex-basis: 100%; max-inline-size: none; justify-content: flex-start; }
