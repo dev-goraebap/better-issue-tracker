@@ -23,6 +23,9 @@ public final class IamRequests {
         }
     }
 
+    /** The member's new picture: an upload for purpose picture, already cut to a square JPEG (BIT-30). */
+    public record Avatar(@NotBlank String uploadId) {}
+
     /** The member's own name, as teammates and agents' records show it. */
     public record Rename(@NotBlank @Size(max = 64) String name) {
         public Rename {

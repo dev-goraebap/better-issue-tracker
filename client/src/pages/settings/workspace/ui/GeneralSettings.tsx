@@ -2,15 +2,17 @@ import { useState } from 'react';
 import { Button, TextInput, VStack } from '@astryxdesign/core';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
-import { authError, sessionQueryOptions } from '@/shared/api';
+import { authError, capabilitiesQueryOptions, sessionQueryOptions } from '@/shared/api';
 import { CompactDialog, ConfirmDialog, FormMessage, Select, SettingsCard, SettingsHead, SettingsRow } from '@/shared/ui';
 import {
-  canManage, deleteWorkspace, forgetWorkspace, leaveWorkspace, refreshWorkspace, renameWorkspace, transferOwner, useMembers, WorkspaceMark, type Space,
+  canManage, changeLogo, deleteWorkspace, forgetWorkspace, leaveWorkspace, refreshWorkspace, removeLogo, renameWorkspace, transferOwner, useMembers, WorkspaceMark, type Space,
 } from '@/entities/workspace';
+import { PictureDialog } from '@/features/picture-change';
 import styles from './workspace-settings.module.css';
 
 /**
- * 일반: the workspace's name (required, saved on its own), its fixed address, who owns it, handed to another member in a
+ * 일반: the workspace's name (required, saved on its own), its logo (BIT-30, in a short dialog that crops it, while the
+ * server keeps files), its fixed address, who owns it, handed to another member in a
  * short dialog that asks the owner's password again; then the danger zone: the owner deletes it behind its typed name,
  * anyone else leaves it. A viewer or member reads the name without changing it.
  */
@@ -31,6 +33,13 @@ export function GeneralSettings({ workspace }: { workspace: Space }) {
   const [handError, setHandError] = useState('');
   const [leaving, setLeaving] = useState<'delete' | 'leave' | null>(null);
   const [leaveError, setLeaveError] = useState<Error | null>(null);
+  const [isPicturing, setPicturing] = useState(false);
+  const canPicture = canEdit && !!useQuery(capabilitiesQueryOptions).data?.objectStorage;
+  const pictured = async (change: Promise<unknown>, done: string) => {
+    await change;
+    await refreshWorkspace(client, workspace.id);
+    setError(''); setNotice(done);
+  };
   const rename = async () => {
     if (!name.trim() || name.trim() === workspace.name || isBusy) return;
     setBusy(true); setError(''); setNotice('');
@@ -62,7 +71,7 @@ export function GeneralSettings({ workspace }: { workspace: Space }) {
   return <VStack gap={8}>
     <SettingsHead title="일반" description="워크스페이스의 이름과 소유자를 정합니다." />
     <SettingsCard title="세부 정보" id="workspace-details">
-      <SettingsRow lead={<WorkspaceMark workspace={{ id: workspace.id, name: name || workspace.name }} size="lg" />} label="이름"
+      <SettingsRow lead={<WorkspaceMark workspace={{ id: workspace.id, name: name || workspace.name, logo: workspace.logo }} size="lg" />} label="이름"
         description={canEdit ? '바꾸면 구성원 모두에게 바로 보입니다.' : undefined}>
         {canEdit ? <form onSubmit={event => { event.preventDefault(); void rename(); }} className={styles.nameForm}>
           <TextInput label="이름" isLabelHidden size="sm" value={name} onChange={setName} isRequired isDisabled={isBusy}
@@ -70,6 +79,9 @@ export function GeneralSettings({ workspace }: { workspace: Space }) {
           <Button type="submit" label="저장" variant="secondary" size="sm" isDisabled={!name.trim() || name.trim() === workspace.name} isLoading={isBusy} />
         </form> : workspace.name}
       </SettingsRow>
+      {canPicture && <SettingsRow label="로고" description="메뉴 머리와 워크스페이스 목록에 보입니다. 없으면 이름 첫 글자로 보입니다.">
+        <Button label={workspace.logo ? '로고 바꾸기' : '로고 올리기'} variant="secondary" size="sm" onClick={() => setPicturing(true)} />
+      </SettingsRow>}
       <SettingsRow label="고정 주소" description="워크스페이스를 만들 때 정해지고 바뀌지 않습니다.">{workspace.slug}</SettingsRow>
     </SettingsCard>
     <FormMessage message={error} /><FormMessage message={notice} isError={false} />
@@ -98,5 +110,9 @@ export function GeneralSettings({ workspace }: { workspace: Space }) {
       description={leaving === 'delete' ? '구성원 모두가 이 워크스페이스에 들어올 수 없게 됩니다.' : '다시 참여하려면 새 초대가 필요합니다.'}
       confirmLabel={leaving === 'delete' ? '워크스페이스 삭제' : '나가기'} variant="destructive" word={leaving === 'delete' ? workspace.name : undefined}
       isPending={isBusy} error={leaveError} onClose={() => { setLeaving(null); setLeaveError(null); }} onConfirm={() => { void leave(); }} />}
+    {isPicturing && <PictureDialog title="워크스페이스 로고" shape="rect" filename="logo.jpg" hasPicture={!!workspace.logo}
+      preview={<WorkspaceMark workspace={workspace} size="lg" />} onClose={() => setPicturing(false)}
+      onSave={uploadId => pictured(changeLogo(workspace.id, uploadId), '로고를 바꿨습니다.')}
+      onRemove={() => pictured(removeLogo(workspace.id), '로고를 뺐습니다.')} />}
   </VStack>;
 }

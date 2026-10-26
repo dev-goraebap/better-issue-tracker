@@ -68,6 +68,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workspaces/{id}/logo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["changeLogo"];
+        post?: never;
+        delete: operations["removeLogo"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/me/password": {
         parameters: {
             query?: never;
@@ -79,6 +95,22 @@ export interface paths {
         put: operations["password"];
         post?: never;
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/avatar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["changeAvatar"];
+        post?: never;
+        delete: operations["removeAvatar"];
         options?: never;
         head?: never;
         patch?: never;
@@ -888,6 +920,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workspaces/{id}/logo/{pictureId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["logo"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/workspaces/{id}/invitations/{invitationId}": {
         parameters: {
             query?: never;
@@ -899,6 +947,22 @@ export interface paths {
         put?: never;
         post?: never;
         delete: operations["revoke"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/users/{userId}/avatar/{pictureId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["avatar"];
+        put?: never;
+        post?: never;
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -1078,9 +1142,15 @@ export interface components {
             userId: string;
             currentPassword: string;
         };
+        Logo: {
+            uploadId: string;
+        };
         Password: {
             currentPassword: string;
             newPassword: string;
+        };
+        Avatar: {
+            uploadId: string;
         };
         Selection: {
             workspaceId: string;
@@ -1644,6 +1714,10 @@ export interface components {
             /** Format: date-time */
             updatedAt: string;
         };
+        Picture: {
+            id: string;
+            color?: string | null;
+        };
         Space: {
             id: string;
             name: string;
@@ -1652,6 +1726,8 @@ export interface components {
             myRole: "owner" | "admin" | "member" | "viewer";
             /** Format: date-time */
             createdAt: string;
+            /** @description 워크스페이스 로고(BIT-30). 없으면 이름 첫 글자 */
+            logo?: components["schemas"]["Picture"];
         };
         Member: {
             memberId: string;
@@ -1662,6 +1738,8 @@ export interface components {
             role: "owner" | "admin" | "member" | "viewer";
             /** Format: date-time */
             joinedAt: string;
+            /** @description 구성원의 사진(BIT-30). 없으면 그림 아바타 */
+            avatar?: components["schemas"]["Picture"];
         };
         Members: {
             items: components["schemas"]["Member"][];
@@ -1698,6 +1776,8 @@ export interface components {
             /** @enum {string} */
             authenticationMethod: "SESSION" | "API_KEY" | "INTEGRATION";
             agentName?: string | null;
+            /** @description 내 사진(BIT-30). 없으면 그림 아바타 */
+            avatar?: components["schemas"]["Picture"];
         };
         Spaces: {
             items: components["schemas"]["Space"][];
@@ -1891,6 +1971,50 @@ export interface operations {
             };
         };
     };
+    changeLogo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Logo"];
+            };
+        };
+        responses: {
+            /** @description Logo changed */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    removeLogo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Logo removed */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     password: {
         parameters: {
             query?: never;
@@ -1905,6 +2029,46 @@ export interface operations {
         };
         responses: {
             /** @description Password changed and session rotated */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    changeAvatar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Avatar"];
+            };
+        };
+        responses: {
+            /** @description Picture changed */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    removeAvatar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Picture removed */
             204: {
                 headers: {
                     [name: string]: unknown;
@@ -3856,6 +4020,29 @@ export interface operations {
             };
         };
     };
+    logo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                pictureId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "image/jpeg": string;
+                };
+            };
+        };
+    };
     invitation: {
         parameters: {
             query?: never;
@@ -3897,6 +4084,29 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    avatar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: string;
+                pictureId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "image/jpeg": string;
+                };
             };
         };
     };

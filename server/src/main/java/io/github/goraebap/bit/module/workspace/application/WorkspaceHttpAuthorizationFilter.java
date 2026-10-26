@@ -42,7 +42,9 @@ final class WorkspaceHttpAuthorizationFilter extends OncePerRequestFilter {
             var action = WorkspaceFacade.Action.READ;
             if (suffix == null && method.equals("DELETE") || "owner".equals(suffix))
                 action = WorkspaceFacade.Action.OWNER;
-            else if (suffix == null && method.equals("PATCH")) action = WorkspaceFacade.Action.EDIT_SETTINGS;
+            else if (suffix == null && method.equals("PATCH")
+                    || "logo".equals(suffix) && (method.equals("PUT") || method.equals("DELETE")))
+                action = WorkspaceFacade.Action.EDIT_SETTINGS;
             else if (suffix != null && suffix.startsWith("invitations")
                     || suffix != null && suffix.startsWith("members/") && !suffix.equals("members/me"))
                 action = WorkspaceFacade.Action.MANAGE_MEMBERS;

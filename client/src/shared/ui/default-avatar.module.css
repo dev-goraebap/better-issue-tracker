@@ -1,0 +1,10 @@
+/* The frame adds no box of its own; it only lets a picture fade in over the colour painted under it, slowly, on a curve
+   gentle at both ends. A picture at hand already (data-at-once) shows at once. */
+.frame { display: contents; }
+.frame[data-picture] img { opacity: 0; transition: opacity 1000ms cubic-bezier(0.45, 0, 0.25, 1); }
+.frame[data-shown] img { opacity: 1; }
+.frame[data-at-once] img { transition: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .frame[data-picture] img { opacity: 1; transition: none; }
+}

@@ -32,6 +32,9 @@ export const invitationsQuery = (id: string) => queryOptions({
 export async function selectWorkspace(id: string) { await command('PUT', '/api/v1/auth/sessions/current/workspace', { workspaceId: id }); }
 export const createWorkspace = (name: string, slug: string) => createAt('/api/v1/workspaces', { name, slug });
 export const renameWorkspace = (id: string, name: string) => command('PATCH', spacePath(id), { name });
+/** Makes an uploaded square picture the workspace's logo (BIT-30), or takes it away. */
+export const changeLogo = (id: string, uploadId: string) => command('PUT', `${spacePath(id)}/logo`, { uploadId });
+export const removeLogo = (id: string) => command('DELETE', `${spacePath(id)}/logo`);
 /** Hands the workspace to another member; the owner's password is asked again. */
 export const transferOwner = (id: string, userId: string, currentPassword: string) => command('PUT', `${spacePath(id)}/owner`, { userId, currentPassword });
 export const deleteWorkspace = (id: string) => command('DELETE', spacePath(id));

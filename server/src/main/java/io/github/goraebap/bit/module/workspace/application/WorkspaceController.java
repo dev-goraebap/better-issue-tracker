@@ -1,6 +1,7 @@
 package io.github.goraebap.bit.module.workspace.application;
 
 import io.github.goraebap.bit.shared.web.CurrentUser;
+import io.github.goraebap.bit.shared.web.PictureBytes;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.Valid;
 import java.net.URI;
@@ -57,6 +58,30 @@ class WorkspaceController {
             @RequestBody WorkspaceRequests.Rename body) {
         workspaceService.rename(actor, id, body.getName(), body.hasName());
         return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/workspaces/{id}/logo")
+    @ApiResponse(responseCode = "204", description = "Logo changed")
+    ResponseEntity<Void> changeLogo(
+            @AuthenticationPrincipal CurrentUser actor,
+            @PathVariable String id,
+            @Valid @RequestBody WorkspaceRequests.Logo body) {
+        workspaceService.changeLogo(actor, id, body);
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/workspaces/{id}/logo")
+    @ApiResponse(responseCode = "204", description = "Logo removed")
+    ResponseEntity<Void> removeLogo(@AuthenticationPrincipal CurrentUser actor, @PathVariable String id) {
+        workspaceService.removeLogo(actor, id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping(value = "/workspaces/{id}/logo/{pictureId}", produces = "image/jpeg")
+    ResponseEntity<byte[]> logo(
+            @AuthenticationPrincipal CurrentUser actor, @PathVariable String id, @PathVariable String pictureId) {
+        var file = workspaceService.logoBytes(actor, id, pictureId);
+        return PictureBytes.of(file.contentType(), file.body());
     }
 
     @DeleteMapping("/workspaces/{id}")

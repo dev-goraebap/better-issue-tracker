@@ -72,6 +72,7 @@ class AuthSecurityConfig {
                         .permitAll()
                         .requestMatchers(
                                 "/api/v1/me",
+                                "/api/v1/me/avatar",
                                 "/api/v1/me/password",
                                 "/api/v1/me/api-keys",
                                 "/api/v1/me/api-keys/*",
@@ -87,6 +88,8 @@ class AuthSecurityConfig {
                                 HttpMethod.GET,
                                 "/api/v1/me/workspaces",
                                 "/api/v1/workspaces/*",
+                                "/api/v1/workspaces/*/logo/*",
+                                "/api/v1/users/*/avatar/*",
                                 "/api/v1/workspaces/*/members",
                                 "/api/v1/workspaces/*/invitations",
                                 "/api/v1/workspaces/*/invitations/*")
@@ -110,11 +113,15 @@ class AuthSecurityConfig {
                         .requestMatchers(
                                 HttpMethod.DELETE,
                                 "/api/v1/workspaces/*",
+                                "/api/v1/workspaces/*/logo",
                                 "/api/v1/workspaces/*/members/*",
                                 "/api/v1/workspaces/*/invitations/*")
                         .authenticated()
                         .requestMatchers(
-                                HttpMethod.PUT, "/api/v1/workspaces/*/owner", "/api/v1/auth/sessions/current/workspace")
+                                HttpMethod.PUT,
+                                "/api/v1/workspaces/*/owner",
+                                "/api/v1/workspaces/*/logo",
+                                "/api/v1/auth/sessions/current/workspace")
                         .authenticated()
                         .requestMatchers(
                                 HttpMethod.GET, "/api/v1/workspaces/*/projects", "/api/v1/workspaces/*/projects/**")

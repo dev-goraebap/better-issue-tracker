@@ -10,6 +10,7 @@ import {
 import { ApiError, logout, sessionQueryOptions } from '@/shared/api';
 import { isJustBefore, isPlainClick } from '@/shared/lib/history-trail';
 import { isForOther } from '@/shared/lib/key-target';
+import { rememberPictures } from '@/shared/lib/person-pictures';
 import { DefaultAvatar, NavIcon, NotificationBell } from '@/shared/ui';
 import { WorkspaceSwitcher } from '@/features/workspace-switcher';
 import { CreateProjectDialog } from '@/features/project-create';
@@ -47,6 +48,8 @@ export function AppLayout() {
   const isSettings = isAccount || isSpaceSettings;
   const workspaceId = place.workspaceId ?? (isAccount ? lastSpace : '');
   const me = useQuery(sessionQueryOptions).data?.user;
+  // The member's own picture shows on their card and beside their name before any member list is read (BIT-30).
+  useEffect(() => { if (me) rememberPictures([[me.id, me.avatar]]); }, [me]);
   const space = useQuery({ ...workspaceQuery(workspaceId), enabled: !!workspaceId });
   const workspace = workspaceId ? space.data : undefined;
   // Only the workspace's owner and admins make projects: the others see no + and no first-project card.
