@@ -11,7 +11,7 @@ import lombok.Getter;
 
 /**
  * A file a member is sending to storage before it belongs to anything. It becomes an attachment when the owning
- * command, such as saving an issue, takes it; one nobody takes within KEPT is removed with its bytes.
+ * command, such as saving a work item, takes it; one nobody takes within KEPT is removed with its bytes.
  */
 @Getter
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)

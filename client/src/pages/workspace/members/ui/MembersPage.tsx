@@ -172,7 +172,7 @@ export function MembersPage() {
         : pending.kind === 'leave' ? '이 워크스페이스에서 나갈까요?' : '초대를 폐기할까요?'}
       description={pending.kind === 'role' ? `${ROLE_LABELS[pending.member.role]} → ${ROLE_LABELS[pending.role]}. API 키 권한도 바로 바뀝니다.`
         : pending.kind === 'remove' ? '이 워크스페이스에 들어올 수 없게 됩니다. 다시 참여하려면 새 초대가 필요합니다.'
-        : pending.kind === 'leave' ? '이 워크스페이스의 이슈와 문서를 더 볼 수 없게 됩니다. 다시 들어오려면 새 초대가 필요합니다.' : `${pending.invite.email}에 보낸 링크로 더 이상 참여할 수 없습니다.`}
+        : pending.kind === 'leave' ? '이 워크스페이스의 업무와 문서를 더 볼 수 없게 됩니다. 다시 들어오려면 새 초대가 필요합니다.' : `${pending.invite.email}에 보낸 링크로 더 이상 참여할 수 없습니다.`}
       confirmLabel={pending.kind === 'role' ? '바꾸기' : pending.kind === 'remove' ? '빼기' : pending.kind === 'leave' ? '나가기' : '폐기'} />}
   </PageFrame>;
 }

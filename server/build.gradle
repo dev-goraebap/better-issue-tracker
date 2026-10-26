@@ -69,7 +69,7 @@ jooq {
                     // SQLite REAL stores doubles; DDLDatabase otherwise maps SQL REAL to Java Float.
                     forcedType {
                         name = 'DOUBLE'
-                        includeExpression = '(?i:.*(issue|issue_view)\\.position)'
+                        includeExpression = '(?i:.*(work_item|work_item_view)\\.position)'
                     }
                     // Ids are ten-character text (D-083); the columns V1-V8 declared uuid keep that type name in SQLite.
                     forcedType {

@@ -61,7 +61,7 @@ export function ProjectGeneralSettings({ project, canManage }: { project: Projec
     finally { setBusy(false); }
   };
   return <VStack gap={8}>
-    <SettingsHead title="일반" description={`${project.name}의 이름과 이슈 번호 앞에 붙는 키를 정합니다.${isArchived ? ' 보관한 프로젝트는 읽기만 됩니다.' : ''}`} />
+    <SettingsHead title="일반" description={`${project.name}의 이름과 업무 번호 앞에 붙는 키를 정합니다.${isArchived ? ' 보관한 프로젝트는 읽기만 됩니다.' : ''}`} />
     <form onSubmit={event => { event.preventDefault(); void save(); }}>
       <SettingsCard title="세부 정보" id="project-details" actions={editable ? <Button type="submit" label="저장" variant="secondary" size="sm" isDisabled={!isChanged} isLoading={isBusy} /> : undefined}>
         <SettingsRow label="아이콘" description="사이드바와 목록에서 프로젝트 이름 앞에 보입니다.">
@@ -71,7 +71,7 @@ export function ProjectGeneralSettings({ project, canManage }: { project: Projec
           {editable ? <TextInput label="이름" isLabelHidden size="sm" value={name} onChange={setName} isRequired isDisabled={isBusy}
             status={nameError ? { type: 'error', message: nameError } : undefined} /> : project.name}
         </SettingsRow>
-        <SettingsRow label="키" description={`이슈 번호가 ${key || project.key}-42처럼 붙습니다. 바꿔도 옛 키로 찾을 수 있습니다.`}>
+        <SettingsRow label="키" description={`업무 번호가 ${key || project.key}-42처럼 붙습니다. 바꿔도 옛 키로 찾을 수 있습니다.`}>
           {editable ? <TextInput label="키" isLabelHidden size="sm" value={key} onChange={value => setKey(value.toUpperCase())} isRequired isDisabled={isBusy}
             status={keyError ? { type: 'error', message: keyError } : undefined} /> : project.key}
         </SettingsRow>
@@ -84,16 +84,16 @@ export function ProjectGeneralSettings({ project, canManage }: { project: Projec
     </form>
     <FormMessage message={error} /><FormMessage message={notice} isError={false} />
     {canManage && <SettingsCard title="위험 구역" id="project-danger" tone="danger">
-      <SettingsRow label={isArchived ? '보관 해제' : '프로젝트 보관'} description={isArchived ? '다시 이슈를 만들고 고칠 수 있게 됩니다.' : '읽을 수만 있게 남기고, 언제든 되돌릴 수 있습니다.'}>
+      <SettingsRow label={isArchived ? '보관 해제' : '프로젝트 보관'} description={isArchived ? '다시 업무를 만들고 고칠 수 있게 됩니다.' : '읽을 수만 있게 남기고, 언제든 되돌릴 수 있습니다.'}>
         <Button label={isArchived ? '보관 해제' : '보관'} variant="secondary" size="sm" onClick={() => setAsking('archive')} />
       </SettingsRow>
-      <SettingsRow label="프로젝트 삭제" description="프로젝트와 그 이슈가 숨겨집니다. 이슈 번호와 옛 키는 남습니다.">
+      <SettingsRow label="프로젝트 삭제" description="프로젝트와 그 업무가 숨겨집니다. 업무 번호와 옛 키는 남습니다.">
         <Button label="프로젝트 삭제" variant="destructive" size="sm" onClick={() => setAsking('delete')} />
       </SettingsRow>
     </SettingsCard>}
     {asking === 'archive' && <ConfirmDialog title={isArchived ? '보관을 풀까요?' : '프로젝트를 보관할까요?'} description={isArchived ? '다시 쓰는 프로젝트가 됩니다.' : '보관한 프로젝트는 읽을 수만 있습니다. 여기에서 되돌릴 수 있습니다.'}
       confirmLabel={isArchived ? '보관 해제' : '보관'} isPending={isBusy} error={askError} onClose={() => { setAsking(null); setAskError(null); }} onConfirm={() => { void act(); }} />}
-    {asking === 'delete' && <ConfirmDialog title="프로젝트를 삭제할까요?" description="프로젝트와 그 안의 이슈가 목록에서 사라집니다."
+    {asking === 'delete' && <ConfirmDialog title="프로젝트를 삭제할까요?" description="프로젝트와 그 안의 업무가 목록에서 사라집니다."
       confirmLabel="프로젝트 삭제" variant="destructive" word={project.key} isPending={isBusy} error={askError} onClose={() => { setAsking(null); setAskError(null); }} onConfirm={() => { void act(); }} />}
   </VStack>;
 }

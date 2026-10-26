@@ -1,7 +1,7 @@
 package io.github.goraebap.bit.module.view.application;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import io.github.goraebap.bit.module.view.domain.IssueView;
+import io.github.goraebap.bit.module.view.domain.WorkItemView;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.Instant;
 import java.util.List;
@@ -10,7 +10,7 @@ public final class ViewViews {
     private ViewViews() {}
 
     /** Opaque comma-joined values the client owns; a key without a filter is left out. */
-    @Schema(name = "IssueViewFilters")
+    @Schema(name = "WorkItemViewFilters")
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public record Filters(
             @Schema(description = "Status categories: todo, doing, done, none")
@@ -23,12 +23,12 @@ public final class ViewViews {
             String label) {}
 
     @Schema(
-            name = "IssueViewSort",
+            name = "WorkItemViewSort",
             requiredProperties = {"key", "direction"})
-    public record Sort(IssueView.SortKey key, IssueView.Direction direction) {}
+    public record Sort(WorkItemView.SortKey key, WorkItemView.Direction direction) {}
 
     @Schema(
-            name = "IssueView",
+            name = "WorkItemView",
             requiredProperties = {
                 "id",
                 "workspaceId",
@@ -55,10 +55,10 @@ public final class ViewViews {
             @Schema(nullable = true) String description,
             String icon,
             String color,
-            IssueView.Layout layout,
+            WorkItemView.Layout layout,
             Filters filters,
             Sort sort,
-            List<IssueView.Column> columns,
+            List<WorkItemView.Column> columns,
             String ownerId,
             boolean isPersonal,
 
@@ -79,12 +79,12 @@ public final class ViewViews {
      * scope's default. A view not in it follows in the workspace's order.
      */
     @Schema(
-            name = "IssueViewOrder",
+            name = "WorkItemViewOrder",
             requiredProperties = {"scope", "viewKeys"})
     public record Order(
             @Schema(description = "home, or a project id") String scope,
 
-            @Schema(description = "View ids, and all for 전체 이슈")
+            @Schema(description = "View ids, and all for 전체 업무")
             List<String> viewKeys) {
         public Order {
             viewKeys = List.copyOf(viewKeys);
@@ -93,16 +93,16 @@ public final class ViewViews {
 
     /** The caller's own adjustments to a view; a part left out follows the view. */
     @Schema(
-            name = "IssueViewTweak",
+            name = "WorkItemViewTweak",
             requiredProperties = {"viewKey"})
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public record Tweak(
-            @Schema(description = "A view id, or all for 전체 이슈")
+            @Schema(description = "A view id, or all for 전체 업무")
             String viewKey,
 
-            IssueView.Layout layout,
+            WorkItemView.Layout layout,
             Sort sort,
-            List<IssueView.Column> columns) {
+            List<WorkItemView.Column> columns) {
         public Tweak {
             columns = columns == null ? null : List.copyOf(columns);
         }

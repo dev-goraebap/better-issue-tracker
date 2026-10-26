@@ -16,17 +16,17 @@ public final class Link {
             Objects.requireNonNull(toId);
             if (fromType == toType && fromId.equals(toId))
                 throw new IllegalArgumentException("Cannot link a target to itself");
-            boolean workPair = fromType == TargetType.issue && toType == TargetType.issue;
-            boolean sessionWork = fromType == TargetType.session_record && toType == TargetType.issue
-                    || fromType == TargetType.issue && toType == TargetType.session_record;
+            boolean workPair = fromType == TargetType.work_item && toType == TargetType.work_item;
+            boolean sessionWork = fromType == TargetType.session_record && toType == TargetType.work_item
+                    || fromType == TargetType.work_item && toType == TargetType.session_record;
             boolean valid =
                     switch (relation == null ? "" : relation) {
                         case "derives_from" ->
                             fromType == TargetType.decision && toType == TargetType.session_record
-                                    || fromType == TargetType.issue && toType == TargetType.decision;
-                        case "implements" -> fromType == TargetType.code_ref && toType == TargetType.issue;
+                                    || fromType == TargetType.work_item && toType == TargetType.decision;
+                        case "implements" -> fromType == TargetType.code_ref && toType == TargetType.work_item;
                         case "revises", "based_on" ->
-                            (fromType == TargetType.issue || fromType == TargetType.decision)
+                            (fromType == TargetType.work_item || fromType == TargetType.decision)
                                     && toType == TargetType.artifact;
                         case "supersedes" -> fromType == TargetType.decision && toType == TargetType.decision;
                         case "blocks", "subtask_of" -> workPair;

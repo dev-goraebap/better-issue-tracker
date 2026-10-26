@@ -18,7 +18,7 @@ import styles from './projects.module.css';
 
 /**
  * PATTERN · 탭 목록 (모든 프로젝트), /workspaces/$workspaceId/projects (?status=archived|deleted). Projects as a table: the name
- * links the row to the project's issues, its key, description and when it changed; archived ones in their own tab, and
+ * links the row to the project's work items, its key, description and when it changed; archived ones in their own tab, and
  * for the owner and admins the deleted ones, each restorable. A phone reads them as cards.
  * - Projects read in the workspace's order (D-080). The owner and admins move one up or down from its row's menu (the
  *   sidebar's drag on a desktop does the same), on the whole list unsearched.
@@ -87,7 +87,7 @@ export function ProjectsPage() {
       <FormMessage message={error} />
       {!result.data ? <QueryMessage pending={result.isPending} error={result.error} retry={() => { void result.refetch(); }} />
         : rows.length === 0 ? <PageState kind={search.q ? 'search' : 'empty'} title={search.q ? `'${search.q}'에 맞는 프로젝트가 없습니다` : tab === 'archived' ? '보관한 프로젝트가 없습니다' : tab === 'deleted' ? '삭제한 프로젝트가 없습니다' : '아직 프로젝트가 없습니다'}
-          description={search.q ? '다른 이름이나 키로 찾아보세요.' : '프로젝트를 만들면 이슈를 그 안에 모을 수 있습니다.'} />
+          description={search.q ? '다른 이름이나 키로 찾아보세요.' : '프로젝트를 만들면 업무를 그 안에 모을 수 있습니다.'} />
         : isMobile
           ? <ItemList label="프로젝트">{rows.map(row => <ItemRow key={row.id} lead={<ProjectMark project={row} size="md" />}
             title={name(row, ITEM_ROW_LINK)} meta={<><ItemMeta><span className={styles.key}>{row.key}</span></ItemMeta><ItemMeta>{dateText(row.updatedAt)}</ItemMeta></>}

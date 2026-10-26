@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { placeOf, spotOf, stepSpot, withCardAt } from '../src/pages/workspace/issues/model/board-move';
+import { placeOf, spotOf, stepSpot, withCardAt } from '../src/pages/workspace/work-items/model/board-move';
 
 const card = (id: string) => ({ id });
 const lanes = [

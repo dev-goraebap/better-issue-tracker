@@ -8,8 +8,8 @@ import io.github.goraebap.bit.module.coderef.domain.IntegrationRepository;
 import io.github.goraebap.bit.module.coderef.domain.Provider;
 import io.github.goraebap.bit.module.coderef.domain.Remote;
 import io.github.goraebap.bit.module.coderef.domain.RuleEvent;
-import io.github.goraebap.bit.module.issue.IssueFacade;
 import io.github.goraebap.bit.module.project.ProjectFacade;
+import io.github.goraebap.bit.module.workitem.WorkItemFacade;
 import io.github.goraebap.bit.module.workspace.WorkspaceFacade;
 import io.github.goraebap.bit.shared.error.BusinessException;
 import io.github.goraebap.bit.shared.web.CurrentUser;
@@ -38,7 +38,7 @@ public class IntegrationService {
     private final IntegrationRepository integrationRepository;
     private final CodeLinkRepository codeLinkRepository;
     private final ProjectFacade projectFacade;
-    private final IssueFacade issueFacade;
+    private final WorkItemFacade workItemFacade;
     private final WorkspaceFacade workspaceFacade;
     private final Hosts hosts;
     private final TransactionTemplate transactionTemplate;
@@ -186,12 +186,12 @@ public class IntegrationService {
     }
 
     /** An issue's links into the project's repositories, newest first. */
-    public List<CodeRefViews.Link> links(CurrentUser actor, String workspaceId, String projectId, String issueId) {
-        issueFacade.requireAccess(actor, workspaceId, projectId, issueId, false, false);
+    public List<CodeRefViews.Link> links(CurrentUser actor, String workspaceId, String projectId, String workItemId) {
+        workItemFacade.requireAccess(actor, workspaceId, projectId, workItemId, false, false);
         var providers = new java.util.HashMap<String, Provider>();
         read(() -> integrationRepository.findAllByProjectId(projectId))
                 .forEach(each -> providers.put(each.id(), each.provider()));
-        return read(() -> codeLinkRepository.findAllByIssueId(issueId)).stream()
+        return read(() -> codeLinkRepository.findAllByWorkItemId(workItemId)).stream()
                 .filter(link -> providers.containsKey(link.integrationId()))
                 .map(link -> new CodeRefViews.Link(
                         link.id(),
@@ -209,19 +209,19 @@ public class IntegrationService {
 
     /** The pull and merge requests of these issues, for the board's and list's badges. */
     public List<CodeRefViews.Pull> pulls(
-            CurrentUser actor, String workspaceId, List<String> issueIds, List<String> projectIds) {
+            CurrentUser actor, String workspaceId, List<String> workItemIds, List<String> projectIds) {
         workspaceFacade.requireAccess(actor, workspaceId, WorkspaceFacade.Action.READ);
-        if (issueIds.isEmpty()) return List.of();
+        if (workItemIds.isEmpty()) return List.of();
         var providers = new java.util.HashMap<String, Provider>();
         for (String projectId : projectIds) {
             projectFacade.requireAccess(actor, workspaceId, projectId, false);
             read(() -> integrationRepository.findAllByProjectId(projectId))
                     .forEach(each -> providers.put(each.id(), each.provider()));
         }
-        return read(() -> codeLinkRepository.findAllByIssueIdIn(issueIds, CodeLink.Kind.pull_request)).stream()
+        return read(() -> codeLinkRepository.findAllByWorkItemIdIn(workItemIds, CodeLink.Kind.pull_request)).stream()
                 .filter(link -> providers.containsKey(link.integrationId()))
                 .map(link -> new CodeRefViews.Pull(
-                        link.issueId(),
+                        link.workItemId(),
                         providers.get(link.integrationId()),
                         link.externalId(),
                         link.url(),

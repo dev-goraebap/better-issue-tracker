@@ -8,12 +8,12 @@ import io.github.goraebap.bit.module.coderef.domain.IntegrationRepository;
 import io.github.goraebap.bit.module.coderef.domain.References;
 import io.github.goraebap.bit.module.coderef.domain.Remote;
 import io.github.goraebap.bit.module.coderef.domain.RuleEvent;
-import io.github.goraebap.bit.module.issue.IssueFacade;
 import io.github.goraebap.bit.module.label.LabelFacade;
 import io.github.goraebap.bit.module.link.CommentFacade;
 import io.github.goraebap.bit.module.link.TargetType;
 import io.github.goraebap.bit.module.project.ColumnCategory;
 import io.github.goraebap.bit.module.project.ProjectFacade;
+import io.github.goraebap.bit.module.workitem.WorkItemFacade;
 import io.github.goraebap.bit.shared.error.BusinessException;
 import io.github.goraebap.bit.shared.web.CurrentUser;
 import java.time.Clock;
@@ -50,7 +50,7 @@ public class InboundService {
     private final CodeLinkRepository codeLinkRepository;
     private final IntegrationService integrationService;
     private final ProjectFacade projectFacade;
-    private final IssueFacade issueFacade;
+    private final WorkItemFacade workItemFacade;
     private final CommentFacade commentFacade;
     private final LabelFacade labelFacade;
     private final OutboundService outboundService;
@@ -123,7 +123,7 @@ public class InboundService {
                     commentFacade.create(
                             Hosts.actor(integration, comment.author()),
                             workspaceId,
-                            TargetType.issue,
+                            TargetType.work_item,
                             id,
                             comment.body());
                     comments++;
@@ -159,17 +159,17 @@ public class InboundService {
 
     private void pushed(Scene scene, Remote.Push push) {
         var now = clock.instant();
-        var branchIssues = resolve(scene, References.keys(push.branch()));
+        var branchWorkItems = resolve(scene, References.keys(push.branch()));
         String last = push.commits().isEmpty() ? null : push.commits().getLast().sha();
         var links = new ArrayList<CodeLink>();
-        for (String issueId : branchIssues) {
+        for (String workItemId : branchWorkItems) {
             var existing =
-                    codeLinkRepository.find(scene.integration.id(), CodeLink.Kind.branch, push.branch(), issueId);
+                    codeLinkRepository.find(scene.integration.id(), CodeLink.Kind.branch, push.branch(), workItemId);
             links.add(existing.map(
                             link -> link.seen(push.branch(), CodeLink.State.open, push.sender(), shortSha(last), now))
                     .orElseGet(() -> CodeLink.of(
                             scene.integration.id(),
-                            issueId,
+                            workItemId,
                             CodeLink.Kind.branch,
                             push.branch(),
                             push.branchUrl() == null ? scene.integration.webUrl() : push.branchUrl(),
@@ -178,21 +178,21 @@ public class InboundService {
                             push.sender(),
                             shortSha(last),
                             now)));
-            if (existing.isEmpty()) move(scene, issueId, RuleEvent.branch_push, push.sender());
+            if (existing.isEmpty()) move(scene, workItemId, RuleEvent.branch_push, push.sender());
         }
         for (var commit : push.commits()) {
-            var issues = new LinkedHashSet<>(branchIssues);
-            issues.addAll(resolve(scene, References.keys(commit.message())));
+            var workItems = new LinkedHashSet<>(branchWorkItems);
+            workItems.addAll(resolve(scene, References.keys(commit.message())));
             String title = commit.message() == null
                     ? commit.sha()
                     : commit.message().lines().findFirst().orElse(commit.sha());
-            for (String issueId : issues) {
+            for (String workItemId : workItems) {
                 var existing =
-                        codeLinkRepository.find(scene.integration.id(), CodeLink.Kind.commit, commit.sha(), issueId);
+                        codeLinkRepository.find(scene.integration.id(), CodeLink.Kind.commit, commit.sha(), workItemId);
                 if (existing.isPresent()) continue;
                 links.add(CodeLink.of(
                         scene.integration.id(),
-                        issueId,
+                        workItemId,
                         CodeLink.Kind.commit,
                         commit.sha(),
                         commit.url() == null ? scene.integration.webUrl() : commit.url(),
@@ -209,16 +209,16 @@ public class InboundService {
     /** Links the request to the issues it names; true when it named any. */
     private boolean pulled(Scene scene, Remote.PullEvent pull) {
         var now = clock.instant();
-        var issues = new LinkedHashSet<String>();
-        issues.addAll(resolve(scene, References.keys(pull.branch())));
-        issues.addAll(resolve(scene, References.keys(pull.title())));
-        issues.addAll(resolve(scene, References.keys(pull.body())));
+        var workItems = new LinkedHashSet<String>();
+        workItems.addAll(resolve(scene, References.keys(pull.branch())));
+        workItems.addAll(resolve(scene, References.keys(pull.title())));
+        workItems.addAll(resolve(scene, References.keys(pull.body())));
         var numbers = new LinkedHashSet<String>();
         var closing = CLOSING.matcher(pull.body() == null ? "" : pull.body());
         while (closing.find()) numbers.add(closing.group(1));
         numbers.addAll(References.numbers(pull.title()));
-        for (String number : numbers) issues.addAll(mirrors(scene, number));
-        if (issues.isEmpty()) return false;
+        for (String number : numbers) workItems.addAll(mirrors(scene, number));
+        if (workItems.isEmpty()) return false;
         var state =
                 switch (pull.action()) {
                     case "merged" -> CodeLink.State.merged;
@@ -226,13 +226,13 @@ public class InboundService {
                     default -> pull.draft() ? CodeLink.State.draft : CodeLink.State.open;
                 };
         var links = new ArrayList<CodeLink>();
-        for (String issueId : issues) {
-            var existing =
-                    codeLinkRepository.find(scene.integration.id(), CodeLink.Kind.pull_request, pull.number(), issueId);
+        for (String workItemId : workItems) {
+            var existing = codeLinkRepository.find(
+                    scene.integration.id(), CodeLink.Kind.pull_request, pull.number(), workItemId);
             links.add(existing.map(link -> link.seen(pull.title(), state, pull.sender(), pull.branch(), now))
                     .orElseGet(() -> CodeLink.of(
                             scene.integration.id(),
-                            issueId,
+                            workItemId,
                             CodeLink.Kind.pull_request,
                             pull.number(),
                             pull.url() == null ? scene.integration.webUrl() : pull.url(),
@@ -243,10 +243,10 @@ public class InboundService {
                             now)));
         }
         transactionTemplate.executeWithoutResult(status -> codeLinkRepository.saveAll(links));
-        for (String issueId : issues) {
-            if (state == CodeLink.State.merged) move(scene, issueId, RuleEvent.pr_merged, pull.sender());
+        for (String workItemId : workItems) {
+            if (state == CodeLink.State.merged) move(scene, workItemId, RuleEvent.pr_merged, pull.sender());
             else if (state == CodeLink.State.open && !"edited".equals(pull.action()))
-                move(scene, issueId, RuleEvent.pr_opened, pull.sender());
+                move(scene, workItemId, RuleEvent.pr_opened, pull.sender());
         }
         return true;
     }
@@ -256,7 +256,7 @@ public class InboundService {
         var links = mirrorLinks(scene, event.number());
         var mirrored = links.stream()
                 .filter(mirror -> !stale(mirror, event.updatedAt()))
-                .map(CodeLink::issueId)
+                .map(CodeLink::workItemId)
                 .toList();
         switch (event.action()) {
             case "opened" -> {
@@ -275,7 +275,7 @@ public class InboundService {
                 mirrored.forEach(id -> {
                     if (category(
                                     scene,
-                                    issueFacade
+                                    workItemFacade
                                             .get(scene.actor, scene.workspaceId, scene.projectId, id)
                                             .columnId())
                             == ColumnCategory.done)
@@ -284,15 +284,15 @@ public class InboundService {
             case "edited" -> {
                 if (!scene.integration.syncsIssues()) return;
                 for (String id : mirrored) {
-                    var now = issueFacade.get(scene.actor, scene.workspaceId, scene.projectId, id);
+                    var now = workItemFacade.get(scene.actor, scene.workspaceId, scene.projectId, id);
                     var labels = event.labels() == null ? null : labels(scene, event.labels());
                     String description = References.withoutMarks(event.body());
-                    issueFacade.revise(
+                    workItemFacade.revise(
                             scene.actor,
                             scene.workspaceId,
                             scene.projectId,
                             id,
-                            new IssueFacade.Revision(
+                            new WorkItemFacade.Revision(
                                     same(now.title(), event.title()) ? null : event.title(),
                                     same(now.description(), description) ? null : description,
                                     labels == null || same(now.priority(), labels.priority)
@@ -316,12 +316,12 @@ public class InboundService {
             commentFacade.create(
                     Hosts.actor(scene.integration, event.author()),
                     scene.workspaceId,
-                    TargetType.issue,
+                    TargetType.work_item,
                     id,
                     event.body());
     }
 
-    /** A BIT issue for a repository issue, mirrored with it; its id. */
+    /** A BIT work item for a repository issue, mirrored with it; its id. */
     private String createMirror(
             Scene scene,
             String number,
@@ -340,11 +340,11 @@ public class InboundService {
                 : title.length() > 200 ? title.substring(0, 200) : title;
         String description = References.withoutMarks(body);
         if (description != null && description.length() > 20000) description = description.substring(0, 20000);
-        String id = issueFacade.create(
+        String id = workItemFacade.create(
                 Hosts.actor(scene.integration, author),
                 scene.workspaceId,
                 scene.projectId,
-                new IssueFacade.NewIssue(
+                new WorkItemFacade.NewWorkItem(
                         safeTitle,
                         description == null || description.isBlank() ? null : description,
                         labels.priority,
@@ -362,7 +362,7 @@ public class InboundService {
                 null,
                 clock.instant());
         transactionTemplate.executeWithoutResult(status -> codeLinkRepository.saveAll(List.of(link)));
-        String reference = issueFacade
+        String reference = workItemFacade
                 .get(scene.actor, scene.workspaceId, scene.projectId, id)
                 .reference();
         outboundService.announce(scene.integration, number, scene.workspaceId, reference);
@@ -373,12 +373,12 @@ public class InboundService {
      * Moves an issue by an event's rule, forward only: a branch starts work on an issue not started, an opened request
      * moves it on unless it is further already, a merge or a close finishes it unless it is done.
      */
-    private void move(Scene scene, String issueId, RuleEvent event, String sender) {
+    private void move(Scene scene, String workItemId, RuleEvent event, String sender) {
         var target = Hosts.column(event, scene.rules, scene.columns);
         if (target.isEmpty()) return;
-        var issue = issueFacade.get(scene.actor, scene.workspaceId, scene.projectId, issueId);
-        var category = category(scene, issue.columnId());
-        boolean ahead = index(scene, target.get()) > index(scene, issue.columnId());
+        var workItem = workItemFacade.get(scene.actor, scene.workspaceId, scene.projectId, workItemId);
+        var category = category(scene, workItem.columnId());
+        boolean ahead = index(scene, target.get()) > index(scene, workItem.columnId());
         boolean moves =
                 switch (event) {
                     case branch_push -> category == null || category == ColumnCategory.todo;
@@ -387,15 +387,15 @@ public class InboundService {
                     case issue_opened -> true;
                 };
         if (!moves) return;
-        issueFacade.moveTo(
-                Hosts.actor(scene.integration, sender), scene.workspaceId, scene.projectId, issueId, target.get());
+        workItemFacade.moveTo(
+                Hosts.actor(scene.integration, sender), scene.workspaceId, scene.projectId, workItemId, target.get());
         // What the repository's issue did it knows already; what its code did, its issue is told.
         if (event == RuleEvent.branch_push || event == RuleEvent.pr_opened || event == RuleEvent.pr_merged)
-            outboundService.moved(scene.workspaceId, scene.projectId, issueId);
+            outboundService.moved(scene.workspaceId, scene.projectId, workItemId);
     }
 
-    private void to(Scene scene, String issueId, Optional<String> column) {
-        column.ifPresent(id -> issueFacade.moveTo(scene.actor, scene.workspaceId, scene.projectId, issueId, id));
+    private void to(Scene scene, String workItemId, Optional<String> column) {
+        column.ifPresent(id -> workItemFacade.moveTo(scene.actor, scene.workspaceId, scene.projectId, workItemId, id));
     }
 
     private static ColumnCategory category(Scene scene, String columnId) {
@@ -419,7 +419,7 @@ public class InboundService {
         var found = new LinkedHashSet<String>();
         for (String key : keys) {
             try {
-                var ref = issueFacade.findByRef(scene.actor, scene.workspaceId, key);
+                var ref = workItemFacade.findByRef(scene.actor, scene.workspaceId, key);
                 if (ref.projectId().equals(scene.projectId)) found.add(ref.id());
             } catch (BusinessException notOurs) {
                 // Not an issue of this workspace: a version number, another project's key or a typo.
@@ -429,7 +429,7 @@ public class InboundService {
     }
 
     private List<String> mirrors(Scene scene, String number) {
-        return mirrorLinks(scene, number).stream().map(CodeLink::issueId).toList();
+        return mirrorLinks(scene, number).stream().map(CodeLink::workItemId).toList();
     }
 
     private List<CodeLink> mirrorLinks(Scene scene, String number) {

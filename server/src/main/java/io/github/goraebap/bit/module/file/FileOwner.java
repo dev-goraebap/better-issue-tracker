@@ -8,7 +8,7 @@ import java.util.Locale;
  * link. Artifact versions point at their blob directly and are not owners here.
  */
 public enum FileOwner {
-    ISSUE,
+    WORK_ITEM,
     COMMENT,
     /** A member's picture. */
     USER,

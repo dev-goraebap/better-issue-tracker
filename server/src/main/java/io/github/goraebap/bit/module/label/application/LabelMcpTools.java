@@ -10,7 +10,7 @@ import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-/** The workspace's labels for an agent over MCP (D-081): the names an issue's labels are given by. */
+/** The workspace's labels for an agent over MCP (D-081): the names a work item's labels are given by. */
 @Component
 @RequiredArgsConstructor
 class LabelMcpTools implements McpToolProvider {
@@ -22,7 +22,7 @@ class LabelMcpTools implements McpToolProvider {
         return List.of(new McpTool(
                 "list_labels",
                 "라벨 목록",
-                "워크스페이스의 라벨 이름을 돌려줍니다. system이 true인 '결정기록'은 앞으로 다른 작업이 따라야 할 선택을 남기는 이슈에 붙입니다(작업 이슈와 따로).",
+                "워크스페이스의 라벨 이름을 돌려줍니다. system이 true인 '결정기록'은 앞으로 다른 작업이 따라야 할 선택을 남기는 업무에 붙입니다(작업 업무와 따로).",
                 McpTool.input()
                         .string("workspace", "워크스페이스 이름이나 슬러그. 속한 워크스페이스가 하나면 생략합니다.", false)
                         .build(),

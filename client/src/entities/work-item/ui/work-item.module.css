@@ -1,0 +1,20 @@
+/* The work item marks and rows (D-067): key, status ring, priority bars, label pills, a person, a phone card's empty lead. */
+.clip { min-inline-size: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* A work item's key, as Linear's: the body's type a step quieter, figures of one width. */
+.key { flex-shrink: 0; white-space: nowrap; font-size: 0.8125rem; font-variant-numeric: tabular-nums; color: var(--color-text-secondary); }
+.none { color: var(--color-text-secondary); opacity: 0.6; }
+/* Linear's marks (D-067): a priority's bars (긴급's orange square) and a status's ring, 14px before the name. */
+.priority { display: inline-flex; align-items: center; gap: var(--spacing-1-5, 0.375rem); color: var(--color-text-secondary); white-space: nowrap; }
+.priority svg { inline-size: 0.875rem; block-size: 0.875rem; flex-shrink: 0; color: var(--color-icon-secondary); }
+.priority[data-level="urgent"] svg { color: #f2994a; }
+.status { display: inline-flex; align-items: center; gap: var(--spacing-1-5, 0.375rem); flex-shrink: 0; min-inline-size: 0; color: var(--color-text-secondary); white-space: nowrap; }
+.status svg { inline-size: 0.875rem; block-size: 0.875rem; flex-shrink: 0; color: var(--color-icon-secondary); }
+.status[data-status="doing"] svg { color: #f2c94c; }
+.status[data-status="done"] svg { color: #5e6ad2; }
+.labels { display: flex; gap: var(--spacing-1); min-inline-size: 0; overflow: hidden; }
+/* A label as Linear's: a 20px pill on a hairline, its colour's dot before the name in 12px. */
+.label { display: inline-flex; align-items: center; gap: var(--spacing-1-5, 0.375rem); flex-shrink: 0; block-size: 1.25rem; padding-inline: 0.4375rem 0.5rem;
+  box-sizing: border-box; border: 1px solid var(--color-border-control); border-radius: var(--radius-full); font-size: 0.75rem; color: var(--color-text-secondary); white-space: nowrap; }
+.labelDot { inline-size: 0.5rem; block-size: 0.5rem; border-radius: 50%; flex-shrink: 0; }
+/* A card's lead when nobody is assigned: an empty dashed circle the size of a picture. */
+.leadEmpty { display: block; inline-size: 2rem; block-size: 2rem; border: 1px dashed var(--color-border-emphasized, var(--color-border)); border-radius: 50%; box-sizing: border-box; }

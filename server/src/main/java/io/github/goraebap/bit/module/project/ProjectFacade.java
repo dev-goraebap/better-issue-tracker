@@ -11,7 +11,7 @@ public interface ProjectFacade {
 
     ProjectRef findByKey(CurrentUser actor, String workspaceId, String key);
 
-    long allocateIssueNumber(CurrentUser actor, String workspaceId, String projectId);
+    long allocateWorkItemNumber(CurrentUser actor, String workspaceId, String projectId);
 
     long allocateDecisionNumber(CurrentUser actor, String workspaceId, String projectId);
 
@@ -23,7 +23,7 @@ public interface ProjectFacade {
 
     Optional<ColumnRef> findColumn(CurrentUser actor, String workspaceId, String projectId, String columnId);
 
-    /** The project's board columns in order, with their names: where an issue can be moved. */
+    /** The project's board columns in order, with their names: where a work item can be moved. */
     java.util.List<ColumnInfo> boardColumns(CurrentUser actor, String workspaceId, String projectId);
 
     record ColumnInfo(String id, String name, ColumnCategory category, boolean finalColumn) {}

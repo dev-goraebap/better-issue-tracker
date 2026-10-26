@@ -58,7 +58,7 @@ export function ConnectDialog({ project, provider, integration, onClose }: {
     <TextInput label="토큰" type="password" value={token} onChange={setToken} isRequired hasAutoFocus={isTokenOnly} isDisabled={isBusy}
       description={`${host.scopes}.`} status={tokenError ? { type: 'error', message: tokenError } : undefined} />
     <p className={styles.connectNote}>
-      <a href={tokenPage} target="_blank" rel="noreferrer noopener">{host.name}에서 토큰 만들기</a> · 토큰은 암호화해 보관하고, 저장소에 쓰는 이슈와 댓글은 이 토큰의 계정으로 남습니다.
+      <a href={tokenPage} target="_blank" rel="noreferrer noopener">{host.name}에서 토큰 만들기</a> · 토큰은 암호화해 보관하고, 저장소에 쓰는 업무와 댓글은 이 토큰의 계정으로 남습니다.
     </p>
     <FormMessage message={error} />
   </CompactDialog>;

@@ -107,7 +107,7 @@ docker exec <p>-litestream litestream ltx -config /etc/litestream.yml -level all
 docker compose -p <p> -f compose.yaml run --rm --no-deps litestream \
   restore -config /etc/litestream.yml -o /var/lib/bit/restore-test.db /var/lib/bit/bit.db
 docker exec <p>-litestream sqlite3 /var/lib/bit/restore-test.db \
-  'PRAGMA integrity_check; SELECT count(*) FROM issue;'
+  'PRAGMA integrity_check; SELECT count(*) FROM workItem;'
 docker exec <p>-litestream rm /var/lib/bit/restore-test.db
 ```
 

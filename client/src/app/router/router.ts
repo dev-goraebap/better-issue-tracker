@@ -3,7 +3,7 @@ import { ApiError, bootstrapQueryOptions, capabilitiesQueryOptions, keyQueryOpti
 import { followHistory } from '@/shared/lib/history-trail';
 import { isId, ownSearch } from '@/shared/lib/route-search';
 import { projectKey, projectQuery } from '@/entities/project';
-import { byRefQuery, parseIssueSearch, parseNewIssueSearch } from '@/entities/issue';
+import { byRefQuery, parseWorkItemSearch, parseNewWorkItemSearch } from '@/entities/work-item';
 import { workspaceKey, workspacePagesQuery, workspaceQuery, workspacesQuery } from '@/entities/workspace';
 import { BootstrapPage } from '@/pages/entry/bootstrap';
 import { ChangePasswordPage } from '@/pages/entry/change-password';
@@ -11,8 +11,8 @@ import { captureJoinEntry, JoinPage } from '@/pages/entry/join';
 import { LoginPage } from '@/pages/entry/login';
 import { NotFoundPage } from '@/pages/entry/not-found';
 import { WorkspacesPage } from '@/pages/entry/workspaces';
-import { IssuePage, loadIssue } from '@/pages/project/issue';
-import { IssueEditPage } from '@/pages/project/issue-edit';
+import { WorkItemPage, loadWorkItem } from '@/pages/project/work-item';
+import { WorkItemEditPage } from '@/pages/project/work-item-edit';
 import { ApiKeysPage } from '@/pages/settings/api-keys';
 import { AppearancePage } from '@/pages/settings/appearance';
 import { ProfilePage } from '@/pages/settings/profile';
@@ -21,8 +21,8 @@ import { SecurityPage } from '@/pages/settings/security';
 import { loadWorkspaceSettings, WorkspaceSettingsPage } from '@/pages/settings/workspace';
 import { DocumentsPage } from '@/pages/workspace/documents';
 import { InboxPage } from '@/pages/workspace/inbox';
-import { NewIssuePage } from '@/pages/workspace/issue-new';
-import { IssuesPage, loadIssues } from '@/pages/workspace/issues';
+import { NewWorkItemPage } from '@/pages/workspace/work-item-new';
+import { WorkItemsPage, loadWorkItems } from '@/pages/workspace/work-items';
 import { loadMembers, MembersPage, parseMembersSearch } from '@/pages/workspace/members';
 import { InvitePage } from '@/pages/workspace/members-invite';
 import { loadProjects, parseProjectsSearch, ProjectsPage } from '@/pages/workspace/projects';
@@ -101,11 +101,11 @@ const scoped = createRoute({ getParentRoute: () => workspace, path: '/workspaces
     throw redirect({ to: '/workspaces' });
   }
 } });
-// A workspace opens on its home, 전체: the issues of every project through the workspace's views (D-065, D-066).
-const home = createRoute({ getParentRoute: () => scoped, path: '/', component: IssuesPage, validateSearch: ownSearch(parseIssueSearch),
-  loader: ({ params }) => loadIssues(queryClient, params.workspaceId) });
-// 새 이슈 at its own address, which the issue pages open in a modal (D-070).
-const issuesNew = createRoute({ getParentRoute: () => scoped, path: '/issues/new', component: NewIssuePage, validateSearch: ownSearch(parseNewIssueSearch) });
+// A workspace opens on its home, 전체: the work items of every project through the workspace's views (D-065, D-066).
+const home = createRoute({ getParentRoute: () => scoped, path: '/', component: WorkItemsPage, validateSearch: ownSearch(parseWorkItemSearch),
+  loader: ({ params }) => loadWorkItems(queryClient, params.workspaceId) });
+// 새 업무 at its own address, which the work item pages open in a modal (D-070).
+const workItemsNew = createRoute({ getParentRoute: () => scoped, path: '/work-items/new', component: NewWorkItemPage, validateSearch: ownSearch(parseNewWorkItemSearch) });
 const inbox = createRoute({ getParentRoute: () => scoped, path: '/inbox', component: InboxPage });
 // 내 작업 is a view now (담당자 filter, D-066); its old address leads home.
 const myTasks = createRoute({ getParentRoute: () => scoped, path: '/my-tasks', beforeLoad: ({ params }) => leadTo(`/workspaces/${params.workspaceId}`) });
@@ -117,19 +117,19 @@ const documents = createRoute({ getParentRoute: () => scoped, path: '/documents'
 const projects = createRoute({ getParentRoute: () => scoped, path: '/projects', component: ProjectsPage, validateSearch: ownSearch(parseProjectsSearch),
   loaderDeps: ({ search }) => search, loader: ({ params, deps }) => loadProjects(queryClient, params.workspaceId, deps) });
 
-// A project is one page of its issues (D-066); an issue opens at its own address, its edit form under it.
-const projectItems = createRoute({ getParentRoute: () => scoped, path: '/projects/$projectId', component: IssuesPage, validateSearch: ownSearch(parseIssueSearch),
-  loader: async ({ params }) => { await loadProject(params.workspaceId, params.projectId); await loadIssues(queryClient, params.workspaceId, params.projectId); } });
-const itemNew = createRoute({ getParentRoute: () => scoped, path: '/projects/$projectId/issues/new', component: NewIssuePage, validateSearch: ownSearch(parseNewIssueSearch),
+// A project is one page of its work items (D-066); a work item opens at its own address, its edit form under it.
+const projectItems = createRoute({ getParentRoute: () => scoped, path: '/projects/$projectId', component: WorkItemsPage, validateSearch: ownSearch(parseWorkItemSearch),
+  loader: async ({ params }) => { await loadProject(params.workspaceId, params.projectId); await loadWorkItems(queryClient, params.workspaceId, params.projectId); } });
+const itemNew = createRoute({ getParentRoute: () => scoped, path: '/projects/$projectId/work-items/new', component: NewWorkItemPage, validateSearch: ownSearch(parseNewWorkItemSearch),
   loader: ({ params }) => loadProject(params.workspaceId, params.projectId) });
-const itemDetail = createRoute({ getParentRoute: () => scoped, path: '/projects/$projectId/issues/$issueId', component: IssuePage, validateSearch: ownSearch(parseIssueSearch),
-  loader: async ({ params }) => { await loadProject(params.workspaceId, params.projectId); await loadIssue(queryClient, params.workspaceId, params.projectId, params.issueId); } });
-const itemEdit = createRoute({ getParentRoute: () => scoped, path: '/projects/$projectId/issues/$issueId/edit', component: IssueEditPage,
-  loader: async ({ params }) => { await loadProject(params.workspaceId, params.projectId); await loadIssue(queryClient, params.workspaceId, params.projectId, params.issueId); } });
-// A key such as BIT-42 (an agent's or a commit's reference) leads to its issue; /issues/new above wins over it.
-const itemReference = createRoute({ getParentRoute: () => scoped, path: '/issues/$reference', loader: async ({ params }) => {
+const itemDetail = createRoute({ getParentRoute: () => scoped, path: '/projects/$projectId/work-items/$workItemId', component: WorkItemPage, validateSearch: ownSearch(parseWorkItemSearch),
+  loader: async ({ params }) => { await loadProject(params.workspaceId, params.projectId); await loadWorkItem(queryClient, params.workspaceId, params.projectId, params.workItemId); } });
+const itemEdit = createRoute({ getParentRoute: () => scoped, path: '/projects/$projectId/work-items/$workItemId/edit', component: WorkItemEditPage,
+  loader: async ({ params }) => { await loadProject(params.workspaceId, params.projectId); await loadWorkItem(queryClient, params.workspaceId, params.projectId, params.workItemId); } });
+// A key such as BIT-42 (an agent's or a commit's reference) leads to its work item; /work-items/new above wins over it.
+const itemReference = createRoute({ getParentRoute: () => scoped, path: '/work-items/$reference', loader: async ({ params }) => {
   const item = await routeRead(() => queryClient.fetchQuery(byRefQuery(params.workspaceId, params.reference)));
-  return leadTo(`/workspaces/${params.workspaceId}/projects/${item.projectId}/issues/${item.id}`);
+  return leadTo(`/workspaces/${params.workspaceId}/projects/${item.projectId}/work-items/${item.id}`);
 } });
 
 // 워크스페이스 설정 turns the menu into the workspace's settings: its pages, then each project's (D-061).
@@ -153,7 +153,10 @@ const keys = createRoute({ getParentRoute: () => workspace, path: '/settings/api
 const legacy = ['/inbox', '/my-tasks', '/members', '/documents'].map(path => createRoute({ getParentRoute: () => workspace, path, beforeLoad: () => resume(path) }));
 // The short addresses before D-084 (/w/…/p/…/work-items/…, /w/…/r/BIT-42) lead to the same page under the plural ones.
 const shortAddress = createRoute({ getParentRoute: () => workspace, path: '/w/$', beforeLoad: ({ location }) => leadTo(location.href
-  .replace(/^\/w\//, '/workspaces/').replace(/\/p\/([^/?#]+)/, '/projects/$1').replace('/work-items/', '/issues/').replace(/\/r\/([^/?#]+)/, '/issues/$1')) });
+  .replace(/^\/w\//, '/workspaces/').replace(/\/p\/([^/?#]+)/, '/projects/$1').replace(/\/r\/([^/?#]+)/, '/work-items/$1')) });
+// The addresses before D-091 (…/issues/…, as repository issues mirrored before it still link) lead to …/work-items/….
+const issueAddresses = ['/issues/$', '/projects/$projectId/issues/$'].map(path => createRoute({ getParentRoute: () => scoped, path,
+  beforeLoad: ({ location }) => leadTo(location.href.replace('/issues/', '/work-items/')) }));
 
 // The entry screens, outside the app's frame.
 const login = createRoute({ getParentRoute: () => rootRoute, path: '/login', component: LoginPage, beforeLoad: () => entryGuard(false) });
@@ -166,8 +169,8 @@ const routeTree = rootRoute.addChildren([
   workspace.addChildren([
     start, chooser,
     scoped.addChildren([
-      home, issuesNew, inbox, myTasks, members, membersInvite, documents, projects,
-      projectItems, itemNew, itemDetail, itemEdit, itemReference,
+      home, workItemsNew, inbox, myTasks, members, membersInvite, documents, projects,
+      projectItems, itemNew, itemDetail, itemEdit, itemReference, ...issueAddresses,
       settingsStart, settings, projectSettingsStart, projectSettings, oldProjectSettings,
     ]),
     profile, security, keys, appearance, ...legacy, shortAddress,

@@ -5,7 +5,7 @@ import { MOBILE_QUERY } from '@/shared/config';
 import { closeMove, isOpenedDirectly, panelDepth, pathOf, searchOf, type PanelHost, type PanelPlace } from './index';
 
 /**
- * A screen that holds a panel (the team calendar, the issue list): the host its pages open in, kept in the screen's own
+ * A screen that holds a panel (the team calendar, the work item list): the host its pages open in, kept in the screen's own
  * address as panel and depth while the address bar shows the page's own (a masked move). to is the screen's path and
  * under its own search without the panel, so closing returns to exactly that place.
  *

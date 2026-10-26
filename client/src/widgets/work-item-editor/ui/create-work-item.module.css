@@ -1,0 +1,40 @@
+/*
+ * 새 업무 as Linear's new issue (D-067): no rules inside, the head a small breadcrumb (the project, 새 작업) with the close
+ * at its end, the title in 18px/600 and the description in 15px with no boxes, a row of 24px property pills, and the foot
+ * with 계속 만들기 and the create button at its end.
+ */
+.dialog { display: flex; flex-direction: column; }
+.head { display: flex; align-items: center; gap: var(--spacing-1-5, 0.375rem); padding: var(--spacing-3) var(--spacing-3) 0 var(--spacing-4); font-size: 0.8125rem;
+  color: var(--color-text-secondary); }
+.head > svg { inline-size: 0.75rem; block-size: 0.75rem; flex-shrink: 0; }
+.headTitle { margin: 0; font-size: 0.8125rem; font-weight: 450; color: var(--color-text-primary); }
+/* 크게 보기 and 닫기 as one pair: both icons 16px (the expand arrows reach their box's corners, so they draw a step smaller), 2px apart. */
+.headEnd { margin-inline-start: auto; display: inline-flex; align-items: center; gap: 2px; }
+.headEnd svg { inline-size: 1rem; block-size: 1rem; }
+.headEnd :global(.lucide-maximize-2) { inline-size: 0.875rem; block-size: 0.875rem; }
+.projectChip { display: inline-flex; align-items: center; gap: var(--spacing-1-5, 0.375rem); block-size: 1.5rem; padding: 0 var(--spacing-2) 0 0.3125rem;
+  border-radius: var(--radius-full); background: var(--color-background-muted); font-size: 0.75rem; font-weight: 500; color: var(--color-text-secondary); }
+.body { display: flex; flex-direction: column; gap: var(--spacing-1); padding: var(--spacing-3) var(--spacing-4) var(--spacing-2); }
+.title { padding: 0; border: 0; outline: 0; background: none; font: inherit; font-size: 1.125rem; font-weight: 600; color: var(--color-text-primary); }
+.description { padding-block-start: var(--spacing-1); max-block-size: 40vh; overflow-y: auto; }
+.title::placeholder { color: var(--color-text-disabled); }
+.pills { display: flex; flex-wrap: wrap; gap: var(--spacing-1-5, 0.375rem); padding: var(--spacing-2) var(--spacing-4); }
+.foot { display: flex; align-items: center; justify-content: flex-end; gap: var(--spacing-4); padding: var(--spacing-2) var(--spacing-3) var(--spacing-3) var(--spacing-4);
+  font-size: 0.75rem; color: var(--color-text-secondary); }
+/* On its own page the form is the page's body, not a card: a larger title, room to write, the pills under a hairline. */
+.page { display: flex; flex-direction: column; gap: var(--spacing-2); padding-block-start: var(--spacing-2); }
+.page .title { font-size: 1.25rem; }
+.page .description { max-block-size: none; overflow: visible; }
+.page .pills { margin-block-start: var(--spacing-2); padding: var(--spacing-4) 0 0; border-block-start: 1px solid var(--color-border-subtle); }
+.error { padding: 0 var(--spacing-4); }
+
+/* A phone: the sheet's own head gives way to the dialog's; the pills scroll sideways in one row; the foot keeps above the keyboard. */
+@media (width < 64rem) {
+  .head { padding: var(--spacing-6) var(--spacing-3) 0 var(--spacing-5); }
+  .body { flex: 1; padding-inline: var(--spacing-5); }
+  .title { font-size: 1.25rem; }
+  .description { max-block-size: none; overflow: visible; }
+  .pills { flex-wrap: nowrap; overflow-x: auto; padding-inline: var(--spacing-5); scrollbar-width: none; }
+  .pills::-webkit-scrollbar { display: none; }
+  .foot { padding: var(--spacing-3) var(--spacing-5) max(var(--spacing-3), env(safe-area-inset-bottom)); border-block-start: 1px solid var(--color-border); }
+}

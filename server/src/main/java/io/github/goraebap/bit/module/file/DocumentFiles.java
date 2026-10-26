@@ -7,7 +7,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * The files a Markdown text, such as an issue's description or a comment, shows. It keeps them as links to
+ * The files a Markdown text, such as a work item's description or a comment, shows. It keeps them as links to
  * {@code attachment:<id>}: {@code ![사진.png](attachment:…)} for a picture shown in place and
  * {@code [자료.pdf](attachment:…)} for a file block. The id is the owner's attachment, which keeps its upload's id.
  */

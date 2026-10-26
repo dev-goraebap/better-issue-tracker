@@ -10,7 +10,7 @@ import styles from './frame.module.css';
 
 /**
  * 짧은 창: a short task that needs no address of its own (a confirmation, a few fields, picking from a list). A desktop
- * shows it in the quick form's modal (새 이슈's, D-070): near the top of the window on one surface with no rules
+ * shows it in the quick form's modal (새 업무's, D-070): near the top of the window on one surface with no rules
  * between its head, body and foot, as wide as its content asks (width); a phone shows it as a bottom sheet with the
  * same head, body and foot. A task
  * that wants the whole phone screen (a reason to write, a picture to crop, a long text) is a page instead, opened in a

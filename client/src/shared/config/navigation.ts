@@ -2,7 +2,7 @@
 export type MenuEntry = { path: string; label: string; icon: string };
 
 /**
- * The workspace's menu (D-064, D-071): 홈 (전체's issues and views, D-065), 문서함 and 구성원; the projects follow under
+ * The workspace's menu (D-064, D-071): 홈 (전체's work items and views, D-065), 문서함 and 구성원; the projects follow under
  * 프로젝트, and 워크스페이스 설정 sits at the menu's foot. The notices are not an entry but the bell at the menu's head
  * (D-059). A phone's tabs are these, then 더보기.
  */
@@ -46,7 +46,7 @@ export type AppPlace = {
   workspaceId?: string; projectId?: string;
   /** The workspace menu entry's path ('' for 홈), when the page is the workspace's. */
   workspaceSection?: string;
-  /** An issue's page, or 'new' for 새 이슈. */
+  /** A work item's page, or 'new' for 새 업무. */
   itemId?: string;
   /** The item's page is its 편집 form. */
   isEditing?: boolean;
@@ -71,6 +71,6 @@ export function appPlace(pathname: string): AppPlace {
   const project = /^\/projects\/([^/]+)(\/.*)?$/.exec(rest);
   if (!project) return { workspaceId, workspaceSection: rest.startsWith('/inbox') ? '/inbox' : rest };
   const [, projectId, inner = ''] = project;
-  const item = /^\/issues\/([^/]+)(\/edit)?$/.exec(inner);
+  const item = /^\/work-items\/([^/]+)(\/edit)?$/.exec(inner);
   return { workspaceId, projectId, itemId: item?.[1], isEditing: !!item?.[2] };
 }

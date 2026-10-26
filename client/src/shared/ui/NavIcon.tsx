@@ -94,7 +94,7 @@ const icons: Record<string, LucideIcon> = {
   redo: Redo2,
   unlink: Unlink,
   send: ArrowUp,
-  // Issue templates (D-077).
+  // Work item templates (D-077).
   bug: Bug,
   template: LayoutTemplate,
   // Repository integrations (D-087).

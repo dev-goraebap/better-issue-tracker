@@ -21,17 +21,17 @@ export const rulesQuery = (w: string, p: string) => queryOptions({
   queryKey: [...integrationsKey(w, p), 'rules'], retry: false,
   queryFn: ({ signal }) => readJson<{ items: IntegrationRule[] }>(`${projectPath(w, p)}/integration-rules`, signal).then(page => page.items),
 });
-/** What in the project's repositories an issue is tied to: its mirrored issue, branches, pull requests, commits. */
-export const codeLinksQuery = (w: string, p: string, issueId: string) => queryOptions({
-  queryKey: ['workspace', w, 'code-links', issueId], retry: false,
-  queryFn: ({ signal }) => readJson<CodeLink[]>(`${projectPath(w, p)}/issues/${encodeURIComponent(issueId)}/code-links`, signal),
+/** What in the project's repositories a work item is tied to: its mirrored issue, branches, pull requests, commits. */
+export const codeLinksQuery = (w: string, p: string, workItemId: string) => queryOptions({
+  queryKey: ['workspace', w, 'code-links', workItemId], retry: false,
+  queryFn: ({ signal }) => readJson<CodeLink[]>(`${projectPath(w, p)}/work-items/${encodeURIComponent(workItemId)}/code-links`, signal),
 });
-/** The pull requests of the issues on screen, for their badges; nothing is asked when no project has a repository. */
-export const pullBadgesQuery = (w: string, projectIds: readonly string[], issueIds: readonly string[]) => queryOptions({
-  queryKey: ['workspace', w, 'pull-requests', [...projectIds].sort().join(','), [...issueIds].sort().join(',')], retry: false, staleTime: 30_000,
-  enabled: projectIds.length > 0 && issueIds.length > 0,
+/** The pull requests of the work items on screen, for their badges; nothing is asked when no project has a repository. */
+export const pullBadgesQuery = (w: string, projectIds: readonly string[], workItemIds: readonly string[]) => queryOptions({
+  queryKey: ['workspace', w, 'pull-requests', [...projectIds].sort().join(','), [...workItemIds].sort().join(',')], retry: false, staleTime: 30_000,
+  enabled: projectIds.length > 0 && workItemIds.length > 0,
   queryFn: ({ signal }) => readJson<PullBadge[]>(
-    `/api/v1/workspaces/${encodeURIComponent(w)}/pull-requests?${new URLSearchParams({ projects: projectIds.join(','), issues: issueIds.slice(0, 500).join(',') })}`, signal),
+    `/api/v1/workspaces/${encodeURIComponent(w)}/pull-requests?${new URLSearchParams({ projects: projectIds.join(','), workItems: workItemIds.slice(0, 500).join(',') })}`, signal),
 });
 
 export const connectRepository = (w: string, p: string, body: components['schemas']['ConnectRepository']) =>

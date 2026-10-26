@@ -7,7 +7,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 
 /**
- * A stored file bound to what owns it, such as an issue. The owning module decides who may open it. The file itself is
+ * A stored file bound to what owns it, such as a work item. The owning module decides who may open it. The file itself is
  * the blob the upload wrote.
  */
 @Getter

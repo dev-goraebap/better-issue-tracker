@@ -5,7 +5,7 @@ import { authError } from '@/shared/api';
 import { rowReorderStyles as rows, useRowReorder } from '@/shared/lib/row-reorder';
 import { CompactDialog, FormMessage, NavIcon, QueryMessage, Select, SettingsAction, SettingsCard, SettingsHead, SettingsRow, StatusToken } from '@/shared/ui';
 import { columnsQuery, deleteColumn, projectQuery, refreshProjects, reorderColumns, type BoardColumn, type Project } from '@/entities/project';
-import { CATEGORY_LABELS, StatusBadge } from '@/entities/issue';
+import { CATEGORY_LABELS, StatusBadge } from '@/entities/work-item';
 import { ColumnDialog } from './ColumnDialog';
 import styles from './project-settings.module.css';
 
@@ -16,7 +16,7 @@ const COLUMN = { word: '칸', object: '칸을', topic: '칸은' };
  * 보드 칸: the project's board columns in order, each its category's mark, name and category, the one that finishes work
  * marked (D-049: at least one, and never the last column removed). A column is put in its place by its grip
  * (useRowReorder: carried by mouse or finger, or Alt + ↑ / ↓). 새 칸 and 고치기 open the same short dialog; 삭제 asks
- * where the column's issues go (another column, or 상태 없음).
+ * where the column's work items go (another column, or 상태 없음).
  */
 export function BoardSettings({ project, canManage }: { project: Project; canManage: boolean }) {
   const client = useQueryClient();
@@ -46,7 +46,7 @@ export function BoardSettings({ project, canManage }: { project: Project; canMan
     finally { setBusy(false); await refreshProjects(client, project.workspaceId); }
   };
   return <VStack gap={8}>
-    <SettingsHead title="보드 칸" description="이슈가 흘러가는 칸입니다. 완료 칸에 들어간 이슈는 끝난 것으로 셉니다." />
+    <SettingsHead title="보드 칸" description="업무가 흘러가는 칸입니다. 완료 칸에 들어간 업무는 끝난 것으로 셉니다." />
     {!columns.data ? <QueryMessage pending={columns.isPending} error={columns.error} retry={() => { void columns.refetch(); }} />
       : <SettingsCard title={`칸 ${list.length}개`} id="board-columns"
         actions={editable ? <Button label="새 칸" variant="secondary" size="sm" icon={<NavIcon name="plus" />} onClick={() => setEditing('new')} /> : undefined}>
@@ -74,7 +74,7 @@ export function BoardSettings({ project, canManage }: { project: Project; canMan
     {editing && <ColumnDialog project={project} column={editing === 'new' ? undefined : editing} onClose={() => setEditing(null)} />}
     <CompactDialog isOpen={!!removing} title={`'${removing?.name ?? ''}' 칸을 지울까요?`} width={520} isBusy={isBusy} onClose={() => { if (!isBusy) setRemoving(null); }}
       footer={<><Button label="취소" variant="ghost" onClick={() => setRemoving(null)} isDisabled={isBusy} /><Button label="옮기고 지우기" variant="destructive" isLoading={isBusy} onClick={() => { void remove(); }} /></>}>
-      <Select label="이 칸의 이슈를 옮길 곳" value={moveTo} onChange={value => setMoveTo(value ?? BACKLOG)}
+      <Select label="이 칸의 업무를 옮길 곳" value={moveTo} onChange={value => setMoveTo(value ?? BACKLOG)}
         options={[{ value: BACKLOG, label: '상태 없음' }, ...list.filter(column => column.id !== removing?.id).map(column => ({ value: column.id, label: column.name }))]} />
     </CompactDialog>
   </VStack>;

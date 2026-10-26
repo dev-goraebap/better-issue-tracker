@@ -10,7 +10,7 @@ description: 서버 모듈의 명명, 패키지·클래스 배치, 예외 처리
 ## 1. 명명 규칙 및 패키지 구조
 
 ### 모듈 및 계층 명명
-- 모듈 이름은 **단수형 소문자**를 사용한다 (예: `issue`, `decision`, `artifact`, `link`, `coderef`, `iam`).
+- 모듈 이름은 **단수형 소문자**를 사용한다 (예: `work_item`, `decision`, `artifact`, `link`, `coderef`, `iam`).
 - 모듈 루트에는 공개 계약(`*Facade`, `*Spi`, `*Event`, 접미사 없는 데이터 타입)만 둔다.
 - 모듈 내부 계층은 `application`, `domain`, `infrastructure` 3개 계층으로 분리한다.
 
@@ -20,11 +20,11 @@ description: 서버 모듈의 명명, 패키지·클래스 배치, 예외 처리
 | 역할 | 명명 규칙 | 위치 | 설명 및 예시 |
 | :--- | :--- | :--- | :--- |
 | **API 진입점** | `*Controller` | `application` | HTTP 요청 검증 및 응답 변환 |
-| **유스케이스** | `*Service` | `application` | 비즈니스 흐름 제어 및 트랜잭션 관리. Facade를 직접 구현 (`IssueService implements IssueFacade`) |
+| **유스케이스** | `*Service` | `application` | 비즈니스 흐름 제어 및 트랜잭션 관리. Facade를 직접 구현 (`WorkItemService implements WorkItemFacade`) |
 | **조회 전용 서비스** | `*QueryService` | `application` | 화면 조회를 전담하는 서비스 |
-| **조회 포트** | `*Query` | `application` | 화면 투영 전용 인터페이스 (예: `IssueQuery`) |
-| **도메인 저장소 포트** | `*Repository` | `domain` | 애그리거트 영속화 인터페이스 (예: `IssueRepository`) |
-| **저장소·조회 구현체** | `Jooq*Repository`, `Jooq*Query` | `infrastructure` | 기술 접두사를 붙인 구현체 (예: `JooqIssueRepository`). `*RepositoryImpl`, `QueryRepository` 혼합 명칭은 쓰지 않는다 |
+| **조회 포트** | `*Query` | `application` | 화면 투영 전용 인터페이스 (예: `WorkItemQuery`) |
+| **도메인 저장소 포트** | `*Repository` | `domain` | 애그리거트 영속화 인터페이스 (예: `WorkItemRepository`) |
+| **저장소·조회 구현체** | `Jooq*Repository`, `Jooq*Query` | `infrastructure` | 기술 접두사를 붙인 구현체 (예: `JooqWorkItemRepository`). `*RepositoryImpl`, `QueryRepository` 혼합 명칭은 쓰지 않는다 |
 | **외부 기능 포트·어댑터** | 역할 이름 인터페이스 / `[기술접두사]*` 구현 | `application` / `infrastructure` | 예: 변환 인터페이스와 `Poi…` 어댑터. 여러 모듈이 쓰는 저장소는 `shared/storage`의 `ObjectStorage` |
 | **요청/응답 DTO** | `*Requests`, `*Views` | `application` | 불변 `record`로 선언하며 final 묶음 클래스 내 중첩 |
 | **오류 코드** | `*ErrorCode` | `application` | `ErrorCode`를 구현한 열거형. 값은 `<MODULE>_<REASON>` (예: `WORKITEM_NOT_FOUND`) |
@@ -36,7 +36,7 @@ description: 서버 모듈의 명명, 패키지·클래스 배치, 예외 처리
 - **접근자 메서드**: `get` 접두사를 생략한 fluent 형식(`title()`, `status()`)을 기본으로 사용한다(`lombok.accessors.fluent=true`).
 - **의존성 주입 명명**:
   - 주입받는 필드, 생성자 매개변수, `@Bean` 메서드 파라미터는 선언 타입명을 그대로 **lowerCamelCase**로 작성한다.
-    - 예시: `IssueRepository issueRepository`, `DecisionQuery decisionQuery`, `LinkService linkService`, `DSLContext dslContext`
+    - 예시: `WorkItemRepository workItemRepository`, `DecisionQuery decisionQuery`, `LinkService linkService`, `DSLContext dslContext`
     - 금지: `Repository`, `Service`, `Query` 접미사를 생략하거나 `items`, `links`, `sessions` 등 복수형 변수명으로 대체하지 않는다.
   - 동일한 타입의 의존성이 여러 개인 경우 명확한 역할 접두사를 추가하여 구분한다.
   - 지연 주입 래퍼(`ObjectProvider<T>`)는 대상 타입과 래퍼 역할을 함께 명시한다 (예: `ObjectProvider<JavaMailSender> javaMailSenderProvider`).
@@ -83,7 +83,7 @@ description: 서버 모듈의 명명, 패키지·클래스 배치, 예외 처리
 
 | 예외 클래스 | 발생 상황 | 로깅 및 처리 기준 |
 | :--- | :--- | :--- |
-| **`BusinessException`** | 사용자의 입력 오류, 권한 부족, 대상 없음, 꺼진 기능 호출 등 정상적인 업무 실패. `IssueErrorCode.WORKITEM_NOT_FOUND.raise()`처럼 오류 코드에서 만든다 | 정상적인 업무 거절이므로 `ERROR` 로그를 남기지 않음 (`INFO` 또는 `WARN` 기록) |
+| **`BusinessException`** | 사용자의 입력 오류, 권한 부족, 대상 없음, 꺼진 기능 호출 등 정상적인 업무 실패. `WorkItemErrorCode.WORKITEM_NOT_FOUND.raise()`처럼 오류 코드에서 만든다 | 정상적인 업무 거절이므로 `ERROR` 로그를 남기지 않음 (`INFO` 또는 `WARN` 기록) |
 | **`DomainRuleViolation`** | 도메인 엔티티 내부의 불변식(Invariant)이 깨진 경우 | 도메인 무결성 위반으로 간주하여 추적 |
 | **`IllegalStateException`** | 데이터 불일치, 외부 연동 장애, 시스템 설정 오류 등 내부 상태 이상 | 시스템 오류로 간주하여 상세 원인 추적 및 `ERROR` 로깅 |
 
@@ -92,8 +92,8 @@ description: 서버 모듈의 명명, 패키지·클래스 배치, 예외 처리
 
 ### 테스트 작성 및 품질 관리
 - **테스트 명명과 위치** (SandboxHr 실제 코드 기준):
-  - 통합 테스트는 테스트 루트 패키지에 기능 단위 이름 `[기능]Test`로 두고 `@Tag("integration")`을 붙인다 (예: `IssueApiTest`, `ArchitectureTest`는 태그 없음).
-  - 단위 테스트는 대상 클래스와 같은 패키지에 `[대상클래스명]Test`로 둔다 (예: `module/issue/domain/IssueTest`).
+  - 통합 테스트는 테스트 루트 패키지에 기능 단위 이름 `[기능]Test`로 두고 `@Tag("integration")`을 붙인다 (예: `WorkItemApiTest`, `ArchitectureTest`는 태그 없음).
+  - 단위 테스트는 대상 클래스와 같은 패키지에 `[대상클래스명]Test`로 둔다 (예: `module/workitem/domain/WorkItemTest`).
 - **수용 조건 검증**: 비즈니스 수용 조건(Acceptance Criteria) ID는 개별 단위 테스트가 아닌 실제 HTTP 통합 테스트 및 E2E 종단 검증에 연결한다. 단순 단위 테스트 통과만으로 전체 수용 조건을 충족한 것으로 표기하지 않는다.
 - **결함 수정 절차**: 버그나 결함을 수정할 때는 먼저 실패하는 재현 테스트 코드를 작성하여 커밋한 후 수정을 진행한다.
 - **품질 검사 준수**: 정적 검사 경고나 결함 탐지를 억제(`@SuppressWarnings` 등)해야 하는 경우 반드시 합당한 사유를 주석으로 기록한다. 표준 지침 개정 없이 임의로 검사 규칙을 완화해서는 안 된다.

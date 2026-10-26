@@ -1,8 +1,8 @@
 package io.github.goraebap.bit.module.view.application;
 
 import com.fasterxml.jackson.annotation.JsonAnySetter;
-import io.github.goraebap.bit.module.view.domain.IssueView;
 import io.github.goraebap.bit.module.view.domain.ViewOrder;
+import io.github.goraebap.bit.module.view.domain.WorkItemView;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -18,27 +18,27 @@ import java.util.Map;
 public final class ViewRequests {
     private ViewRequests() {}
 
-    @Schema(name = "CreateIssueView")
+    @Schema(name = "CreateWorkItemView")
     public record Create(
-            @NotBlank @Size(max = IssueView.NAME_MAX) String name,
+            @NotBlank @Size(max = WorkItemView.NAME_MAX) String name,
 
-            @Size(max = IssueView.DESCRIPTION_MAX) @Schema(nullable = true)
+            @Size(max = WorkItemView.DESCRIPTION_MAX) @Schema(nullable = true)
             String description,
 
-            @NotBlank @Size(max = IssueView.ICON_MAX) String icon,
+            @NotBlank @Size(max = WorkItemView.ICON_MAX) String icon,
 
-            @NotNull @Pattern(regexp = IssueView.COLOR_PATTERN) String color,
+            @NotNull @Pattern(regexp = WorkItemView.COLOR_PATTERN) String color,
 
             @Schema(description = "Personal views are seen only by their owner; omitted means shared")
             boolean isPersonal,
 
-            @NotNull IssueView.Layout layout,
+            @NotNull WorkItemView.Layout layout,
 
             @Schema(implementation = ViewViews.Filters.class, nullable = true)
             Map<String, String> filters,
 
             @NotNull ViewViews.Sort sort,
-            @NotNull List<IssueView.Column> columns) {
+            @NotNull List<WorkItemView.Column> columns) {
         public Create {
             filters = Map.copyOf(present(filters));
             columns = columns == null ? null : Collections.unmodifiableList(new ArrayList<>(columns));
@@ -56,23 +56,23 @@ public final class ViewRequests {
     }
 
     /** Changes only the fields present. description and filters may be null to clear them; the others may not. */
-    @Schema(name = "UpdateIssueView")
+    @Schema(name = "UpdateWorkItemView")
     public static final class Update {
         @NotNull @Min(0) private Long expectedVersion;
 
-        @Size(max = IssueView.NAME_MAX) private String name;
+        @Size(max = WorkItemView.NAME_MAX) private String name;
 
-        @Size(max = IssueView.DESCRIPTION_MAX) private String description;
+        @Size(max = WorkItemView.DESCRIPTION_MAX) private String description;
 
-        @Size(max = IssueView.ICON_MAX) private String icon;
+        @Size(max = WorkItemView.ICON_MAX) private String icon;
 
-        @Pattern(regexp = IssueView.COLOR_PATTERN) private String color;
+        @Pattern(regexp = WorkItemView.COLOR_PATTERN) private String color;
 
         private Boolean isPersonal;
-        private IssueView.Layout layout;
+        private WorkItemView.Layout layout;
         private Map<String, String> filters;
         private ViewViews.Sort sort;
-        private List<IssueView.Column> columns;
+        private List<WorkItemView.Column> columns;
         private boolean hasName, hasDescription, hasIcon, hasColor, hasIsPersonal, hasLayout;
         private boolean hasFilters, hasSort, hasColumns;
 
@@ -131,11 +131,11 @@ public final class ViewRequests {
             hasIsPersonal = true;
         }
 
-        public IssueView.Layout getLayout() {
+        public WorkItemView.Layout getLayout() {
             return layout;
         }
 
-        public void setLayout(IssueView.Layout value) {
+        public void setLayout(WorkItemView.Layout value) {
             layout = value;
             hasLayout = true;
         }
@@ -159,11 +159,11 @@ public final class ViewRequests {
             hasSort = true;
         }
 
-        public List<IssueView.Column> getColumns() {
+        public List<WorkItemView.Column> getColumns() {
             return columns == null ? null : Collections.unmodifiableList(columns);
         }
 
-        public void setColumns(List<IssueView.Column> value) {
+        public void setColumns(List<WorkItemView.Column> value) {
             columns = value == null ? null : new ArrayList<>(value);
             hasColumns = true;
         }
@@ -211,9 +211,9 @@ public final class ViewRequests {
     }
 
     /** A scope's views in their new order; a view left out follows them in the workspace's order (D-088). */
-    @Schema(name = "PutIssueViewOrder")
+    @Schema(name = "PutWorkItemViewOrder")
     public record PutOrder(
-            @NotNull @Size(max = ViewOrder.MAX_KEYS) @Schema(description = "View ids, and all for 전체 이슈")
+            @NotNull @Size(max = ViewOrder.MAX_KEYS) @Schema(description = "View ids, and all for 전체 업무")
             List<String> viewKeys) {
         public PutOrder {
             viewKeys = viewKeys == null ? null : Collections.unmodifiableList(new ArrayList<>(viewKeys));
@@ -221,11 +221,11 @@ public final class ViewRequests {
     }
 
     /** Replaces the caller's tweak; leaving every part out removes it. */
-    @Schema(name = "PutIssueViewTweak")
+    @Schema(name = "PutWorkItemViewTweak")
     public record PutTweak(
-            @Schema(nullable = true) IssueView.Layout layout,
+            @Schema(nullable = true) WorkItemView.Layout layout,
             @Schema(nullable = true) ViewViews.Sort sort,
-            @Schema(nullable = true) List<IssueView.Column> columns) {
+            @Schema(nullable = true) List<WorkItemView.Column> columns) {
         public PutTweak {
             columns = columns == null ? null : Collections.unmodifiableList(new ArrayList<>(columns));
         }

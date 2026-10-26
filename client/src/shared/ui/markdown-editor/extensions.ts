@@ -55,7 +55,7 @@ const BulletToTask = Extension.create({
 
 /**
  * Ctrl (⌘) + Enter hands the text to the editor's owner (a comment sends) and never breaks the line, as the hard break
- * would: a form around the editor (a new issue) takes the key from its own keydown.
+ * would: a form around the editor (a new work item) takes the key from its own keydown.
  */
 const SubmitShortcut = Extension.create<{ onSubmit?: () => void }>({
   name: 'submitShortcut',

@@ -144,15 +144,15 @@ final class AuthenticationFilter extends OncePerRequestFilter {
         String method = request.getMethod();
         String project = "/api/v1/workspaces/[^/]+/projects";
         if (Set.of("GET", "HEAD").contains(method)
-                && path.matches(project + "(?:/[^/]+(?:/(?:columns|issues)(?:/[^/]+)?)?)?")) return true;
+                && path.matches(project + "(?:/[^/]+(?:/(?:columns|work-items)(?:/[^/]+)?)?)?")) return true;
         if (method.equals("POST")
                 && (path.matches(project)
                         || path.matches(
                                 project
-                                        + "/[^/]+/(?:archive|unarchive|restore|columns(?:/reorder)?|issues(?:/[^/]+/(?:move|archive|unarchive|restore))?)")))
+                                        + "/[^/]+/(?:archive|unarchive|restore|columns(?:/reorder)?|work-items(?:/[^/]+/(?:move|archive|unarchive|restore))?)")))
             return true;
         if (Set.of("PATCH", "DELETE").contains(method)
-                && path.matches(project + "/[^/]+(?:/(?:columns|issues)/[^/]+)?")) return true;
+                && path.matches(project + "/[^/]+(?:/(?:columns|work-items)/[^/]+)?")) return true;
         String labels = "/api/v1/workspaces/[^/]+/labels";
         if (Set.of("GET", "HEAD").contains(method) && path.matches(labels + "(?:/[^/]+)?")
                 || method.equals("POST") && path.matches(labels)
@@ -174,7 +174,7 @@ final class AuthenticationFilter extends OncePerRequestFilter {
         if (Set.of("GET", "HEAD").contains(method))
             return path.equals("/api/v1/me")
                     || path.equals("/api/v1/me/workspaces")
-                    || path.matches("/api/v1/workspaces/[^/]+/(?:my-tasks|issues|issues/by-ref/[^/]+)")
+                    || path.matches("/api/v1/workspaces/[^/]+/(?:my-tasks|work-items|work-items/by-ref/[^/]+)")
                     || path.matches("/api/v1/workspaces/[^/]+(?:/members)?");
         return method.equals("PATCH") && path.matches("/api/v1/workspaces/[^/]+");
     }

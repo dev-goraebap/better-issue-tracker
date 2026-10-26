@@ -24,7 +24,7 @@ export const deleteProject = (w: string, p: string, expectedVersion: number) => 
 export const restoreProject = (w: string, p: string, expectedVersion: number) => command('POST', `${projectPath(w, p)}/restore`, { expectedVersion });
 export const createColumn = (w: string, p: string, body: components['schemas']['CreateBoardColumn']) => command('POST', `${projectPath(w, p)}/columns`, body);
 export const updateColumn = (w: string, p: string, columnId: string, body: components['schemas']['UpdateBoardColumn']) => command('PATCH', `${projectPath(w, p)}/columns/${encodeURIComponent(columnId)}`, body);
-/** Deletes a column, its issues moving to another column or to no status ('backlog'). */
+/** Deletes a column, its work items moving to another column or to no status ('backlog'). */
 export const deleteColumn = (w: string, p: string, columnId: string, expectedVersion: number, moveTo: string) =>
   command('DELETE', `${projectPath(w, p)}/columns/${encodeURIComponent(columnId)}?expectedVersion=${expectedVersion}&moveTo=${encodeURIComponent(moveTo)}`);
 export const reorderColumns = (w: string, p: string, expectedVersion: number, order: string[]) => command('POST', `${projectPath(w, p)}/columns/reorder`, { expectedVersion, order });

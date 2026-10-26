@@ -77,8 +77,8 @@ class WorkspaceIntegrationTest {
         for (String table : List.of(
                 "workspace_invitation",
                 "workspace_member",
-                "issue_view_tweak",
-                "issue_view",
+                "work_item_view_tweak",
+                "work_item_view",
                 "label",
                 "workspace",
                 "iam_api_key",
@@ -355,7 +355,7 @@ class WorkspaceIntegrationTest {
     }
 
     @Test
-    void issuerPermissionLossRevokesOutstandingInvitations() throws Exception {
+    void workItemrPermissionLossRevokesOutstandingInvitations() throws Exception {
         try (Client owner = owner();
                 Client anonymous = new Client()) {
             String path = space(owner, "team-a");

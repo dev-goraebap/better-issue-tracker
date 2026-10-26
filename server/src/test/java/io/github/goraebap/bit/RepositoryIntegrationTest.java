@@ -9,10 +9,10 @@ import io.github.goraebap.bit.module.coderef.application.CodeRefRequests;
 import io.github.goraebap.bit.module.coderef.application.InboundService;
 import io.github.goraebap.bit.module.coderef.application.IntegrationService;
 import io.github.goraebap.bit.module.coderef.domain.Provider;
-import io.github.goraebap.bit.module.issue.application.IssueRequests;
-import io.github.goraebap.bit.module.issue.application.IssueService;
-import io.github.goraebap.bit.module.issue.domain.Issue;
 import io.github.goraebap.bit.module.project.application.ProjectService;
+import io.github.goraebap.bit.module.workitem.application.WorkItemRequests;
+import io.github.goraebap.bit.module.workitem.application.WorkItemService;
+import io.github.goraebap.bit.module.workitem.domain.WorkItem;
 import io.github.goraebap.bit.shared.domain.Ids;
 import io.github.goraebap.bit.shared.error.BusinessException;
 import io.github.goraebap.bit.shared.persistence.InstantTextBinding;
@@ -81,7 +81,7 @@ class RepositoryIntegrationTest {
     private ProjectService projectService;
 
     @Autowired
-    private IssueService issueService;
+    private WorkItemService workItemService;
 
     @Autowired
     private IntegrationService integrationService;
@@ -118,15 +118,15 @@ class RepositoryIntegrationTest {
                 "repository_integration",
                 "comment",
                 "activity",
-                "issue_label",
-                "issue",
+                "work_item_label",
+                "work_item",
                 "board_column",
                 "project_member",
                 "project_key",
                 "project",
                 "workspace_member",
-                "issue_view_tweak",
-                "issue_view",
+                "work_item_view_tweak",
+                "work_item_view",
                 "label",
                 "workspace",
                 "iam_session",
@@ -187,26 +187,26 @@ class RepositoryIntegrationTest {
                 .isInstanceOf(BusinessException.class);
 
         // A new BIT issue becomes the repository's issue, with its column and priority as labels and a link back.
-        String login = issueService.create(
+        String login = workItemService.create(
                 owner,
                 workspace,
                 project,
-                new Issue.Details("Login fails", "Steps", Issue.Priority.high, null, null, null, null),
+                new WorkItem.Details("Login fails", "Steps", WorkItem.Priority.high, null, null, null, null),
                 columns.get("할 일"));
         var opened = sent("POST", "/api/v3/repos/acme/app/issues");
         assertThat(opened.path("title").asString()).isEqualTo("Login fails");
         assertThat(opened.path("body").asString())
                 .startsWith("Steps")
-                .contains("<!-- bit:issue:")
+                .contains("<!-- bit:work_item:")
                 .contains("BIT-1");
         assertThat(JSON.convertValue(opened.path("labels"), List.class)).contains("priority:high", "status:할 일");
         assertThat(link("issue", login)).isEqualTo("101");
 
         // A change made in BIT reaches it; a webhook echoing BIT's own issue makes no second issue.
-        var update = new IssueRequests.Update();
+        var update = new WorkItemRequests.Update();
         update.setExpectedVersion(0L);
         update.setTitle("Login fails on Safari");
-        issueService.revise(owner, workspace, project, login, update);
+        workItemService.revise(owner, workspace, project, login, update);
         assertThat(sent("PATCH", "/api/v3/repos/acme/app/issues/101")
                         .path("title")
                         .asString())
@@ -222,7 +222,7 @@ class RepositoryIntegrationTest {
                         Map.of("login", "bit-bot"),
                         "issue",
                         issue(101, "Login fails", opened.path("body").asString(), List.of())));
-        assertThat(count("SELECT count(*) FROM issue")).isEqualTo(1);
+        assertThat(count("SELECT count(*) FROM work_item")).isEqualTo(1);
 
         // A pushed branch named after it links the branch and its commit and starts the work.
         hook(
@@ -342,15 +342,15 @@ class RepositoryIntegrationTest {
                         "issue",
                         issue(5, "Export to CSV", "Please", List.of("priority:low", "feature"))));
         String exported = jdbcTemplate.queryForObject(
-                "SELECT issue_id FROM code_link WHERE kind='issue' AND external_id='5'", String.class);
+                "SELECT work_item_id FROM code_link WHERE kind='issue' AND external_id='5'", String.class);
         assertThat(jdbcTemplate.queryForMap(
-                        "SELECT title, priority, created_by_agent FROM issue WHERE issue_id=?", exported))
+                        "SELECT title, priority, created_by_agent FROM work_item WHERE work_item_id=?", exported))
                 .containsEntry("title", "Export to CSV")
                 .containsEntry("priority", "low")
                 .containsEntry("created_by_agent", "GitHub · carol");
         assertThat(
                         count(
-                                "SELECT count(*) FROM issue_label il JOIN label l ON l.label_id=il.label_id WHERE l.name='feature'"))
+                                "SELECT count(*) FROM work_item_label il JOIN label l ON l.label_id=il.label_id WHERE l.name='feature'"))
                 .isEqualTo(1);
         assertThat(sent("POST", "/api/v3/repos/acme/app/issues/5/comments")
                         .path("body")
@@ -395,7 +395,7 @@ class RepositoryIntegrationTest {
         openIssues.put("6", "Dark mode");
         var imported = inboundService.importOpen(owner, workspace, project, integration.id());
         assertThat(imported.issues()).isEqualTo(1);
-        assertThat(count("SELECT count(*) FROM issue")).isEqualTo(3);
+        assertThat(count("SELECT count(*) FROM work_item")).isEqualTo(3);
 
         // A delivery not signed with the secret changes nothing.
         var refused = deliver(integration.id(), "issues", "{\"action\":\"opened\"}", "sha256=00");
@@ -492,16 +492,17 @@ class RepositoryIntegrationTest {
                 .orElseThrow(() -> new AssertionError(method + " " + path + " was not sent; sent: " + received));
     }
 
-    private String link(String kind, String issueId) {
+    private String link(String kind, String workItemId) {
         return jdbcTemplate.queryForObject(
-                "SELECT external_id FROM code_link WHERE kind=? AND issue_id=? ORDER BY updated_at DESC LIMIT 1",
+                "SELECT external_id FROM code_link WHERE kind=? AND work_item_id=? ORDER BY updated_at DESC LIMIT 1",
                 String.class,
                 kind,
-                issueId);
+                workItemId);
     }
 
-    private String column(String issueId) {
-        return jdbcTemplate.queryForObject("SELECT board_column_id FROM issue WHERE issue_id=?", String.class, issueId);
+    private String column(String workItemId) {
+        return jdbcTemplate.queryForObject(
+                "SELECT board_column_id FROM work_item WHERE work_item_id=?", String.class, workItemId);
     }
 
     private int count(String sql) {

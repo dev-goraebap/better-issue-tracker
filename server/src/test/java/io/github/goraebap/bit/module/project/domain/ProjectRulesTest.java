@@ -27,14 +27,14 @@ class ProjectRulesTest {
                 .isInstanceOf(IllegalArgumentException.class);
         assertThat(p.name()).isEqualTo("Original");
         assertThat(p.version()).isZero();
-        assertThat(p.allocateIssueNumber()).isEqualTo(1);
+        assertThat(p.allocateWorkItemNumber()).isEqualTo(1);
         p.archive(true, actor, "codex", now);
         p.delete(actor, "codex", now.plusSeconds(1));
         p.restore(actor, "codex", now.plusSeconds(2));
         assertThat(p.audit().deletedAt()).isNull();
         assertThat(p.audit().createdByAgent()).isEqualTo("codex");
         assertThat(p.archivedAt()).isEqualTo(now);
-        assertThat(p.allocateIssueNumber()).isEqualTo(2);
+        assertThat(p.allocateWorkItemNumber()).isEqualTo(2);
     }
 
     @Test

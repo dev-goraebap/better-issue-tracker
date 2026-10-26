@@ -2,6 +2,11 @@
 
 최신이 위다. 각 항목은 증상(무엇이 틀렸나), 수정, 확인으로 쓴다.
 
+## 2026-10-26 · 이슈를 업무로 (BIT-36, D-091)
+- 증상: 결정 D-091로 일감의 이름이 화면에서는 '업무', 코드·API·MCP에서는 work item이 됐다. 스킬과 MCP 안내문은 '이슈'와 `get_issue_context`·`list_issues`·`create_issue`·`update_issue`·`move_issue`를 쓰고 있었다.
+- 수정: 스킬 본문과 README의 '이슈'를 '업무'로, 도구 이름을 `get_work_item_context`·`list_work_items`·`create_work_item`·`update_work_item`·`move_work_item`으로 바꿨다. 저장소의 이슈(GitHub·GitLab·Gitea의 issue)는 그대로 '저장소 이슈'다. 7절에 issue 이름을 쓰던 서버(D-084~D-091 사이)의 도구 이름을 남겼다. MCP 안내문(`McpServerConfig`)과 도구 설명도 같이 바꿨다.
+- 확인: 서버 검사(단위 48개, 통합 110개)와 화면 검사가 통과했다. 운영 서버에 배포한 뒤 연결된 세션은 다시 연결해야 새 도구 이름이 보인다.
+
 ## 2026-10-26 · 담당자와 저장소 연동 (BIT-19)
 - 증상: 에이전트가 만든 이슈(BIT-17, BIT-18)에 담당자가 비어 있었다. 스킬, MCP 안내문, `create_issue` 설명 어디에도 담당자를 넣으라는 말이 없었다. 또 BIT-17·BIT-18 시험에서 스킬이 저장소 연동을 몰랐다. 브랜치·PR 이름 규칙이 없었고, "검증되면 완료로 옮긴다"를 따르면 PR 병합 전에 저장소 이슈가 닫힌다. 서버를 업데이트한 뒤에는 연결된 세션이 옛 도구 이름으로 남아 `Unknown tool`이 났다.
 - 수정: 이슈를 만들 때와 맡을 때 `assignee: "me"`(미뤄 두는 이슈는 비움). 5절 '저장소와 연결된 프로젝트'(이름 규칙, 칸 규칙 표, PR 작업은 병합에 맡김, 저장소 이슈 중복 금지, 댓글 공개 주의). 7절과 README에 다시 연결 안내. MCP 안내문과 `create_issue`·`update_issue` 설명에도 담당자와 이름 규칙을 넣었다.

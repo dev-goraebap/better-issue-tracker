@@ -17,11 +17,11 @@ DB는 SQLite 파일 하나다. 테이블과 제약의 이름 규칙, 로컬 DB�
 
 | 대상 | 규칙 | 예 |
 | --- | --- | --- |
-| 테이블 | 단수 snake_case. 인증 계열만 `iam_` 접두사 | `issue`, `iam_session` |
-| 기본 키 열 | `<table>_id varchar(10)`. 값은 애플리케이션이 `Ids.newId()`로 만드는 10자 ID(`[A-Za-z][A-Za-z0-9]{9}`, D-083). V1~V8의 ID 열은 타입 이름이 `uuid`로 남아 있고 jOOQ가 문자열로 만든다. 새 표의 ID 열과 그것을 가리키는 열은 `varchar(10)`으로 쓴다 | `issue_id` |
-| 기본 키 제약 | `<table>_pkey` | `issue_pkey` |
-| 외래 키 | `<t>_<col>_<ref>_<refcol>_fk` | `issue_project_id_project_project_id_fk` |
-| 고유 인덱스 | `ux_` + 테이블·열 이름 | `ux_issue_project_id_number` |
+| 테이블 | 단수 snake_case. 인증 계열만 `iam_` 접두사 | `work_item`, `iam_session` |
+| 기본 키 열 | `<table>_id varchar(10)`. 값은 애플리케이션이 `Ids.newId()`로 만드는 10자 ID(`[A-Za-z][A-Za-z0-9]{9}`, D-083). V1~V8의 ID 열은 타입 이름이 `uuid`로 남아 있고 jOOQ가 문자열로 만든다. 새 표의 ID 열과 그것을 가리키는 열은 `varchar(10)`으로 쓴다 | `work_item_id` |
+| 기본 키 제약 | `<table>_pkey` | `work_item_pkey` |
+| 외래 키 | `<t>_<col>_<ref>_<refcol>_fk` | `work_item_project_id_project_project_id_fk` |
+| 고유 인덱스 | `ux_` + 테이블·열 이름 | `ux_work_item_project_id_number` |
 | 일반 인덱스 | `ix_` + 테이블·열 이름 | `ix_board_column_project_id_position` |
 | CHECK | `ck_` + 테이블·열 이름 | `ck_workspace_member_role` |
 | 열거값 | `varchar` + CHECK. 값은 소문자 snake_case | `proposed`, `agent_session` |
@@ -29,7 +29,7 @@ DB는 SQLite 파일 하나다. 테이블과 제약의 이름 규칙, 로컬 DB�
 
 - **감사 열**: 필요한 테이블에 `created_at`, `created_by`, `updated_at`, `updated_by`, `deleted_at`, `deleted_by`를 둔다. 어느 테이블에 두는지는 `docs/06-schema.md`의 "감사" 표기를 따른다.
 - **에이전트 표시**: API 키로 만든 기록은 사람 ID 열과 함께 키의 `agent_name`을 `*_agent` 열(`created_by_agent`, `actor_agent`, `author_agent`)에 남긴다(D-021).
-- **사람이 읽는 번호**: 이슈·결정·세션 번호는 ID와 별도 열(`number`)이다. 이슈 키(`BIT-42`)는 저장하지 않고 `project_key`의 현재 키와 `number`로 만든다.
+- **사람이 읽는 번호**: 업무·결정·세션 번호는 ID와 별도 열(`number`)이다. 업무 키(`BIT-42`)는 저장하지 않고 `project_key`의 현재 키와 `number`로 만든다.
 - **다형 대상**: `link`, `activity`, `comment`, `attachment`처럼 대상 종류가 여럿인 테이블은 `*_type` + `*_id`로 가리키고 DB 외래 키를 두지 않는다. 대상 존재 검사는 애플리케이션이 한다(D-014, D-020).
 
 ## 소프트 삭제

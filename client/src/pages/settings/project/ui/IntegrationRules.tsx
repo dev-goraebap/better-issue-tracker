@@ -7,17 +7,17 @@ import { columnsQuery, type Project } from '@/entities/project';
 import { integrationsKey, rulesQuery, setRules, type RuleEvent } from '@/entities/repository';
 
 const EVENTS: readonly { event: RuleEvent; label: string; description: string }[] = [
-  { event: 'branch_push', label: '브랜치를 올리면', description: '이슈 키(예: bit-42-…)가 든 브랜치가 처음 올라올 때. 시작 전 이슈만 옮깁니다.' },
-  { event: 'pr_opened', label: 'PR을 열면', description: '이슈 키나 연결된 저장소 이슈(Closes #12)를 단 PR·MR이 열리거나 초안에서 풀릴 때. 앞쪽 칸으로만 옮깁니다.' },
+  { event: 'branch_push', label: '브랜치를 올리면', description: '업무 키(예: bit-42-…)가 든 브랜치가 처음 올라올 때. 시작 전 업무만 옮깁니다.' },
+  { event: 'pr_opened', label: 'PR을 열면', description: '업무 키나 연결된 저장소 이슈(Closes #12)를 단 PR·MR이 열리거나 초안에서 풀릴 때. 앞쪽 칸으로만 옮깁니다.' },
   { event: 'pr_merged', label: 'PR이 병합되면', description: '그 PR·MR이 병합될 때.' },
-  { event: 'issue_opened', label: '저장소 이슈가 열리면', description: '저장소에서 연 이슈를 BIT로 들여올 때, 닫힌 이슈가 다시 열릴 때.' },
+  { event: 'issue_opened', label: '저장소 이슈가 열리면', description: '저장소에서 연 이슈를 BIT 업무로 들여올 때, 닫힌 이슈가 다시 열릴 때.' },
   { event: 'issue_closed', label: '저장소 이슈가 닫히면', description: '이어진 저장소 이슈가 닫힐 때.' },
 ];
 const STAY = 'stay';
 const DEFAULT = 'default';
 
 /**
- * The column each repository event moves an issue to, as Kaneo's workflow rules (D-087): left at 기본, the column of the
+ * The column each repository event moves a work item to, as Kaneo's workflow rules (D-087): left at 기본, the column of the
  * fitting kind (the first 진행 중 for a branch, the last for a pull request, the 완료 column for a merge or a close);
  * or any column; or 옮기지 않음.
  */
