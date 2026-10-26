@@ -1,0 +1,43 @@
+/* The mark's square on a muted ground, its icon in the mark's colour. */
+.wrap { display: inline-flex; flex-shrink: 0; }
+.mark { display: inline-grid; place-items: center; inline-size: 2rem; block-size: 2rem; padding: 0; border: 0; border-radius: var(--radius-element);
+  background: var(--color-background-muted); cursor: pointer; }
+.mark[data-size="md"] { inline-size: var(--size-element-md); block-size: var(--size-element-md); }
+.mark svg { inline-size: 1rem; block-size: 1rem; }
+.mark:hover, .mark[aria-expanded="true"] { background: var(--color-background-gray); }
+.mark:focus-visible { outline: var(--focus-outline-width) var(--focus-outline-style) var(--focus-outline-color); }
+.mark:disabled { cursor: default; opacity: 0.6; }
+
+/* An icon not fetched yet holds its place. */
+.pending { display: inline-block; inline-size: 1em; block-size: 1em; border-radius: 3px; background: currentColor; opacity: 0.15; }
+
+/* The panel: the search and the colours over a hairline, then the grid scrolling under them. */
+.popover { padding: 0; }
+.panel { display: flex; flex-direction: column; min-block-size: 0; }
+.panel[data-size="lg"] { block-size: 100%; }
+.top { display: flex; flex-direction: column; gap: var(--spacing-2); padding: var(--spacing-2); border-block-end: 1px solid var(--bit-float-border); }
+.searchBox { display: flex; align-items: center; gap: var(--spacing-2); block-size: 2rem; padding: 0 var(--spacing-2); border-radius: var(--radius-element);
+  background: var(--color-background-muted); color: var(--color-icon-secondary); }
+.searchBox:focus-within { box-shadow: inset 0 0 0 1px var(--color-border-strong, var(--color-border)); }
+.searchBox svg { inline-size: 0.875rem; block-size: 0.875rem; flex-shrink: 0; }
+.search { flex: 1; min-inline-size: 0; border: 0; outline: 0; background: none; font: inherit; font-size: 0.8125rem; color: var(--color-text-primary); }
+.search::placeholder { color: var(--color-text-disabled); }
+.colors { display: flex; flex-wrap: wrap; gap: 0.3125rem; padding: 2px; }
+.color { inline-size: 1.25rem; block-size: 1.25rem; padding: 0; border: 0; border-radius: 50%; cursor: pointer; }
+.color[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--color-background-popover), 0 0 0 3.5px var(--color-text-primary); }
+.color:focus-visible { outline: var(--focus-outline-width) var(--focus-outline-style) var(--focus-outline-color); outline-offset: 3px; }
+
+.grid { max-block-size: 20rem; overflow-y: auto; overscroll-behavior: contain; padding: var(--spacing-1) var(--spacing-2) var(--spacing-2); }
+.panel[data-size="lg"] .grid { max-block-size: none; flex: 1; min-block-size: 0; }
+.group { margin: 0; padding: var(--spacing-3) 2px var(--spacing-1); font-size: 0.6875rem; font-weight: 500; color: var(--color-text-secondary); }
+.grid > .group:first-child { padding-block-start: var(--spacing-1); }
+.cells { display: grid; grid-template-columns: repeat(auto-fill, minmax(2.25rem, 1fr)); gap: 2px; }
+.cell { display: grid; place-items: center; aspect-ratio: 1; padding: 0; border: 0; border-radius: var(--radius-element); background: none;
+  color: var(--color-icon-primary); cursor: pointer; }
+.cell svg { inline-size: 1.125rem; block-size: 1.125rem; }
+.cell:hover, .cell:focus-visible { background: var(--color-overlay-hover); outline: 0; }
+.cell[aria-pressed="true"] { background: var(--color-background-gray); box-shadow: inset 0 0 0 1px var(--color-border); }
+.panel[data-size="lg"] .cells { grid-template-columns: repeat(auto-fill, minmax(2.75rem, 1fr)); }
+.panel[data-size="lg"] .cell svg { inline-size: 1.375rem; block-size: 1.375rem; }
+.note { margin: 0; padding: var(--spacing-6) var(--spacing-2); text-align: center; font-size: 0.8125rem; color: var(--color-text-secondary); }
+.end { block-size: 1px; }

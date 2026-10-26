@@ -6,4 +6,4 @@ export {
   type AppPlace, type MenuEntry,
 } from './navigation';
 export { LOOK_CHOICES, lookOf, type LookChoice } from './color-themes';
-export { MARK_ICONS, PALETTE } from './palette';
+export { DEFAULT_MARK_COLOR, MARK_ICONS, PALETTE } from './palette';

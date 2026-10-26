@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Button, TextInput, VStack } from '@astryxdesign/core';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { PALETTE } from '@/shared/config';
+import { DEFAULT_MARK_COLOR, PALETTE } from '@/shared/config';
 import { ApiError, authError } from '@/shared/api';
 import { CompactDialog, ConfirmDialog, FormMessage, NavIcon, QueryMessage, SettingsAction, SettingsCard, SettingsHead, SettingsRow } from '@/shared/ui';
 import { createLabel, deleteLabel, labelsQuery, refreshLabels, updateLabel, type Label } from '@/entities/label';
@@ -53,7 +53,7 @@ export function LabelsSettings({ workspaceId, canWrite }: { workspaceId: string;
     <SettingsHead title="라벨" description="이 워크스페이스의 모든 프로젝트가 같은 라벨을 씁니다." />
     {!labels.data ? <QueryMessage pending={labels.isPending} error={labels.error} retry={() => { void labels.refetch(); }} />
       : <SettingsCard title={`라벨 ${list.length}개`} id="labels-list"
-        actions={canWrite ? <Button label="새 라벨" variant="secondary" size="sm" icon={<NavIcon name="plus" />} onClick={() => setDraft({ name: '', color: PALETTE[1]!.value })} /> : undefined}>
+        actions={canWrite ? <Button label="새 라벨" variant="secondary" size="sm" icon={<NavIcon name="plus" />} onClick={() => setDraft({ name: '', color: DEFAULT_MARK_COLOR })} /> : undefined}>
         {list.map(label => <SettingsRow key={label.id} lead={<span className={styles.swatch} style={{ background: label.color }} aria-hidden="true" />}
           label={<>{label.name}{label.system && <span className={styles.system}>시스템</span>}</>}
           description={label.system ? '결정의 상태와 기각한 대안을 갖는 라벨입니다. 이름을 바꾸거나 지울 수 없습니다.' : undefined}>

@@ -35,7 +35,7 @@ export { useFillRoom } from './use-fill-room';
 export { NotificationBell } from './notification-bell';
 export { SettingsAction, SettingsCard, SettingsHead, SettingsRow } from './settings-card';
 export { MarkdownEditor, MarkdownView } from './markdown-editor';
-export { MarkPicker, type Mark } from './mark-picker';
+export { IconPicker, MarkIcon, type Mark } from './icon-picker';
 export { PropertyPicker, type PropertyOption } from './property-picker';
 export { DuePicker } from './due-picker';
 export { PanelDialog, RoutedPanel, Surface, SurfaceContext, usePanelSurface, type PanelSurface } from './side-panel';

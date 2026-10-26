@@ -4,7 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { ApiError, authError } from '@/shared/api';
 import { useAutoGrow } from '@/shared/lib/auto-grow';
-import { ConfirmDialog, FormMessage, MarkPicker, SettingsCard, SettingsHead, SettingsRow } from '@/shared/ui';
+import { ConfirmDialog, FormMessage, IconPicker, SettingsCard, SettingsHead, SettingsRow } from '@/shared/ui';
 import { archiveProject, deleteProject, PROJECT_KEY as KEY, ProjectMark, refreshProjects, updateProject, type Project } from '@/entities/project';
 
 /**
@@ -65,7 +65,7 @@ export function ProjectGeneralSettings({ project, canManage }: { project: Projec
     <form onSubmit={event => { event.preventDefault(); void save(); }}>
       <SettingsCard title="세부 정보" id="project-details" actions={editable ? <Button type="submit" label="저장" variant="secondary" size="sm" isDisabled={!isChanged} isLoading={isBusy} /> : undefined}>
         <SettingsRow label="아이콘" description="사이드바와 목록에서 프로젝트 이름 앞에 보입니다.">
-          {editable ? <MarkPicker value={mark} label="프로젝트 아이콘과 색 고르기" isDisabled={isBusy} onChange={setMark} /> : <ProjectMark project={project} size="md" />}
+          {editable ? <IconPicker value={mark} label="프로젝트 아이콘과 색 고르기" isDisabled={isBusy} onChange={setMark} /> : <ProjectMark project={project} size="md" />}
         </SettingsRow>
         <SettingsRow label="이름">
           {editable ? <TextInput label="이름" isLabelHidden size="sm" value={name} onChange={setName} isRequired isDisabled={isBusy}

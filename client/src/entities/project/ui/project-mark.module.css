@@ -7,3 +7,7 @@
 .mark[data-size="xs"] svg { inline-size: 0.625rem; block-size: 0.625rem; }
 .mark[data-size="md"] { inline-size: 1.75rem; block-size: 1.75rem; border-radius: 6px; font-size: 0.75rem; }
 .mark[data-size="md"] svg { inline-size: 1rem; block-size: 1rem; }
+/* An icon still being fetched holds the size the icons have. */
+.mark > span { font-size: 0.8125rem; }
+.mark[data-size="xs"] > span { font-size: 0.625rem; }
+.mark[data-size="md"] > span { font-size: 1.0625rem; }

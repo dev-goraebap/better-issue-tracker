@@ -2,7 +2,7 @@ import { useState, type KeyboardEvent } from 'react';
 import { Button, IconButton } from '@astryxdesign/core';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ApiError, authError } from '@/shared/api';
-import { FormMessage, MarkdownEditor, MarkPicker, NavIcon, PanelDialog, type Mark } from '@/shared/ui';
+import { FormMessage, MarkdownEditor, IconPicker, NavIcon, PanelDialog, type Mark } from '@/shared/ui';
 import { createProject, PROJECT_KEY as KEY, refreshProjects } from '@/entities/project';
 import { WorkspaceMark, workspaceQuery } from '@/entities/workspace';
 import styles from './create-project.module.css';
@@ -60,7 +60,7 @@ export function CreateProjectDialog({ workspaceId, isOpen, onClose, onCreated }:
         <span className={styles.headEnd}><IconButton label="닫기" tooltip="닫기 (Esc)" variant="ghost" size="sm" icon={<NavIcon name="close" />} onClick={close} /></span>
       </header>
       <div className={styles.body}>
-        <MarkPicker value={mark} label="프로젝트 아이콘과 색 고르기" isDisabled={isBusy} onChange={setMark} />
+        <IconPicker value={mark} label="프로젝트 아이콘과 색 고르기" isDisabled={isBusy} onChange={setMark} />
         <input className={styles.name} value={name} placeholder="프로젝트 이름" aria-label="프로젝트 이름" aria-required="true" data-autofocus disabled={isBusy}
           onChange={event => setName(event.target.value)} />
         <div className={styles.pills} role="group" aria-label="속성">

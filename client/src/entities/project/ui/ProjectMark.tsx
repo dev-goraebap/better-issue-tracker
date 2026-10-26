@@ -1,5 +1,5 @@
 import type { CSSProperties } from 'react';
-import { NavIcon } from '@/shared/ui';
+import { MarkIcon } from '@/shared/ui';
 import styles from './project-mark.module.css';
 
 /**
@@ -10,6 +10,6 @@ import styles from './project-mark.module.css';
 export function ProjectMark({ project, size = 'sm' }: { project: { key: string; icon?: string | null; color?: string | null }; size?: 'xs' | 'sm' | 'md' }) {
   const tone = project.color ? { '--mark': project.color } as CSSProperties : undefined;
   return <span className={styles.mark} data-size={size} data-icon={project.icon ? '' : undefined} style={tone} aria-hidden="true">
-    {project.icon ? <NavIcon name={project.icon} /> : project.key.slice(0, 1)}
+    {project.icon ? <MarkIcon name={project.icon} /> : project.key.slice(0, 1)}
   </span>;
 }

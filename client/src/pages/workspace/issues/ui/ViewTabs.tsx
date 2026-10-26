@@ -16,7 +16,7 @@ export function ViewTabs({ views, value, panelId, onPick, onCreate, onEdit, onCo
 }) {
   const current = views.find(view => view.id === value);
   const labelId = useId();
-  const items: PageTab<string>[] = views.map(view => ({ value: view.id, label: view.name, icon: view.icon, tone: view.color,
+  const items: PageTab<string>[] = views.map(view => ({ value: view.id, label: view.name, mark: view.icon, tone: view.color,
     endContent: view.isPersonal ? <span className={styles.personal} aria-label="나만 보기"><NavIcon name="person" /></span> : undefined }));
   return <div className={styles.tabs} role="group" aria-labelledby={labelId}>
     <span id={labelId} className={styles.spoken}>뷰</span>
