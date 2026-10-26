@@ -141,6 +141,8 @@ public final class WorkItem {
     private double position;
     private Instant closedAt;
     private Instant archivedAt;
+    private String recurrenceId;
+    private LocalDate occurrenceOn;
     private long version;
     private Audit audit;
 
@@ -155,6 +157,8 @@ public final class WorkItem {
             double position,
             Instant closedAt,
             Instant archivedAt,
+            String recurrenceId,
+            LocalDate occurrenceOn,
             long version,
             Audit audit) {
         this.id = id;
@@ -167,6 +171,8 @@ public final class WorkItem {
         this.position = position;
         this.closedAt = closedAt;
         this.archivedAt = archivedAt;
+        this.recurrenceId = recurrenceId;
+        this.occurrenceOn = occurrenceOn;
         this.version = version;
         this.audit = audit;
     }
@@ -199,6 +205,8 @@ public final class WorkItem {
                 position,
                 finalColumn ? now : null,
                 null,
+                null,
+                null,
                 0,
                 Audit.create(actor, agent, now));
     }
@@ -214,6 +222,8 @@ public final class WorkItem {
             double position,
             Instant closedAt,
             Instant archivedAt,
+            String recurrenceId,
+            LocalDate occurrenceOn,
             long version,
             Audit audit) {
         return new WorkItem(
@@ -227,8 +237,19 @@ public final class WorkItem {
                 position,
                 closedAt,
                 archivedAt,
+                recurrenceId,
+                occurrenceOn,
                 version,
                 audit);
+    }
+
+    /**
+     * Makes this the occurrence of a recurrence on a day (D-092): the one it was set up on, or one it made. The rule and
+     * day say where it is in the series; what it says stays its own, so this is not an edit of it.
+     */
+    public void occur(String recurrenceId, LocalDate day) {
+        this.recurrenceId = Objects.requireNonNull(recurrenceId, "recurrenceId");
+        this.occurrenceOn = Objects.requireNonNull(day, "day");
     }
 
     public void revise(Details next, String actor, String agent, Instant now) {

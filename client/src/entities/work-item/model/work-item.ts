@@ -1,4 +1,4 @@
-import type { EventTime } from '@/shared/ui';
+import type { EventTime, Repeat, Weekday } from '@/shared/ui';
 import type { ColumnCategory, WorkItem } from '../api/work-item';
 
 /** A work item is a work item (D-066): no fixed types, only the properties it has and its labels. */
@@ -64,6 +64,20 @@ export function eventTimeOf(item: Pick<WorkItem, 'startDate' | 'dueDate' | 'star
  * An event's time for the API, from what the member picked: a day without a start time is that whole day, so the day
  * is never lost; times are the member's own and leave as moments.
  */
+/** The rule a work item repeats by, as the repeat pill takes it (D-092); none when it does not repeat. */
+export function repeatOf(item: Pick<WorkItem, 'recurrence'>): Repeat | undefined {
+  const rule = item.recurrence;
+  return rule ? { frequency: rule.frequency, interval: rule.interval, weekdays: rule.weekdays as Weekday[], untilOn: rule.untilOn ?? undefined } : undefined;
+}
+
+/** A rule as the server takes it, in the member's own time zone, over the version the member saw. */
+export function repeatBody(repeat: Repeat, expectedVersion: number) {
+  return {
+    expectedVersion, frequency: repeat.frequency, interval: repeat.interval, weekdays: repeat.weekdays.length > 0 ? repeat.weekdays : null,
+    untilOn: repeat.untilOn ?? null, timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+  };
+}
+
 export function eventFields(time: EventTime) {
   if (!time.day) return { startDate: null, dueDate: null, startsAt: null, endsAt: null, allDay: false };
   if (time.allDay || !time.start) return { startDate: time.day, dueDate: time.day, startsAt: null, endsAt: null, allDay: true };

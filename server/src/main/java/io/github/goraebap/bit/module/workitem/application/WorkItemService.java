@@ -7,11 +7,13 @@ import io.github.goraebap.bit.module.link.TargetType;
 import io.github.goraebap.bit.module.project.ColumnWorkItemSpi;
 import io.github.goraebap.bit.module.project.ProjectFacade;
 import io.github.goraebap.bit.module.workitem.WorkItemFacade;
+import io.github.goraebap.bit.module.workitem.domain.Recurrence;
 import io.github.goraebap.bit.module.workitem.domain.WorkItem;
 import io.github.goraebap.bit.module.workitem.domain.WorkItemRepository;
 import io.github.goraebap.bit.module.workspace.WorkspaceFacade;
 import io.github.goraebap.bit.shared.web.CurrentUser;
 import java.time.Clock;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -94,6 +96,55 @@ public class WorkItemService implements WorkItemFacade, ColumnWorkItemSpi {
             WorkItem.Details details,
             String requestedColumnId,
             Set<String> labelIds) {
+        return create(actor, workspaceId, projectId, kind, details, requestedColumnId, labelIds, null, null);
+    }
+
+    /**
+     * An occurrence a recurrence makes on a day (D-092), from its template: people who have since left and labels since
+     * deleted are left out, and a task whose column has gone or is final starts in the backlog.
+     */
+    @Transactional(propagation = Propagation.MANDATORY)
+    String createOccurrence(CurrentUser actor, Recurrence rule, LocalDate day) {
+        var t = rule.template();
+        String workspaceId = rule.workspaceId();
+        var details = t.on(day, rule.zone());
+        var people = details.peopleIds().stream()
+                .filter(person -> workspaceFacade.hasMember(actor, workspaceId, person))
+                .collect(Collectors.toSet());
+        details = new WorkItem.Details(
+                details.title(),
+                details.description(),
+                details.priority(),
+                details.triggerType(),
+                people,
+                details.startDate(),
+                details.dueDate(),
+                details.startsAt(),
+                details.endsAt(),
+                details.allDay());
+        var labelIds = t.labelIds().isEmpty()
+                ? Set.<String>of()
+                : labelFacade.findAllById(actor, workspaceId, t.labelIds()).keySet();
+        String columnId = t.columnId() == null
+                ? null
+                : projectFacade
+                        .findColumn(actor, workspaceId, rule.projectId(), t.columnId())
+                        .filter(column -> !column.finalColumn())
+                        .map(ProjectFacade.ColumnRef::id)
+                        .orElse(null);
+        return create(actor, workspaceId, rule.projectId(), t.kind(), details, columnId, labelIds, rule.id(), day);
+    }
+
+    private String create(
+            CurrentUser actor,
+            String workspaceId,
+            String projectId,
+            WorkItem.Kind kind,
+            WorkItem.Details details,
+            String requestedColumnId,
+            Set<String> labelIds,
+            String recurrenceId,
+            LocalDate occurrenceOn) {
         projectFacade.requireAccess(actor, workspaceId, projectId, true);
         validateDates(details);
         WorkItem.Details valid = shape(kind, details);
@@ -119,6 +170,7 @@ public class WorkItemService implements WorkItemFacade, ColumnWorkItemSpi {
                 actor.userId(),
                 agent(actor),
                 clock.instant());
+        if (recurrenceId != null) w.occur(recurrenceId, occurrenceOn);
         workItemRepository.save(w);
         changed(actor, workspaceId, w, "created", List.of());
         return w.id();

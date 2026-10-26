@@ -1,10 +1,10 @@
 export {
-  workBase, itemPath, itemQuery, itemsQuery, workspaceItemsQuery, byRefQuery, createItem, moveItem, updateItem, archiveItem, deleteItem, refreshItems, taskParams,
+  workBase, itemPath, itemQuery, itemsQuery, workspaceItemsQuery, byRefQuery, createItem, moveItem, updateItem, repeatItem, stopRepeating, archiveItem, deleteItem, refreshItems, taskParams,
 } from './api/work-item';
 export type { WorkItem, ItemLabel, ColumnCategory, TaskFilters } from './api/work-item';
 export { PRIORITIES } from './model/labels';
 export {
-  CATEGORIES, CATEGORY_LABELS, categoryOf, eventFields, eventTimeOf, eventWhen, localDay, localTime, workItemHref, PRIORITY_RANK, spanOf, SYSTEM_LABEL, type Priority, type StatusCategory,
+  CATEGORIES, CATEGORY_LABELS, categoryOf, eventFields, eventTimeOf, eventWhen, localDay, localTime, repeatBody, repeatOf, workItemHref, PRIORITY_RANK, spanOf, SYSTEM_LABEL, type Priority, type StatusCategory,
 } from './model/work-item';
 export { WORK_ITEM_TEMPLATES, templateLabel, type WorkItemTemplate } from './model/templates';
 export { parseWorkItemSearch, parseNewWorkItemSearch, type WorkItemSearch, type NewWorkItemSearch } from './model/search';

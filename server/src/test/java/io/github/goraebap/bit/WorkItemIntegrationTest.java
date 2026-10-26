@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import io.github.goraebap.bit.module.project.application.ProjectService;
+import io.github.goraebap.bit.module.workitem.application.RecurrenceService;
 import io.github.goraebap.bit.module.workitem.application.WorkItemQueryService;
 import io.github.goraebap.bit.module.workitem.application.WorkItemRequests;
 import io.github.goraebap.bit.module.workitem.application.WorkItemService;
@@ -63,6 +64,9 @@ class WorkItemIntegrationTest {
     private WorkItemQueryService workItemQueryService;
 
     @Autowired
+    private RecurrenceService recurrenceService;
+
+    @Autowired
     private WorkItemRepository workItemRepository;
 
     @Autowired
@@ -100,6 +104,7 @@ class WorkItemIntegrationTest {
                 "work_item_person",
                 "work_item_label",
                 "work_item",
+                "recurrence",
                 "board_column",
                 "project_member",
                 "project_key",
@@ -966,6 +971,166 @@ class WorkItemIntegrationTest {
                         String.class,
                         task))
                 .anySatisfy(payload -> assertThat(payload).contains("\"field\":\"kind\""));
+    }
+
+    @Test
+    void aRepeatingEventIsMadeAheadEditsCarryToLaterOccurrencesAndCancellingEndsIt() throws Exception {
+        var zone = java.time.ZoneId.of("Asia/Seoul");
+        var today = java.time.LocalDate.now(zone);
+        var monday = today.with(java.time.temporal.TemporalAdjusters.nextOrSame(java.time.DayOfWeek.MONDAY));
+        var startsAt = java.time.ZonedDateTime.of(monday, java.time.LocalTime.of(10, 0), zone)
+                .toInstant();
+        var meeting = new WorkItem.Details(
+                "Weekly",
+                "Agenda",
+                null,
+                null,
+                java.util.Set.of(owner.userId()),
+                null,
+                null,
+                startsAt,
+                startsAt.plusSeconds(3600),
+                false);
+        String first = workItemService.create(
+                owner, workspace, project, WorkItem.Kind.event, meeting, null, java.util.Set.of());
+        String password = "work item integration password phrase";
+        jdbcTemplate.update(
+                "UPDATE iam_password SET password_hash=? WHERE iam_user_id=?",
+                passwordEncoder.encode(password),
+                owner.userId());
+        String email = jdbcTemplate.queryForObject(
+                "SELECT email FROM iam_user WHERE iam_user_id=?", String.class, owner.userId());
+        try (var client = HttpClient.newBuilder()
+                .cookieHandler(new CookieManager(null, CookiePolicy.ACCEPT_ALL))
+                .build()) {
+            expect(
+                    http(
+                            client,
+                            "POST",
+                            "/api/v1/auth/sessions",
+                            JSON.writeValueAsString(Map.of("email", email, "password", password)),
+                            null),
+                    201);
+            String base = "/api/v1/workspaces/" + workspace + "/projects/" + project + "/work-items/";
+            expect(
+                    http(
+                            client,
+                            "PUT",
+                            base + first + "/recurrence",
+                            "{\"expectedVersion\":0,\"frequency\":\"weekly\",\"timeZone\":\"Asia/Seoul\"}",
+                            null),
+                    204);
+
+            // Every Monday up to eight weeks ahead is its own event, each at 10:00 in Seoul with the same people.
+            var series = occurrences();
+            assertThat(series).hasSize(1 + (monday.equals(today) ? 8 : 7));
+            assertThat(series.getFirst().id()).isEqualTo(first);
+            var second = series.get(1);
+            assertThat(second.occurrenceOn()).isEqualTo(monday.plusWeeks(1));
+            assertThat(second.startsAt()).isEqualTo(startsAt.plus(java.time.Duration.ofDays(7)));
+            assertThat(second.title()).isEqualTo("Weekly");
+            assertThat(second.description()).isEqualTo("Agenda");
+            assertThat(second.people()).extracting(WorkItemViews.Person::id).containsExactly(owner.userId());
+            assertThat(second.recurrence().weekdays()).containsExactly(java.time.DayOfWeek.MONDAY);
+            assertThat(second.createdByAgent()).isEqualTo("반복");
+            var ruleId = second.recurrence().id();
+            // The job finds nothing more to make until the days move on.
+            recurrenceService.materialize(ruleId);
+            assertThat(occurrences()).hasSize(series.size());
+
+            // From the second on: a new title and time reach every later one; a new description only the second.
+            var elevenOnSecond = java.time.ZonedDateTime.of(monday.plusWeeks(1), java.time.LocalTime.of(11, 0), zone)
+                    .toInstant();
+            expect(
+                    http(
+                            client,
+                            "PATCH",
+                            base + second.id() + "?scope=following",
+                            JSON.writeValueAsString(Map.of(
+                                    "expectedVersion",
+                                    second.version(),
+                                    "title",
+                                    "Weekly sync",
+                                    "description",
+                                    "New agenda",
+                                    "startsAt",
+                                    elevenOnSecond.toString(),
+                                    "endsAt",
+                                    elevenOnSecond.plusSeconds(1800).toString())),
+                            null),
+                    204);
+            var edited = occurrences();
+            assertThat(edited.getFirst().title()).isEqualTo("Weekly");
+            assertThat(edited.get(1).description()).isEqualTo("New agenda");
+            assertThat(edited.get(2).title()).isEqualTo("Weekly sync");
+            assertThat(edited.get(2).description()).isEqualTo("Agenda");
+            assertThat(edited.get(2).startsAt())
+                    .isEqualTo(java.time.ZonedDateTime.of(monday.plusWeeks(2), java.time.LocalTime.of(11, 0), zone)
+                            .toInstant());
+            assertThat(edited.get(2).endsAt())
+                    .isEqualTo(edited.get(2).startsAt().plusSeconds(1800));
+            assertThat(edited.getFirst().startsAt()).isEqualTo(startsAt);
+
+            // Cancelling after the fourth deletes the later ones and ends the rule on its day.
+            var fourth = edited.get(3);
+            expect(
+                    http(
+                            client,
+                            "DELETE",
+                            base + fourth.id() + "/recurrence?expectedVersion=" + fourth.version(),
+                            null,
+                            null),
+                    204);
+            var left = occurrences();
+            assertThat(left).hasSize(4);
+            assertThat(left.getLast().recurrence().untilOn()).isEqualTo(fourth.occurrenceOn());
+            recurrenceService.materialize(ruleId);
+            assertThat(occurrences()).hasSize(4);
+        }
+    }
+
+    @Test
+    void aRepeatingTaskHasOnlyItsNextOccurrenceInItsColumn() {
+        var today = java.time.LocalDate.now(java.time.ZoneId.of("Asia/Seoul"));
+        var report = new WorkItem.Details(
+                "Daily report", null, null, null, java.util.Set.of(owner.userId()), today, null, null, null, false);
+        String first =
+                workItemService.create(owner, workspace, project, WorkItem.Kind.task, report, todo, java.util.Set.of());
+        recurrenceService.repeat(
+                owner,
+                workspace,
+                project,
+                first,
+                new WorkItemRequests.Repeat(
+                        0L,
+                        io.github.goraebap.bit.module.workitem.domain.Recurrence.Frequency.daily,
+                        null,
+                        null,
+                        null,
+                        "Asia/Seoul"));
+        var series = occurrences();
+        assertThat(series).hasSize(2);
+        assertThat(series.get(1).startDate()).isEqualTo(today.plusDays(1));
+        assertThat(series.get(1).columnId()).isEqualTo(todo);
+        assertThat(series.get(1).people()).extracting(WorkItemViews.Person::id).containsExactly(owner.userId());
+        recurrenceService.materialize(series.get(1).recurrence().id());
+        assertThat(occurrences()).hasSize(2);
+        // A work item that does not repeat has nothing to cancel.
+        String single = create(owner, "Single", todo, null);
+        assertThatThrownBy(() -> recurrenceService.stop(owner, workspace, project, single, 0))
+                .hasMessageContaining("반복");
+    }
+
+    /** The project's live occurrences, in day order. */
+    private List<WorkItemViews.Item> occurrences() {
+        return jdbcTemplate
+                .queryForList(
+                        "SELECT work_item_id FROM work_item WHERE recurrence_id IS NOT NULL AND deleted_at IS NULL"
+                                + " ORDER BY occurrence_on",
+                        String.class)
+                .stream()
+                .map(id -> workItemQueryService.get(owner, workspace, project, id))
+                .toList();
     }
 
     private static WorkItemRequests.WorkspaceListRequest withPerson(

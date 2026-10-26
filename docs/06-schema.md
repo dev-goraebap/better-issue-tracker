@@ -107,6 +107,7 @@ erDiagram
 |---|---|---|
 | `work_item` | `work_item_id`, `project_id`, `number bigint`, `title varchar(200)`, `description text?`, `board_column_id uuid?`, `position real`, `priority varchar(8)?`, `trigger_type varchar(16)?`, `assignee_id uuid?`, `start_date date?`, `due_date date?`, `closed_at?`, `archived_at?`, `version bigint`, 감사 | `ux_work_item_project_id_number`, `ix_work_item_board_column_id_position`, `ck_..._priority` (low, medium, high, urgent), `ck_..._trigger_type` (request, finding, external, improvement, planned) |
 | `work_item_person` | `work_item_person_id`, `work_item_id`, `iam_user_id`, `created_at`, `created_by`, `created_by_agent?` | `ux_work_item_person_work_item_id_iam_user_id`, `ix_work_item_person_iam_user_id_work_item_id` |
+| `recurrence` | `recurrence_id`, `workspace_id`, `project_id`, `frequency`(daily·weekly·monthly), `interval_count`, `weekdays?`, `starts_on`, `until_on?`, `time_zone`, 본보기(`kind`, `title`, `description?`, `priority?`, `people_ids`, `label_ids`, `board_column_id?`, `date_parts`, `span_days`, `start_time?`, `duration_minutes?`, `all_day`), `version`, 감사 열 | `ix_recurrence_project_id`, `ix_recurrence_until_on` |
 | `work_item_label` | `work_item_label_id`, `work_item_id`, `label_id`, `created_at`, `created_by`, `created_by_agent?` | `ux_work_item_label_work_item_id_label_id`, `ix_work_item_label_label_id_work_item_id` |
 
 - **상태는 컬럼 하나로**: `board_column_id`가 NULL이면 백로그다. Kaneo처럼 상태 문자열과 컬럼 ID를 함께 두지 않는다 (D-009).
@@ -118,6 +119,7 @@ erDiagram
 ### T-004 실제 V3 계약
 
 - V3에 project / project_key / board_column / work_item(V10에서 `issue`로, V14에서 다시 `work_item`으로 바뀜)을 추가했다. V1/V2는 수정하지 않는다. 작업 번호는 bigint이며 프로젝트 카운터와 같은 쓰기 트랜잭션에서 발급한다.
+- **V17(D-092, BIT-38)**: 반복은 `recurrence` 규칙이 업무 하나를 본보기로 복사해 두고, 회차마다 따로 업무를 만든다. `work_item`에 `recurrence_id?`·`occurrence_on?`(그 회차의 날)을 더했고, `(recurrence_id, occurrence_on)`은 지운 회차를 포함해 하나뿐이라 취소한 날은 다시 만들지 않는다. 시각은 규칙의 시간대로 두어 10:00은 서머타임이 바뀌어도 10:00이다.
 - **V16(D-092, BIT-37)**: `work_item`에 `kind`(task, event), `starts_at?`·`ends_at?`(시각 일정), `all_day`를 더하고 `assignee_id`를 없앴다. 사람은 `work_item_person`에 여럿(작업은 담당자, 일정은 참석자, 20명 이하)이고, 옛 담당자는 그 표로 옮겼다. CHECK: 작업은 시각이 없고, 일정은 칸·닫힘이 없으며, 시각 일정은 날짜가 없고 종일 일정은 날짜를 쓴다. 백로그(상태 없음)와 보드 개수는 작업만 센다.
 - V14(D-091)가 `issue`·`issue_label`·`issue_view`·`issue_view_tweak`·`issue_view_order`와 `code_link.issue_id`, `project.last_issue_number`, 대상 종류 `issue`(link·activity·comment·attachment)를 다시 work_item으로 바꿨다. 저장소의 이슈(`code_link.kind`의 `issue`, 규칙 이벤트 `issue_opened`·`issue_closed`, `syncs_issues`)는 저장소 쪽 이름이라 그대로다.
 - 프로젝트·컬럼·작업에 version을 둔다. 새 감사 열에는 생성·수정·삭제의 사용자와 에이전트 이름을 함께 둔다. archived_at과 deleted_at은 별개다.

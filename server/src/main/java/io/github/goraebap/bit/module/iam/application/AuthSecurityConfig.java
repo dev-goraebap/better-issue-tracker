@@ -136,6 +136,9 @@ class AuthSecurityConfig {
                         .authenticated()
                         .requestMatchers(HttpMethod.PATCH, "/api/v1/workspaces/*/projects/**")
                         .authenticated()
+                        // A work item's recurrence (D-092).
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/workspaces/*/projects/*/work-items/*/recurrence")
+                        .authenticated()
                         .requestMatchers(HttpMethod.DELETE, "/api/v1/workspaces/*/projects/**")
                         .authenticated()
                         .requestMatchers(

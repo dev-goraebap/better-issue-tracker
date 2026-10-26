@@ -153,6 +153,8 @@ final class AuthenticationFilter extends OncePerRequestFilter {
             return true;
         if (Set.of("PATCH", "DELETE").contains(method)
                 && path.matches(project + "/[^/]+(?:/(?:columns|work-items)/[^/]+)?")) return true;
+        if (Set.of("PUT", "DELETE").contains(method) && path.matches(project + "/[^/]+/work-items/[^/]+/recurrence"))
+            return true;
         String labels = "/api/v1/workspaces/[^/]+/labels";
         if (Set.of("GET", "HEAD").contains(method) && path.matches(labels + "(?:/[^/]+)?")
                 || method.equals("POST") && path.matches(labels)
