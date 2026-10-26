@@ -62,12 +62,12 @@ export function appPlace(pathname: string): AppPlace {
   const path = pathname.replace(/\/$/, '');
   if (path === '/workspaces') return { isWorkspaces: true };
   if (path.startsWith('/settings/')) return { account: path };
-  const match = /^\/w\/([^/]+)(\/.*)?$/.exec(path);
+  const match = /^\/workspaces\/([^/]+)(\/.*)?$/.exec(path);
   if (!match) return {};
   const [, workspaceId, rest = ''] = match;
   const settings = /^\/settings(?:\/projects\/([^/]+))?(\/[^/]+)$/.exec(rest);
   if (settings) return { workspaceId, settingsProjectId: settings[1], settings: settings[2] };
-  const project = /^\/p\/([^/]+)(\/.*)?$/.exec(rest);
+  const project = /^\/projects\/([^/]+)(\/.*)?$/.exec(rest);
   if (!project) return { workspaceId, workspaceSection: rest.startsWith('/inbox') ? '/inbox' : rest };
   const [, projectId, inner = ''] = project;
   const item = /^\/issues\/([^/]+)(\/edit)?$/.exec(inner);

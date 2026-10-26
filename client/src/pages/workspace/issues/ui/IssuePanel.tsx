@@ -5,9 +5,9 @@ import { IssueDetail } from '@/widgets/issue-detail';
 import { NewIssue } from '@/widgets/issue-editor';
 
 /** An issue's address, as the issue pages open it in their modal. */
-export const ISSUE_PATH = /^\/w\/([^/]+)\/p\/([^/]+)\/issues\/(?!new$)([^/]+)$/;
+export const ISSUE_PATH = /^\/workspaces\/([^/]+)\/projects\/([^/]+)\/issues\/(?!new$)([^/]+)$/;
 /** 새 이슈's address, in a project or in 전체. */
-export const NEW_PATH = /^\/w\/([^/]+)(?:\/p\/([^/]+)\/issues|\/issues)\/new$/;
+export const NEW_PATH = /^\/workspaces\/([^/]+)(?:\/projects\/([^/]+)\/issues|\/issues)\/new$/;
 
 /** The page the issue pages' modal shows, by its address: an issue (IssueDetail) or 새 이슈 (NewIssue), each its own frame. */
 export function IssuePanel({ href }: { href: string }) {

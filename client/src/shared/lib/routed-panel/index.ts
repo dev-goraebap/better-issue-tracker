@@ -8,8 +8,8 @@ import { createContext, useContext } from 'react';
  */
 const PANEL_PAGES = [
   // An issue's page, over the issue pages it was opened from (D-069), and 새 이슈 in a project or in 전체 (D-070).
-  /^\/w\/[^/]+\/p\/[^/]+\/issues\/[^/]+$/,
-  /^\/w\/[^/]+\/issues\/new$/,
+  /^\/workspaces\/[^/]+\/projects\/[^/]+\/issues\/[^/]+$/,
+  /^\/workspaces\/[^/]+\/issues\/new$/,
 ];
 
 /** An address's path, without its search or hash. */
