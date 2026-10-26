@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { Button, IconButton, TextInput, VStack } from '@astryxdesign/core';
+import { Button, TextInput, VStack } from '@astryxdesign/core';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { PALETTE } from '@/shared/config';
 import { ApiError, authError } from '@/shared/api';
-import { CompactDialog, ConfirmDialog, FormMessage, NavIcon, QueryMessage, SettingsCard, SettingsHead, SettingsRow } from '@/shared/ui';
+import { CompactDialog, ConfirmDialog, FormMessage, NavIcon, QueryMessage, SettingsAction, SettingsCard, SettingsHead, SettingsRow } from '@/shared/ui';
 import { createLabel, deleteLabel, labelsQuery, refreshLabels, updateLabel, type Label } from '@/entities/label';
 import styles from './workspace-settings.module.css';
 
@@ -58,9 +58,8 @@ export function LabelsSettings({ workspaceId, canWrite }: { workspaceId: string;
           label={<>{label.name}{label.system && <span className={styles.system}>시스템</span>}</>}
           description={label.system ? '결정의 상태와 기각한 대안을 갖는 라벨입니다. 이름을 바꾸거나 지울 수 없습니다.' : undefined}>
           {canWrite && <span className={styles.rowActions}>
-            <IconButton label={`${label.name} 고치기`} tooltip="고치기" variant="ghost" size="sm" icon={<NavIcon name="edit" />}
-              onClick={() => setDraft({ from: label, name: label.name, color: label.color })} />
-            {!label.system && <IconButton label={`${label.name} 삭제`} tooltip="삭제" variant="ghost" size="sm" icon={<NavIcon name="delete" />} onClick={() => setDeleting(label)} />}
+            <SettingsAction label={`${label.name} 고치기`} tooltip="고치기" icon="edit" onClick={() => setDraft({ from: label, name: label.name, color: label.color })} />
+            {!label.system && <SettingsAction label={`${label.name} 삭제`} tooltip="삭제" icon="delete" tone="danger" onClick={() => setDeleting(label)} />}
           </span>}
         </SettingsRow>)}
       </SettingsCard>}
