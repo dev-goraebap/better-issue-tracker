@@ -1,5 +1,6 @@
 package io.github.goraebap.bit.shared.web;
 
+import io.github.goraebap.bit.shared.storage.StorageStatus;
 import io.swagger.v3.oas.annotations.Operation;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -13,10 +14,13 @@ import org.springframework.web.bind.annotation.RestController;
 class SystemController {
     private final DataSource dataSource;
     private final boolean gitIntegration;
+    private final StorageStatus storageStatus;
 
-    SystemController(DataSource dataSource, @Value("${app.git.encryption-key:}") String gitKey) {
+    SystemController(
+            DataSource dataSource, @Value("${app.git.encryption-key:}") String gitKey, StorageStatus storageStatus) {
         this.dataSource = dataSource;
         this.gitIntegration = gitKey != null && !gitKey.isBlank();
+        this.storageStatus = storageStatus;
     }
 
     @Operation(summary = "Check the server and its database")
@@ -34,6 +38,7 @@ class SystemController {
     @Operation(summary = "Read available optional capabilities")
     @GetMapping(value = "/api/v1/capabilities", produces = "application/json")
     SystemViews.Capabilities capabilities() {
-        return new SystemViews.Capabilities(false, gitIntegration, true, false, false);
+        return new SystemViews.Capabilities(
+                false, gitIntegration, storageStatus.available(), false, false, storageStatus.maxFileBytes());
     }
 }

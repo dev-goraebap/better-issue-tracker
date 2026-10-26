@@ -454,6 +454,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/files/uploads": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Start an upload: where to send a file's bytes */
+        post: operations["upload"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/auth/sessions": {
         parameters: {
             query?: never;
@@ -937,6 +954,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/storage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read the file storage in use and whether it answered (instance admin) */
+        get: operations["storage"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/workspaces/{workspaceId}/projects/{projectId}/members/{userId}": {
         parameters: {
             query?: never;
@@ -1194,6 +1228,39 @@ export interface components {
             email: string;
             /** @enum {string} */
             role: "owner" | "admin" | "member" | "viewer";
+            /** Format: date-time */
+            expiresAt: string;
+        };
+        Upload: {
+            filename: string;
+            /** Format: int64 */
+            size: number;
+            /**
+             * @description attachment(이슈 설명·댓글 파일, 기본) 또는 picture(아바타·로고, 정사각 JPEG 1MB 이하)
+             * @enum {string}
+             */
+            purpose?: "attachment" | "picture";
+            /** @description 사진 자리를 칠할 대표색(#RRGGBB) */
+            dominantColor?: string;
+            /**
+             * Format: int32
+             * @description 사진의 가로(px)
+             */
+            width?: number;
+            /**
+             * Format: int32
+             * @description 사진의 세로(px)
+             */
+            height?: number;
+        };
+        UploadTicket: {
+            id: string;
+            /** Format: uri */
+            url: string;
+            method: string;
+            headers: {
+                [key: string]: string;
+            };
             /** Format: date-time */
             expiresAt: string;
         };
@@ -1621,6 +1688,8 @@ export interface components {
             objectStorage: boolean;
             documentConversion: boolean;
             pdf: boolean;
+            /** Format: int64 */
+            fileMaxBytes: number;
         };
         Session: {
             user: components["schemas"]["Me"];
@@ -1637,6 +1706,20 @@ export interface components {
         };
         BootstrapStatus: {
             canBootstrap: boolean;
+        };
+        Storage: {
+            /** @description local(데이터 볼륨) 또는 s3(S3 호환: AWS S3·R2·MinIO) */
+            adapter: string;
+            bucket?: string;
+            endpoint?: string;
+            keyPrefix?: string;
+            available: boolean;
+            /** @description 쓸 수 없을 때 고칠 것 */
+            problem?: string;
+            /** Format: date-time */
+            checkedAt: string;
+            /** Format: int64 */
+            maxFileBytes: number;
         };
     };
     responses: never;
@@ -2574,6 +2657,30 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    upload: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Upload"];
+            };
+        };
+        responses: {
+            /** @description 업로드 주소 발급 */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UploadTicket"];
+                };
             };
         };
     };
@@ -3823,6 +3930,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Csrf"];
+                };
+            };
+        };
+    };
+    storage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Storage"];
                 };
             };
         };
