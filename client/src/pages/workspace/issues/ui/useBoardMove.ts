@@ -154,21 +154,27 @@ export function useBoardMove<Lane extends BoardLane>(lanes: readonly Lane[], can
     };
   }, []);
 
-  // While a pointer carries a card, the board scrolls sideways at its ends and the page at its top and bottom.
+  // While a pointer carries a card, the board scrolls sideways at its ends, and the lane under it (its [data-lane-scroll]
+  // list, when that list scrolls) or else the page at their top and bottom.
   const isDragging = carry?.by === 'pointer';
   useEffect(() => {
     const box = board.current;
     if (!isDragging || !box) return;
     const page = scrollParent(box);
+    const laneUnder = (x: number) => [...box.querySelectorAll<HTMLElement>('[data-lane-scroll]')].find(list => {
+      const { left, right } = list.getBoundingClientRect();
+      return x >= left && x <= right && list.scrollHeight > list.clientHeight;
+    });
     let frame = 0;
     const tick = () => {
       const { x, y } = pointer.current;
       const across = box.getBoundingClientRect();
-      const down = page === document.scrollingElement ? { top: 0, bottom: window.innerHeight } : page.getBoundingClientRect();
+      const scroller = laneUnder(x) ?? page;
+      const down = scroller === document.scrollingElement ? { top: 0, bottom: window.innerHeight } : scroller.getBoundingClientRect();
       const dx = x < across.left + EDGE ? -speed(across.left + EDGE - x) : x > across.right - EDGE ? speed(x - across.right + EDGE) : 0;
       const dy = y < down.top + EDGE ? -speed(down.top + EDGE - y) : y > down.bottom - EDGE ? speed(y - down.bottom + EDGE) : 0;
       if (dx) box.scrollLeft += dx;
-      if (dy) page.scrollTop += dy;
+      if (dy) scroller.scrollTop += dy;
       if (dx || dy) onScrolled();
       frame = requestAnimationFrame(tick);
     };

@@ -4,7 +4,7 @@ import styles from './settings-card.module.css';
 
 /**
  * A SettingsRow's action (고치기, 삭제…) as the list header's 필터 and 표시: the icon small inside a round 28px chip on
- * a light ring, not bare, so a row's actions read as buttons side by side. tone="danger" turns red under the pointer. On
+ * a light ring, not bare, so a row's actions read as buttons side by side. A page's title row takes it for 편집 too. tone="danger" turns red under the pointer. On
  * a phone it stays 32px to look at and takes a 44px press (D-067).
  */
 export function SettingsAction({ label, tooltip, icon, tone, isDisabled, onClick }: {

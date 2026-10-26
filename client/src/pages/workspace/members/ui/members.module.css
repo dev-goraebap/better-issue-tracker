@@ -1,6 +1,6 @@
-/* A member's cell: the picture beside the name over the email. */
-.person { display: flex; align-items: center; gap: var(--spacing-3); min-inline-size: 0; }
-.personText { display: flex; flex-direction: column; min-inline-size: 0; }
+/* A member's cell: a small picture beside the name over the email, set close so the row keeps room above and below. */
+.person { display: flex; align-items: center; gap: var(--spacing-2-5, 0.625rem); min-inline-size: 0; }
+.personText { display: flex; flex-direction: column; min-inline-size: 0; line-height: 1.25; }
 .personName { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
 .personEmail { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.75rem; color: var(--color-text-secondary); }
 .clip { min-inline-size: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -11,7 +11,9 @@ button.projects { cursor: pointer; border-radius: var(--radius-element); }
 button.projects:hover .projectsLabel { color: var(--color-text-primary); text-decoration: underline; text-underline-offset: 3px; }
 button.projects:focus-visible { outline: var(--focus-outline-width) var(--focus-outline-style) var(--focus-outline-color); }
 .marks { display: inline-flex; flex-shrink: 0; }
-.marks > * + * { margin-inline-start: -4px; box-shadow: 0 0 0 2px var(--color-background-surface); }
+/* Each mark sits on a solid slot of the surface, so a mark's see-through wash never shows the one under it. */
+.markSlot { display: inline-flex; border-radius: 5px; background: var(--color-background-surface); }
+.markSlot + .markSlot { margin-inline-start: -4px; box-shadow: 0 0 0 2px var(--color-background-surface); }
 .projectsLabel { min-inline-size: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 /* The dialog's list: a row per project, its mark, name over key, and the switch at the end. */
 .projectList { display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none; }

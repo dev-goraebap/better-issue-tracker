@@ -5,7 +5,7 @@ import { useQueries, useQueryClient } from '@tanstack/react-query';
 import { MOBILE_QUERY } from '@/shared/config';
 import { authError } from '@/shared/api';
 import { useGo } from '@/shared/lib/routed-panel';
-import { DefaultAvatar, ListSummary, ListToolbar, PageState, type ListDisplay, type ListFilter, type ListSort, type ListViews } from '@/shared/ui';
+import { DefaultAvatar, ListSummary, ListToolbar, PageState, useFillRoom, type ListDisplay, type ListFilter, type ListSort, type ListViews } from '@/shared/ui';
 import type { Label } from '@/entities/label';
 import { columnsQuery } from '@/entities/project';
 import type { Member } from '@/entities/workspace';
@@ -50,6 +50,8 @@ export function IssuesView({ scope, view, tweak, effective, issues, labels, memb
   // An issue opened from the calendar goes where a pressed link would: into the page's modal (D-069).
   const openPage = useGo();
   const [shown, setShown] = useState(SLICE);
+  // The calendar shares out the height the page leaves below the toolbar, to the card's foot.
+  const calendarRoom = useFillRoom<HTMLDivElement>(effective.layout === 'calendar');
   const { workspaceId } = scope;
   const canEdit = view.canEdit;
   const rows = useMemo(() => filterIssues(issues, effective.filters, effective.sort, search.q), [issues, effective.filters, effective.sort, search.q]);
@@ -135,7 +137,7 @@ export function IssuesView({ scope, view, tweak, effective, issues, labels, memb
       : <IssueTable workspaceId={workspaceId} rows={visible} search={search} columns={effective.columns} columnNames={columnNames} order={order} foot={summary} />)}
     {effective.layout === 'board' && (withStatus.length === 0 && !scope.project ? empty('상태가 있는 이슈', '이슈에 상태를 정하면 칸반의 칸에 놓입니다.')
       : <BoardView scope={scope} items={withStatus} search={search} onCreate={onCreate} />)}
-    {effective.layout === 'calendar' && <div className={styles.calendarRoom}>
+    {effective.layout === 'calendar' && <div ref={calendarRoom} className={styles.calendarRoom}>
       <div className={styles.calendarBar}><CalendarBar day={search.date ?? currentDay()} onPlace={date => go({ date: date === currentDay() ? undefined : date })} /></div>
       <IssueCalendar workspaceId={workspaceId} items={rows} anchor={search.date ?? currentDay()} onOpen={href => openPage(href)}
         onMove={scope.canWrite ? (item, by) => { void moveDays(item, by); } : undefined} />
