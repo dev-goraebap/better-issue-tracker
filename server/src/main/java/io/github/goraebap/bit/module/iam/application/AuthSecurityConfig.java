@@ -1,5 +1,6 @@
 package io.github.goraebap.bit.module.iam.application;
 
+import io.github.goraebap.bit.shared.storage.LocalObjectStorage;
 import io.github.goraebap.bit.shared.web.ProblemResponse;
 import jakarta.servlet.DispatcherType;
 import org.springframework.beans.factory.annotation.Value;
@@ -49,7 +50,8 @@ class AuthSecurityConfig {
                         .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler())
                         .requireCsrfProtectionMatcher(request -> !AuthenticationFilter.safe(request)
                                 && !AuthenticationFilter.bearer(request)
-                                && !AuthenticationFilter.hook(request)))
+                                && !AuthenticationFilter.hook(request)
+                                && !AuthenticationFilter.storage(request)))
                 .authorizeHttpRequests(a -> a.dispatcherTypeMatchers(DispatcherType.ERROR, DispatcherType.FORWARD)
                         .permitAll()
                         .requestMatchers(
@@ -185,6 +187,17 @@ class AuthSecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/v1/workspaces/*/pull-requests")
                         .authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/v1/hooks/*")
+                        .permitAll()
+                        // Files (D-029, D-090): starting an upload, and the local storage's signed URLs.
+                        .requestMatchers(HttpMethod.POST, "/api/v1/files/uploads")
+                        .authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/admin/storage")
+                        .hasAuthority("INSTANCE_ADMIN")
+                        .requestMatchers(HttpMethod.GET, LocalObjectStorage.PATH)
+                        .permitAll()
+                        .requestMatchers(HttpMethod.HEAD, LocalObjectStorage.PATH)
+                        .permitAll()
+                        .requestMatchers(HttpMethod.PUT, LocalObjectStorage.PATH)
                         .permitAll()
                         .requestMatchers("/api", "/api/**")
                         .denyAll()

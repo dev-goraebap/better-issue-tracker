@@ -1,0 +1,66 @@
+package io.github.goraebap.bit.module.file;
+
+import io.github.goraebap.bit.shared.web.CurrentUser;
+import java.io.InputStream;
+import java.net.URI;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+/**
+ * Files other modules bind to what they own (bit-api-contract 04). The file module checks uploads and stores the link;
+ * the owning module decides who may open an owner's files before asking for a URL, since only it knows who may see the
+ * owner. While storage is off (D-030) every call that needs it raises FILE_STORAGE_NOT_CONFIGURED.
+ */
+public interface FileFacade {
+    /** Whether files can be sent and opened now; the server's capabilities say the same. */
+    boolean available();
+
+    /**
+     * Binds the member's finished uploads, in the given order, after the owner's own files, within the caller's
+     * transaction; each file keeps its upload's id, so a text can point at it before it is saved. Refuses uploads that
+     * are missing, someone else's, expired, not stored, larger than the limit, or whose content does not start as
+     * their format does.
+     */
+    List<AttachedFile> attach(CurrentUser uploader, List<String> uploadIds, FileOwner owner, String ownerId);
+
+    /**
+     * Makes the member's finished upload the owner's only picture, a JPEG square of side pixels, and discards the
+     * owner's earlier files; their bytes go with the daily cleanup. Refuses what attach refuses, and a file that does
+     * not decode whole to that size.
+     */
+    AttachedFile replacePicture(CurrentUser uploader, String uploadId, FileOwner owner, String ownerId, int side);
+
+    /** One of the owner's files as a stream, empty when the owner has no such file; the caller closes it. */
+    Optional<OpenedFile> open(FileOwner owner, String ownerId, String attachmentId);
+
+    /** A file being read: what it is called, its type and size, and its bytes. */
+    record OpenedFile(String filename, String contentType, long size, InputStream body) {}
+
+    /**
+     * A short-lived URL for one of the owner's files, empty when the owner has no such file. The caller has already
+     * checked that the member may see the owner.
+     */
+    Optional<URI> openUrl(FileOwner owner, String ownerId, String attachmentId, boolean download);
+
+    /** The files of each owner in their order, in one batch; owners without files are left out. */
+    Map<String, List<AttachedFile>> attachmentsOf(FileOwner owner, Collection<String> ownerIds);
+
+    /**
+     * Removes the given files of the owner, bytes included, once the caller's transaction commits; ids that are not the
+     * owner's are ignored. The daily cleanup deletes the bytes again for a week, so a storage failure is retried.
+     */
+    void discard(FileOwner owner, String ownerId, Collection<String> attachmentIds, CurrentUser actor);
+
+    /** Removes every file of the owner, as discard does, when the owner is no longer kept. */
+    void discardAll(FileOwner owner, String ownerId, CurrentUser actor);
+
+    /**
+     * Gives another owner of the same kind its own copy of the given files of an owner, sharing their bytes, after its
+     * own files. Returns each copied file's new id by the id it was copied from; ids the owner does not keep are left
+     * out. Discarding either copy leaves the other's bytes.
+     */
+    Map<String, String> copy(
+            FileOwner owner, String fromOwnerId, String toOwnerId, Collection<String> attachmentIds, CurrentUser actor);
+}

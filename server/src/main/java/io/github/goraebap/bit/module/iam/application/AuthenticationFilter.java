@@ -1,6 +1,7 @@
 package io.github.goraebap.bit.module.iam.application;
 
 import io.github.goraebap.bit.shared.error.BusinessException;
+import io.github.goraebap.bit.shared.storage.LocalObjectStorage;
 import io.github.goraebap.bit.shared.web.CurrentUser;
 import io.github.goraebap.bit.shared.web.ProblemResponse;
 import jakarta.servlet.FilterChain;
@@ -55,6 +56,15 @@ final class AuthenticationFilter extends OncePerRequestFilter {
         return request.getMethod().equals("POST") && request.getRequestURI().matches("/api/v1/hooks/[^/]+");
     }
 
+    /**
+     * A signed URL to the local file storage (D-029): the signature is the permission, as with S3, so it needs no
+     * session, key or CSRF token, and an expired session cookie beside it must not refuse a picture.
+     */
+    static boolean storage(HttpServletRequest request) {
+        return Set.of("GET", "HEAD", "PUT").contains(request.getMethod())
+                && request.getRequestURI().equals(LocalObjectStorage.PATH);
+    }
+
     static boolean publicInfo(HttpServletRequest request) {
         return Set.of("GET", "HEAD").contains(request.getMethod())
                 && Set.of("/api/v1/health", "/api/v1/capabilities", "/api/v1/auth/bootstrap", "/api/v1/auth/csrf")
@@ -64,7 +74,7 @@ final class AuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws ServletException, IOException {
-        if (!request.getRequestURI().startsWith("/api") || hook(request)) {
+        if (!request.getRequestURI().startsWith("/api") || hook(request) || storage(request)) {
             chain.doFilter(request, response);
             return;
         }

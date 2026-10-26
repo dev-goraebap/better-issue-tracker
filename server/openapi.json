@@ -1444,6 +1444,35 @@
         }
       }
     },
+    "/api/v1/files/uploads" : {
+      "post" : {
+        "tags" : [ "file-controller" ],
+        "summary" : "Start an upload: where to send a file's bytes",
+        "operationId" : "upload",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/Upload"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "description" : "업로드 주소 발급",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/UploadTicket"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/auth/sessions" : {
       "post" : {
         "tags" : [ "auth-controller" ],
@@ -3531,6 +3560,25 @@
         }
       }
     },
+    "/api/v1/admin/storage" : {
+      "get" : {
+        "tags" : [ "file-controller" ],
+        "summary" : "Read the file storage in use and whether it answered (instance admin)",
+        "operationId" : "storage",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Storage"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/workspaces/{workspaceId}/projects/{projectId}/members/{userId}" : {
       "delete" : {
         "tags" : [ "project-member-controller" ],
@@ -4214,6 +4262,72 @@
           }
         },
         "required" : [ "email", "expiresAt", "role", "workspaceId", "workspaceName" ]
+      },
+      "Upload" : {
+        "type" : "object",
+        "properties" : {
+          "filename" : {
+            "type" : "string",
+            "maxLength" : 256,
+            "minLength" : 0
+          },
+          "size" : {
+            "type" : "integer",
+            "format" : "int64",
+            "exclusiveMinimum" : 0
+          },
+          "purpose" : {
+            "type" : "string",
+            "description" : "attachment(이슈 설명·댓글 파일, 기본) 또는 picture(아바타·로고, 정사각 JPEG 1MB 이하)",
+            "enum" : [ "attachment", "picture" ]
+          },
+          "dominantColor" : {
+            "type" : "string",
+            "description" : "사진 자리를 칠할 대표색(#RRGGBB)",
+            "pattern" : "^#[0-9a-fA-F]{6}$"
+          },
+          "width" : {
+            "type" : "integer",
+            "format" : "int32",
+            "description" : "사진의 가로(px)",
+            "exclusiveMinimum" : 0,
+            "maximum" : 1000000
+          },
+          "height" : {
+            "type" : "integer",
+            "format" : "int32",
+            "description" : "사진의 세로(px)",
+            "exclusiveMinimum" : 0,
+            "maximum" : 1000000
+          }
+        },
+        "required" : [ "filename", "size" ]
+      },
+      "UploadTicket" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string"
+          },
+          "url" : {
+            "type" : "string",
+            "format" : "uri"
+          },
+          "method" : {
+            "type" : "string"
+          },
+          "headers" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "type" : "string"
+            }
+          },
+          "expiresAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        },
+        "required" : [ "expiresAt", "headers", "id", "method", "url" ]
       },
       "Login" : {
         "type" : "object",
@@ -5351,9 +5465,13 @@
           },
           "pdf" : {
             "type" : "boolean"
+          },
+          "fileMaxBytes" : {
+            "type" : "integer",
+            "format" : "int64"
           }
         },
-        "required" : [ "documentConversion", "gitIntegration", "mail", "objectStorage", "pdf" ]
+        "required" : [ "documentConversion", "fileMaxBytes", "gitIntegration", "mail", "objectStorage", "pdf" ]
       },
       "Session" : {
         "type" : "object",
@@ -5398,6 +5516,40 @@
           }
         },
         "required" : [ "canBootstrap" ]
+      },
+      "Storage" : {
+        "type" : "object",
+        "properties" : {
+          "adapter" : {
+            "type" : "string",
+            "description" : "local(데이터 볼륨) 또는 s3(S3 호환: AWS S3·R2·MinIO)"
+          },
+          "bucket" : {
+            "type" : "string"
+          },
+          "endpoint" : {
+            "type" : "string"
+          },
+          "keyPrefix" : {
+            "type" : "string"
+          },
+          "available" : {
+            "type" : "boolean"
+          },
+          "problem" : {
+            "type" : "string",
+            "description" : "쓸 수 없을 때 고칠 것"
+          },
+          "checkedAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "maxFileBytes" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        },
+        "required" : [ "adapter", "available", "checkedAt", "maxFileBytes" ]
       }
     }
   }

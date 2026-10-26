@@ -27,6 +27,9 @@ dependencies {
     // MCP for agents (D-022, D-081): the official Java SDK's stateless Streamable HTTP servlet, on Jackson 3.
     implementation 'io.modelcontextprotocol.sdk:mcp-core:2.1.0'
     implementation 'io.modelcontextprotocol.sdk:mcp-json-jackson3:2.1.0'
+    // Files on S3, Cloudflare R2 or MinIO through one adapter (D-029); without STORAGE_ENDPOINT they stay local.
+    implementation platform('software.amazon.awssdk:bom:2.46.7')
+    implementation 'software.amazon.awssdk:s3'
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
     jooqCodegen 'org.jooq:jooq-meta-extensions:3.21.6'
@@ -37,6 +40,11 @@ dependencies {
 }
 
 tasks.named('bootJar') { archiveFileName = 'app.jar' }
+// Tests keep their local file storage under build/ and run no nightly jobs.
+tasks.withType(Test).configureEach {
+    systemProperty 'app.storage.local-root', layout.buildDirectory.dir('test-files').get().asFile.absolutePath
+    systemProperty 'app.jobs.enabled', 'false'
+}
 tasks.named('test') {
     useJUnitPlatform { excludeTags 'integration' }
     testLogging { events 'failed'; exceptionFormat 'full'; showStackTraces = true }
