@@ -6,7 +6,7 @@ export type ItemLabel = WorkItem['labels'][number];
 export type ColumnCategory = NonNullable<WorkItem['columnCategory']>;
 /** The lists' conditions; arrays are sent as repeated parameters (projectId, labelId, columnId and category are any-of). */
 export type TaskFilters = {
-  q?: string; column?: string; assigneeId?: string; priority?: string; triggerType?: string; archived?: boolean; deleted?: boolean; closed?: string;
+  q?: string; column?: string; personId?: string; kind?: string[]; priority?: string; triggerType?: string; archived?: boolean; deleted?: boolean; closed?: string;
   from?: string; to?: string; sort?: string; direction?: string; size?: number; hasDates?: boolean;
   projectId?: string[]; labelId?: string[]; columnId?: string[]; category?: string[];
 };

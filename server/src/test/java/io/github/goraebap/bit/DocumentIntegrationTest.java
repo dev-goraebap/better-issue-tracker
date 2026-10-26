@@ -105,6 +105,7 @@ class DocumentIntegrationTest {
                 "document_label",
                 "document",
                 "folder",
+                "work_item_person",
                 "work_item_label",
                 "work_item",
                 "board_column",

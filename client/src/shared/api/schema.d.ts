@@ -1358,11 +1358,30 @@ export interface components {
             priority?: "low" | "medium" | "high" | "urgent" | null;
             /** @enum {string|null} */
             triggerType?: "request" | "finding" | "external" | "improvement" | "planned" | null;
-            assigneeId?: string | null;
+            /** @description Who does a task or attends an event */
+            peopleIds?: string[] | null;
             /** Format: date */
             startDate?: string | null;
             /** Format: date */
             dueDate?: string | null;
+            /**
+             * @description task (the default) or event (D-092)
+             * @enum {string|null}
+             */
+            kind?: "task" | "event" | null;
+            /**
+             * Format: date-time
+             * @description A timed event's start
+             */
+            startsAt?: string | null;
+            /**
+             * Format: date-time
+             * @description A timed event's end
+             */
+            endsAt?: string | null;
+            /** @description An event that lasts whole days, from startDate to dueDate */
+            allDay?: boolean | null;
+            /** @description A task's column; an event has none */
             columnId?: string | null;
             /** @description Workspace labels to attach; omitted or null attaches none */
             labelIds?: string[] | null;
@@ -1621,13 +1640,24 @@ export interface components {
             priority?: "low" | "medium" | "high" | "urgent" | null;
             /** @enum {string|null} */
             triggerType?: "request" | "finding" | "external" | "improvement" | "planned" | null;
-            assigneeId?: string | null;
             /** Format: date */
             startDate?: string | null;
             /** Format: date */
             dueDate?: string | null;
+            /**
+             * @description Changing the kind keeps what fits it (D-092): an event leaves its column
+             * @enum {string}
+             */
+            kind?: "task" | "event";
+            /** Format: date-time */
+            startsAt?: string | null;
+            /** Format: date-time */
+            endsAt?: string | null;
+            allDay?: boolean;
             /** @description Omitted: labels are kept. Present: the whole set is replaced; [] or null clears it */
             labelIds?: string[] | null;
+            /** @description Omitted: people are kept. Present: the whole set is replaced */
+            peopleIds?: string[] | null;
         };
         ReviseRepositoryIntegration: {
             /** Format: int64 */
@@ -1714,6 +1744,8 @@ export interface components {
             /** Format: int64 */
             number: number;
             key: string;
+            /** @enum {string} */
+            kind: "task" | "event";
             title: string;
             description: string | null;
             columnId: string | null;
@@ -1730,12 +1762,17 @@ export interface components {
             priority: "low" | "medium" | "high" | "urgent" | null;
             /** @enum {string|null} */
             triggerType: "request" | "finding" | "external" | "improvement" | "planned" | null;
-            assigneeId: string | null;
-            assigneeName: string | null;
+            /** @description Who does a task or attends an event, by name */
+            people: components["schemas"]["WorkItemPerson"][];
             /** Format: date */
             startDate: string | null;
             /** Format: date */
             dueDate: string | null;
+            /** Format: date-time */
+            startsAt: string | null;
+            /** Format: date-time */
+            endsAt: string | null;
+            allDay: boolean;
             /** Format: date-time */
             closedAt: string | null;
             /** Format: date-time */
@@ -1758,6 +1795,10 @@ export interface components {
             name: string;
             color: string;
             system: boolean;
+        };
+        WorkItemPerson: {
+            id: string;
+            name: string;
         };
         WorkItems: {
             items: components["schemas"]["WorkItem"][];
@@ -2505,7 +2546,10 @@ export interface operations {
             query?: {
                 /** @description A column id of the project, or backlog */
                 column?: string;
-                assigneeId?: string | null;
+                /** @description Items this member does or attends */
+                personId?: string | null;
+                /** @description Any of task, event (repeatable) */
+                kind?: string[];
                 /** @description Any of these labels (repeatable). Deleted labels match nothing */
                 labelId?: string[];
                 /** @description Any of todo, doing, done, or none for items without a status (repeatable) */
@@ -4295,7 +4339,10 @@ export interface operations {
                 projectId?: string[];
                 /** @description Any of these columns (repeatable); use category=none for items without a status */
                 columnId?: string[];
-                assigneeId?: string | null;
+                /** @description Items this member does or attends */
+                personId?: string | null;
+                /** @description Any of task, event (repeatable) */
+                kind?: string[];
                 /** @description Any of these labels (repeatable). Deleted labels match nothing */
                 labelId?: string[];
                 /** @description Any of todo, doing, done, or none for items without a status (repeatable) */
@@ -4484,7 +4531,10 @@ export interface operations {
             query?: {
                 /** @description A column id of the project, or backlog */
                 column?: string;
-                assigneeId?: string | null;
+                /** @description Items this member does or attends */
+                personId?: string | null;
+                /** @description Any of task, event (repeatable) */
+                kind?: string[];
                 /** @description Any of these labels (repeatable). Deleted labels match nothing */
                 labelId?: string[];
                 /** @description Any of todo, doing, done, or none for items without a status (repeatable) */
@@ -4553,7 +4603,10 @@ export interface operations {
             query?: {
                 /** @description A column id of the project, or backlog */
                 column?: string;
-                assigneeId?: string | null;
+                /** @description Items this member does or attends */
+                personId?: string | null;
+                /** @description Any of task, event (repeatable) */
+                kind?: string[];
                 /** @description Any of these labels (repeatable). Deleted labels match nothing */
                 labelId?: string[];
                 /** @description Any of todo, doing, done, or none for items without a status (repeatable) */

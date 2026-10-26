@@ -77,10 +77,10 @@ export function WorkItemsPage() {
   // The scope's default view keeps the bare address, so the trail's link and the first chip are one place.
   const pick = (id: string) => { setEditing(null); place(id === views[0]!.id ? {} : { v: id }); };
   // 새 업무 at its address: the project's, or 전체's; a board lane's + says where it starts.
-  const openNew = (status?: string) => {
+  const openNew = (status?: string, kind?: 'event') => {
     if (!canWrite) return;
     const path = projectId ? `/workspaces/${workspaceId}/projects/${projectId}/work-items/new` : `/workspaces/${workspaceId}/work-items/new`;
-    host.open(status ? `${path}?status=${status}` : path);
+    host.open(kind ? `${path}?kind=${kind}` : status ? `${path}?status=${status}` : path);
   };
   // A work item's link pressed (a plain click) opens the modal instead of leaving the list.
   const peek = (event: MouseEvent) => {

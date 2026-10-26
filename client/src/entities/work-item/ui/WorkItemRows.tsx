@@ -21,7 +21,7 @@ export function WorkItemRows({ workspaceId, rows, search, columns, columnNames, 
 }) {
   const shows = (column: ViewColumn) => columns.includes(column);
   return <ItemList label="업무 목록">{rows.map(row => <ItemRow key={row.id}
-    lead={row.assigneeId ? <DefaultAvatar seed={row.assigneeId} name={row.assigneeName ?? ''} size={32} /> : <span className={styles.leadEmpty} aria-hidden="true" />}
+    lead={row.people[0] ? <DefaultAvatar seed={row.people[0].id} name={row.people[0].name} size={32} /> : <span className={styles.leadEmpty} aria-hidden="true" />}
     title={<WorkItemLink workspaceId={workspaceId} item={row} search={search} className={ITEM_ROW_LINK}>{row.title}</WorkItemLink>}
     meta={<>
       <ItemMeta><span className={styles.key}>{row.key}</span></ItemMeta>

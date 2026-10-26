@@ -18,7 +18,8 @@ class WorkItemRulesTest {
         return WorkItem.create(
                 project,
                 1,
-                WorkItem.Details.of("Task", null, null, null, null, null, null),
+                WorkItem.Kind.task,
+                new WorkItem.Details("Task", null, null, null, (String) null, null, null),
                 Set.of(),
                 null,
                 false,

@@ -143,7 +143,7 @@ export function filterWorkItems(workItems: readonly WorkItem[], filters: ViewFil
     .filter(workItem => !text || workItem.title.toLowerCase().includes(text) || workItem.key.toLowerCase().includes(text))
     .filter(workItem => statuses.length === 0 || statuses.includes(categoryOf(workItem)))
     .filter(workItem => !filters.priority || workItem.priority === filters.priority)
-    .filter(workItem => assignees.length === 0 || (workItem.assigneeId !== null && assignees.includes(workItem.assigneeId)))
+    .filter(workItem => assignees.length === 0 || workItem.people.some(person => assignees.includes(person.id)))
     .filter(workItem => labels.length === 0 || workItem.labels.some(label => labels.includes(label.id) || (label.system && labels.includes(SYSTEM_LABEL))))
     .sort((a, b) => {
       if (sort.key === 'title') return sign * a.title.localeCompare(b.title, 'ko');

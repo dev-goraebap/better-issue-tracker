@@ -70,7 +70,7 @@ public class WorkItemService implements WorkItemFacade, ColumnWorkItemSpi {
     @Transactional
     public String create(
             CurrentUser actor, String workspaceId, String projectId, WorkItem.Details details, String columnId) {
-        return create(actor, workspaceId, projectId, details, columnId, Set.of());
+        return create(actor, workspaceId, projectId, WorkItem.Kind.task, details, columnId, Set.of());
     }
 
     @Transactional
@@ -81,10 +81,25 @@ public class WorkItemService implements WorkItemFacade, ColumnWorkItemSpi {
             WorkItem.Details details,
             String columnId,
             Set<String> labelIds) {
+        return create(actor, workspaceId, projectId, WorkItem.Kind.task, details, columnId, labelIds);
+    }
+
+    /** A task in a column (null is the backlog), or an event, which has no column (D-092). */
+    @Transactional
+    public String create(
+            CurrentUser actor,
+            String workspaceId,
+            String projectId,
+            WorkItem.Kind kind,
+            WorkItem.Details details,
+            String requestedColumnId,
+            Set<String> labelIds) {
         projectFacade.requireAccess(actor, workspaceId, projectId, true);
         validateDates(details);
-        assignee(actor, workspaceId, details.assigneeId());
+        WorkItem.Details valid = shape(kind, details);
+        people(actor, workspaceId, valid.peopleIds());
         labels(actor, workspaceId, labelIds);
+        String columnId = kind == WorkItem.Kind.event ? null : requestedColumnId;
         var column = projectFacade.requireColumn(actor, workspaceId, projectId, columnId);
         long number = projectFacade.allocateWorkItemNumber(actor, workspaceId, projectId);
         double position = workItemRepository.findColumnItems(projectId, columnId, false).stream()
@@ -95,7 +110,8 @@ public class WorkItemService implements WorkItemFacade, ColumnWorkItemSpi {
         var w = WorkItem.create(
                 projectId,
                 number,
-                details,
+                kind,
+                valid,
                 labelIds,
                 columnId,
                 column.finalColumn(),
@@ -114,32 +130,55 @@ public class WorkItemService implements WorkItemFacade, ColumnWorkItemSpi {
         var w = access(actor, workspaceId, projectId, id, true, false);
         version(w, request.getExpectedVersion());
         var d = w.details();
+        var kind = request.hasKind() ? request.getKind() : w.kind();
+        // A new kind keeps what fits it (D-092); what the request gives still wins.
+        var base = kind == w.kind() ? d : d.as(kind);
         var next = new WorkItem.Details(
                 request.hasTitle() ? request.getTitle() : d.title(),
                 request.hasDescription() ? request.getDescription() : d.description(),
                 request.hasPriority() ? request.getPriority() : d.priority(),
                 request.hasTriggerType() ? request.getTriggerType() : d.triggerType(),
-                request.hasAssigneeId() ? request.getAssigneeId() : d.assigneeId(),
-                request.hasStartDate() ? request.getStartDate() : d.startDate(),
-                request.hasDueDate() ? request.getDueDate() : d.dueDate());
+                request.hasPeopleIds() ? request.people() : d.peopleIds(),
+                request.hasStartDate() ? request.getStartDate() : base.startDate(),
+                request.hasDueDate() ? request.getDueDate() : base.dueDate(),
+                request.hasStartsAt() ? request.getStartsAt() : base.startsAt(),
+                request.hasEndsAt() ? request.getEndsAt() : base.endsAt(),
+                request.hasAllDay() ? request.getAllDay() : base.allDay());
         validateDates(next);
-        if (!Objects.equals(next.assigneeId(), d.assigneeId())) assignee(actor, workspaceId, next.assigneeId());
+        next = shape(kind, next);
+        if (!next.peopleIds().equals(d.peopleIds())) people(actor, workspaceId, next.peopleIds());
         var labelIds = request.hasLabelIds() ? request.labels() : w.labelIds();
         if (!labelIds.equals(w.labelIds())) labels(actor, workspaceId, labelIds);
         long before = w.version();
+        var previousKind = w.kind();
         var previousLabels = w.labelIds();
-        w.revise(next, labelIds, actor.userId(), agent(actor), clock.instant());
+        String previousColumn = w.columnId();
+        w.revise(kind, next, labelIds, actor.userId(), agent(actor), clock.instant());
         if (w.version() == before) return;
         workItemRepository.save(w);
+        if (previousColumn != null && w.columnId() == null) {
+            // An item that became an event left the board: the column it left closes its gap.
+            var old = projectFacade.requireColumn(actor, workspaceId, projectId, previousColumn);
+            applyOrder(
+                    actor,
+                    workItemRepository.findColumnItems(projectId, previousColumn, false),
+                    previousColumn,
+                    old.finalColumn());
+        }
         var changes = new ArrayList<FieldChange>();
+        field(changes, "kind", text(previousKind), text(kind));
         field(changes, "title", d.title(), next.title());
         // A description is written in place and saved as it is typed: the activity says it changed, not what it said.
         if (!Objects.equals(d.description(), next.description()))
             changes.add(new FieldChange("description", null, null));
         field(changes, "priority", text(d.priority()), text(next.priority()));
-        field(changes, "assignee", text(d.assigneeId()), text(next.assigneeId()));
+        field(changes, "people", ids(d.peopleIds()), ids(next.peopleIds()));
         field(changes, "startDate", text(d.startDate()), text(next.startDate()));
         field(changes, "dueDate", text(d.dueDate()), text(next.dueDate()));
+        field(changes, "startsAt", text(d.startsAt()), text(next.startsAt()));
+        field(changes, "endsAt", text(d.endsAt()), text(next.endsAt()));
+        field(changes, "allDay", text(d.allDay()), text(next.allDay()));
+        field(changes, "column", text(previousColumn), text(w.columnId()));
         field(changes, "labels", ids(previousLabels), ids(labelIds));
         if (!changes.isEmpty()) changed(actor, workspaceId, w, "changed", changes);
     }
@@ -328,9 +367,21 @@ public class WorkItemService implements WorkItemFacade, ColumnWorkItemSpi {
         return -1;
     }
 
-    private void assignee(CurrentUser actor, String workspaceId, String userId) {
-        if (userId != null && !workspaceFacade.hasMember(actor, workspaceId, userId))
-            throw WorkItemErrorCode.WORK_ITEM_ASSIGNEE_NOT_MEMBER.raise();
+    /** Every person must be a current member of the workspace. */
+    private void people(CurrentUser actor, String workspaceId, Set<String> userIds) {
+        if (userIds.size() > WorkItem.MAX_PEOPLE) throw WorkItemErrorCode.WORK_ITEM_PERSON_NOT_MEMBER.raise();
+        for (String userId : userIds)
+            if (!workspaceFacade.hasMember(actor, workspaceId, userId))
+                throw WorkItemErrorCode.WORK_ITEM_PERSON_NOT_MEMBER.raise();
+    }
+
+    /** The details as the kind takes them: a task with times, or a timed event with dates, is refused. */
+    private static WorkItem.Details shape(WorkItem.Kind kind, WorkItem.Details details) {
+        try {
+            return WorkItem.Details.of(kind, details);
+        } catch (IllegalArgumentException wrong) {
+            throw WorkItemErrorCode.WORK_ITEM_KIND_SHAPE_INVALID.raise();
+        }
     }
 
     /** Every label must be a live label of this workspace; deleted or foreign ids are rejected as one error. */
@@ -342,8 +393,11 @@ public class WorkItemService implements WorkItemFacade, ColumnWorkItemSpi {
 
     private static void validateDates(WorkItem.Details details) {
         if (details.startDate() != null
-                && details.dueDate() != null
-                && details.startDate().isAfter(details.dueDate()))
+                        && details.dueDate() != null
+                        && details.startDate().isAfter(details.dueDate())
+                || details.startsAt() != null
+                        && details.endsAt() != null
+                        && details.startsAt().isAfter(details.endsAt()))
             throw WorkItemErrorCode.WORK_ITEM_DATE_RANGE_INVALID.raise();
     }
 

@@ -8,6 +8,7 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -25,19 +26,51 @@ public final class WorkItemRequests {
             @Size(max = 20000) @Schema(nullable = true) String description,
             @Schema(nullable = true) WorkItem.Priority priority,
             @Schema(nullable = true) WorkItem.TriggerType triggerType,
-            @Schema(nullable = true) String assigneeId,
+
+            @Size(max = WorkItem.MAX_PEOPLE) @Schema(nullable = true, description = "Who does a task or attends an event")
+            List<@NotNull String> peopleIds,
+
             @Schema(nullable = true) LocalDate startDate,
             @Schema(nullable = true) LocalDate dueDate,
-            @Schema(nullable = true) String columnId,
+
+            @Schema(nullable = true, description = "task (the default) or event (D-092)")
+            WorkItem.Kind kind,
+
+            @Schema(nullable = true, description = "A timed event's start")
+            Instant startsAt,
+
+            @Schema(nullable = true, description = "A timed event's end")
+            Instant endsAt,
+
+            @Schema(nullable = true, description = "An event that lasts whole days, from startDate to dueDate")
+            Boolean allDay,
+
+            @Schema(nullable = true, description = "A task's column; an event has none")
+            String columnId,
 
             @Size(max = MAX_LABELS) @Schema(nullable = true, description = "Workspace labels to attach; omitted or null attaches none")
             List<@NotNull String> labelIds) {
         public Create {
             labelIds = labelIds == null ? null : List.copyOf(labelIds);
+            peopleIds = peopleIds == null ? null : List.copyOf(peopleIds);
+        }
+
+        WorkItem.Kind kindOrTask() {
+            return kind == null ? WorkItem.Kind.task : kind;
         }
 
         WorkItem.Details details() {
-            return new WorkItem.Details(title, description, priority, triggerType, assigneeId, startDate, dueDate);
+            return new WorkItem.Details(
+                    title,
+                    description,
+                    priority,
+                    triggerType,
+                    peopleIds == null ? Set.of() : Set.copyOf(peopleIds),
+                    startDate,
+                    dueDate,
+                    startsAt,
+                    endsAt,
+                    Boolean.TRUE.equals(allDay));
         }
 
         Set<String> labels() {
@@ -56,14 +89,19 @@ public final class WorkItemRequests {
         private @Schema(nullable = true) String description;
         private @Schema(nullable = true) WorkItem.Priority priority;
         private @Schema(nullable = true) WorkItem.TriggerType triggerType;
-        private @Schema(nullable = true) String assigneeId;
         private @Schema(nullable = true) LocalDate startDate;
         private @Schema(nullable = true) LocalDate dueDate;
+        private WorkItem.Kind kind;
+        private @Schema(nullable = true) Instant startsAt;
+        private @Schema(nullable = true) Instant endsAt;
+        private Boolean allDay;
 
         @Size(max = MAX_LABELS) private List<@NotNull String> labelIds;
 
-        private boolean hasTitle, hasDescription, hasPriority, hasTriggerType, hasAssigneeId, hasStartDate, hasDueDate;
-        private boolean hasLabelIds;
+        @Size(max = WorkItem.MAX_PEOPLE) private List<@NotNull String> peopleIds;
+
+        private boolean hasTitle, hasDescription, hasPriority, hasTriggerType, hasStartDate, hasDueDate;
+        private boolean hasLabelIds, hasPeopleIds, hasKind, hasStartsAt, hasEndsAt, hasAllDay;
 
         public Long getExpectedVersion() {
             return expectedVersion;
@@ -109,13 +147,51 @@ public final class WorkItemRequests {
             hasTriggerType = true;
         }
 
-        public String getAssigneeId() {
-            return assigneeId;
+        @Schema(description = "Changing the kind keeps what fits it (D-092): an event leaves its column")
+        public WorkItem.Kind getKind() {
+            return kind;
         }
 
-        public void setAssigneeId(String value) {
-            assigneeId = value;
-            hasAssigneeId = true;
+        public void setKind(WorkItem.Kind value) {
+            kind = value;
+            hasKind = value != null;
+        }
+
+        @Schema(nullable = true, description = "Omitted: people are kept. Present: the whole set is replaced")
+        public List<String> getPeopleIds() {
+            return peopleIds == null ? null : java.util.Collections.unmodifiableList(peopleIds);
+        }
+
+        public void setPeopleIds(List<String> value) {
+            peopleIds = value == null ? null : new ArrayList<>(value);
+            hasPeopleIds = true;
+        }
+
+        public Instant getStartsAt() {
+            return startsAt;
+        }
+
+        public void setStartsAt(Instant value) {
+            startsAt = value;
+            hasStartsAt = true;
+        }
+
+        public Instant getEndsAt() {
+            return endsAt;
+        }
+
+        public void setEndsAt(Instant value) {
+            endsAt = value;
+            hasEndsAt = true;
+        }
+
+        public Boolean getAllDay() {
+            return allDay;
+        }
+
+        public void setAllDay(Boolean value) {
+            allDay = value;
+            hasAllDay = value != null;
         }
 
         public LocalDate getStartDate() {
@@ -172,8 +248,28 @@ public final class WorkItemRequests {
             return hasTriggerType;
         }
 
-        public boolean hasAssigneeId() {
-            return hasAssigneeId;
+        public boolean hasKind() {
+            return hasKind;
+        }
+
+        public boolean hasPeopleIds() {
+            return hasPeopleIds;
+        }
+
+        Set<String> people() {
+            return peopleIds == null ? Set.of() : Set.copyOf(peopleIds);
+        }
+
+        public boolean hasStartsAt() {
+            return hasStartsAt;
+        }
+
+        public boolean hasEndsAt() {
+            return hasEndsAt;
+        }
+
+        public boolean hasAllDay() {
+            return hasAllDay;
         }
 
         public boolean hasStartDate() {
@@ -245,7 +341,8 @@ public final class WorkItemRequests {
 
     /** Filters shared by the project, My Tasks and workspace lists. */
     public abstract static class Filters {
-        private @Schema(nullable = true) String assigneeId;
+        private @Schema(nullable = true) String personId;
+        private List<String> kind = List.of();
         private List<String> labelId = List.of();
         private List<String> category = List.of();
         private Boolean hasDates;
@@ -270,12 +367,22 @@ public final class WorkItemRequests {
         private String sort = "createdAt";
         private String direction = "DESC";
 
-        public String getAssigneeId() {
-            return assigneeId;
+        @Schema(nullable = true, description = "Items this member does or attends")
+        public String getPersonId() {
+            return personId;
         }
 
-        public void setAssigneeId(String value) {
-            assigneeId = value;
+        public void setPersonId(String value) {
+            personId = value;
+        }
+
+        @Schema(description = "Any of task, event (repeatable)")
+        public List<String> getKind() {
+            return List.copyOf(kind);
+        }
+
+        public void setKind(List<String> value) {
+            kind = value == null ? List.of() : List.copyOf(value);
         }
 
         @Schema(description = "Any of these labels (repeatable). Deleted labels match nothing")

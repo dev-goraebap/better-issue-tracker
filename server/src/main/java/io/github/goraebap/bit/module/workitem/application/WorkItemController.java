@@ -78,7 +78,13 @@ class WorkItemController {
             @PathVariable String projectId,
             @Valid @RequestBody WorkItemRequests.Create request) {
         String id = workItemService.create(
-                actor, workspaceId, projectId, request.details(), request.columnId(), request.labels());
+                actor,
+                workspaceId,
+                projectId,
+                request.kindOrTask(),
+                request.details(),
+                request.columnId(),
+                request.labels());
         return ResponseEntity.created(URI.create(base(workspaceId, projectId, id)))
                 .build();
     }

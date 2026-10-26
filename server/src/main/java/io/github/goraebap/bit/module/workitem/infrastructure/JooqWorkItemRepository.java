@@ -7,11 +7,14 @@ import static io.github.goraebap.bit.jooq.tables.Project.PROJECT;
 import static io.github.goraebap.bit.jooq.tables.ProjectKey.PROJECT_KEY;
 import static io.github.goraebap.bit.jooq.tables.WorkItem.WORK_ITEM;
 import static io.github.goraebap.bit.jooq.tables.WorkItemLabel.WORK_ITEM_LABEL;
+import static io.github.goraebap.bit.jooq.tables.WorkItemPerson.WORK_ITEM_PERSON;
 
 import io.github.goraebap.bit.module.workitem.domain.WorkItem;
 import io.github.goraebap.bit.module.workitem.domain.WorkItemRepository;
 import io.github.goraebap.bit.shared.domain.Ids;
 import io.github.goraebap.bit.shared.persistence.AuditRecords;
+import java.time.ZoneOffset;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -82,7 +85,7 @@ class JooqWorkItemRepository implements WorkItemRepository {
         return items(dslContext
                 .selectFrom(WORK_ITEM)
                 .where(WORK_ITEM.PROJECT_ID.eq(projectId))
-                .and(columnId == null ? WORK_ITEM.BOARD_COLUMN_ID.isNull() : WORK_ITEM.BOARD_COLUMN_ID.eq(columnId))
+                .and(columnId == null ? backlog() : WORK_ITEM.BOARD_COLUMN_ID.eq(columnId))
                 .and(includeDeleted ? DSL.noCondition() : WORK_ITEM.DELETED_AT.isNull())
                 .orderBy(WORK_ITEM.POSITION, WORK_ITEM.WORK_ITEM_ID)
                 .fetch());
@@ -107,29 +110,33 @@ class JooqWorkItemRepository implements WorkItemRepository {
         // board_column is a to-one join by primary key: the category filter needs it, so its value is read here too.
         var records = dslContext
                 .select(WORK_ITEM.fields())
-                .select(PROJECT_KEY.KEY, IAM_USER.NAME.as("assignee_name"), BOARD_COLUMN.CATEGORY)
+                .select(PROJECT_KEY.KEY, BOARD_COLUMN.CATEGORY)
                 .from(WORK_ITEM)
                 .join(PROJECT)
                 .on(PROJECT.PROJECT_ID.eq(WORK_ITEM.PROJECT_ID))
                 .join(PROJECT_KEY)
                 .on(PROJECT_KEY.PROJECT_ID.eq(PROJECT.PROJECT_ID).and(PROJECT_KEY.IS_CURRENT.isTrue()))
-                .leftJoin(IAM_USER)
-                .on(IAM_USER.IAM_USER_ID.eq(WORK_ITEM.ASSIGNEE_ID))
                 .leftJoin(BOARD_COLUMN)
                 .on(BOARD_COLUMN.BOARD_COLUMN_ID.eq(WORK_ITEM.BOARD_COLUMN_ID))
                 .where(where)
                 .orderBy(order, ascending ? WORK_ITEM.WORK_ITEM_ID.asc() : WORK_ITEM.WORK_ITEM_ID.desc())
                 .limit(limit)
                 .fetch();
-        var labels =
-                labels(records.stream().map(r -> r.get(WORK_ITEM.WORK_ITEM_ID)).collect(Collectors.toSet()));
+        var ids = records.stream().map(r -> r.get(WORK_ITEM.WORK_ITEM_ID)).collect(Collectors.toSet());
+        var labels = labels(ids);
+        var people = people(ids);
         return records.stream()
                 .map(r -> new Row(
                         r.get(WORK_ITEM.WORK_ITEM_ID),
                         r.get(WORK_ITEM.PROJECT_ID),
                         r.get(PROJECT_KEY.KEY),
                         r.get(WORK_ITEM.NUMBER),
-                        details(r),
+                        WorkItem.Kind.valueOf(r.get(WORK_ITEM.KIND)),
+                        details(
+                                r,
+                                people.getOrDefault(r.get(WORK_ITEM.WORK_ITEM_ID), List.of()).stream()
+                                        .map(Person::id)
+                                        .collect(Collectors.toSet())),
                         labels.getOrDefault(r.get(WORK_ITEM.WORK_ITEM_ID), Set.of()),
                         r.get(WORK_ITEM.BOARD_COLUMN_ID),
                         r.get(BOARD_COLUMN.CATEGORY),
@@ -138,7 +145,7 @@ class JooqWorkItemRepository implements WorkItemRepository {
                         r.get(WORK_ITEM.ARCHIVED_AT),
                         r.get(WORK_ITEM.VERSION),
                         AuditRecords.read(r),
-                        r.get("assignee_name", String.class)))
+                        people.getOrDefault(r.get(WORK_ITEM.WORK_ITEM_ID), List.of())))
                 .toList();
     }
 
@@ -149,15 +156,18 @@ class JooqWorkItemRepository implements WorkItemRepository {
         r.setWorkItemId(w.id());
         r.setProjectId(w.projectId());
         r.setNumber(w.number());
+        r.setKind(w.kind().name());
         r.setTitle(d.title());
         r.setDescription(d.description());
         r.setBoardColumnId(w.columnId());
         r.setPosition(w.position());
         r.setPriority(d.priority() == null ? null : d.priority().name());
         r.setTriggerType(d.triggerType() == null ? null : d.triggerType().name());
-        r.setAssigneeId(d.assigneeId());
         r.setStartDate(d.startDate());
         r.setDueDate(d.dueDate());
+        r.setStartsAt(d.startsAt());
+        r.setEndsAt(d.endsAt());
+        r.setAllDay(d.allDay());
         r.setClosedAt(w.closedAt());
         r.setArchivedAt(w.archivedAt());
         r.setVersion(w.version());
@@ -170,6 +180,30 @@ class JooqWorkItemRepository implements WorkItemRepository {
                 .set(r)
                 .execute();
         saveLabels(w);
+        savePeople(w);
+    }
+
+    /** As the labels: people no longer on the item go, new ones come as its latest editor's, kept ones stay. */
+    private void savePeople(WorkItem w) {
+        var people = w.details().peopleIds();
+        dslContext
+                .deleteFrom(WORK_ITEM_PERSON)
+                .where(WORK_ITEM_PERSON.WORK_ITEM_ID.eq(w.id()))
+                .and(people.isEmpty() ? DSL.noCondition() : WORK_ITEM_PERSON.IAM_USER_ID.notIn(people))
+                .execute();
+        if (people.isEmpty()) return;
+        var insert = dslContext.insertInto(
+                WORK_ITEM_PERSON,
+                WORK_ITEM_PERSON.WORK_ITEM_PERSON_ID,
+                WORK_ITEM_PERSON.WORK_ITEM_ID,
+                WORK_ITEM_PERSON.IAM_USER_ID,
+                WORK_ITEM_PERSON.CREATED_AT,
+                WORK_ITEM_PERSON.CREATED_BY,
+                WORK_ITEM_PERSON.CREATED_BY_AGENT);
+        var a = w.audit();
+        for (String person : people)
+            insert = insert.values(Ids.newId(), w.id(), person, a.updatedAt(), a.updatedBy(), a.updatedByAgent());
+        insert.onConflictDoNothing().execute();
     }
 
     /** Removes links no longer in the set and adds new ones as the item's latest editor; kept links stay as they are. */
@@ -204,14 +238,21 @@ class JooqWorkItemRepository implements WorkItemRepository {
         if (q.projectId() != null) where = where.and(WORK_ITEM.PROJECT_ID.eq(q.projectId()));
         else where = where.and(PROJECT.ARCHIVED_AT.isNull());
         if (!q.projectIds().isEmpty()) where = where.and(WORK_ITEM.PROJECT_ID.in(q.projectIds()));
-        if (q.assigneeId() != null) where = where.and(WORK_ITEM.ASSIGNEE_ID.eq(q.assigneeId()));
-        if (q.backlog()) where = where.and(WORK_ITEM.BOARD_COLUMN_ID.isNull());
+        if (q.personId() != null)
+            where = where.and(DSL.exists(DSL.selectOne()
+                    .from(WORK_ITEM_PERSON)
+                    .where(WORK_ITEM_PERSON.WORK_ITEM_ID.eq(WORK_ITEM.WORK_ITEM_ID))
+                    .and(WORK_ITEM_PERSON.IAM_USER_ID.eq(q.personId()))));
+        if (!q.kinds().isEmpty())
+            where = where.and(
+                    WORK_ITEM.KIND.in(q.kinds().stream().map(Enum::name).toList()));
+        if (q.backlog()) where = where.and(backlog());
         else if (q.columnId() != null) where = where.and(WORK_ITEM.BOARD_COLUMN_ID.eq(q.columnId()));
         if (!q.columnIds().isEmpty()) where = where.and(WORK_ITEM.BOARD_COLUMN_ID.in(q.columnIds()));
         if (!q.categories().isEmpty() || q.noCategory()) {
             Condition category =
                     q.categories().isEmpty() ? DSL.falseCondition() : BOARD_COLUMN.CATEGORY.in(q.categories());
-            if (q.noCategory()) category = category.or(WORK_ITEM.BOARD_COLUMN_ID.isNull());
+            if (q.noCategory()) category = category.or(backlog());
             where = where.and(category);
         }
         if (!q.labelIds().isEmpty())
@@ -232,15 +273,32 @@ class JooqWorkItemRepository implements WorkItemRepository {
         if (!q.search().isEmpty()) where = where.and(WORK_ITEM.TITLE.containsIgnoreCase(q.search()));
         if (q.closed() != null)
             where = where.and(q.closed() ? WORK_ITEM.CLOSED_AT.isNotNull() : WORK_ITEM.CLOSED_AT.isNull());
-        Condition dated = WORK_ITEM.START_DATE.isNotNull().or(WORK_ITEM.DUE_DATE.isNotNull());
+        Condition dated = WORK_ITEM
+                .START_DATE
+                .isNotNull()
+                .or(WORK_ITEM.DUE_DATE.isNotNull())
+                .or(WORK_ITEM.STARTS_AT.isNotNull());
         if (q.hasDates() != null) where = where.and(q.hasDates() ? dated : DSL.not(dated));
         // An item spans start..due; with only one of them it is that single day. from/to keep items overlapping it.
+        // A timed event spans startsAt..endsAt (or its start alone); the days asked for are the member's, so its
+        // times are kept when they come within a day of them, and the screen places it on its own days.
+        Condition timed = WORK_ITEM.STARTS_AT.isNotNull();
         if (q.from() != null)
-            where = where.and(
-                    DSL.coalesce(WORK_ITEM.DUE_DATE, WORK_ITEM.START_DATE).ge(q.from()));
+            where = where.and(DSL.when(
+                            timed,
+                            DSL.coalesce(WORK_ITEM.ENDS_AT, WORK_ITEM.STARTS_AT)
+                                    .ge(q.from().minusDays(1).atStartOfDay().toInstant(ZoneOffset.UTC)))
+                    .otherwise(DSL.coalesce(WORK_ITEM.DUE_DATE, WORK_ITEM.START_DATE)
+                            .ge(q.from()))
+                    .isTrue());
         if (q.to() != null)
-            where = where.and(
-                    DSL.coalesce(WORK_ITEM.START_DATE, WORK_ITEM.DUE_DATE).le(q.to()));
+            where = where.and(DSL.when(
+                            timed,
+                            WORK_ITEM.STARTS_AT.lt(
+                                    q.to().plusDays(2).atStartOfDay().toInstant(ZoneOffset.UTC)))
+                    .otherwise(DSL.coalesce(WORK_ITEM.START_DATE, WORK_ITEM.DUE_DATE)
+                            .le(q.to()))
+                    .isTrue());
         return where;
     }
 
@@ -255,8 +313,14 @@ class JooqWorkItemRepository implements WorkItemRepository {
                 .leftJoin(BOARD_COLUMN)
                 .on(BOARD_COLUMN.BOARD_COLUMN_ID.eq(WORK_ITEM.BOARD_COLUMN_ID))
                 .where(conditions(q))
+                .and(WORK_ITEM.KIND.eq(WorkItem.Kind.task.name()))
                 .groupBy(WORK_ITEM.BOARD_COLUMN_ID)
                 .fetch(r -> new ColumnCount(r.get(WORK_ITEM.BOARD_COLUMN_ID), r.get(count)));
+    }
+
+    /** Tasks without a status (D-092): an event has no column either, but it is not waiting in the backlog. */
+    private static Condition backlog() {
+        return WORK_ITEM.BOARD_COLUMN_ID.isNull().and(WORK_ITEM.KIND.eq(WorkItem.Kind.task.name()));
     }
 
     private Optional<WorkItem> single(List<? extends Record> records) {
@@ -264,11 +328,33 @@ class JooqWorkItemRepository implements WorkItemRepository {
     }
 
     private List<WorkItem> items(List<? extends Record> records) {
-        var labels =
-                labels(records.stream().map(r -> r.get(WORK_ITEM.WORK_ITEM_ID)).collect(Collectors.toSet()));
+        var ids = records.stream().map(r -> r.get(WORK_ITEM.WORK_ITEM_ID)).collect(Collectors.toSet());
+        var labels = labels(ids);
+        var people = people(ids);
         return records.stream()
-                .map(r -> item(r, labels.getOrDefault(r.get(WORK_ITEM.WORK_ITEM_ID), Set.of())))
+                .map(r -> item(
+                        r,
+                        labels.getOrDefault(r.get(WORK_ITEM.WORK_ITEM_ID), Set.of()),
+                        people.getOrDefault(r.get(WORK_ITEM.WORK_ITEM_ID), List.of()).stream()
+                                .map(Person::id)
+                                .collect(Collectors.toSet())))
                 .toList();
+    }
+
+    /** One query for the people of every item read together, each item's by name. */
+    private Map<String, List<Person>> people(Set<String> workItemIds) {
+        if (workItemIds.isEmpty()) return Map.of();
+        Map<String, List<Person>> people = new HashMap<>();
+        dslContext
+                .select(WORK_ITEM_PERSON.WORK_ITEM_ID, IAM_USER.IAM_USER_ID, IAM_USER.NAME)
+                .from(WORK_ITEM_PERSON)
+                .join(IAM_USER)
+                .on(IAM_USER.IAM_USER_ID.eq(WORK_ITEM_PERSON.IAM_USER_ID))
+                .where(WORK_ITEM_PERSON.WORK_ITEM_ID.in(workItemIds))
+                .orderBy(IAM_USER.NAME, IAM_USER.IAM_USER_ID)
+                .forEach(r -> people.computeIfAbsent(r.value1(), id -> new ArrayList<>())
+                        .add(new Person(r.value2(), r.value3())));
+        return people;
     }
 
     /** One query for the label links of every item read together. */
@@ -284,12 +370,13 @@ class JooqWorkItemRepository implements WorkItemRepository {
         return labels;
     }
 
-    private WorkItem item(Record r, Set<String> labelIds) {
+    private WorkItem item(Record r, Set<String> labelIds, Set<String> peopleIds) {
         return WorkItem.fromPersistence(
                 r.get(WORK_ITEM.WORK_ITEM_ID),
                 r.get(WORK_ITEM.PROJECT_ID),
                 r.get(WORK_ITEM.NUMBER),
-                details(r),
+                WorkItem.Kind.valueOf(r.get(WORK_ITEM.KIND)),
+                details(r, peopleIds),
                 labelIds,
                 r.get(WORK_ITEM.BOARD_COLUMN_ID),
                 r.get(WORK_ITEM.POSITION).doubleValue(),
@@ -299,7 +386,7 @@ class JooqWorkItemRepository implements WorkItemRepository {
                 AuditRecords.read(r));
     }
 
-    private WorkItem.Details details(Record r) {
+    private WorkItem.Details details(Record r, Set<String> peopleIds) {
         String priority = r.get(WORK_ITEM.PRIORITY);
         String trigger = r.get(WORK_ITEM.TRIGGER_TYPE);
         return new WorkItem.Details(
@@ -307,8 +394,11 @@ class JooqWorkItemRepository implements WorkItemRepository {
                 r.get(WORK_ITEM.DESCRIPTION),
                 priority == null ? null : WorkItem.Priority.valueOf(priority),
                 trigger == null ? null : WorkItem.TriggerType.valueOf(trigger),
-                r.get(WORK_ITEM.ASSIGNEE_ID),
+                peopleIds,
                 r.get(WORK_ITEM.START_DATE),
-                r.get(WORK_ITEM.DUE_DATE));
+                r.get(WORK_ITEM.DUE_DATE),
+                r.get(WORK_ITEM.STARTS_AT),
+                r.get(WORK_ITEM.ENDS_AT),
+                Boolean.TRUE.equals(r.get(WORK_ITEM.ALL_DAY)));
     }
 }

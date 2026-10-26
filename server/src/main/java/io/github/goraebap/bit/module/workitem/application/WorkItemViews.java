@@ -21,6 +21,11 @@ public final class WorkItemViews {
     public record Label(String id, String name, String color, boolean system) {}
 
     @Schema(
+            name = "WorkItemPerson",
+            requiredProperties = {"id", "name"})
+    public record Person(String id, String name) {}
+
+    @Schema(
             name = "WorkItem",
             requiredProperties = {
                 "id",
@@ -28,6 +33,7 @@ public final class WorkItemViews {
                 "projectId",
                 "number",
                 "key",
+                "kind",
                 "title",
                 "description",
                 "columnId",
@@ -36,10 +42,12 @@ public final class WorkItemViews {
                 "position",
                 "priority",
                 "triggerType",
-                "assigneeId",
-                "assigneeName",
+                "people",
                 "startDate",
                 "dueDate",
+                "startsAt",
+                "endsAt",
+                "allDay",
                 "closedAt",
                 "archivedAt",
                 "deletedAt",
@@ -57,6 +65,7 @@ public final class WorkItemViews {
             String projectId,
             long number,
             String key,
+            WorkItem.Kind kind,
             String title,
             @Schema(nullable = true) String description,
             @Schema(nullable = true) String columnId,
@@ -70,10 +79,15 @@ public final class WorkItemViews {
             double position,
             @Schema(nullable = true) WorkItem.Priority priority,
             @Schema(nullable = true) WorkItem.TriggerType triggerType,
-            @Schema(nullable = true) String assigneeId,
-            @Schema(nullable = true) String assigneeName,
+
+            @Schema(description = "Who does a task or attends an event, by name")
+            List<Person> people,
+
             @Schema(nullable = true) LocalDate startDate,
             @Schema(nullable = true) LocalDate dueDate,
+            @Schema(nullable = true) Instant startsAt,
+            @Schema(nullable = true) Instant endsAt,
+            boolean allDay,
             @Schema(nullable = true) Instant closedAt,
             @Schema(nullable = true) Instant archivedAt,
             @Schema(nullable = true) Instant deletedAt,
@@ -86,6 +100,7 @@ public final class WorkItemViews {
             @Schema(nullable = true) String updatedByAgent) {
         public Item {
             labels = List.copyOf(labels);
+            people = List.copyOf(people);
         }
     }
 

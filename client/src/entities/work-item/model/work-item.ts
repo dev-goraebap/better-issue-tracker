@@ -1,3 +1,4 @@
+import type { EventTime } from '@/shared/ui';
 import type { ColumnCategory, WorkItem } from '../api/work-item';
 
 /** A work item is a work item (D-066): no fixed types, only the properties it has and its labels. */
@@ -12,12 +13,60 @@ export const SYSTEM_LABEL = 'system';
 
 export const categoryOf = (item: Pick<WorkItem, 'columnCategory'>): StatusCategory => item.columnCategory ?? 'none';
 
-/** The days a work item covers, for a calendar or a timeline: start to due, or its one day; none without a day. */
-export function spanOf(item: Pick<WorkItem, 'startDate' | 'dueDate'>): { start: string; end: string } | undefined {
+const pad = (value: number) => String(value).padStart(2, '0');
+const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
+/** A moment's day in the member's own time zone, as 2026-10-28. */
+export const localDay = (moment: string) => { const at = new Date(moment); return `${at.getFullYear()}-${pad(at.getMonth() + 1)}-${pad(at.getDate())}`; };
+/** A moment's time of day in the member's own time zone, as 10:00. */
+export const localTime = (moment: string) => { const at = new Date(moment); return `${pad(at.getHours())}:${pad(at.getMinutes())}`; };
+const dayWords = (day: string) => {
+  const [year, month, date] = day.split('-').map(Number);
+  return `${month}월 ${date}일 (${WEEKDAYS[new Date(Date.UTC(year!, month! - 1, date!)).getUTCDay()]})`;
+};
+
+/**
+ * The days a work item covers, for a calendar or a timeline: start to due, or its one day; a timed event its days in
+ * the member's own time zone (D-092); none without a day.
+ */
+export function spanOf(item: Pick<WorkItem, 'startDate' | 'dueDate' | 'startsAt' | 'endsAt'>): { start: string; end: string } | undefined {
+  if (item.startsAt) {
+    const start = localDay(item.startsAt);
+    return { start, end: item.endsAt ? localDay(item.endsAt) : start };
+  }
   const start = item.startDate ?? item.dueDate;
   const end = item.dueDate ?? item.startDate;
   return start && end ? { start, end } : undefined;
 }
 
+/** When an event happens, as its page says it (D-092): 10월 28일 (화) 10:00–11:00, or 10월 28일 (화) 종일; none for a task. */
+export function eventWhen(item: Pick<WorkItem, 'kind' | 'startDate' | 'dueDate' | 'startsAt' | 'endsAt' | 'allDay'>): string | undefined {
+  if (item.kind !== 'event') return undefined;
+  if (item.startsAt) {
+    const day = localDay(item.startsAt);
+    const end = item.endsAt && (localDay(item.endsAt) === day ? localTime(item.endsAt) : `${dayWords(localDay(item.endsAt))} ${localTime(item.endsAt)}`);
+    return `${dayWords(day)} ${localTime(item.startsAt)}${end ? `–${end}` : ''}`;
+  }
+  const span = spanOf(item);
+  if (!span) return undefined;
+  return span.start === span.end ? `${dayWords(span.start)} 종일` : `${dayWords(span.start)} – ${dayWords(span.end)} 종일`;
+}
+
 /** A work item's page, for what navigates rather than links (a calendar's bar, a toast's 보기). */
 export const workItemHref = (workspaceId: string, item: Pick<WorkItem, 'id' | 'projectId'>) => `/workspaces/${workspaceId}/projects/${item.projectId}/work-items/${item.id}`;
+
+/** An event's time as the picker holds it, in the member's own time zone (D-092). */
+export function eventTimeOf(item: Pick<WorkItem, 'startDate' | 'dueDate' | 'startsAt' | 'endsAt' | 'allDay'>): EventTime {
+  if (item.startsAt) return { day: localDay(item.startsAt), start: localTime(item.startsAt), end: item.endsAt ? localTime(item.endsAt) : undefined, allDay: false };
+  return { day: item.startDate ?? item.dueDate ?? undefined, allDay: item.allDay || !!(item.startDate ?? item.dueDate) };
+}
+
+/**
+ * An event's time for the API, from what the member picked: a day without a start time is that whole day, so the day
+ * is never lost; times are the member's own and leave as moments.
+ */
+export function eventFields(time: EventTime) {
+  if (!time.day) return { startDate: null, dueDate: null, startsAt: null, endsAt: null, allDay: false };
+  if (time.allDay || !time.start) return { startDate: time.day, dueDate: time.day, startsAt: null, endsAt: null, allDay: true };
+  const moment = (at?: string) => (at ? new Date(`${time.day}T${at}`).toISOString() : null);
+  return { startDate: null, dueDate: null, startsAt: moment(time.start), endsAt: moment(time.end), allDay: false };
+}

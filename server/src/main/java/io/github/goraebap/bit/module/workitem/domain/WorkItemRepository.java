@@ -29,13 +29,16 @@ public interface WorkItemRepository {
 
     /**
      * A list filter. {@code projectId} scopes to one project (archived projects included); without it archived
-     * projects are left out. Empty sets mean no filter on that value; sets are matched as any-of.
+     * projects are left out. Empty sets mean no filter on that value; sets are matched as any-of. personId keeps the
+     * items that person does or attends. from/to keep items whose days overlap them; a timed event is kept when its
+     * times come within a day of them, since the days are the member's own and the server keeps UTC.
      */
     record Query(
             String workspaceId,
             String projectId,
             Set<String> projectIds,
-            String assigneeId,
+            String personId,
+            Set<WorkItem.Kind> kinds,
             String columnId,
             boolean backlog,
             Set<String> columnIds,
@@ -55,6 +58,7 @@ public interface WorkItemRepository {
             String direction) {
         public Query {
             projectIds = Set.copyOf(projectIds);
+            kinds = Set.copyOf(kinds);
             columnIds = Set.copyOf(columnIds);
             labelIds = Set.copyOf(labelIds);
             categories = Set.copyOf(categories);
@@ -71,6 +75,7 @@ public interface WorkItemRepository {
             String projectId,
             String projectKey,
             long number,
+            WorkItem.Kind kind,
             WorkItem.Details details,
             Set<String> labelIds,
             String columnId,
@@ -80,9 +85,13 @@ public interface WorkItemRepository {
             Instant archivedAt,
             long version,
             Audit audit,
-            String assigneeName) {
+            List<Person> people) {
         public Row {
             labelIds = Set.copyOf(labelIds);
+            people = List.copyOf(people);
         }
     }
+
+    /** One of the people of an item, by name. */
+    record Person(String id, String name) {}
 }

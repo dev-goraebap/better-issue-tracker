@@ -12,7 +12,8 @@ export const NEW_PATH = /^\/workspaces\/([^/]+)(?:\/projects\/([^/]+)\/work-item
 /** The page the work item pages' modal shows, by its address: a work item (WorkItemDetail) or 새 업무 (NewWorkItem), each its own frame. */
 export function WorkItemPanel({ href }: { href: string }) {
   const making = NEW_PATH.exec(pathOf(href));
-  if (making) return <NewWorkItem key={href} workspaceId={making[1]!} projectId={making[2]} status={searchOf(href).status} />;
+  if (making) return <NewWorkItem key={href} workspaceId={making[1]!} projectId={making[2]} status={searchOf(href).status}
+    kind={searchOf(href).kind === 'event' ? 'event' : 'task'} />;
   const match = WORK_ITEM_PATH.exec(pathOf(href));
   if (!match) return <PageState title="열 수 없는 페이지입니다" description="주소를 확인해 주세요." />;
   return <WorkItemDetail key={href} workspaceId={match[1]!} projectId={match[2]!} id={match[3]!} search={searchOf(href) as WorkItemSearch} />;

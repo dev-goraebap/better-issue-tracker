@@ -106,6 +106,7 @@ erDiagram
 | 테이블 | 열 | 제약·인덱스 |
 |---|---|---|
 | `work_item` | `work_item_id`, `project_id`, `number bigint`, `title varchar(200)`, `description text?`, `board_column_id uuid?`, `position real`, `priority varchar(8)?`, `trigger_type varchar(16)?`, `assignee_id uuid?`, `start_date date?`, `due_date date?`, `closed_at?`, `archived_at?`, `version bigint`, 감사 | `ux_work_item_project_id_number`, `ix_work_item_board_column_id_position`, `ck_..._priority` (low, medium, high, urgent), `ck_..._trigger_type` (request, finding, external, improvement, planned) |
+| `work_item_person` | `work_item_person_id`, `work_item_id`, `iam_user_id`, `created_at`, `created_by`, `created_by_agent?` | `ux_work_item_person_work_item_id_iam_user_id`, `ix_work_item_person_iam_user_id_work_item_id` |
 | `work_item_label` | `work_item_label_id`, `work_item_id`, `label_id`, `created_at`, `created_by`, `created_by_agent?` | `ux_work_item_label_work_item_id_label_id`, `ix_work_item_label_label_id_work_item_id` |
 
 - **상태는 컬럼 하나로**: `board_column_id`가 NULL이면 백로그다. Kaneo처럼 상태 문자열과 컬럼 ID를 함께 두지 않는다 (D-009).
@@ -117,6 +118,7 @@ erDiagram
 ### T-004 실제 V3 계약
 
 - V3에 project / project_key / board_column / work_item(V10에서 `issue`로, V14에서 다시 `work_item`으로 바뀜)을 추가했다. V1/V2는 수정하지 않는다. 작업 번호는 bigint이며 프로젝트 카운터와 같은 쓰기 트랜잭션에서 발급한다.
+- **V16(D-092, BIT-37)**: `work_item`에 `kind`(task, event), `starts_at?`·`ends_at?`(시각 일정), `all_day`를 더하고 `assignee_id`를 없앴다. 사람은 `work_item_person`에 여럿(작업은 담당자, 일정은 참석자, 20명 이하)이고, 옛 담당자는 그 표로 옮겼다. CHECK: 작업은 시각이 없고, 일정은 칸·닫힘이 없으며, 시각 일정은 날짜가 없고 종일 일정은 날짜를 쓴다. 백로그(상태 없음)와 보드 개수는 작업만 센다.
 - V14(D-091)가 `issue`·`issue_label`·`issue_view`·`issue_view_tweak`·`issue_view_order`와 `code_link.issue_id`, `project.last_issue_number`, 대상 종류 `issue`(link·activity·comment·attachment)를 다시 work_item으로 바꿨다. 저장소의 이슈(`code_link.kind`의 `issue`, 규칙 이벤트 `issue_opened`·`issue_closed`, `syncs_issues`)는 저장소 쪽 이름이라 그대로다.
 - 프로젝트·컬럼·작업에 version을 둔다. 새 감사 열에는 생성·수정·삭제의 사용자와 에이전트 이름을 함께 둔다. archived_at과 deleted_at은 별개다.
 - (project_id, workspace_id) 복합 키를 project_key가 참조해 다른 공간의 키 연결을 거부한다. (project_id, board_column_id) 복합 키를 issue가 참조해 다른 프로젝트의 컬럼 연결을 거부한다.
