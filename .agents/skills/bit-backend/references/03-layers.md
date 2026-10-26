@@ -31,7 +31,7 @@ MCP 도구는 Controller와 같은 진입점이다. 도구는 각 모듈의 Faca
 - **단일 진입점 (`save`)**: jOOQ는 JPA와 달리 변경 감지(Dirty Checking) 메커니즘이 없다. 모든 상태 변경은 반드시 `save` 메서드를 명시적으로 호출해야 하며, `save`는 신규 삽입(INSERT)과 수정(UPDATE)의 단일 영속화 진입점으로 작동한다.
 - **도메인 원본 유지**: 명령 처리 시 화면용 Query DTO를 도메인 상태 판정의 근거로 사용하지 않는다. 항상 영속성 저장소에서 온전한 애그리거트 원본을 복원하여 비즈니스 규칙을 평가해야 한다.
 - **기록 주체**: 만들거나 바꾼 행에는 사람 ID와 함께, API 키로 들어온 요청이면 키의 `agent_name`을 `*_agent` 열에 남긴다(D-021).
-- **다형 대상**: `link`·`activity`·`comment`를 만들 때는 대상(`work_item`, `decision`, `session_record`, `artifact`, `code_ref`)의 존재를 소유 모듈의 Facade로 먼저 확인한다. DB가 FK로 검사하지 않기 때문이다(D-014, D-020).
+- **다형 대상**: `link`·`activity`·`comment`를 만들 때는 대상(`work_item`, `decision`, `session_record`, `document`, `code_ref`)의 존재를 소유 모듈의 Facade로 먼저 확인한다. DB가 FK로 검사하지 않기 때문이다(D-014, D-020).
 
 ### 저장소 메서드 이름과 여러 건 처리
 
@@ -132,7 +132,7 @@ MCP 도구는 Controller와 같은 진입점이다. 도구는 각 모듈의 Faca
 - 기능을 쓰는 쪽(`application`, 공용이면 `shared`)이 인터페이스를 선언하고, `infrastructure`가 기술별 어댑터를 구현한다. 호스팅이나 도구가 늘면 어댑터를 더한다(GitHub → GitLab·Gitea, D-028).
 - 설정이 없거나 연결되지 않으면 그 어댑터는 "꺼짐"을 보고하고, 서버는 정상 기동한다. 꺼진 기능을 부르면 `BusinessException`(예: `*_NOT_CONFIGURED`)으로 이유를 돌려준다. MCP 도구도 같은 오류를 받는다.
 - 켜진 기능 목록은 서버가 API로 알려 주고 화면은 그 값을 보고 버튼을 숨긴다.
-- 파생본을 만드는 어댑터는 결과에 도구와 버전을 남긴다(`artifact_rendition.converter`). 도구가 바뀌면 다시 만들 수 있게 하기 위해서다.
+- 파생본(텍스트 변환·PDF)을 만드는 어댑터는 결과에 도구와 버전을 남긴다(`converter` 같은 열). 도구가 바뀌면 다시 만들 수 있게 하기 위해서다.
 - 연결 장애·응답 이상은 `IllegalStateException`으로 분류하되, 그 기능 하나의 실패로 끝나게 하고 다른 요청을 막지 않는다.
 
 ---

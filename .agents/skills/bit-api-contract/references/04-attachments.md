@@ -22,7 +22,7 @@ description: 파일 모듈 소유권, 사전 서명 URL 업로드, 로컬·S3 �
 - `shared/storage`의 저장소 어댑터는 순수한 스토리지 I/O만을 담당하며, BIT 업무의 인가 지식을 포함하지 않는다.
 
 ### 산출물 파일
-- 산출물 정본과 파생본(텍스트 변환·PDF)은 `attachment`를 거치지 않고 `artifact_version.blob_id`, `artifact_rendition.blob_id`로 `blob`을 직접 가리킨다. 업로드 흐름(2절)과 검증·정리는 같다.
+- 문서(D-093)의 본문 파일도 다른 주인처럼 `attachment`로 붙인다. 예전 설계의 산출물 정본·파생본(`artifact_version`·`artifact_rendition`)은 D-093으로 대체되어 없다.
 - 1차에는 산출물을 다시 올리면 `current` 버전 행을 덮어쓰고, 이전 blob은 정리 대상이 된다(D-019).
 - 업무 설명·댓글에 붙는 이미지 등은 `attachment`로 붙인다.
 
@@ -117,4 +117,4 @@ description: 파일 모듈 소유권, 사전 서명 URL 업로드, 로컬·S3 �
 
 - **1차 형식과 크기 (D-090)**: PDF·HWP/HWPX·DOC/DOCX·XLS/XLSX·PPT/PPTX·JPEG/PNG/WebP/GIF·ZIP·MD/TXT/CSV. 녹음과 SVG는 받지 않는다(SVG는 위 새니타이징을 만들 때 연다). 파일 하나 기본 20MB(`STORAGE_MAX_FILE_MB`)이고 업무 합계는 두지 않는다. 형식은 파일 이름의 확장자로 정하고, 저장된 바이트의 시작이 그 형식과 맞아야 한다.
 - **미검증 파일 격리**: 유효성 검증을 통과하지 못했거나 처리가 완료되지 않은 원시 파일 객체는 외부에 절대 노출하거나 공개 URL로 제공하지 않는다.
-- **텍스트 변환·PDF**: 산출물의 파생본은 트랜잭션 밖 작업이 만들고 `artifact_rendition`의 상태만 갱신한다. 1차 어댑터는 서버 안의 Apache POI + PDFBox(텍스트 변환, D-031)와 HTML 렌더링(PDF, D-032)이라 항상 켜져 있고, `converter`에 어댑터와 버전을 남긴다. 어댑터라 바꿀 수 있다(D-030).
+- **텍스트 변환·PDF**: 첨부의 텍스트 변환(D-031)과 문서의 PDF(D-032)는 D-093에서 1차 범위 밖으로 미뤘다. 다시 다룰 때도 트랜잭션 밖 작업이 만들고 상태만 갱신하며, 어댑터와 버전을 남긴다(D-030).

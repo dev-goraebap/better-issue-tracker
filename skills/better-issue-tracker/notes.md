@@ -2,6 +2,11 @@
 
 최신이 위다. 각 항목은 증상(무엇이 틀렸나), 수정, 확인으로 쓴다.
 
+## 2026-10-26 · 문서 도구 (BIT-40, D-093)
+- 증상: 서버에 문서(프로젝트 폴더에 두는 마크다운 글)와 MCP 도구 `list_documents`·`get_document`·`create_document`·`update_document`·`link_document`가 생겼는데, 스킬은 긴 글을 둘 곳을 말하지 않았다.
+- 수정: 7절 도구 표에 문서 도구 다섯 개와 "문서 도구가 없는 서버면 업무 설명에 쓴다"를 더했다. MCP 안내문에도 문서를 쓰는 때를 한 문장 넣었다. 결정기록을 문서로 옮기는 일(D-094)은 BIT-42에서 하므로 4절은 아직 업무 기준이다.
+- 확인: 통합 테스트가 API 키로 문서 도구를 불러 만들기·폴더 경로·고치기·업무 잇기·찾기를 확인했다.
+
 ## 2026-10-26 · 이슈를 업무로 (BIT-36, D-091)
 - 증상: 결정 D-091로 일감의 이름이 화면에서는 '업무', 코드·API·MCP에서는 work item이 됐다. 스킬과 MCP 안내문은 '이슈'와 `get_issue_context`·`list_issues`·`create_issue`·`update_issue`·`move_issue`를 쓰고 있었다.
 - 수정: 스킬 본문과 README의 '이슈'를 '업무'로, 도구 이름을 `get_work_item_context`·`list_work_items`·`create_work_item`·`update_work_item`·`move_work_item`으로 바꿨다. 저장소의 이슈(GitHub·GitLab·Gitea의 issue)는 그대로 '저장소 이슈'다. 7절에 issue 이름을 쓰던 서버(D-084~D-091 사이)의 도구 이름을 남겼다. MCP 안내문(`McpServerConfig`)과 도구 설명도 같이 바꿨다.

@@ -374,6 +374,104 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workspaces/{workspaceId}/folders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Every folder of one part, by name: a project's, or the workspace's own when projectId is left out */
+        get: operations["list_5"];
+        put?: never;
+        post: operations["create_5"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{workspaceId}/folders/{folderId}/move": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["move_1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{workspaceId}/documents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Documents matching a search, the most recently changed first (D-093) */
+        get: operations["search"];
+        put?: never;
+        post: operations["create_6"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{workspaceId}/documents/{documentId}/restore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["restore_2"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{workspaceId}/documents/{documentId}/move": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["move_2"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{workspaceId}/documents/{documentId}/links": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["link"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/workspaces/{workspaceId}/comments": {
         parameters: {
             query?: never;
@@ -383,7 +481,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["create_5"];
+        post: operations["create_7"];
         delete?: never;
         options?: never;
         head?: never;
@@ -647,7 +745,7 @@ export interface paths {
         patch: operations["revise_4"];
         trace?: never;
     };
-    "/api/v1/workspaces/{workspaceId}/comments/{commentId}": {
+    "/api/v1/workspaces/{workspaceId}/folders/{folderId}": {
         parameters: {
             query?: never;
             header?: never;
@@ -660,10 +758,10 @@ export interface paths {
         delete: operations["delete_4"];
         options?: never;
         head?: never;
-        patch: operations["revise_5"];
+        patch: operations["rename"];
         trace?: never;
     };
-    "/api/v1/workspaces/{id}": {
+    "/api/v1/workspaces/{workspaceId}/documents/{documentId}": {
         parameters: {
             query?: never;
             header?: never;
@@ -676,7 +774,39 @@ export interface paths {
         delete: operations["delete_5"];
         options?: never;
         head?: never;
-        patch: operations["rename"];
+        patch: operations["revise_5"];
+        trace?: never;
+    };
+    "/api/v1/workspaces/{workspaceId}/comments/{commentId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["delete_6"];
+        options?: never;
+        head?: never;
+        patch: operations["revise_6"];
+        trace?: never;
+    };
+    "/api/v1/workspaces/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_5"];
+        put?: never;
+        post?: never;
+        delete: operations["delete_7"];
+        options?: never;
+        head?: never;
+        patch: operations["rename_1"];
         trace?: never;
     };
     "/api/v1/workspaces/{id}/members/{memberId}": {
@@ -708,7 +838,7 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
-        patch: operations["rename_1"];
+        patch: operations["rename_2"];
         trace?: never;
     };
     "/api/v1/workspaces/{workspaceId}/work-items": {
@@ -847,7 +977,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_5"];
+        get: operations["list_6"];
         put?: never;
         post?: never;
         delete?: never;
@@ -864,6 +994,23 @@ export interface paths {
             cookie?: never;
         };
         get: operations["mine"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{workspaceId}/documents/contents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One folder of a part opened: the way down to it, its folders and its documents (D-093) */
+        get: operations["contents"];
         put?: never;
         post?: never;
         delete?: never;
@@ -911,7 +1058,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_6"];
+        get: operations["list_7"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1014,6 +1161,22 @@ export interface paths {
         put?: never;
         post?: never;
         delete: operations["remove_1"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{workspaceId}/documents/{documentId}/links/{linkId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["unlink"];
         options?: never;
         head?: never;
         patch?: never;
@@ -1217,9 +1380,47 @@ export interface components {
             /** @example #5e6ad2 */
             color: string;
         };
+        CreateFolder: {
+            /** @description The project whose part holds it; null for the workspace's own */
+            projectId?: string | null;
+            /** @description The folder holding it; null for the part's top */
+            parentId?: string | null;
+            name: string;
+        };
+        MoveFolder: {
+            /** Format: int64 */
+            expectedVersion: number;
+            /** @description The folder of the same part to move under; null for its top */
+            parentId?: string | null;
+        };
+        CreateDocument: {
+            /** @description The project whose part holds it; omitted or null for the workspace's own */
+            projectId?: string | null;
+            /** @description A folder of that part; omitted or null for the part's top */
+            folderId?: string | null;
+            title: string;
+            /** @description Markdown; omitted or null is empty */
+            body?: string | null;
+            labelIds?: string[] | null;
+        };
+        DocumentVersion: {
+            /** Format: int64 */
+            expectedVersion: number;
+        };
+        MoveDocument: {
+            /** Format: int64 */
+            expectedVersion: number;
+            /** @description The project whose part takes it; null for the workspace's own */
+            projectId?: string | null;
+            /** @description A folder of that part; null for its top */
+            folderId?: string | null;
+        };
+        LinkDocument: {
+            workItemId: string;
+        };
         CreateComment: {
             /** @enum {string} */
-            targetType: "work_item" | "decision" | "session_record" | "artifact";
+            targetType: "work_item" | "decision" | "session_record" | "artifact" | "document";
             targetId: string;
             /** @description Markdown */
             body: string;
@@ -1408,6 +1609,20 @@ export interface components {
             /** @description The system label keeps its name; sending a different one is LABEL_SYSTEM_LOCKED */
             name?: string;
             color?: string;
+        };
+        RenameFolder: {
+            /** Format: int64 */
+            expectedVersion: number;
+            name: string;
+        };
+        UpdateDocument: {
+            /** Format: int64 */
+            expectedVersion: number;
+            title?: string;
+            /** @description Markdown */
+            body?: string;
+            /** @description Replaces the document's labels */
+            labelIds?: string[];
         };
         UpdateComment: {
             /** @description Markdown */
@@ -1643,6 +1858,71 @@ export interface components {
             createdAt: string;
             /** Format: date-time */
             updatedAt: string;
+        };
+        Folder: {
+            id?: string;
+            /** @description The project whose part holds it; null for the workspace's own */
+            projectId?: string | null;
+            /** @description The folder holding it; null at the top of its part */
+            parentId?: string | null;
+            name?: string;
+            /** Format: int64 */
+            version?: number;
+        };
+        DocumentPage: {
+            items?: components["schemas"]["DocumentSummary"][];
+            nextCursor?: string | null;
+        };
+        DocumentSummary: {
+            id?: string;
+            projectId?: string | null;
+            folderId?: string | null;
+            title?: string;
+            /** @description The text's first characters, for a card */
+            excerpt?: string;
+            labelIds?: string[];
+            /** Format: int64 */
+            version?: number;
+            /** Format: date-time */
+            updatedAt?: string;
+            updatedBy?: string;
+            updatedByAgent?: string | null;
+        };
+        Document: {
+            id?: string;
+            projectId?: string | null;
+            folderId?: string | null;
+            /** @description The folders from the part's top down to the document's */
+            path?: components["schemas"]["Folder"][];
+            title?: string;
+            body?: string;
+            labelIds?: string[];
+            workItems?: components["schemas"]["LinkedWorkItem"][];
+            /** Format: int64 */
+            version?: number;
+            /** Format: date-time */
+            createdAt?: string;
+            createdBy?: string;
+            createdByAgent?: string | null;
+            /** Format: date-time */
+            updatedAt?: string;
+            updatedBy?: string;
+            updatedByAgent?: string | null;
+        };
+        LinkedWorkItem: {
+            linkId?: string;
+            id?: string;
+            projectId?: string;
+            reference?: string;
+            title?: string;
+        };
+        DocumentFolderContents: {
+            projectId?: string | null;
+            folderId?: string | null;
+            /** @description The folders from the part's top down to this one, this one last */
+            path?: components["schemas"]["Folder"][];
+            folders?: components["schemas"]["Folder"][];
+            documents?: components["schemas"]["DocumentSummary"][];
         };
         Space: {
             id: string;
@@ -2525,7 +2805,209 @@ export interface operations {
             };
         };
     };
+    list_5: {
+        parameters: {
+            query?: {
+                projectId?: string;
+            };
+            header?: never;
+            path: {
+                workspaceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Folder"][];
+                };
+            };
+        };
+    };
     create_5: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateFolder"];
+            };
+        };
+        responses: {
+            /** @description 폴더 생성 */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    move_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+                folderId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MoveFolder"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    search: {
+        parameters: {
+            query?: {
+                projectId?: string;
+                workspaceOnly?: boolean;
+                labelId?: string;
+                query?: string;
+                workItemId?: string;
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                workspaceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocumentPage"];
+                };
+            };
+        };
+    };
+    create_6: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateDocument"];
+            };
+        };
+        responses: {
+            /** @description 문서 생성 */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    restore_2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+                documentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DocumentVersion"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    move_2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+                documentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MoveDocument"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    link: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+                documentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LinkDocument"];
+            };
+        };
+        responses: {
+            /** @description 업무와 연결 */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    create_7: {
         parameters: {
             query?: never;
             header?: never;
@@ -3329,7 +3811,78 @@ export interface operations {
             header?: never;
             path: {
                 workspaceId: string;
-                commentId: string;
+                folderId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    rename: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+                folderId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RenameFolder"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_4: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+                documentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Document"];
+                };
+            };
+        };
+    };
+    delete_5: {
+        parameters: {
+            query: {
+                expectedVersion: number;
+            };
+            header?: never;
+            path: {
+                workspaceId: string;
+                documentId: string;
             };
             cookie?: never;
         };
@@ -3345,6 +3898,54 @@ export interface operations {
         };
     };
     revise_5: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+                documentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateDocument"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    delete_6: {
+        parameters: {
+            query: {
+                expectedVersion: number;
+            };
+            header?: never;
+            path: {
+                workspaceId: string;
+                commentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    revise_6: {
         parameters: {
             query?: never;
             header?: never;
@@ -3369,7 +3970,7 @@ export interface operations {
             };
         };
     };
-    get_4: {
+    get_5: {
         parameters: {
             query?: never;
             header?: never;
@@ -3391,7 +3992,7 @@ export interface operations {
             };
         };
     };
-    delete_5: {
+    delete_7: {
         parameters: {
             query?: never;
             header?: never;
@@ -3411,7 +4012,7 @@ export interface operations {
             };
         };
     };
-    rename: {
+    rename_1: {
         parameters: {
             query?: never;
             header?: never;
@@ -3501,7 +4102,7 @@ export interface operations {
             };
         };
     };
-    rename_1: {
+    rename_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -3641,7 +4242,7 @@ export interface operations {
     timeline: {
         parameters: {
             query: {
-                targetType: "work_item" | "decision" | "session_record" | "artifact" | "code_ref";
+                targetType: "work_item" | "decision" | "session_record" | "artifact" | "code_ref" | "document";
                 targetId: string;
                 cursor?: string;
                 size?: number;
@@ -3761,7 +4362,7 @@ export interface operations {
             };
         };
     };
-    list_5: {
+    list_6: {
         parameters: {
             query?: never;
             header?: never;
@@ -3825,6 +4426,31 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["WorkItems"];
+                };
+            };
+        };
+    };
+    contents: {
+        parameters: {
+            query?: {
+                projectId?: string;
+                folderId?: string;
+            };
+            header?: never;
+            path: {
+                workspaceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocumentFolderContents"];
                 };
             };
         };
@@ -3900,7 +4526,7 @@ export interface operations {
             };
         };
     };
-    list_6: {
+    list_7: {
         parameters: {
             query?: {
                 cursor?: string;
@@ -4058,6 +4684,28 @@ export interface operations {
         responses: {
             /** @description Member taken off */
             204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    unlink: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+                documentId: string;
+                linkId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };

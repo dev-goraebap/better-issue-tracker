@@ -5,5 +5,6 @@ public enum TargetType {
     decision,
     session_record,
     artifact,
-    code_ref
+    code_ref,
+    document
 }
