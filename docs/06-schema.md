@@ -159,6 +159,8 @@ erDiagram
 
 ## 6. artifact — 문서함
 
+> **대체됨 (2026-10-26, D-093)**: 문서함은 `folder`와 마크다운 `document`로 다시 설계한다(구현 업무에서 정함). 아래 산출물 표는 만들지 않는다.
+
 | 테이블 | 열 | 제약·인덱스 |
 |---|---|---|
 | `folder` | `folder_id`, `workspace_id`, `parent_folder_id uuid?`, `name varchar(128)`, 감사 | `ux_folder_workspace_id_parent_name` (coalesce(parent_folder_id,''), name, deleted_at IS NULL) |
