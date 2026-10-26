@@ -1,5 +1,6 @@
 package io.github.goraebap.bit.module.workspace.application;
 
+import io.github.goraebap.bit.module.file.Picture;
 import io.github.goraebap.bit.module.workspace.domain.WorkspaceRole;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.Instant;
@@ -9,11 +10,27 @@ public final class WorkspaceViews {
     private WorkspaceViews() {}
 
     @Schema(requiredProperties = {"id", "name", "slug", "myRole", "createdAt"})
-    public record Space(String id, String name, String slug, WorkspaceRole myRole, Instant createdAt) {}
+    public record Space(
+            String id,
+            String name,
+            String slug,
+            WorkspaceRole myRole,
+            Instant createdAt,
+
+            @Schema(description = "워크스페이스 로고(BIT-30). 없으면 이름 첫 글자")
+            Picture logo) {}
 
     @Schema(requiredProperties = {"memberId", "userId", "name", "email", "role", "joinedAt"})
     public record Member(
-            String memberId, String userId, String name, String email, WorkspaceRole role, Instant joinedAt) {}
+            String memberId,
+            String userId,
+            String name,
+            String email,
+            WorkspaceRole role,
+            Instant joinedAt,
+
+            @Schema(description = "구성원의 사진(BIT-30). 없으면 그림 아바타")
+            Picture avatar) {}
 
     @Schema(
             name = "WorkspaceInvitation",

@@ -1,5 +1,6 @@
 package io.github.goraebap.bit.module.iam.application;
 
+import io.github.goraebap.bit.module.file.Picture;
 import io.github.goraebap.bit.shared.web.CurrentUser;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.Instant;
@@ -19,7 +20,10 @@ public final class IamViews {
             boolean instanceAdmin,
             boolean mustChangePassword,
             CurrentUser.Method authenticationMethod,
-            @Schema(types = {"string", "null"}) String agentName) {}
+            @Schema(types = {"string", "null"}) String agentName,
+
+            @Schema(description = "내 사진(BIT-30). 없으면 그림 아바타")
+            Picture avatar) {}
 
     @Schema(requiredProperties = {"user", "expiresAt", "absoluteExpiresAt", "mustChangePassword"})
     public record Session(

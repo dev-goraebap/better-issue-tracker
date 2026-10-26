@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import io.github.goraebap.bit.module.file.FileOwner;
+import io.github.goraebap.bit.module.file.Picture;
 import io.github.goraebap.bit.module.file.application.FileService;
 import io.github.goraebap.bit.shared.domain.Ids;
 import io.github.goraebap.bit.shared.error.BusinessException;
@@ -83,8 +84,20 @@ class FileIntegrationTest {
     @BeforeEach
     void prepare() throws Exception {
         for (String table : List.of(
-                "attachment", "blob", "pending_upload", "iam_api_key", "iam_session", "iam_password", "iam_user"))
-            jdbcTemplate.update("DELETE FROM " + table);
+                "attachment",
+                "blob",
+                "pending_upload",
+                "work_item_view_order",
+                "work_item_view_tweak",
+                "work_item_view",
+                "label",
+                "workspace_invitation",
+                "workspace_member",
+                "workspace",
+                "iam_api_key",
+                "iam_session",
+                "iam_password",
+                "iam_user")) jdbcTemplate.update("DELETE FROM " + table);
         owner = identity("owner");
         session = login(owner);
     }
@@ -251,6 +264,64 @@ class FileIntegrationTest {
     }
 
     @Test
+    void membersAndWorkspacesShowTheirPictureAtAnAddressBrowsersKeep() throws Exception {
+        byte[] square = jpeg(Picture.SIDE, Picture.SIDE);
+        // The member's own picture: sent, made theirs, and shown with its colour on what lists them.
+        var mine = upload(session, picture("me.jpg", square.length));
+        expect(put(mine, square, "image/jpeg"), 200);
+        String avatar = mine.path("id").asText();
+        expect(http(session, "PUT", "/api/v1/me/avatar", "{\"uploadId\":\"" + avatar + "\"}"), 204);
+        var me = JSON.readTree(http(session, "GET", "/api/v1/me", null).body());
+        assertThat(me.path("avatar").path("id").asText()).isEqualTo(avatar);
+        assertThat(me.path("avatar").path("color").asText()).isEqualTo("#112233");
+        var created = http(
+                session,
+                "POST",
+                "/api/v1/workspaces",
+                "{\"name\":\"Pictures\",\"slug\":\"pictures-" + Ids.newId().toLowerCase(Locale.ROOT) + "\"}");
+        expect(created, 201);
+        String location = created.headers().firstValue("Location").orElseThrow();
+        String workspace = location.substring(location.lastIndexOf('/') + 1);
+        var members = JSON.readTree(http(session, "GET", "/api/v1/workspaces/" + workspace + "/members", null)
+                .body());
+        assertThat(members.path("items").get(0).path("avatar").path("id").asText())
+                .isEqualTo(avatar);
+        var bytes = image(session, "/api/v1/users/" + owner.userId() + "/avatar/" + avatar);
+        expect(bytes, 200);
+        assertThat(bytes.headers().firstValue("Content-Type")).hasValue("image/jpeg");
+        assertThat(bytes.headers().firstValue("Cache-Control").orElse("")).contains("immutable", "private");
+
+        // The workspace's logo, which only its admins change and only its members see.
+        var logo = upload(session, picture("logo.jpg", square.length));
+        expect(put(logo, square, "image/jpeg"), 200);
+        String logoId = logo.path("id").asText();
+        expect(
+                http(session, "PUT", "/api/v1/workspaces/" + workspace + "/logo", "{\"uploadId\":\"" + logoId + "\"}"),
+                204);
+        var space = JSON.readTree(
+                http(session, "GET", "/api/v1/workspaces/" + workspace, null).body());
+        assertThat(space.path("logo").path("id").asText()).isEqualTo(logoId);
+        var spaces = JSON.readTree(
+                http(session, "GET", "/api/v1/me/workspaces", null).body());
+        assertThat(spaces.path("items").get(0).path("logo").path("id").asText()).isEqualTo(logoId);
+        expect(image(session, "/api/v1/workspaces/" + workspace + "/logo/" + logoId), 200);
+        var stranger = login(identity("member"));
+        expect(image(stranger, "/api/v1/workspaces/" + workspace + "/logo/" + logoId), 404);
+        expect(http(stranger, "DELETE", "/api/v1/workspaces/" + workspace + "/logo", null), 404);
+
+        // Taken away, both fall back to their drawn stand-ins.
+        expect(http(session, "DELETE", "/api/v1/me/avatar", null), 204);
+        expect(http(session, "DELETE", "/api/v1/workspaces/" + workspace + "/logo", null), 204);
+        me = JSON.readTree(http(session, "GET", "/api/v1/me", null).body());
+        assertThat(me.path("avatar").isMissingNode() || me.path("avatar").isNull())
+                .isTrue();
+        space = JSON.readTree(
+                http(session, "GET", "/api/v1/workspaces/" + workspace, null).body());
+        assertThat(space.path("logo").isMissingNode() || space.path("logo").isNull())
+                .isTrue();
+    }
+
+    @Test
     void cleanupRemovesUploadsNobodyTookWithTheirBytes() throws Exception {
         var stale = upload(session, "old.pdf", 5, null, null, null);
         expect(put(stale, "%PDF-".getBytes(StandardCharsets.US_ASCII), "application/pdf"), 200);
@@ -396,6 +467,15 @@ class FileIntegrationTest {
 
     private static void expect(HttpResponse<String> response, int status) {
         assertThat(response.statusCode()).as(response.body()).isEqualTo(status);
+    }
+
+    /** A picture as an image element asks for it. */
+    private HttpResponse<String> image(HttpClient client, String path) throws Exception {
+        return client.send(
+                HttpRequest.newBuilder(URI.create("http://localhost:" + port + path))
+                        .header("Accept", "image/avif,image/webp,image/*,*/*;q=0.8")
+                        .build(),
+                HttpResponse.BodyHandlers.ofString(StandardCharsets.ISO_8859_1));
     }
 
     private HttpResponse<String> http(HttpClient client, String method, String path, String body) throws Exception {

@@ -163,6 +163,52 @@
         }
       }
     },
+    "/api/v1/workspaces/{id}/logo" : {
+      "put" : {
+        "tags" : [ "workspace-controller" ],
+        "operationId" : "changeLogo",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/Logo"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "204" : {
+            "description" : "Logo changed"
+          }
+        }
+      },
+      "delete" : {
+        "tags" : [ "workspace-controller" ],
+        "operationId" : "removeLogo",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "Logo removed"
+          }
+        }
+      }
+    },
     "/api/v1/me/password" : {
       "put" : {
         "tags" : [ "auth-controller" ],
@@ -180,6 +226,36 @@
         "responses" : {
           "204" : {
             "description" : "Password changed and session rotated"
+          }
+        }
+      }
+    },
+    "/api/v1/me/avatar" : {
+      "put" : {
+        "tags" : [ "auth-controller" ],
+        "operationId" : "changeAvatar",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/Avatar"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "204" : {
+            "description" : "Picture changed"
+          }
+        }
+      },
+      "delete" : {
+        "tags" : [ "auth-controller" ],
+        "operationId" : "removeAvatar",
+        "responses" : {
+          "204" : {
+            "description" : "Picture removed"
           }
         }
       }
@@ -3960,6 +4036,40 @@
         }
       }
     },
+    "/api/v1/workspaces/{id}/logo/{pictureId}" : {
+      "get" : {
+        "tags" : [ "workspace-controller" ],
+        "operationId" : "logo",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "pictureId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "image/jpeg" : {
+                "schema" : {
+                  "type" : "string",
+                  "format" : "byte"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/workspaces/{id}/invitations/{invitationId}" : {
       "get" : {
         "tags" : [ "workspace-controller" ],
@@ -4013,6 +4123,40 @@
         "responses" : {
           "204" : {
             "description" : "Invitation revoked"
+          }
+        }
+      }
+    },
+    "/api/v1/users/{userId}/avatar/{pictureId}" : {
+      "get" : {
+        "tags" : [ "auth-controller" ],
+        "operationId" : "avatar",
+        "parameters" : [ {
+          "name" : "userId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "pictureId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "image/jpeg" : {
+                "schema" : {
+                  "type" : "string",
+                  "format" : "byte"
+                }
+              }
+            }
           }
         }
       }
@@ -4352,6 +4496,16 @@
         },
         "required" : [ "currentPassword", "userId" ]
       },
+      "Logo" : {
+        "type" : "object",
+        "properties" : {
+          "uploadId" : {
+            "type" : "string",
+            "minLength" : 1
+          }
+        },
+        "required" : [ "uploadId" ]
+      },
       "Password" : {
         "type" : "object",
         "properties" : {
@@ -4367,6 +4521,16 @@
           }
         },
         "required" : [ "currentPassword", "newPassword" ]
+      },
+      "Avatar" : {
+        "type" : "object",
+        "properties" : {
+          "uploadId" : {
+            "type" : "string",
+            "minLength" : 1
+          }
+        },
+        "required" : [ "uploadId" ]
       },
       "Selection" : {
         "type" : "object",
@@ -6225,6 +6389,18 @@
           }
         }
       },
+      "Picture" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string"
+          },
+          "color" : {
+            "type" : [ "string", "null" ]
+          }
+        },
+        "required" : [ "id" ]
+      },
       "Space" : {
         "type" : "object",
         "properties" : {
@@ -6244,6 +6420,10 @@
           "createdAt" : {
             "type" : "string",
             "format" : "date-time"
+          },
+          "logo" : {
+            "$ref" : "#/components/schemas/Picture",
+            "description" : "워크스페이스 로고(BIT-30). 없으면 이름 첫 글자"
           }
         },
         "required" : [ "createdAt", "id", "myRole", "name", "slug" ]
@@ -6270,6 +6450,10 @@
           "joinedAt" : {
             "type" : "string",
             "format" : "date-time"
+          },
+          "avatar" : {
+            "$ref" : "#/components/schemas/Picture",
+            "description" : "구성원의 사진(BIT-30). 없으면 그림 아바타"
           }
         },
         "required" : [ "email", "joinedAt", "memberId", "name", "role", "userId" ]
@@ -6372,6 +6556,10 @@
           },
           "agentName" : {
             "type" : [ "string", "null" ]
+          },
+          "avatar" : {
+            "$ref" : "#/components/schemas/Picture",
+            "description" : "내 사진(BIT-30). 없으면 그림 아바타"
           }
         },
         "required" : [ "authenticationMethod", "email", "id", "instanceAdmin", "mustChangePassword", "name" ]

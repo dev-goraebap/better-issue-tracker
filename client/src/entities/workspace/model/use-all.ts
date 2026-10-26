@@ -1,5 +1,6 @@
 import { useEffect, useMemo } from 'react';
 import { useInfiniteQuery } from '@tanstack/react-query';
+import { rememberPictures } from '@/shared/lib/person-pictures';
 import { memberPagesQuery, workspacePagesQuery } from '../api/workspace';
 
 type PagedQuery<T> = {
@@ -15,7 +16,14 @@ function useAllPages<T>(query: PagedQuery<T>) {
   return { items, hasData: !!data, isPending: query.isPending, error: query.error, refetch: query.refetch };
 }
 
-/** All the workspace's members (the server pages them; counts, owners and pickers need them all). */
-export const useMembers = (workspaceId: string) => useAllPages(useInfiniteQuery(memberPagesQuery(workspaceId)));
+/**
+ * All the workspace's members (the server pages them; counts, owners and pickers need them all). Their pictures are
+ * remembered as they arrive, so every avatar beside a name shows them (BIT-30).
+ */
+export function useMembers(workspaceId: string) {
+  const members = useAllPages(useInfiniteQuery(memberPagesQuery(workspaceId)));
+  useEffect(() => { rememberPictures(members.items.map(member => [member.userId, member.avatar] as const)); }, [members.items]);
+  return members;
+}
 /** All the member's workspaces. */
 export const useAllWorkspaces = () => useAllPages(useInfiniteQuery(workspacePagesQuery()));

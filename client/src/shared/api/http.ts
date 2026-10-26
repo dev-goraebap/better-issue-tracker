@@ -118,8 +118,9 @@ export function authError(error: unknown): string {
     WORKSPACE_INVITATION_LOGIN_REQUIRED: '이미 계정이 있습니다. 기존 계정으로 로그인해 주세요.',
     WORKSPACE_INVITATION_ACCOUNT_MISMATCH: '초대받은 이메일의 계정으로 로그인해 주세요.',
   };
-  // A repository host's refusal is written for people (D-087): its reason, such as a token without access, is shown.
-  if (error.code.startsWith('INTEGRATION_') && error.detail) return error.detail;
+  // A repository host's refusal (D-087) and a file's (D-090) are written for people: the reason, such as a token without
+  // access or a photo that does not decode, is shown.
+  if ((error.code.startsWith('INTEGRATION_') || error.code.startsWith('FILE_')) && error.detail) return error.detail;
   return messages[error.code] ?? error.message;
 }
 

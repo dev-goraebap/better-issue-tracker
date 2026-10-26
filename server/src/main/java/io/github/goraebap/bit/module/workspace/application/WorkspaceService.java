@@ -1,5 +1,8 @@
 package io.github.goraebap.bit.module.workspace.application;
 
+import io.github.goraebap.bit.module.file.FileFacade;
+import io.github.goraebap.bit.module.file.FileOwner;
+import io.github.goraebap.bit.module.file.Picture;
 import io.github.goraebap.bit.module.iam.IamFacade;
 import io.github.goraebap.bit.module.workspace.WorkspaceCreatedEvent;
 import io.github.goraebap.bit.module.workspace.WorkspaceFacade;
@@ -28,6 +31,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class WorkspaceService implements WorkspaceFacade {
     private final WorkspaceRepository workspaceRepository;
     private final IamFacade iamFacade;
+    private final FileFacade fileFacade;
     private final SecretTokens secretTokens;
     private final ApplicationEventPublisher applicationEventPublisher;
     private final Clock clock;
@@ -172,9 +176,11 @@ public class WorkspaceService implements WorkspaceFacade {
                 ? WorkspaceCursor.encode(
                         scope, page.getLast().createdAt(), page.getLast().id())
                 : null;
+        var logos = pictures(FileOwner.WORKSPACE, page.stream().map(w -> w.id()).toList());
         return new WorkspaceViews.Spaces(
                 page.stream()
-                        .map(w -> new WorkspaceViews.Space(w.id(), w.name(), w.slug(), w.myRole(), w.createdAt()))
+                        .map(w -> new WorkspaceViews.Space(
+                                w.id(), w.name(), w.slug(), w.myRole(), w.createdAt(), logos.get(w.id())))
                         .toList(),
                 next);
     }
@@ -183,7 +189,44 @@ public class WorkspaceService implements WorkspaceFacade {
     public WorkspaceViews.Space get(CurrentUser actor, String id) {
         var own = access(actor, id, Action.READ);
         var w = space(id);
-        return new WorkspaceViews.Space(w.id(), w.name(), w.slug(), own.role(), w.createdAt());
+        return new WorkspaceViews.Space(
+                w.id(),
+                w.name(),
+                w.slug(),
+                own.role(),
+                w.createdAt(),
+                pictures(FileOwner.WORKSPACE, List.of(w.id())).get(w.id()));
+    }
+
+    /** Makes an uploaded square JPEG the workspace's logo; the one before goes (BIT-30). Its admins change it. */
+    @Transactional
+    public void changeLogo(CurrentUser actor, String id, WorkspaceRequests.Logo request) {
+        access(actor, id, Action.EDIT_SETTINGS);
+        space(id);
+        fileFacade.replacePicture(actor, request.uploadId(), FileOwner.WORKSPACE, id, Picture.SIDE);
+    }
+
+    /** Takes the logo away, back to the name's first letter. */
+    @Transactional
+    public void removeLogo(CurrentUser actor, String id) {
+        access(actor, id, Action.EDIT_SETTINGS);
+        space(id);
+        fileFacade.discardAll(FileOwner.WORKSPACE, id, actor);
+    }
+
+    /** The workspace's logo by its id, for its members. */
+    @Transactional(readOnly = true)
+    public FileFacade.OpenedFile logoBytes(CurrentUser actor, String id, String pictureId) {
+        access(actor, id, Action.READ);
+        return fileFacade
+                .open(FileOwner.WORKSPACE, id, pictureId)
+                .orElseThrow(WorkspaceErrorCode.WORKSPACE_NOT_FOUND::raise);
+    }
+
+    /** Each owner's picture, while files can be opened; none otherwise, and the screens draw their stand-ins. */
+    private Map<String, Picture> pictures(FileOwner owner, List<String> ids) {
+        if (ids.isEmpty() || !fileFacade.available()) return Map.of();
+        return Picture.byOwner(fileFacade.attachmentsOf(owner, ids));
     }
 
     @Transactional
@@ -221,9 +264,10 @@ public class WorkspaceService implements WorkspaceFacade {
         var p = WorkspaceCursor.decode(cursor, scope, size);
         var rows = workspaceRepository.findMembers(id, p.time(), p.id(), size + 1);
         var page = rows.stream().limit(size).toList();
+        var userIds = page.stream().map(Membership::userId).distinct().toList();
         Map<String, IamFacade.User> users =
-                iamFacade.users(page.stream().map(Membership::userId).distinct().toList()).stream()
-                        .collect(Collectors.toMap(IamFacade.User::id, Function.identity()));
+                iamFacade.users(userIds).stream().collect(Collectors.toMap(IamFacade.User::id, Function.identity()));
+        var avatars = pictures(FileOwner.USER, userIds);
         String next = rows.size() > size
                 ? WorkspaceCursor.encode(
                         scope, page.getLast().joinedAt(), page.getLast().id())
@@ -233,7 +277,13 @@ public class WorkspaceService implements WorkspaceFacade {
                         .map(m -> {
                             var u = users.get(m.userId());
                             return new WorkspaceViews.Member(
-                                    m.id(), m.userId(), u.name(), u.email(), m.role(), m.joinedAt());
+                                    m.id(),
+                                    m.userId(),
+                                    u.name(),
+                                    u.email(),
+                                    m.role(),
+                                    m.joinedAt(),
+                                    avatars.get(m.userId()));
                         })
                         .toList(),
                 next);

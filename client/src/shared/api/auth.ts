@@ -19,6 +19,9 @@ export async function logout(all = false) { await command('DELETE', all ? '/api/
 export async function changePassword(body: Schemas['Password']) { await command('PUT', '/api/v1/me/password', body); resetCsrf(); }
 /** The member's own name, as teammates and agents' records show it. */
 export const renameMe = (name: string) => command('PATCH', '/api/v1/me', { name });
+/** Makes an uploaded square picture the member's own (BIT-30), or takes it away. */
+export const changeAvatar = (uploadId: string) => command('PUT', '/api/v1/me/avatar', { uploadId });
+export const removeAvatar = () => command('DELETE', '/api/v1/me/avatar');
 /** The member's API keys, a page after another (the newest first). */
 export const keyQueryOptions = infiniteQueryOptions({
   queryKey: ['api-keys'], initialPageParam: undefined as string | undefined,

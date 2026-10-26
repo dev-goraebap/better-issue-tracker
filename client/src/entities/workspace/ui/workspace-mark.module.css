@@ -4,6 +4,11 @@
 .mark[data-size="sm"] { inline-size: 1.25rem; block-size: 1.25rem; border-radius: 4px; font-size: 0.6875rem; }
 .mark[data-size="lg"] { inline-size: 4rem; block-size: 4rem; border-radius: 12px; font-size: 1.5rem; }
 .mark img { inline-size: 100%; block-size: 100%; object-fit: cover; }
+/* A logo fades in over its main colour, slowly, unless it is at hand already (data-at-once). */
+.mark[data-picture] img { opacity: 0; transition: opacity 1000ms cubic-bezier(0.45, 0, 0.25, 1); }
+.mark[data-shown] img { opacity: 1; }
+.mark[data-at-once] img { transition: none; }
+@media (prefers-reduced-motion: reduce) { .mark[data-picture] img { opacity: 1; transition: none; } }
 .mark[data-tone="0"] { background: #4f46e5; }
 .mark[data-tone="1"] { background: #0e7490; }
 .mark[data-tone="2"] { background: #b45309; }

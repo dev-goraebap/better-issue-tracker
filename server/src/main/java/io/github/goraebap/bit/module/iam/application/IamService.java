@@ -1,5 +1,8 @@
 package io.github.goraebap.bit.module.iam.application;
 
+import io.github.goraebap.bit.module.file.FileFacade;
+import io.github.goraebap.bit.module.file.FileOwner;
+import io.github.goraebap.bit.module.file.Picture;
 import io.github.goraebap.bit.module.iam.IamFacade;
 import io.github.goraebap.bit.module.iam.domain.AgentKey;
 import io.github.goraebap.bit.module.iam.domain.IamRepository;
@@ -22,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class IamService {
     private final IamRepository iamRepository;
+    private final FileFacade fileFacade;
     private final Clock clock;
 
     @Transactional(readOnly = true)
@@ -129,7 +133,38 @@ public class IamService {
                 user.instanceAdmin(),
                 mustChange,
                 actor.method(),
-                actor.agentName());
+                actor.agentName(),
+                avatar(user.id()));
+    }
+
+    /** The member's picture, if they have one and files can be opened. */
+    private Picture avatar(String userId) {
+        if (!fileFacade.available()) return null;
+        return Picture.byOwner(fileFacade.attachmentsOf(FileOwner.USER, List.of(userId)))
+                .get(userId);
+    }
+
+    /** Makes an uploaded square JPEG the member's own picture; the one before goes (BIT-30). Only they change it. */
+    @Transactional
+    public void changeAvatar(CurrentUser actor, IamRequests.Avatar request) {
+        Identity user = requireActor(actor, false);
+        fileFacade.replacePicture(actor, request.uploadId(), FileOwner.USER, user.id(), Picture.SIDE);
+    }
+
+    /** Takes the member's picture away, back to their drawn avatar. */
+    @Transactional
+    public void removeAvatar(CurrentUser actor) {
+        Identity user = requireActor(actor, false);
+        fileFacade.discardAll(FileOwner.USER, user.id(), actor);
+    }
+
+    /**
+     * A member's picture by its id. Pictures stand beside names on every screen, so anyone signed in may read them;
+     * an earlier picture is gone once replaced.
+     */
+    @Transactional(readOnly = true)
+    public FileFacade.OpenedFile avatarBytes(String userId, String pictureId) {
+        return fileFacade.open(FileOwner.USER, userId, pictureId).orElseThrow(AuthErrorCode.AUTH_NOT_FOUND::raise);
     }
 
     @Transactional(readOnly = true)

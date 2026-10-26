@@ -74,4 +74,7 @@ public final class WorkspaceRequests {
     }
 
     public record Selection(@NotNull String workspaceId) {}
+
+    /** The workspace's new logo: an upload for purpose picture, already cut to a square JPEG (BIT-30). */
+    public record Logo(@NotBlank String uploadId) {}
 }

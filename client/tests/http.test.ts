@@ -53,5 +53,6 @@ test('aborted reads propagate cancellation', async () => {
 
 test('a repository host refusal shows its reason while other details stay hidden', () => {
   assert.equal(authError(new ApiError(400, 'INTEGRATION_HOST_REFUSED', undefined, '토큰이 거절되었습니다')), '토큰이 거절되었습니다');
+  assert.equal(authError(new ApiError(400, 'FILE_PICTURE_INVALID', undefined, '사진을 읽을 수 없습니다')), '사진을 읽을 수 없습니다');
   assert.ok(!authError(new ApiError(503, 'MAIL_NOT_CONFIGURED', undefined, 'internal detail')).includes('internal detail'));
 });
