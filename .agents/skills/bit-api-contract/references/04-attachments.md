@@ -17,7 +17,7 @@ description: 파일 모듈 소유권, 사전 서명 URL 업로드, 로컬·S3 �
 - **`pending_upload`**: 사전 서명 URL 발급 이력 및 만료 상태.
 
 ### 다형 연결(Polymorphic Link) 규칙
-- 업무 엔티티와의 연결은 `owner_type`(예: `work_item`, `comment`), `owner_id`(엔티티 UUID), 그리고 첨부 용도를 나타내는 `name`의 조합으로 식별한다. 순서는 `position`이다.
+- 업무 엔티티와의 연결은 `owner_type`(예: `work_item`, `comment`), `owner_id`(엔티티 ID), 그리고 첨부 용도를 나타내는 `name`의 조합으로 식별한다. 순서는 `position`이다.
 - 각 업무 모듈은 `file` 모듈의 내부 테이블을 직접 참조하지 않고, `file` 모듈이 공개한 계약 인터페이스(`FileFacade`)를 통해서만 첨부파일을 관리한다.
 - `shared/storage`의 저장소 어댑터는 순수한 스토리지 I/O만을 담당하며, BIT 업무의 인가 지식을 포함하지 않는다.
 

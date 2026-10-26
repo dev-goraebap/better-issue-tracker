@@ -18,7 +18,7 @@ DB는 SQLite 파일 하나다. 테이블과 제약의 이름 규칙, 로컬 DB�
 | 대상 | 규칙 | 예 |
 | --- | --- | --- |
 | 테이블 | 단수 snake_case. 인증 계열만 `iam_` 접두사 | `work_item`, `iam_session` |
-| 기본 키 열 | `<table>_id uuid`. UUID v4를 애플리케이션에서 만들어 글자로 저장 | `work_item_id` |
+| 기본 키 열 | `<table>_id varchar(10)`. 값은 애플리케이션이 `Ids.newId()`로 만드는 10자 ID(`[A-Za-z][A-Za-z0-9]{9}`, D-083). V1~V8의 ID 열은 타입 이름이 `uuid`로 남아 있고 jOOQ가 문자열로 만든다. 새 표의 ID 열과 그것을 가리키는 열은 `varchar(10)`으로 쓴다 | `work_item_id` |
 | 기본 키 제약 | `<table>_pkey` | `work_item_pkey` |
 | 외래 키 | `<t>_<col>_<ref>_<refcol>_fk` | `work_item_project_id_project_project_id_fk` |
 | 고유 인덱스 | `ux_` + 테이블·열 이름 | `ux_work_item_project_id_number` |
@@ -29,7 +29,7 @@ DB는 SQLite 파일 하나다. 테이블과 제약의 이름 규칙, 로컬 DB�
 
 - **감사 열**: 필요한 테이블에 `created_at`, `created_by`, `updated_at`, `updated_by`, `deleted_at`, `deleted_by`를 둔다. 어느 테이블에 두는지는 `docs/06-schema.md`의 "감사" 표기를 따른다.
 - **에이전트 표시**: API 키로 만든 기록은 사람 ID 열과 함께 키의 `agent_name`을 `*_agent` 열(`created_by_agent`, `actor_agent`, `author_agent`)에 남긴다(D-021).
-- **사람이 읽는 번호**: 작업항목·결정·세션 번호는 UUID와 별도 열(`number`)이다. 작업항목 키(`BIT-42`)는 저장하지 않고 `project_key`의 현재 키와 `number`로 만든다.
+- **사람이 읽는 번호**: 작업항목·결정·세션 번호는 ID와 별도 열(`number`)이다. 작업항목 키(`BIT-42`)는 저장하지 않고 `project_key`의 현재 키와 `number`로 만든다.
 - **다형 대상**: `link`, `activity`, `comment`, `attachment`처럼 대상 종류가 여럿인 테이블은 `*_type` + `*_id`로 가리키고 DB 외래 키를 두지 않는다. 대상 존재 검사는 애플리케이션이 한다(D-014, D-020).
 
 ## 소프트 삭제
@@ -48,7 +48,7 @@ SQLite는 열 타입을 강제하지 않으므로, 같은 열의 값은 서버�
 | 벽시계 시각(`timestamp`, `LocalDateTime`) | `2026-10-05 10:00:00.0`(jOOQ 기본) |
 | 날짜 | `2026-10-05` |
 | 참거짓 | `1`·`0` |
-| UUID | 글자 |
+| ID | 글자 10자, 대소문자 구분 |
 | JSON(`jsonb` 타입 이름) | JSON 글자 |
 
 테스트나 손으로 쓰는 SQL도 순간 값은 `InstantTextBinding.text(…)`나 `strftime('%Y-%m-%dT%H:%M:%S','now') || substr(strftime('%f','now'),3) || '000Z'`로 쓴다. `CURRENT_TIMESTAMP`(`2026-10-02 03:04:05`)나 `Instant.toString()`은 소수 자릿수가 달라 비교가 어긋난다.
