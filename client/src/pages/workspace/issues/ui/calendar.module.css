@@ -21,7 +21,7 @@
   min-inline-size: 0; overflow: hidden; text-overflow: ellipsis; }
 /* The calendar fills the room it is given, down to the card's foot (BIT's header page keeps no inset below it). */
 /* Its contents are left out of its size (contain: size), so the card's rest, not the events in it, sets how tall it is. */
-.calendar { display: flex; flex: 1; contain: size; min-block-size: 36rem; min-width: 0; }
+.calendar { display: flex; flex: 1; contain: size; min-block-size: 0; min-width: 0; }
 .main { display: flex; flex-direction: column; flex: 1; min-width: 0; min-block-size: 0; }
 
 /* The month: a row of weekday names, then weeks sharing the height, parted by thin rules, with no box around them. */

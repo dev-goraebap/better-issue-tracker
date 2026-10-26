@@ -1,11 +1,11 @@
 import { useRef, useState, type ReactNode } from 'react';
-import { Button, MoreMenu, useToast, VStack } from '@astryxdesign/core';
+import { MoreMenu, useToast, VStack } from '@astryxdesign/core';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { authError, isNotFound, type components } from '@/shared/api';
 import { dateText } from '@/shared/lib/date-text';
 import {
-  BackLink, ConfirmDialog, DuePicker, NavIcon, PageState, PropertyPicker, QueryMessage, SectionHeader, Surface, usePanelSurface,
+  BackLink, ConfirmDialog, DuePicker, NavIcon, PageState, PropertyPicker, QueryMessage, SectionHeader, SettingsAction, Surface, usePanelSurface,
 } from '@/shared/ui';
 import { labelsQuery } from '@/entities/label';
 import { columnsQuery } from '@/entities/project';
@@ -30,7 +30,8 @@ import styles from './detail.module.css';
  *   opens its menu and saves at once: 상태 (the project's columns, or 상태 없음), 우선순위, 담당자, 시작일, 기한, 라벨.
  *   A viewer reads the same values without the menus.
  * - The description is written in place and saves itself (IssueDescription, D-076); a viewer reads it rendered.
- * - The title row ends with 편집 (the form page for the title and description) and the more menu: 링크 복사, 보관, then
+ * - The title row ends with 편집 (the form page for the title and description), a round icon chip as the list header's
+ *   필터 and 표시 (SettingsAction), and the more menu: 링크 복사, 보관, then
  *   삭제 behind ConfirmDialog. A change someone else saved first (409) says so and shows the latest.
  * - Under the description its 활동 (IssueActivity, D-078): what happened to it and its comments on one timeline, the
  *   box to comment at its foot. 연결 comes with the links (T-005).
@@ -90,7 +91,7 @@ export function IssueDetail({ workspaceId, projectId, id, search }: { workspaceI
   ];
   const leave = () => { if (panel) panel.onClose(); else void navigate(list); };
   return <Surface title={item.title} wrapsTitle back={back} width="default" actions={<>
-    {canWrite && <Button label="편집" variant="secondary" size={panel ? 'sm' : undefined} icon={<NavIcon name="edit" />}
+    {canWrite && <SettingsAction label="편집" tooltip="편집" icon="edit"
       onClick={() => void navigate({ to: '/workspaces/$workspaceId/projects/$projectId/issues/$issueId/edit', params: { workspaceId, projectId, issueId: id } })} />}
     <MoreMenu label="이슈 메뉴" variant="ghost" size={panel ? 'sm' : undefined} placement="end" items={[
       { label: '링크 복사', icon: <NavIcon name="link" />, onClick: () => void navigator.clipboard?.writeText(`${window.location.origin}/workspaces/${workspaceId}/projects/${projectId}/issues/${id}`) },

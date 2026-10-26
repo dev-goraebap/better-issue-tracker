@@ -89,18 +89,18 @@ export function MembersPage() {
   } : undefined;
   const canChange = (member: Member) => member.role !== 'owner' && member.userId !== me && (myRole === 'owner' || (myRole === 'admin' && member.role !== 'admin'));
   const roleOptions = (myRole === 'owner' ? ['admin', 'member', 'viewer'] as const : ['member', 'viewer'] as const).map(role => ({ value: role, label: ROLE_LABELS[role] }));
-  const person = (member: Member) => <span className={styles.person}><DefaultAvatar seed={member.userId} name={member.name} size={32} />
+  const person = (member: Member) => <span className={styles.person}><DefaultAvatar seed={member.userId} name={member.name} size={24} />
     <span className={styles.personText}><span className={styles.personName}>{member.name}{member.userId === me ? ' (나)' : ''}</span><span className={styles.personEmail}>{member.email}</span></span></span>;
   const memberColumns: SheetColumn<Member>[] = [
     { key: 'name', header: '이름', render: person },
     { key: 'role', header: '역할', width: '9rem', render: row => (canChange(row)
-      ? <Select label={`${row.name} 역할`} isLabelHidden size="sm" options={roleOptions} value={row.role}
+      ? <Select label={`${row.name} 역할`} isLabelHidden size="sm" width="6.5rem" options={roleOptions} value={row.role}
         onChange={value => { if (value && value !== row.role) setPending({ kind: 'role', member: row, role: value as Role }); }} />
       : ROLE_LABELS[row.role]) },
     { key: 'projects', header: '참여 프로젝트', width: '13rem', render: row => {
       const mine = joinedProjects(row.userId);
       const label = mine.length === 0 ? (isManager ? '프로젝트에 넣기' : '없음') : mine.length === 1 ? mine[0]!.name : `${mine[0]!.name} 외 ${mine.length - 1}`;
-      const body = <><span className={styles.marks}>{mine.slice(0, 3).map(project => <ProjectMark key={project.id} project={project} />)}</span>
+      const body = <><span className={styles.marks}>{mine.slice(0, 3).map(project => <span key={project.id} className={styles.markSlot}><ProjectMark project={project} /></span>)}</span>
         <span className={styles.projectsLabel}>{label}</span></>;
       return <button type="button" className={styles.projects} aria-label={`${row.name}의 참여 프로젝트: ${mine.map(project => project.name).join(', ') || '없음'}`}
         onClick={() => setProjectsOf(row)}>{body}</button>;

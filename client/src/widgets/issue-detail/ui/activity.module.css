@@ -2,7 +2,7 @@
  * An issue's 활동 as Linear's (D-078): one 1px rule down the left that the lines of activity hang on, each a 16px
  * picture on the rule and a 13px line in the secondary ink (the name in the primary ink, 500); comments as cards on the
  * page's ground with a hairline, 10px corners, a 20px picture, the name and when over the Markdown; the comment box at
- * the foot, its 댓글 button at its end.
+ * the foot, the design system's chat composer with its send button inside.
  */
 .activity { display: flex; flex-direction: column; gap: var(--spacing-3); }
 .timeline { position: relative; display: flex; flex-direction: column; gap: var(--spacing-1); margin: 0; padding: 0; list-style: none; }
@@ -20,5 +20,10 @@
 .cardBody { padding: var(--spacing-1) var(--spacing-3) var(--spacing-3); }
 .cardBody :global(.ProseMirror) { font-size: 0.875rem; }
 .cardEdit { display: flex; flex-direction: column; gap: var(--spacing-2); padding: var(--spacing-1) var(--spacing-3) var(--spacing-3); }
-.composer { display: flex; flex-direction: column; gap: var(--spacing-2); }
+/*
+ * The comment box (the design system's chat composer): its corners the comment cards' 10px rather than a chat's round
+ * ones, and the editor's text a touch smaller, as a comment card's body.
+ */
+.composer { --_chat-composer-radius: 10px; }
+.composer :global(.ProseMirror) { font-size: 0.875rem; }
 .actions { display: flex; justify-content: flex-end; gap: var(--spacing-2); }
