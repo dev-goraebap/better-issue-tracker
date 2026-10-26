@@ -60,4 +60,3 @@ AI 네이티브 경량 ALM(Application Lifecycle Management). 제품 가칭은 b
   - 일하는 방법은 우리가 배포하는 스킬 `better-issue-tracker`(원본 `skills/better-issue-tracker/`)를 따른다. 코드·문서를 바꾸는 요청을 받으면 **첫 수정 전에** BIT 이슈를 찾거나 만들고, 작업 중 찾은 다른 문제도 따로 이슈로 만든다.
   - 우리는 이 스킬을 만드는 쪽이다. 스킬이나 MCP 안내문(`McpServerConfig`, 도구 설명)대로 했는데 결과가 틀리면 그 자리에서 스킬과 안내문을 고치고 `skills/better-issue-tracker/notes.md`에 남긴다.
   - 결정 기록의 원본은 아직 `docs/decisions.md`다. 여기에 D-번호 결정을 더할 때는 같은 결정을 BIT `결정기록` 이슈로도 만들고(스킬의 4절), 두 곳에 서로의 번호를 적는다. 한쪽으로 옮기는 시점은 따로 정한다.
-  - 운영 서버가 0.8.x인 동안은 이슈 도구 이름이 옛 이름(`get_work_item_context`, `create_work_item` 등)이다.
