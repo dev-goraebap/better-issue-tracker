@@ -9,6 +9,17 @@
 .accountFolded { display: flex; justify-content: center; }
 .accountText { display: flex; flex-direction: column; flex: 1; min-inline-size: 0; }
 
+/*
+ * The menu's rows as Linear's (BIT-15, measured there: a 14px icon 6px before the 13px/500 label, both in the secondary
+ * ink, the row in view in full ink). Lucide's lines want a little more room, so its icon is 16px, drawn at 2 to keep its
+ * weight, centred in the 20px a project's mark takes so every label starts at one line; under the pointer or in view the
+ * row comes up to the full ink.
+ */
+.sidebar :global(.astryx-side-nav-item) { gap: 6px; color: var(--color-text-secondary); }
+.sidebar :global(.astryx-side-nav-item) > span { font-weight: 500; }
+.sidebar :global(.astryx-side-nav-item):is(:hover, [aria-current='page'], [data-selected]) { color: var(--color-text-primary); }
+.sidebar :global(.astryx-side-nav-item) > :global(.bit-nav-icon) { inline-size: 1rem; block-size: 1rem; margin-inline: 2px; stroke-width: 2; }
+
 /* An open project's menu hangs from a faint line dropped from the project's mark (18px in from the group's edge); the
    chosen row darkens its stretch of the line. */
 .sidebar :global(.astryx-side-nav-item) + [role='group'] > div { position: relative; }
