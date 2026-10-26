@@ -33,7 +33,7 @@ export { PageTabs, type PageTab } from './page-tabs';
 export { SearchSelect, Select, SheetList, type SheetChoice, type SheetGroup } from './select';
 export { useFillRoom } from './use-fill-room';
 export { NotificationBell } from './notification-bell';
-export { SettingsCard, SettingsHead, SettingsRow } from './settings-card';
+export { SettingsAction, SettingsCard, SettingsHead, SettingsRow } from './settings-card';
 export { MarkdownEditor, MarkdownView } from './markdown-editor';
 export { MarkPicker, type Mark } from './mark-picker';
 export { PropertyPicker, type PropertyOption } from './property-picker';
