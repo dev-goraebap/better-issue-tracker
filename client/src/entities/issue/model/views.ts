@@ -3,8 +3,11 @@ import { useQuery, type QueryClient } from '@tanstack/react-query';
 import type { components } from '@/shared/api';
 import { MARK_ICONS } from '@/shared/config';
 import type { Issue } from '../api/issue';
-import { createView, deleteTweak, deleteView, patchView, putTweak, tweaksQuery, viewsQuery, type ServerTweak, type ServerView } from '../api/view';
+import {
+  createView, deleteTweak, deleteView, patchView, putTweak, putViewOrder, tweaksQuery, viewOrdersQuery, viewsQuery, type ServerTweak, type ServerView, type ServerViewOrder,
+} from '../api/view';
 import { categoryOf, PRIORITY_RANK, SYSTEM_LABEL } from './issue';
+import { orderViews } from './view-order';
 
 /**
  * The views over a workspace's issues (D-066, D-068), as Linear's, in three layers kept on the server: a shared view
@@ -25,6 +28,8 @@ export type IssueView = Omit<ServerView, 'description' | 'version' | 'position' 
 export type ViewTweak = { layout?: ViewLayout; sort?: ViewSort; columns?: ViewColumn[] };
 
 export const ALL_VIEW = 'all';
+/** The home's scope in the views' orders; a project's is its id (D-088). */
+export const HOME_SCOPE = 'home';
 export const VIEW_LAYOUTS: readonly { value: ViewLayout; label: string; icon: string }[] = [
   { value: 'list', label: '리스트', icon: 'list' }, { value: 'calendar', label: '캘린더', icon: 'calendar' },
   { value: 'board', label: '칸반', icon: 'board' }, { value: 'timeline', label: '타임라인', icon: 'milestone' },
@@ -50,10 +55,12 @@ const allView = (workspaceId: string): IssueView => ({
 const fromServer = ({ description, position: _position, createdAt: _createdAt, updatedAt: _updatedAt, ...view }: ServerView): IssueView =>
   ({ ...view, description: description ?? undefined });
 
-/** The views the member sees in a workspace: 전체 이슈 first, then the server's in order. */
-export function useViews(workspaceId: string): IssueView[] {
+/** The views the member sees in a scope (HOME_SCOPE or a project's id), in that scope's order; the first is its default. */
+export function useViews(workspaceId: string, scope: string): IssueView[] {
   const views = useQuery(viewsQuery(workspaceId)).data;
-  return useMemo(() => [allView(workspaceId), ...[...(views ?? [])].sort((a, b) => a.position - b.position).map(fromServer)], [workspaceId, views]);
+  const keys = useQuery(viewOrdersQuery(workspaceId)).data?.find(order => order.scope === scope)?.viewKeys;
+  return useMemo(() => orderViews([allView(workspaceId), ...[...(views ?? [])].sort((a, b) => a.position - b.position).map(fromServer)], keys),
+    [workspaceId, views, keys]);
 }
 /** The member's adjustments to a view, if any. */
 export function useViewTweak(workspaceId: string, viewId: string): ViewTweak | undefined {
@@ -93,6 +100,17 @@ export async function setViewTweak(client: QueryClient, workspaceId: string, vie
     if (isEmpty) await deleteTweak(workspaceId, viewKey);
     else await putTweak(workspaceId, viewKey, { layout: tweak.layout ?? null, sort: tweak.sort, columns: tweak.columns ?? null });
   } finally { await client.invalidateQueries({ queryKey: key }); }
+}
+
+/**
+ * Puts a scope's views in a new order, its first the scope's default (D-088). It shows at once: the cached orders change
+ * before the server answers, and are read again either way.
+ */
+export async function setViewOrder(client: QueryClient, workspaceId: string, scope: string, viewKeys: string[]) {
+  const key = viewOrdersQuery(workspaceId).queryKey;
+  client.setQueryData<ServerViewOrder[]>(key, previous => [...(previous ?? []).filter(each => each.scope !== scope), { scope, viewKeys }]);
+  try { await putViewOrder(workspaceId, scope, viewKeys); }
+  finally { await client.invalidateQueries({ queryKey: key }); }
 }
 
 /** The address's conditions over a view: a filter the address names (or '-' for none) stands over the view's own. */

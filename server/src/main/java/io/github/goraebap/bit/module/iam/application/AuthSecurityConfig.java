@@ -140,7 +140,8 @@ class AuthSecurityConfig {
                                 "/api/v1/workspaces/*/labels/*",
                                 "/api/v1/workspaces/*/views",
                                 "/api/v1/workspaces/*/views/*",
-                                "/api/v1/workspaces/*/view-tweaks")
+                                "/api/v1/workspaces/*/view-tweaks",
+                                "/api/v1/workspaces/*/view-orders")
                         .authenticated()
                         .requestMatchers(
                                 HttpMethod.HEAD,
@@ -151,7 +152,8 @@ class AuthSecurityConfig {
                                 "/api/v1/workspaces/*/labels/*",
                                 "/api/v1/workspaces/*/views",
                                 "/api/v1/workspaces/*/views/*",
-                                "/api/v1/workspaces/*/view-tweaks")
+                                "/api/v1/workspaces/*/view-tweaks",
+                                "/api/v1/workspaces/*/view-orders")
                         .authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/v1/workspaces/*/labels", "/api/v1/workspaces/*/views")
                         .authenticated()
@@ -164,7 +166,10 @@ class AuthSecurityConfig {
                                 "/api/v1/workspaces/*/views/*",
                                 "/api/v1/workspaces/*/view-tweaks/*")
                         .authenticated()
-                        .requestMatchers(HttpMethod.PUT, "/api/v1/workspaces/*/view-tweaks/*")
+                        .requestMatchers(
+                                HttpMethod.PUT,
+                                "/api/v1/workspaces/*/view-tweaks/*",
+                                "/api/v1/workspaces/*/view-orders/*")
                         .authenticated()
                         .requestMatchers(HttpMethod.PUT, "/api/v1/workspaces/*/project-order")
                         .authenticated()

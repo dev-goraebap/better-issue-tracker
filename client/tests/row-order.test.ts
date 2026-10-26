@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { placeAt, placeFor, stepBy } from '../src/pages/settings/project/model/column-order';
+import { placeAt, placeFor, stepBy } from '../src/shared/lib/row-reorder/order';
 
 const order = ['todo', 'doing', 'review', 'done'];
 

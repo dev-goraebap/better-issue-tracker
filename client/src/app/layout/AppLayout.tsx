@@ -16,7 +16,6 @@ import { CreateProjectDialog } from '@/features/project-create';
 import { canManage, forgetWorkspace, workspaceQuery } from '@/entities/workspace';
 import { ProjectMark, projectsQuery, type Project } from '@/entities/project';
 import { itemQuery } from '@/entities/issue';
-import { ScopeSwitcher } from './ScopeSwitcher';
 import { SidebarProjects } from './SidebarProjects';
 import styles from './app-layout.module.css';
 
@@ -25,8 +24,8 @@ const SECTION_NAMES: Record<string, string> = { '/inbox': '알림', '/projects':
 /**
  * The signed-in app's frame: ShellFrame with the workspace switcher and the bell at the menu's
  * head; 홈, 문서함 and 구성원 (D-071); 프로젝트 with its + and the active projects, each one page of issues (D-066); and
- * 워크스페이스 설정 and the member's card at its foot. On the home (전체) and a project's page the trail's second step
- * switches between them (D-065). The card's gear turns the menu into the member's own settings (/settings/…), and
+ * 워크스페이스 설정 and the member's card at its foot. On the home and a project's page the trail's second step is 홈 or
+ * the project's name, a link to that scope's default view (D-088). The card's gear turns the menu into the member's own settings (/settings/…), and
  * 워크스페이스 설정 into the workspace's (its pages, then each project's, D-061): either way 돌아가기 or Esc goes back
  * to the page of work left. A workspace the member lost (404) sends them to choose another.
  */
@@ -91,14 +90,10 @@ export function AppLayout() {
   const bell = workspace && <NotificationBell count={0} href={inbox} onOpen={go(inbox)} />;
   const projectMark = (project: Project) => <ProjectMark project={project} />;
   const projectName = (id?: string) => projects.find(project => project.id === id)?.name;
-  // The scope's step on the home and a project's pages: 전체 or the project, switching among them with the view kept.
-  const scopeStep = (label: string): TrailStep => ({ label, content: <ScopeSwitcher projects={projects} current={place.projectId} mark={projectMark}
-    onCreate={canMakeProjects ? () => setCreatingProject(true) : undefined}
-    onPick={projectId => {
-      const keep = new URLSearchParams([...new URLSearchParams(searchStr)].filter(([key]) => key === 'v'));
-      void navigate({ href: `${projectId ? projectPath(workspaceId, projectId) : workspacePath(workspaceId)}${keep.size ? `?${keep}` : ''}` });
-    }} /> });
-  // The trail: the workspace (to its home), the scope (전체 or the project, a switcher), then the item in view.
+  // The scope's step on the home and a project's pages (D-088): 홈 or the project's name, a link to the scope's bare
+  // address, which opens its default view (the first in its own order). Other projects are a step away in the menu.
+  const scopeStep = (label: string, href: string): TrailStep => ({ label, href, onClick: go(href) });
+  // The trail: the workspace (to its home), the scope (홈 or the project), then the item in view.
   const steps: TrailStep[] = [];
   if (isAccount) steps.push({ label: '계정' }, { label: ACCOUNT_MENU.find(entry => entry.path === place.account)?.label ?? '설정' });
   else if (isSpaceSettings && workspace) {
@@ -113,10 +108,10 @@ export function AppLayout() {
     const home = workspacePath(workspaceId);
     steps.push({ label: workspace.name, href: home, onClick: go(home) });
     if (place.projectId) {
-      steps.push(scopeStep(projectName(place.projectId) ?? '프로젝트'));
+      steps.push(scopeStep(projectName(place.projectId) ?? '프로젝트', projectPath(workspaceId, place.projectId)));
       const key = item.data?.key;
       if (place.itemId) steps.push({ label: place.itemId === 'new' ? '새 이슈' : key && place.isEditing ? `${key} 편집` : key ?? '이슈' });
-    } else if (place.workspaceSection === '') steps.push(scopeStep('전체'));
+    } else if (place.workspaceSection === '') steps.push(scopeStep('홈', home));
     else steps.push({ label: WORKSPACE_MENU.find(entry => entry.path === place.workspaceSection)?.label ?? SECTION_NAMES[place.workspaceSection ?? ''] ?? '페이지 찾기' });
   } else steps.push({ label: PRODUCT_NAME });
 

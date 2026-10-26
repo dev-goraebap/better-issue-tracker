@@ -1,10 +1,13 @@
 package io.github.goraebap.bit.module.view.infrastructure;
 
 import static io.github.goraebap.bit.jooq.tables.IssueView.ISSUE_VIEW;
+import static io.github.goraebap.bit.jooq.tables.IssueViewOrder.ISSUE_VIEW_ORDER;
 import static io.github.goraebap.bit.jooq.tables.IssueViewTweak.ISSUE_VIEW_TWEAK;
 
+import io.github.goraebap.bit.jooq.tables.records.IssueViewOrderRecord;
 import io.github.goraebap.bit.jooq.tables.records.IssueViewRecord;
 import io.github.goraebap.bit.module.view.domain.IssueView;
+import io.github.goraebap.bit.module.view.domain.ViewOrder;
 import io.github.goraebap.bit.module.view.domain.ViewRepository;
 import io.github.goraebap.bit.module.view.domain.ViewTweak;
 import io.github.goraebap.bit.shared.persistence.AuditRecords;
@@ -25,6 +28,7 @@ import tools.jackson.databind.json.JsonMapper;
 class JooqViewRepository implements ViewRepository {
     private static final TypeReference<Map<String, String>> FILTERS = new TypeReference<>() {};
     private static final TypeReference<List<IssueView.Column>> COLUMNS = new TypeReference<>() {};
+    private static final TypeReference<List<String>> KEYS = new TypeReference<>() {};
     private final DSLContext dslContext;
     private final JsonMapper jsonMapper;
 
@@ -208,5 +212,53 @@ class JooqViewRepository implements ViewRepository {
                 r.get(ISSUE_VIEW.POSITION),
                 r.get(ISSUE_VIEW.VERSION),
                 AuditRecords.read(r));
+    }
+
+    @Override
+    public List<ViewOrder> findOrders(String workspaceId) {
+        return dslContext
+                .selectFrom(ISSUE_VIEW_ORDER)
+                .where(ISSUE_VIEW_ORDER.WORKSPACE_ID.eq(workspaceId))
+                .orderBy(ISSUE_VIEW_ORDER.SCOPE)
+                .fetch(this::order);
+    }
+
+    @Override
+    public Optional<ViewOrder> findOrder(String workspaceId, String scope) {
+        return dslContext
+                .selectFrom(ISSUE_VIEW_ORDER)
+                .where(ISSUE_VIEW_ORDER.WORKSPACE_ID.eq(workspaceId))
+                .and(ISSUE_VIEW_ORDER.SCOPE.eq(scope))
+                .fetchOptional(this::order);
+    }
+
+    @Override
+    public void saveOrder(ViewOrder order) {
+        String keys = jsonMapper.writeValueAsString(order.viewKeys());
+        dslContext
+                .insertInto(ISSUE_VIEW_ORDER)
+                .set(ISSUE_VIEW_ORDER.WORKSPACE_ID, order.workspaceId())
+                .set(ISSUE_VIEW_ORDER.SCOPE, order.scope())
+                .set(ISSUE_VIEW_ORDER.VIEW_KEYS, keys)
+                .set(ISSUE_VIEW_ORDER.UPDATED_AT, order.updatedAt())
+                .set(ISSUE_VIEW_ORDER.UPDATED_BY, order.updatedBy())
+                .set(ISSUE_VIEW_ORDER.UPDATED_BY_AGENT, order.updatedByAgent())
+                .onConflict(ISSUE_VIEW_ORDER.WORKSPACE_ID, ISSUE_VIEW_ORDER.SCOPE)
+                .doUpdate()
+                .set(ISSUE_VIEW_ORDER.VIEW_KEYS, keys)
+                .set(ISSUE_VIEW_ORDER.UPDATED_AT, order.updatedAt())
+                .set(ISSUE_VIEW_ORDER.UPDATED_BY, order.updatedBy())
+                .set(ISSUE_VIEW_ORDER.UPDATED_BY_AGENT, order.updatedByAgent())
+                .execute();
+    }
+
+    private ViewOrder order(IssueViewOrderRecord r) {
+        return new ViewOrder(
+                r.getWorkspaceId(),
+                r.getScope(),
+                jsonMapper.readValue(r.getViewKeys(), KEYS),
+                r.getUpdatedAt(),
+                r.getUpdatedBy(),
+                r.getUpdatedByAgent());
     }
 }

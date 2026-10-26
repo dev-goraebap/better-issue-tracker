@@ -69,6 +69,42 @@
         }
       }
     },
+    "/api/v1/workspaces/{workspaceId}/view-orders/{scope}" : {
+      "put" : {
+        "tags" : [ "view-controller" ],
+        "operationId" : "putOrder",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "scope",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/PutIssueViewOrder"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        }
+      }
+    },
     "/api/v1/workspaces/{workspaceId}/project-order" : {
       "put" : {
         "tags" : [ "project-member-controller" ],
@@ -2545,6 +2581,35 @@
         }
       }
     },
+    "/api/v1/workspaces/{workspaceId}/view-orders" : {
+      "get" : {
+        "tags" : [ "view-controller" ],
+        "operationId" : "orders",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/IssueViewOrder"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/workspaces/{workspaceId}/timeline" : {
       "get" : {
         "tags" : [ "comment-controller" ],
@@ -3687,6 +3752,21 @@
           }
         }
       },
+      "PutIssueViewOrder" : {
+        "type" : "object",
+        "properties" : {
+          "viewKeys" : {
+            "type" : "array",
+            "description" : "View ids, and all for 전체 이슈",
+            "items" : {
+              "type" : "string"
+            },
+            "maxItems" : 200,
+            "minItems" : 0
+          }
+        },
+        "required" : [ "viewKeys" ]
+      },
       "ProjectOrder" : {
         "type" : "object",
         "properties" : {
@@ -4771,6 +4851,23 @@
           }
         },
         "required" : [ "viewKey" ]
+      },
+      "IssueViewOrder" : {
+        "type" : "object",
+        "properties" : {
+          "scope" : {
+            "type" : "string",
+            "description" : "home, or a project id"
+          },
+          "viewKeys" : {
+            "type" : "array",
+            "description" : "View ids, and all for 전체 이슈",
+            "items" : {
+              "type" : "string"
+            }
+          }
+        },
+        "required" : [ "scope", "viewKeys" ]
       },
       "Timeline" : {
         "type" : "object",

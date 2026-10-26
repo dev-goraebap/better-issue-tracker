@@ -3,10 +3,12 @@ package io.github.goraebap.bit;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowableOfType;
 
+import io.github.goraebap.bit.module.project.application.ProjectService;
 import io.github.goraebap.bit.module.view.application.ViewRequests;
 import io.github.goraebap.bit.module.view.application.ViewService;
 import io.github.goraebap.bit.module.view.application.ViewViews;
 import io.github.goraebap.bit.module.view.domain.IssueView;
+import io.github.goraebap.bit.module.view.domain.ViewOrder;
 import io.github.goraebap.bit.module.workspace.application.WorkspaceService;
 import io.github.goraebap.bit.shared.domain.Ids;
 import io.github.goraebap.bit.shared.error.BusinessException;
@@ -62,6 +64,9 @@ class ViewIntegrationTest {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Autowired
+    private ProjectService projectService;
+
     private CurrentUser owner;
     private CurrentUser admin;
     private CurrentUser member;
@@ -79,8 +84,13 @@ class ViewIntegrationTest {
     @BeforeEach
     void prepare() {
         for (String table : List.of(
+                "issue_view_order",
                 "issue_view_tweak",
                 "issue_view",
+                "board_column",
+                "project_member",
+                "project_key",
+                "project",
                 "label",
                 "workspace_invitation",
                 "workspace_member",
@@ -352,6 +362,60 @@ class ViewIntegrationTest {
             expect(http(client, "DELETE", location + "?expectedVersion=1", null), 204);
             expect(http(client, "GET", location, null), 404);
         }
+    }
+
+    @Test
+    void theHomeAndEachProjectKeepTheirOwnViewOrderThatOnlyAdminsChange() throws Exception {
+        var ids = viewService.list(owner, workspace).stream()
+                .map(ViewViews.View::id)
+                .toList();
+        String board = ids.get(1);
+        String decisions = ids.getLast();
+        String project = projectService.create(owner, workspace, "Orders", "ORD", null);
+        assertThat(viewService.orders(member, workspace)).isEmpty();
+
+        viewService.putOrder(admin, workspace, ViewOrder.HOME, order(board, IssueView.ALL));
+        viewService.putOrder(owner, workspace, project, order(decisions));
+        assertThat(viewService.orders(member, workspace))
+                .containsExactlyInAnyOrder(
+                        new ViewViews.Order(ViewOrder.HOME, List.of(board, IssueView.ALL)),
+                        new ViewViews.Order(project, List.of(decisions)));
+
+        // The order is the workspace's to set; a key twice, an unknown view or a stranger's personal one is refused.
+        assertThat(code(() -> viewService.putOrder(member, workspace, ViewOrder.HOME, order(IssueView.ALL))))
+                .isEqualTo("AUTH_FORBIDDEN");
+        assertThat(code(() -> viewService.putOrder(member, workspace, project, order(IssueView.ALL))))
+                .isEqualTo("AUTH_FORBIDDEN");
+        assertThat(code(() -> viewService.putOrder(owner, workspace, ViewOrder.HOME, order(board, board))))
+                .isEqualTo("VIEW_ORDER_INVALID");
+        assertThat(code(() -> viewService.putOrder(owner, workspace, ViewOrder.HOME, order(Ids.newId()))))
+                .isEqualTo("VIEW_ORDER_INVALID");
+        String mine = viewService.create(member, workspace, create("Mine", true, Map.of()));
+        assertThat(code(() -> viewService.putOrder(admin, workspace, ViewOrder.HOME, order(mine))))
+                .isEqualTo("VIEW_ORDER_INVALID");
+        assertThat(code(() -> viewService.putOrder(owner, workspace, Ids.newId(), order(board))))
+                .isEqualTo("PROJECT_NOT_FOUND");
+
+        // Over HTTP too: the admin's session puts the home's order and every member reads it.
+        String base = "/api/v1/workspaces/" + workspace + "/view-orders";
+        expect(http(login(admin), "PUT", base + "/home", "{\"viewKeys\":[\"" + board + "\",\"all\"]}"), 204);
+        var read = http(login(member), "GET", base, null);
+        expect(read, 200);
+        assertThat(read.body()).contains("\"scope\":\"home\"");
+        expect(http(login(member), "PUT", base + "/home", "{\"viewKeys\":[\"all\"]}"), 403);
+
+        // A view removed drops out of every order.
+        viewService.delete(
+                owner,
+                workspace,
+                board,
+                viewService.get(owner, workspace, board).version());
+        assertThat(viewService.orders(owner, workspace))
+                .contains(new ViewViews.Order(ViewOrder.HOME, List.of(IssueView.ALL)));
+    }
+
+    private static ViewRequests.PutOrder order(String... keys) {
+        return new ViewRequests.PutOrder(List.of(keys));
     }
 
     private static ViewRequests.Create create(String name, boolean personal, Map<String, String> filters) {
