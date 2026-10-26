@@ -32,7 +32,7 @@ const USUAL_ORDER = { key: 'joined', direction: 'asc' } as const;
 const roleRank = (role: Role) => ROLES.indexOf(role);
 
 /**
- * PATTERN · 탭마다 다른 리스트 (구성원), /w/$workspaceId/members (?view=invitations). One menu holding two lists of
+ * PATTERN · 탭마다 다른 리스트 (구성원), /workspaces/$workspaceId/members (?view=invitations). One menu holding two lists of
  * different shapes.
  *
  * - The tab is the URL's view (구성원 left out); 초대 shows to the workspace's owner and admins only. They also get
@@ -69,7 +69,7 @@ export function MembersPage() {
   const [isBusy, setBusy] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const go = useCallback((patch: Partial<MembersSearch>, replace = false) => void navigate({
-    to: '/w/$workspaceId/members', params: { workspaceId }, replace,
+    to: '/workspaces/$workspaceId/members', params: { workspaceId }, replace,
     search: Object.fromEntries(Object.entries({ ...search, ...patch }).filter(([, value]) => value !== undefined)),
   }), [navigate, workspaceId, search]);
   const changed = () => refreshWorkspace(client, workspaceId).then(() => undefined);
@@ -147,7 +147,7 @@ export function MembersPage() {
     tabs={<PageTabs value={tab} items={tabs} panelId={panelId} onChange={next => go({ view: next === 'members' ? undefined : 'invitations' })} />}>
     <ListToolbar search={tab === 'members' ? { label: '구성원 검색', placeholder: '이름이나 이메일로 찾기', value: search.q, onChange: q => go({ q: q || undefined }, true) } : undefined}
       label={tab === 'members' ? '구성원 조건' : '초대 조건'} filters={filters} onFiltersChange={values => go({ role: values.role as MembersSearch['role'] }, true)} order={order}
-      action={isManager ? { label: '구성원 초대', icon: 'plus', onClick: () => void navigate({ to: '/w/$workspaceId/members/invite', params: { workspaceId } }), isCreate: true } : undefined} />
+      action={isManager ? { label: '구성원 초대', icon: 'plus', onClick: () => void navigate({ to: '/workspaces/$workspaceId/members/invite', params: { workspaceId } }), isCreate: true } : undefined} />
     <div role="tabpanel" id={panelId}>
       {(request.isPending || request.isError) && <QueryMessage pending={request.isPending} error={request.error} retry={() => { void request.refetch(); }} />}
       {tab === 'members' && people.hasData && (members.length === 0

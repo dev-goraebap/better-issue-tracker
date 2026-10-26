@@ -1,7 +1,7 @@
 import { PageFrame, PageState } from '@/shared/ui';
 
 /**
- * 알림, /w/$workspaceId/inbox (the bell at the menu's head, D-059). Notices are not made yet (T-006 leaves them out), so it
+ * 알림, /workspaces/$workspaceId/inbox (the bell at the menu's head, D-059). Notices are not made yet (T-006 leaves them out), so it
  * says what will arrive here.
  */
 export function InboxPage() {

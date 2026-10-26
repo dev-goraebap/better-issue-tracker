@@ -8,7 +8,7 @@ import { createContext, useContext } from 'react';
  */
 const PANEL_PAGES = [
   // An issue's page, over the issue pages it was opened from (D-069), and 새 이슈 in a project or in 전체 (D-070).
-  /^\/w\/[^/]+\/p\/[^/]+\/work-items\/[^/]+$/,
+  /^\/w\/[^/]+\/p\/[^/]+\/issues\/[^/]+$/,
   /^\/w\/[^/]+\/issues\/new$/,
 ];
 

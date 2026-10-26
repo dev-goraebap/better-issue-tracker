@@ -20,7 +20,7 @@ export function WorkspaceSwitcher({ current, isFolded = false }: { current?: Spa
   const list = <div className={styles.panel}>
     <span className={styles.panelTitle}>워크스페이스</span>
     <ul className={styles.items} aria-label="워크스페이스">{workspaces.map(workspace => <li key={workspace.id}>
-      <Link to="/w/$workspaceId" params={{ workspaceId: workspace.id }} className={styles.item} aria-current={workspace.id === current?.id ? 'page' : undefined} onClick={() => setOpen(false)}>
+      <Link to="/workspaces/$workspaceId" params={{ workspaceId: workspace.id }} className={styles.item} aria-current={workspace.id === current?.id ? 'page' : undefined} onClick={() => setOpen(false)}>
         <WorkspaceMark workspace={workspace} size="sm" /><span className={styles.itemName}>{workspace.name}</span>
         {workspace.id === current?.id && <span className={styles.check}><NavIcon name="check" /></span>}
       </Link>
@@ -38,6 +38,6 @@ export function WorkspaceSwitcher({ current, isFolded = false }: { current?: Spa
       </button>
     </Popover>
     <CreateWorkspaceDialog isOpen={isCreating} onClose={() => setCreating(false)}
-      onCreated={id => { setCreating(false); void navigate({ to: '/w/$workspaceId', params: { workspaceId: id } }); }} />
+      onCreated={id => { setCreating(false); void navigate({ to: '/workspaces/$workspaceId', params: { workspaceId: id } }); }} />
   </>;
 }

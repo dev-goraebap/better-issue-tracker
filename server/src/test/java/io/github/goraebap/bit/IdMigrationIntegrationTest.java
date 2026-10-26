@@ -199,7 +199,7 @@ class IdMigrationIntegrationTest {
                     "{}",
                     NOW);
         }
-        Flyway.configure().dataSource(url, null, null).load().migrate();
+        Flyway.configure().dataSource(url, null, null).target("9").load().migrate();
         try (var connection = DriverManager.getConnection(url)) {
             var jdbc = jdbc(connection);
             String newOwner = id(jdbc, "SELECT iam_user_id FROM iam_user WHERE email='owner@example.test'");

@@ -50,7 +50,7 @@ final class ProjectHttpAuthorizationFilter extends OncePerRequestFilter {
                                 : WorkspaceFacade.Action.READ);
             } else {
                 String project = id(projectId);
-                boolean work = suffix != null && suffix.startsWith("work-items");
+                boolean work = suffix != null && suffix.startsWith("issues");
                 if (writing && !work) {
                     boolean deletion = method.equals("DELETE") && suffix == null || "restore".equals(suffix);
                     boolean allowArchived = deletion || "archive".equals(suffix) || "unarchive".equals(suffix);

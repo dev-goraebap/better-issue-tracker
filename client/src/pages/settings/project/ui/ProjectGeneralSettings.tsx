@@ -54,7 +54,7 @@ export function ProjectGeneralSettings({ project, canManage }: { project: Projec
       else await deleteProject(project.workspaceId, project.id, project.version);
       setAsking(null);
       await refreshProjects(client, project.workspaceId);
-      if (asking === 'delete') void navigate({ to: '/w/$workspaceId', params: { workspaceId: project.workspaceId } });
+      if (asking === 'delete') void navigate({ to: '/workspaces/$workspaceId', params: { workspaceId: project.workspaceId } });
     } catch (failure) { setAskError(new Error(authError(failure))); }
     finally { setBusy(false); }
   };

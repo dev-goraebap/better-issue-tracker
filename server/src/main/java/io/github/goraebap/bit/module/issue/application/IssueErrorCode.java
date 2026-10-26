@@ -1,0 +1,19 @@
+package io.github.goraebap.bit.module.issue.application;
+
+import io.github.goraebap.bit.shared.error.ErrorCode;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+
+@Getter
+@RequiredArgsConstructor
+public enum IssueErrorCode implements ErrorCode {
+    ISSUE_NOT_FOUND(HttpStatus.NOT_FOUND, "이슈를 찾을 수 없습니다"),
+    ISSUE_VERSION_CONFLICT(HttpStatus.CONFLICT, "다른 변경이 있습니다. 새로 읽은 뒤 다시 시도해 주세요"),
+    ISSUE_ASSIGNEE_NOT_MEMBER(HttpStatus.BAD_REQUEST, "현재 워크스페이스 멤버에게만 배정할 수 있습니다"),
+    ISSUE_DATE_RANGE_INVALID(HttpStatus.BAD_REQUEST, "시작일은 마감일보다 늦을 수 없습니다"),
+    ISSUE_MOVE_INVALID(HttpStatus.BAD_REQUEST, "이동할 위치를 다시 확인해 주세요"),
+    ISSUE_LABEL_INVALID(HttpStatus.BAD_REQUEST, "이 워크스페이스의 라벨만 붙일 수 있습니다");
+    private final HttpStatus status;
+    private final String message;
+}

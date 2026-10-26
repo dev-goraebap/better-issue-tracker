@@ -13,7 +13,7 @@ import { columnsQuery, projectQuery, projectsQuery } from '@/entities/project';
 import { canWrite as canWriteIn, useMembers, workspaceQuery } from '@/entities/workspace';
 import {
   ALL_VIEW, addView, effectiveView, removeView, updateView, useScopeItems, useViews, useViewTweak, type IssueSearch,
-} from '@/entities/work-item';
+} from '@/entities/issue';
 import type { Scope } from '../model/scope';
 import { IssuePanel, ISSUE_PATH, NEW_PATH } from './IssuePanel';
 import { IssuesView } from './IssuesView';
@@ -23,7 +23,7 @@ import { ViewTabs } from './ViewTabs';
 type Editing = { mode: 'create' | 'edit'; initial: ViewDraft };
 
 /**
- * PATTERN · 이슈와 뷰, /w/$workspaceId/p/$projectId, and 전체 at /w/$workspaceId (the home, D-065). One kind of thing
+ * PATTERN · 이슈와 뷰, /workspaces/$workspaceId/projects/$projectId, and 전체 at /workspaces/$workspaceId (the home, D-065). One kind of thing
  * seen through views the members make (D-066, D-068), read from the server: every live issue of the scope at once
  * (useScopeItems), filtered, ordered and grouped on the page.
  *
@@ -32,7 +32,7 @@ type Editing = { mode: 'create' | 'edit'; initial: ViewDraft };
  *   remove it. The view in sight is the address's (v; 전체 이슈 when left out).
  * - A new view takes the list's conditions as they stand; its card (ViewEditor) opens over the list, as Linear's.
  * - 새 이슈 (the toolbar's action, a board lane's +, or the C key) opens at its own address in a modal near the top
- *   (NewIssue, D-070): …/work-items/new in a project, …/issues/new in 전체, ?status= from a lane's +.
+ *   (NewIssue, D-070): …/issues/new in a project, …/issues/new in 전체, ?status= from a lane's +.
  * - An issue pressed in any layout opens in a modal over the page at its own address (a masked move, D-069): the list
  *   stays under it, back or Esc closes it, 크게 보기 goes to the issue's page. Reloaded, the address is the page.
  */
@@ -65,8 +65,8 @@ export function IssuesPage() {
   const [isRemoving, setRemoving] = useState(false);
   // The page in view (전체 or the project) with its address's conditions changed, or a view's fresh start.
   const place = useCallback((next: IssueSearch, replace = false) => {
-    if (projectId) void navigate({ to: '/w/$workspaceId/p/$projectId', params: { workspaceId, projectId }, search: next, replace });
-    else void navigate({ to: '/w/$workspaceId', params: { workspaceId }, search: next, replace });
+    if (projectId) void navigate({ to: '/workspaces/$workspaceId/projects/$projectId', params: { workspaceId, projectId }, search: next, replace });
+    else void navigate({ to: '/workspaces/$workspaceId', params: { workspaceId }, search: next, replace });
   }, [navigate, workspaceId, projectId]);
   const go = useCallback((patch: Partial<IssueSearch>, replace = false) => place(
     Object.fromEntries(Object.entries({ ...search, ...patch }).filter(([, value]) => value !== undefined)) as IssueSearch, replace), [place, search]);
@@ -74,7 +74,7 @@ export function IssuesPage() {
   // 새 이슈 at its address: the project's, or 전체's; a board lane's + says where it starts.
   const openNew = (status?: string) => {
     if (!canWrite) return;
-    const path = projectId ? `/w/${workspaceId}/p/${projectId}/work-items/new` : `/w/${workspaceId}/issues/new`;
+    const path = projectId ? `/workspaces/${workspaceId}/projects/${projectId}/issues/new` : `/workspaces/${workspaceId}/issues/new`;
     host.open(status ? `${path}?status=${status}` : path);
   };
   // An issue's link pressed (a plain click) opens the modal instead of leaving the list.

@@ -1,10 +1,10 @@
 import { Fragment, type ReactNode } from 'react';
 import { dateText, monthText } from '@/shared/lib/date-text';
-import { IssueLink, LabelTokens, PersonCell, StatusBadge, type IssueSearch, type WorkItem } from '@/entities/work-item';
+import { IssueLink, LabelTokens, PersonCell, StatusBadge, type IssueSearch, type Issue } from '@/entities/issue';
 import styles from './history.module.css';
 
 /** The day an issue entered the history: its start when it has one, else the day it was made. */
-const dayOf = (issue: WorkItem) => issue.startDate ?? issue.createdAt;
+const dayOf = (issue: Issue) => issue.startDate ?? issue.createdAt;
 
 /**
  * The 히스토리 view (D-064's 결정기록 timeline, now a layout any view may take): a history read down the page in a
@@ -12,7 +12,7 @@ const dayOf = (issue: WorkItem) => issue.startDate ?? issue.createdAt;
  * is a ring on the line with its name and count, each record a dot in its status's colour with its day before the line
  * and its card after: key and title, its status, who it is for and its labels.
  */
-export function HistoryView({ workspaceId, items, search, empty }: { workspaceId: string; items: readonly WorkItem[]; search: IssueSearch; empty: ReactNode }) {
+export function HistoryView({ workspaceId, items, search, empty }: { workspaceId: string; items: readonly Issue[]; search: IssueSearch; empty: ReactNode }) {
   if (items.length === 0) return empty;
   const sorted = [...items].sort((a, b) => dayOf(b).localeCompare(dayOf(a)));
   const groups = [...new Set(sorted.map(issue => monthText(dayOf(issue))))].map(name => ({ name, issues: sorted.filter(issue => monthText(dayOf(issue)) === name) }));

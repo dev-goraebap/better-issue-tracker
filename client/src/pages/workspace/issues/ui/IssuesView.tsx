@@ -12,8 +12,8 @@ import type { Member } from '@/entities/workspace';
 import {
   CATEGORY_LABELS, FILTER_KEYS, filterIssues, IssueRows, IssueTable, NO_FILTER, PRIORITIES, refreshItems, setViewTweak, SYSTEM_LABEL, updateItem,
   updateView, VIEW_COLUMNS, VIEW_LAYOUTS, VIEW_SORT_KEYS, type effectiveView, type IssueSearch, type IssueView, type ViewColumn, type ViewLayout, type ViewSort, type ViewTweak,
-  type WorkItem,
-} from '@/entities/work-item';
+  type Issue,
+} from '@/entities/issue';
 import { currentDay, shiftDay } from '../model/dates';
 import type { Scope } from '../model/scope';
 import { BoardView } from './BoardView';
@@ -40,7 +40,7 @@ const same = <T,>(a: T, b: T) => JSON.stringify(a) === JSON.stringify(b);
  *   those with a day, 카드 every issue as Keep's cards, 히스토리 every issue down a timeline by month.
  */
 export function IssuesView({ scope, view, tweak, effective, issues, labels, members, search, go, onCreate, onSaveAsView }: {
-  scope: Scope; view: IssueView; tweak?: ViewTweak; effective: ReturnType<typeof effectiveView>; issues: readonly WorkItem[];
+  scope: Scope; view: IssueView; tweak?: ViewTweak; effective: ReturnType<typeof effectiveView>; issues: readonly Issue[];
   labels: readonly Label[]; members: readonly Member[]; search: IssueSearch; go: (patch: Partial<IssueSearch>, replace?: boolean) => void;
   onCreate?: (status?: string) => void; onSaveAsView: () => void;
 }) {
@@ -112,7 +112,7 @@ export function IssuesView({ scope, view, tweak, effective, issues, labels, memb
   </> : undefined;
   const create = onCreate && (() => onCreate());
   // A bar carried across the calendar moves the issue's start and due day together.
-  const moveDays = async (item: WorkItem, by: number) => {
+  const moveDays = async (item: Issue, by: number) => {
     try {
       await updateItem(workspaceId, item.projectId, item.id, { expectedVersion: item.version,
         ...(item.startDate ? { startDate: shiftDay(item.startDate, by) } : {}), ...(item.dueDate ? { dueDate: shiftDay(item.dueDate, by) } : {}) });

@@ -8,7 +8,7 @@ import { LabelsSettings } from './LabelsSettings';
 import { RolesSettings } from './RolesSettings';
 
 /**
- * PATTERN · 워크스페이스 설정, /w/$workspaceId/settings/$section (the menu turned into the workspace's settings, D-061).
+ * PATTERN · 워크스페이스 설정, /workspaces/$workspaceId/settings/$section (the menu turned into the workspace's settings, D-061).
  * One page per menu entry (WORKSPACE_SETTINGS_MENU), each a SettingsHead over SettingsCard sections in the narrow
  * column; an address naming no entry finds nothing.
  */

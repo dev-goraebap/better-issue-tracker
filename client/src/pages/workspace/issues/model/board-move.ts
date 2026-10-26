@@ -8,7 +8,7 @@ export type MoveLane<Card extends { id: string }> = { key: string; columnId?: st
 export type BoardSpot = { lane: string; index: number };
 /** The arrow keys that walk a carried card: across the lanes and up or down its lane. */
 export type StepKey = 'ArrowLeft' | 'ArrowRight' | 'ArrowUp' | 'ArrowDown';
-/** What the server's move takes (MoveWorkItem without the version): the column and the card it goes before or after. */
+/** What the server's move takes (MoveIssue without the version): the column and the card it goes before or after. */
 export type MovePlace = { targetColumnId: string; beforeItemId?: string; afterItemId?: string };
 
 const othersIn = <Card extends { id: string }>(lane: MoveLane<Card>, id: string) => lane.cards.filter(card => card.id !== id);

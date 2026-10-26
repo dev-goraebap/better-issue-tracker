@@ -17,7 +17,7 @@ import styles from './projects.module.css';
 
 
 /**
- * PATTERN · 탭 목록 (모든 프로젝트), /w/$workspaceId/projects (?status=archived|deleted). Projects as a table: the name
+ * PATTERN · 탭 목록 (모든 프로젝트), /workspaces/$workspaceId/projects (?status=archived|deleted). Projects as a table: the name
  * links the row to the project's issues, its key, description and when it changed; archived ones in their own tab, and
  * for the owner and admins the deleted ones, each restorable. A phone reads them as cards.
  * - Projects read in the workspace's order (D-080). The owner and admins move one up or down from its row's menu (the
@@ -40,7 +40,7 @@ export function ProjectsPage() {
   const [restoring, setRestoring] = useState('');
   const [error, setError] = useState('');
   const go = useCallback((patch: Partial<ProjectsSearch>, replace = false) => void navigate({
-    to: '/w/$workspaceId/projects', params: { workspaceId }, replace,
+    to: '/workspaces/$workspaceId/projects', params: { workspaceId }, replace,
     search: Object.fromEntries(Object.entries({ ...search, ...patch }).filter(([, value]) => value !== undefined && value !== '')),
   }), [navigate, workspaceId, search]);
   const restore = async (project: Project) => {
@@ -67,7 +67,7 @@ export function ProjectsPage() {
     ]} />;
   };
   const name = (row: Project, className: string) => (tab === 'deleted' ? row.name
-    : <Link to="/w/$workspaceId/p/$projectId" params={{ workspaceId, projectId: row.id }} className={className}>{row.name}</Link>);
+    : <Link to="/workspaces/$workspaceId/projects/$projectId" params={{ workspaceId, projectId: row.id }} className={className}>{row.name}</Link>);
   const columns: SheetColumn<Project>[] = [
     { key: 'name', header: '프로젝트', render: row => <span className={styles.named}><ProjectMark project={row} />{name(row, SHEET_ROW_LINK)}</span> },
     { key: 'key', header: '키', width: '6rem', render: row => <span className={styles.key}>{row.key}</span> },
@@ -96,6 +96,6 @@ export function ProjectsPage() {
       <ListMore hasMore={!!result.hasNextPage} isLoading={result.isFetchingNextPage} onMore={() => { void result.fetchNextPage(); }} />
     </div>
     <CreateProjectDialog workspaceId={workspaceId} isOpen={isCreating} onClose={() => setCreating(false)}
-      onCreated={id => { setCreating(false); void navigate({ to: '/w/$workspaceId/p/$projectId', params: { workspaceId, projectId: id } }); }} />
+      onCreated={id => { setCreating(false); void navigate({ to: '/workspaces/$workspaceId/projects/$projectId', params: { workspaceId, projectId: id } }); }} />
   </PageFrame>;
 }

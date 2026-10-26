@@ -17,17 +17,17 @@ description: 파일 모듈 소유권, 사전 서명 URL 업로드, 로컬·S3 �
 - **`pending_upload`**: 사전 서명 URL 발급 이력 및 만료 상태.
 
 ### 다형 연결(Polymorphic Link) 규칙
-- 업무 엔티티와의 연결은 `owner_type`(예: `work_item`, `comment`), `owner_id`(엔티티 ID), 그리고 첨부 용도를 나타내는 `name`의 조합으로 식별한다. 순서는 `position`이다.
+- 업무 엔티티와의 연결은 `owner_type`(예: `issue`, `comment`), `owner_id`(엔티티 ID), 그리고 첨부 용도를 나타내는 `name`의 조합으로 식별한다. 순서는 `position`이다.
 - 각 업무 모듈은 `file` 모듈의 내부 테이블을 직접 참조하지 않고, `file` 모듈이 공개한 계약 인터페이스(`FileFacade`)를 통해서만 첨부파일을 관리한다.
 - `shared/storage`의 저장소 어댑터는 순수한 스토리지 I/O만을 담당하며, BIT 업무의 인가 지식을 포함하지 않는다.
 
 ### 산출물 파일
 - 산출물 정본과 파생본(텍스트 변환·PDF)은 `attachment`를 거치지 않고 `artifact_version.blob_id`, `artifact_rendition.blob_id`로 `blob`을 직접 가리킨다. 업로드 흐름(2절)과 검증·정리는 같다.
 - 1차에는 산출물을 다시 올리면 `current` 버전 행을 덮어쓰고, 이전 blob은 정리 대상이 된다(D-019).
-- 작업항목 설명·댓글에 붙는 이미지 등은 `attachment`로 붙인다.
+- 이슈 설명·댓글에 붙는 이미지 등은 `attachment`로 붙인다.
 
 ### 본문이 가리키는 파일
-- 확정한 첨부는 업로드 id를 그대로 자기 id로 쓴다(`FileFacade.attach`). 그래서 작업항목 설명·결정 본문·세션 요약·댓글 같은 Markdown 본문은 저장하기 전부터 `![이름](attachment:<id>)`(사진)·`[이름](attachment:<id>)`(파일 블록)로 첨부를 가리킨다. 본문을 읽고 바꾸는 서버 도우미는 `io.github.goraebap.bit.module.file.DocumentFiles`(`referencedIn`, `repoint`)다.
+- 확정한 첨부는 업로드 id를 그대로 자기 id로 쓴다(`FileFacade.attach`). 그래서 이슈 설명·결정 본문·세션 요약·댓글 같은 Markdown 본문은 저장하기 전부터 `![이름](attachment:<id>)`(사진)·`[이름](attachment:<id>)`(파일 블록)로 첨부를 가리킨다. 본문을 읽고 바꾸는 서버 도우미는 `io.github.goraebap.bit.module.file.DocumentFiles`(`referencedIn`, `repoint`)다.
 - 본문은 첨부의 일부를 가리킬 뿐이고, 건수·용량 한도와 접근 검사는 그대로 첨부로 한다. 본문에서 빠진 첨부를 떼는 것은 화면이 저장할 때 뺄 id로 보낸다.
 - 한 첨부를 다른 소유자에게 나눠 줄 때는 `FileFacade.copy`로 같은 blob을 함께 쓰는 새 첨부를 만든다. 첨부를 지울 때 그 blob을 아직 쓰는 다른 첨부가 있으면 blob을 버리지 않고 저장소에서도 지우지 않는다(`discardBlobs`가 실제로 버린 키만 돌려준다).
 
@@ -66,7 +66,7 @@ description: 파일 모듈 소유권, 사전 서명 URL 업로드, 로컬·S3 �
    - *응답 본문 예외*: 이 응답은 클라이언트가 즉시 소비해야 할 URL과 헤더를 포함하므로, 변경 작업의 "본문 없음" 기본 규칙의 명시적 예외로 OpenAPI 스펙에 선언한다.
 2. **스토리지 직접 업로드**: 브라우저 클라이언트는 발급받은 URL로 직접 바이너리를 전송한다.
 3. **첨부 확정(Confirmation)**:
-   - 클라이언트가 업로드 완료 후 소유 업무 모듈(작업항목, 산출물 등)에 첨부 확정을 요청한다.
+   - 클라이언트가 업로드 완료 후 소유 업무 모듈(이슈, 산출물 등)에 첨부 확정을 요청한다.
    - 업무 모듈은 사용자의 업무 권한을 확인한 뒤 `file` 모듈에 최종 바인딩을 요청한다.
    - `file` 모듈은 세션 발급자와 확정 요청자의 일치 여부, 스토리지에 실제 저장된 객체의 실제 크기(Byte)와 MIME 유형을 교차 검증한 후 상태를 영속화한다. 클라이언트가 전송한 MIME 문자열이나 스토리지 키 접두사만을 맹신하지 않는다.
 

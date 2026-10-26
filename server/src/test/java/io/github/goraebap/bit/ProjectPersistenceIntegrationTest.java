@@ -86,8 +86,8 @@ class ProjectPersistenceIntegrationTest {
         jdbcTemplate.execute("DROP TRIGGER IF EXISTS reject_final_column");
         for (String table : List.of(
                 "activity",
-                "work_item_label",
-                "work_item",
+                "issue_label",
+                "issue",
                 "board_column",
                 "project_member",
                 "project_key",
@@ -199,7 +199,7 @@ class ProjectPersistenceIntegrationTest {
         assertThat(jdbcTemplate.queryForObject("SELECT count(*) FROM project_key", Integer.class))
                 .isEqualTo(2);
         projectService.archive(actor, workspace, id, 2, true);
-        assertThatThrownBy(() -> projectService.allocateWorkItemNumber(actor, workspace, id))
+        assertThatThrownBy(() -> projectService.allocateIssueNumber(actor, workspace, id))
                 .hasMessageContaining("보관");
         projectService.delete(actor, workspace, id, 3);
         assertThatThrownBy(() -> projectService.findByKey(actor, workspace, "NEW"))
@@ -232,7 +232,7 @@ class ProjectPersistenceIntegrationTest {
         try (var executor = Executors.newFixedThreadPool(4)) {
             var tasks = java.util.stream.IntStream.range(0, 8)
                     .<java.util.concurrent.Callable<Long>>mapToObj(
-                            i -> () -> projectService.allocateWorkItemNumber(actor, workspace, id))
+                            i -> () -> projectService.allocateIssueNumber(actor, workspace, id))
                     .toList();
             var results = executor.invokeAll(tasks);
             var numbers = new java.util.HashSet<Long>();
@@ -240,22 +240,22 @@ class ProjectPersistenceIntegrationTest {
             assertThat(numbers).containsExactlyInAnyOrder(1L, 2L, 3L, 4L, 5L, 6L, 7L, 8L);
         }
         assertThatThrownBy(() -> new TransactionTemplate(transactionManager).execute(status -> {
-                    projectService.allocateWorkItemNumber(actor, workspace, id);
+                    projectService.allocateIssueNumber(actor, workspace, id);
                     throw new IllegalStateException("forced failure");
                 }))
                 .isInstanceOf(IllegalStateException.class);
-        assertThat(projectService.allocateWorkItemNumber(actor, workspace, id)).isEqualTo(9);
+        assertThat(projectService.allocateIssueNumber(actor, workspace, id)).isEqualTo(9);
     }
 
     @Test
     void currentRoleIsRecheckedForWorkWritesAndSettingsAreSeparate() {
         String id = projectService.create(actor, workspace, "Roles", "ROLE", null);
         jdbcTemplate.update("UPDATE workspace_member SET role='member' WHERE workspace_id=?", workspace);
-        assertThat(projectService.allocateWorkItemNumber(actor, workspace, id)).isEqualTo(1);
+        assertThat(projectService.allocateIssueNumber(actor, workspace, id)).isEqualTo(1);
         assertThatThrownBy(() -> projectService.create(actor, workspace, "Forbidden", "NO", null))
                 .hasMessageContaining("권한");
         jdbcTemplate.update("UPDATE workspace_member SET role='viewer' WHERE workspace_id=?", workspace);
-        assertThatThrownBy(() -> projectService.allocateWorkItemNumber(actor, workspace, id))
+        assertThatThrownBy(() -> projectService.allocateIssueNumber(actor, workspace, id))
                 .hasMessageContaining("권한");
         assertThat(workspaceFacade.hasMember(actor, workspace, actor.userId())).isTrue();
         jdbcTemplate.update("DELETE FROM workspace_member WHERE workspace_id=?", workspace);

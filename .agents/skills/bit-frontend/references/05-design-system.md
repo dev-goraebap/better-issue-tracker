@@ -44,7 +44,7 @@ npm run astryx --prefix client -- docs tokens --dense
 
 ### 전역 스타일 및 프로바이더 조립
 - **전역 스타일**: 브라우저 스타일 초기화(CSS Reset), 웹 폰트, `astryx.css`, 테마 변수는 `app/styles/index.css` 한곳에서 통합 로드한다. 기본 테마는 `@astryxdesign/theme-stone`이다.
-- **글꼴**: 본문과 제목은 Pretendard Variable(npm `pretendard`의 동적 서브셋, 한글·영문 모두), 고정폭이 필요한 곳(작업항목 키, 커밋 해시, 코드)은 JetBrains Mono Variable(`@fontsource-variable/jetbrains-mono`)을 앱에 실어 기기마다 같은 모양으로 보인다. 테마가 `--font-family-body`·`--font-family-heading`·`--font-family-code`로 이름을 대고, 테마 밖(body)도 같은 글꼴 목록을 쓴다. 시스템 글꼴은 불러오는 동안의 대체로만 둔다.
+- **글꼴**: 본문과 제목은 Pretendard Variable(npm `pretendard`의 동적 서브셋, 한글·영문 모두), 고정폭이 필요한 곳(이슈 키, 커밋 해시, 코드)은 JetBrains Mono Variable(`@fontsource-variable/jetbrains-mono`)을 앱에 실어 기기마다 같은 모양으로 보인다. 테마가 `--font-family-body`·`--font-family-heading`·`--font-family-code`로 이름을 대고, 테마 밖(body)도 같은 글꼴 목록을 쓴다. 시스템 글꼴은 불러오는 동안의 대체로만 둔다.
 - **최상위 프로바이더**: 레이어 중첩을 관리하는 `LayerProvider`와 다국어 처리를 위한 `InternationalizationProvider`는 앱 진입점(`app/entry.tsx`)에서 단 1회 조립한다.
 
 ---
@@ -57,7 +57,7 @@ npm run astryx --prefix client -- docs tokens --dense
 | :--- | :--- | :--- |
 | **고밀도 테이블형 데이터** | `Table` 또는 `List`/`Item` | 다량의 정형화된 레코드 비교 및 정렬 |
 | **독립된 맥락 묶음** | `Card` | 특정 엔티티의 정보 요약 및 작업 그룹화 |
-| **도메인 상태 표시** | `StatusDot` 또는 `StatusToken`(shared/ui) | 작업항목 상태, 결정 상태(제안/확정/대체됨) 등 상태 코드의 직관적 인지. 상태는 모서리가 완전히 둥근 알약 모양 `StatusToken`으로 보이고, 라벨·이름표·정본 종류(docx / md / Git)·트리거 유형은 `Token`·`Badge`를 쓴다 |
+| **도메인 상태 표시** | `StatusDot` 또는 `StatusToken`(shared/ui) | 이슈 상태, 결정 상태(제안/확정/대체됨) 등 상태 코드의 직관적 인지. 상태는 모서리가 완전히 둥근 알약 모양 `StatusToken`으로 보이고, 라벨·이름표·정본 종류(docx / md / Git)·트리거 유형은 `Token`·`Badge`를 쓴다 |
 | **단순 건수 및 카운트** | `Badge` | 미확인 알림 수, 탭별 항목 수 등 정량적 수치 표현 |
 
 - **무분별한 래퍼 생성 금지**: 동일한 props를 단순 전달하기만 하는 껍데기 래퍼 컴포넌트를 기계적으로 양산하지 않는다. 반응형 정책이 결합되거나 프로젝트 공통 규칙이 부여된 경우에 한해서만 `shared/ui`로 승격 추출한다.

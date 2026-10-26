@@ -8,7 +8,7 @@ import { BoardSettings } from './BoardSettings';
 import { ProjectGeneralSettings } from './ProjectGeneralSettings';
 
 /**
- * PATTERN · 프로젝트 설정, /w/$workspaceId/settings/projects/$projectId/$section: a project's pages within the
+ * PATTERN · 프로젝트 설정, /workspaces/$workspaceId/settings/projects/$projectId/$section: a project's pages within the
  * workspace's settings (its name in the menu over PROJECT_SETTINGS_MENU, as Kaneo has them), each a SettingsHead over
  * SettingsCard sections (D-061).
  */

@@ -7,6 +7,8 @@ import io.github.goraebap.bit.module.decision.DecisionFacade;
 import io.github.goraebap.bit.module.decision.application.DecisionService;
 import io.github.goraebap.bit.module.decision.domain.Decision;
 import io.github.goraebap.bit.module.decision.domain.DecisionRepository;
+import io.github.goraebap.bit.module.issue.application.IssueService;
+import io.github.goraebap.bit.module.issue.domain.Issue;
 import io.github.goraebap.bit.module.link.CommentFacade;
 import io.github.goraebap.bit.module.link.LinkFacade;
 import io.github.goraebap.bit.module.link.TargetFacade;
@@ -18,8 +20,6 @@ import io.github.goraebap.bit.module.session.application.SessionService;
 import io.github.goraebap.bit.module.session.domain.Participant;
 import io.github.goraebap.bit.module.session.domain.SessionRecord;
 import io.github.goraebap.bit.module.session.domain.SessionRepository;
-import io.github.goraebap.bit.module.workitem.application.WorkItemService;
-import io.github.goraebap.bit.module.workitem.domain.WorkItem;
 import io.github.goraebap.bit.shared.domain.Ids;
 import io.github.goraebap.bit.shared.error.BusinessException;
 import io.github.goraebap.bit.shared.persistence.InstantTextBinding;
@@ -76,7 +76,7 @@ class TargetPersistenceIntegrationTest {
     private ProjectService projects;
 
     @Autowired
-    private WorkItemService workItems;
+    private IssueService issues;
 
     @Autowired
     private JdbcTemplate jdbc;
@@ -108,8 +108,8 @@ class TargetPersistenceIntegrationTest {
                 "session_participant",
                 "session_record",
                 "decision",
-                "work_item_label",
-                "work_item",
+                "issue_label",
+                "issue",
                 "board_column",
                 "project_member",
                 "project_key",
@@ -252,9 +252,9 @@ class TargetPersistenceIntegrationTest {
     @Test
     void deletedTargetsAreHiddenAndArchivedProjectsRemainReadableButNotWritable() {
         String decision = decision();
-        String item = workItems.create(
-                actor, workspace, project, new WorkItem.Details("Work", null, null, null, null, null, null), null);
-        assertThat(targets.requireAccess(actor, workspace, TargetType.work_item, item, false)
+        String item = issues.create(
+                actor, workspace, project, new Issue.Details("Work", null, null, null, null, null, null), null);
+        assertThat(targets.requireAccess(actor, workspace, TargetType.issue, item, false)
                         .reference())
                 .isEqualTo("OLD-1");
         transaction().executeWithoutResult(status -> {
@@ -272,13 +272,13 @@ class TargetPersistenceIntegrationTest {
                         .reference())
                 .isEqualTo("OLD D-001");
         projects.archive(actor, workspace, project, 0, true);
-        assertThat(targets.requireAccess(actor, workspace, TargetType.work_item, item, false)
+        assertThat(targets.requireAccess(actor, workspace, TargetType.issue, item, false)
                         .id())
                 .isEqualTo(item);
-        denied(() -> targets.requireAccess(actor, workspace, TargetType.work_item, item, true), 409);
+        denied(() -> targets.requireAccess(actor, workspace, TargetType.issue, item, true), 409);
         projects.delete(actor, workspace, project, 1);
         denied(() -> targets.requireAccess(actor, workspace, TargetType.decision, decision, false), 404);
-        denied(() -> targets.requireAccess(actor, workspace, TargetType.work_item, item, false), 404);
+        denied(() -> targets.requireAccess(actor, workspace, TargetType.issue, item, false), 404);
     }
 
     @Test
@@ -311,32 +311,29 @@ class TargetPersistenceIntegrationTest {
     }
 
     private String item(String title) {
-        return workItems.create(
-                actor, workspace, project, new WorkItem.Details(title, null, null, null, null, null, null), null);
+        return issues.create(
+                actor, workspace, project, new Issue.Details(title, null, null, null, null, null, null), null);
     }
 
     @Test
     void symmetricLinksAreIdempotentAndReconnectingRetainsTheDisconnectedHistory() {
         String a = item("A");
         String b = item("B");
-        String first = links.connect(actor, workspace, TargetType.work_item, a, "relates_to", TargetType.work_item, b);
-        assertThat(links.connect(actor, workspace, TargetType.work_item, b, "relates_to", TargetType.work_item, a))
+        String first = links.connect(actor, workspace, TargetType.issue, a, "relates_to", TargetType.issue, b);
+        assertThat(links.connect(actor, workspace, TargetType.issue, b, "relates_to", TargetType.issue, a))
                 .isEqualTo(first);
         assertThat(jdbc.queryForObject("SELECT count(*) FROM link", Integer.class))
                 .isEqualTo(1);
         links.disconnect(actor, workspace, first);
         links.disconnect(actor, workspace, first);
-        String next = links.connect(actor, workspace, TargetType.work_item, a, "relates_to", TargetType.work_item, b);
+        String next = links.connect(actor, workspace, TargetType.issue, a, "relates_to", TargetType.issue, b);
         assertThat(next).isNotEqualTo(first);
         assertThat(jdbc.queryForObject("SELECT count(*) FROM link", Integer.class))
                 .isEqualTo(2);
         assertThat(jdbc.queryForObject("SELECT count(*) FROM link WHERE deleted_at IS NOT NULL", Integer.class))
                 .isEqualTo(1);
-        denied(() -> links.connect(actor, workspace, TargetType.work_item, a, "blocks", TargetType.work_item, a), 400);
-        denied(
-                () -> links.connect(
-                        actor, workspace, TargetType.work_item, a, "not-a-relation", TargetType.work_item, b),
-                400);
+        denied(() -> links.connect(actor, workspace, TargetType.issue, a, "blocks", TargetType.issue, a), 400);
+        denied(() -> links.connect(actor, workspace, TargetType.issue, a, "not-a-relation", TargetType.issue, b), 400);
     }
 
     @Test
@@ -344,13 +341,13 @@ class TargetPersistenceIntegrationTest {
         String a = item("A");
         String b = item("B");
         String c = item("C");
-        links.connect(actor, workspace, TargetType.work_item, a, "blocks", TargetType.work_item, b);
-        links.connect(actor, workspace, TargetType.work_item, b, "blocks", TargetType.work_item, c);
-        jdbc.update("UPDATE work_item SET deleted_at=? WHERE work_item_id=?", InstantTextBinding.text(now), b);
-        denied(() -> links.connect(actor, workspace, TargetType.work_item, c, "blocks", TargetType.work_item, a), 409);
+        links.connect(actor, workspace, TargetType.issue, a, "blocks", TargetType.issue, b);
+        links.connect(actor, workspace, TargetType.issue, b, "blocks", TargetType.issue, c);
+        jdbc.update("UPDATE issue SET deleted_at=? WHERE issue_id=?", InstantTextBinding.text(now), b);
+        denied(() -> links.connect(actor, workspace, TargetType.issue, c, "blocks", TargetType.issue, a), 409);
         assertThat(jdbc.queryForObject("SELECT count(*) FROM link WHERE deleted_at IS NULL", Integer.class))
                 .isEqualTo(2);
-        denied(() -> links.connect(actor, workspace, TargetType.work_item, c, "blocks", TargetType.work_item, b), 404);
+        denied(() -> links.connect(actor, workspace, TargetType.issue, c, "blocks", TargetType.issue, b), 404);
     }
 
     @Test
@@ -358,14 +355,10 @@ class TargetPersistenceIntegrationTest {
         String a = item("A");
         String b = item("B");
         String c = item("C");
-        links.connect(actor, workspace, TargetType.work_item, a, "subtask_of", TargetType.work_item, b);
-        denied(
-                () -> links.connect(actor, workspace, TargetType.work_item, a, "subtask_of", TargetType.work_item, c),
-                409);
-        links.connect(actor, workspace, TargetType.work_item, b, "subtask_of", TargetType.work_item, c);
-        denied(
-                () -> links.connect(actor, workspace, TargetType.work_item, c, "subtask_of", TargetType.work_item, a),
-                409);
+        links.connect(actor, workspace, TargetType.issue, a, "subtask_of", TargetType.issue, b);
+        denied(() -> links.connect(actor, workspace, TargetType.issue, a, "subtask_of", TargetType.issue, c), 409);
+        links.connect(actor, workspace, TargetType.issue, b, "subtask_of", TargetType.issue, c);
+        denied(() -> links.connect(actor, workspace, TargetType.issue, c, "subtask_of", TargetType.issue, a), 409);
     }
 
     @Test
@@ -391,15 +384,13 @@ class TargetPersistenceIntegrationTest {
                 "owner",
                 time);
         String otherProject = projects.create(actor, other, "Other project", "OTH", null);
-        String foreign = workItems.create(
-                actor, other, otherProject, new WorkItem.Details("Foreign", null, null, null, null, null, null), null);
-        denied(
-                () -> links.connect(actor, workspace, TargetType.work_item, a, "blocks", TargetType.work_item, foreign),
-                404);
-        String link = links.connect(actor, workspace, TargetType.work_item, a, "blocks", TargetType.work_item, b);
+        String foreign = issues.create(
+                actor, other, otherProject, new Issue.Details("Foreign", null, null, null, null, null, null), null);
+        denied(() -> links.connect(actor, workspace, TargetType.issue, a, "blocks", TargetType.issue, foreign), 404);
+        String link = links.connect(actor, workspace, TargetType.issue, a, "blocks", TargetType.issue, b);
         jdbc.update("UPDATE workspace_member SET role='viewer' WHERE workspace_id=?", workspace);
         denied(() -> links.disconnect(actor, workspace, link), 403);
-        denied(() -> links.connect(actor, workspace, TargetType.work_item, b, "blocks", TargetType.work_item, a), 403);
+        denied(() -> links.connect(actor, workspace, TargetType.issue, b, "blocks", TargetType.issue, a), 403);
         assertThat(jdbc.queryForObject("SELECT count(*) FROM link WHERE deleted_at IS NULL", Integer.class))
                 .isEqualTo(1);
     }
@@ -597,7 +588,7 @@ class TargetPersistenceIntegrationTest {
     /** Activity other than an issue's own changes (D-078), which the issue tests below count apart. */
     private int activityCount() {
         return java.util.Objects.requireNonNull(jdbc.queryForObject(
-                "SELECT count(*) FROM activity WHERE NOT (target_type='work_item' AND type NOT LIKE 'comment%')",
+                "SELECT count(*) FROM activity WHERE NOT (target_type='issue' AND type NOT LIKE 'comment%')",
                 Integer.class));
     }
 
@@ -623,15 +614,15 @@ class TargetPersistenceIntegrationTest {
         assertThat(decision.audit().createdBy()).isEqualTo(actor.userId());
         assertThat(decision.audit().createdByAgent()).isEqualTo("Decision agent");
         assertThat(jdbc.queryForList(
-                        "SELECT actor_id FROM activity WHERE NOT (target_type='work_item' AND type NOT LIKE 'comment%')",
+                        "SELECT actor_id FROM activity WHERE NOT (target_type='issue' AND type NOT LIKE 'comment%')",
                         String.class))
                 .containsOnly(actor.userId());
         assertThat(jdbc.queryForList(
-                        "SELECT actor_agent FROM activity WHERE NOT (target_type='work_item' AND type NOT LIKE 'comment%')",
+                        "SELECT actor_agent FROM activity WHERE NOT (target_type='issue' AND type NOT LIKE 'comment%')",
                         String.class))
                 .containsOnly("Decision agent");
         for (String payload : jdbc.queryForList(
-                "SELECT payload FROM activity WHERE NOT (target_type='work_item' AND type NOT LIKE 'comment%')",
+                "SELECT payload FROM activity WHERE NOT (target_type='issue' AND type NOT LIKE 'comment%')",
                 String.class)) assertThat(payload).doesNotContain("never-log-fixture-key-hash", credential);
         jdbc.update("UPDATE iam_api_key SET revoked_at=? WHERE iam_api_key_id=?", time, credential);
         denied(
@@ -648,7 +639,7 @@ class TargetPersistenceIntegrationTest {
 
     @Test
     void sessionBundleSavesCanonicalParticipantSnapshotsDecisionsAndDeduplicatedLinks() {
-        String work = workItem("Related work");
+        String work = issue("Related work");
         String id = sessionService.record(
                 actor,
                 workspace,
@@ -698,7 +689,7 @@ class TargetPersistenceIntegrationTest {
 
     @Test
     void failureAtParticipantsLinksOrActivitiesRollsBackTheEntireSessionBundleAndBothCounters() {
-        String work = workItem("Related work");
+        String work = issue("Related work");
         for (String table : List.of("session_participant", "link", "activity")) {
             jdbc.execute("CREATE TRIGGER reject_bundle BEFORE INSERT ON " + table
                     + " BEGIN SELECT RAISE(ABORT,'forced bundle failure'); END");
@@ -715,7 +706,7 @@ class TargetPersistenceIntegrationTest {
                 for (String child : List.of("session_record", "session_participant", "decision", "link", "activity"))
                     assertThat(jdbc.queryForObject(
                                     "SELECT count(*) FROM " + child
-                                            + (child.equals("activity") ? " WHERE target_type<>'work_item'" : ""),
+                                            + (child.equals("activity") ? " WHERE target_type<>'issue'" : ""),
                                     Integer.class))
                             .isZero();
                 assertThat(jdbc.queryForObject(
@@ -723,7 +714,7 @@ class TargetPersistenceIntegrationTest {
                                 Integer.class,
                                 project))
                         .isZero();
-                assertThat(jdbc.queryForObject("SELECT count(*) FROM work_item", Integer.class))
+                assertThat(jdbc.queryForObject("SELECT count(*) FROM issue", Integer.class))
                         .isEqualTo(1);
             } finally {
                 jdbc.execute("DROP TRIGGER reject_bundle");
@@ -764,8 +755,8 @@ class TargetPersistenceIntegrationTest {
                         List.of()),
                 400);
         String another = projects.create(actor, workspace, "Other project", "OTH", null);
-        String otherWork = workItems.create(
-                actor, workspace, another, new WorkItem.Details("Other", null, null, null, null, null, null), null);
+        String otherWork = issues.create(
+                actor, workspace, another, new Issue.Details("Other", null, null, null, null, null, null), null);
         denied(
                 () -> sessionService.record(
                         actor,
@@ -776,8 +767,8 @@ class TargetPersistenceIntegrationTest {
                         List.of(new DecisionFacade.Draft("Decision", "Reason", null, null)),
                         List.of(otherWork)),
                 404);
-        String hidden = workItem("Hidden");
-        workItems.delete(actor, workspace, project, hidden, 0);
+        String hidden = issue("Hidden");
+        issues.delete(actor, workspace, project, hidden, 0);
         denied(
                 () -> sessionService.record(
                         actor, workspace, project, sessionDraft("Summary"), List.of(), List.of(), List.of(hidden)),
@@ -809,7 +800,7 @@ class TargetPersistenceIntegrationTest {
                 .extracting(Participant::displayName)
                 .containsExactly("Current owner");
         for (String payload : jdbc.queryForList(
-                "SELECT payload FROM activity WHERE NOT (target_type='work_item' AND type NOT LIKE 'comment%')",
+                "SELECT payload FROM activity WHERE NOT (target_type='issue' AND type NOT LIKE 'comment%')",
                 String.class)) assertThat(payload).doesNotContain("Original private summary", "New private summary");
         denied(() -> sessionService.revise(actor, workspace, project, id, sessionDraft("Stale"), null, 0), 409);
         sessionService.delete(actor, workspace, project, id, 1);
@@ -824,12 +815,12 @@ class TargetPersistenceIntegrationTest {
     }
 
     @Test
-    void sessionBundleSupportsTheFullParticipantDecisionAndWorkItemLimits() {
+    void sessionBundleSupportsTheFullParticipantDecisionAndIssueLimits() {
         var work = new java.util.ArrayList<String>();
         var people = new java.util.ArrayList<SessionFacade.Person>();
         var drafts = new java.util.ArrayList<DecisionFacade.Draft>();
         for (int i = 0; i < 100; i++) {
-            work.add(workItem("Related " + i));
+            work.add(issue("Related " + i));
             people.add(new SessionFacade.Person("guest", null, "Guest " + i));
         }
         for (int i = 0; i < 20; i++) drafts.add(new DecisionFacade.Draft("Decision " + i, "Reason", null, null));
@@ -877,8 +868,8 @@ class TargetPersistenceIntegrationTest {
 
     @Test
     void authorCanCorrectDeleteAndRestoreCommentsWithVersionsAndBodyFreeActivities() {
-        String work = workItem("Discussion");
-        String id = comments.create(actor, workspace, TargetType.work_item, work, " Original private comment ");
+        String work = issue("Discussion");
+        String id = comments.create(actor, workspace, TargetType.issue, work, " Original private comment ");
         assertThat(commentRepository.findById(workspace, id).orElseThrow().body())
                 .isEqualTo("Original private comment");
         comments.revise(actor, workspace, id, "Corrected private comment", 0);
@@ -895,7 +886,7 @@ class TargetPersistenceIntegrationTest {
         assertThat(comment.audit().deletedAt()).isNull();
         assertThat(activityCount()).isEqualTo(4);
         for (String payload : jdbc.queryForList(
-                "SELECT payload FROM activity WHERE NOT (target_type='work_item' AND type NOT LIKE 'comment%')",
+                "SELECT payload FROM activity WHERE NOT (target_type='issue' AND type NOT LIKE 'comment%')",
                 String.class))
             assertThat(payload).contains(id).doesNotContain("private comment", "Original", "Corrected");
     }
@@ -905,8 +896,8 @@ class TargetPersistenceIntegrationTest {
         CurrentUser author = member("member");
         CurrentUser other = member("member");
         CurrentUser admin = member("admin");
-        String work = workItem("Discussion");
-        String id = comments.create(author, workspace, TargetType.work_item, work, "Author text");
+        String work = issue("Discussion");
+        String id = comments.create(author, workspace, TargetType.issue, work, "Author text");
         denied(() -> comments.revise(actor, workspace, id, "Owner rewrite", 0), 403);
         denied(() -> comments.revise(admin, workspace, id, "Admin rewrite", 0), 403);
         denied(() -> comments.revise(other, workspace, id, "Member rewrite", 0), 403);
@@ -926,21 +917,21 @@ class TargetPersistenceIntegrationTest {
     @Test
     void currentMembershipAndTargetLifecycleGovernCommentWritesAndInstanceAdminsCannotBypassThem() {
         CurrentUser author = member("member");
-        String work = workItem("Discussion");
-        String id = comments.create(author, workspace, TargetType.work_item, work, "Author text");
+        String work = issue("Discussion");
+        String id = comments.create(author, workspace, TargetType.issue, work, "Author text");
         jdbc.update(
                 "UPDATE workspace_member SET role='viewer' WHERE workspace_id=? AND iam_user_id=?",
                 workspace,
                 author.userId());
         denied(() -> comments.revise(author, workspace, id, "Viewer edit", 0), 403);
         denied(() -> comments.delete(author, workspace, id, 0), 403);
-        denied(() -> comments.create(author, workspace, TargetType.work_item, work, "Viewer post"), 403);
+        denied(() -> comments.create(author, workspace, TargetType.issue, work, "Viewer post"), 403);
         jdbc.update("DELETE FROM workspace_member WHERE workspace_id=? AND iam_user_id=?", workspace, author.userId());
         denied(() -> comments.delete(author, workspace, id, 0), 404);
         denied(() -> comments.delete(actor, Ids.newId(), id, 0), 404);
-        workItems.delete(actor, workspace, project, work, 0);
+        issues.delete(actor, workspace, project, work, 0);
         denied(() -> comments.delete(actor, workspace, id, 0), 404);
-        workItems.restore(actor, workspace, project, work, 1);
+        issues.restore(actor, workspace, project, work, 1);
         comments.delete(actor, workspace, id, 0);
         assertThat(commentRepository
                         .findById(workspace, id)
@@ -956,14 +947,14 @@ class TargetPersistenceIntegrationTest {
 
     @Test
     void failedCommentActivitiesRollBackCreationCorrectionsAndModeration() {
-        String work = workItem("Discussion");
+        String work = issue("Discussion");
         rejectActivities();
-        assertThatThrownBy(() -> comments.create(actor, workspace, TargetType.work_item, work, "Not persisted"))
+        assertThatThrownBy(() -> comments.create(actor, workspace, TargetType.issue, work, "Not persisted"))
                 .isInstanceOf(RuntimeException.class);
         assertThat(jdbc.queryForObject("SELECT count(*) FROM comment", Integer.class))
                 .isZero();
         jdbc.execute("DROP TRIGGER reject_activity");
-        String id = comments.create(actor, workspace, TargetType.work_item, work, "Original");
+        String id = comments.create(actor, workspace, TargetType.issue, work, "Original");
         rejectActivities();
         assertThatThrownBy(() -> comments.revise(actor, workspace, id, "Not persisted", 0))
                 .isInstanceOf(RuntimeException.class);
@@ -1006,7 +997,7 @@ class TargetPersistenceIntegrationTest {
                         .targetId())
                 .isEqualTo(session);
         denied(() -> comments.create(actor, workspace, TargetType.artifact, Ids.newId(), "Unimplemented"), 404);
-        denied(() -> comments.create(actor, workspace, TargetType.work_item, Ids.newId(), "Missing"), 404);
+        denied(() -> comments.create(actor, workspace, TargetType.issue, Ids.newId(), "Missing"), 404);
         denied(() -> comments.create(actor, workspace, TargetType.code_ref, Ids.newId(), "Unsupported"), 404);
         assertThat(jdbc.queryForObject("SELECT count(*) FROM comment", Integer.class))
                 .isEqualTo(2);
@@ -1048,8 +1039,8 @@ class TargetPersistenceIntegrationTest {
         return new CurrentUser(user, false, CurrentUser.Method.SESSION, credential, null, false);
     }
 
-    private String workItem(String title) {
-        return workItems.create(
-                actor, workspace, project, new WorkItem.Details(title, null, null, null, null, null, null), null);
+    private String issue(String title) {
+        return issues.create(
+                actor, workspace, project, new Issue.Details(title, null, null, null, null, null, null), null);
     }
 }

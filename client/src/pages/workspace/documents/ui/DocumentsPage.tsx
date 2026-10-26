@@ -1,7 +1,7 @@
 import { PageFrame, PageState } from '@/shared/ui';
 
 /**
- * PATTERN · 준비 중인 기능, /w/$workspaceId/documents. The workspace's 문서함 (D-015) keeps its menu and says what it will
+ * PATTERN · 준비 중인 기능, /workspaces/$workspaceId/documents. The workspace's 문서함 (D-015) keeps its menu and says what it will
  * hold; its actions come with the feature (T-005 and the file store).
  */
 export function DocumentsPage() {

@@ -15,7 +15,7 @@ import { WorkspaceSwitcher } from '@/features/workspace-switcher';
 import { CreateProjectDialog } from '@/features/project-create';
 import { canManage, forgetWorkspace, workspaceQuery } from '@/entities/workspace';
 import { ProjectMark, projectsQuery, type Project } from '@/entities/project';
-import { itemQuery } from '@/entities/work-item';
+import { itemQuery } from '@/entities/issue';
 import { ScopeSwitcher } from './ScopeSwitcher';
 import { SidebarProjects } from './SidebarProjects';
 import styles from './app-layout.module.css';

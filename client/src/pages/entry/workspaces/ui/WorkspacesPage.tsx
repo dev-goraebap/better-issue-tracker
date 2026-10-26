@@ -23,7 +23,7 @@ export function WorkspacesPage() {
     setError('');
     try { await selectWorkspace(id); } catch (failure) { setError(authError(failure)); }
     await client.invalidateQueries({ queryKey: ['session'] });
-    await navigate({ to: '/w/$workspaceId', params: { workspaceId: id } });
+    await navigate({ to: '/workspaces/$workspaceId', params: { workspaceId: id } });
   };
   const list = spaces.items;
   return <PageFrame title="워크스페이스" icon="switcher" width="narrow" actions={<Button label="워크스페이스 추가" variant="secondary" onClick={() => setCreating(true)} />}>
@@ -33,6 +33,6 @@ export function WorkspacesPage() {
       : <div className={styles.flush}><ItemList label="워크스페이스">{list.map(space => <ItemRow key={space.id} lead={<WorkspaceMark workspace={space} />}
         title={<button type="button" className={`${ITEM_ROW_LINK} ${styles.open}`} onClick={() => { void open(space.id); }}>{space.name}</button>}
         meta={<><ItemMeta width="5rem">{ROLE_LABELS[space.myRole]}</ItemMeta><ItemMeta width="9rem" align="end">{space.slug}</ItemMeta></>} />)}</ItemList></div>}
-    <CreateWorkspaceDialog isOpen={isCreating} onClose={() => setCreating(false)} onCreated={id => { setCreating(false); void navigate({ to: '/w/$workspaceId', params: { workspaceId: id } }); }} />
+    <CreateWorkspaceDialog isOpen={isCreating} onClose={() => setCreating(false)} onCreated={id => { setCreating(false); void navigate({ to: '/workspaces/$workspaceId', params: { workspaceId: id } }); }} />
   </PageFrame>;
 }

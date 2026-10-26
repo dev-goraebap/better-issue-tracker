@@ -197,7 +197,7 @@ class JooqProjectRepository implements ProjectRepository {
         r.setIcon(p.icon());
         r.setColor(p.color());
         r.setPosition(p.position());
-        r.setLastWorkItemNumber(p.lastWorkItemNumber());
+        r.setLastIssueNumber(p.lastIssueNumber());
         r.setLastDecisionNumber(p.lastDecisionNumber());
         r.setLastSessionNumber(p.lastSessionNumber());
         r.setArchivedAt(p.archivedAt());
@@ -296,7 +296,7 @@ class JooqProjectRepository implements ProjectRepository {
                 r.get(PROJECT.ICON),
                 r.get(PROJECT.COLOR),
                 r.get(PROJECT.POSITION),
-                r.get(PROJECT.LAST_WORK_ITEM_NUMBER),
+                r.get(PROJECT.LAST_ISSUE_NUMBER),
                 r.get(PROJECT.LAST_DECISION_NUMBER),
                 r.get(PROJECT.LAST_SESSION_NUMBER),
                 r.get(PROJECT.ARCHIVED_AT),

@@ -11,7 +11,7 @@ import { columnsQuery, ProjectMark, projectsQuery, type BoardColumn, type Projec
 import { useMembers } from '@/entities/workspace';
 import {
   createItem, ISSUE_TEMPLATES, issueHref, labelOptions, NO_STATUS, peopleOptions, priorityOptions, refreshItems, statusOptions, templateLabel, type Priority,
-} from '@/entities/work-item';
+} from '@/entities/issue';
 import styles from './create-issue.module.css';
 
 const mark = (project: Project) => <ProjectMark project={project} size="xs" />;
@@ -31,8 +31,8 @@ function startColumn(columns: readonly BoardColumn[], status?: string): string {
 }
 
 /**
- * 새 이슈 as Linear's new issue (D-067), at its own address (D-070): /w/$workspaceId/p/$projectId/work-items/new in a
- * project, /w/$workspaceId/issues/new in 전체 (a project picked in it), ?status= where it starts (a board lane's +). The
+ * 새 이슈 as Linear's new issue (D-067), at its own address (D-070): /workspaces/$workspaceId/projects/$projectId/issues/new in a
+ * project, /workspaces/$workspaceId/issues/new in 전체 (a project picked in it), ?status= where it starts (a board lane's +). The
  * issue pages open it in a modal near the top of the window over them (RoutedPanel, a masked move), its head the project
  * over '새 이슈' with 크게 보기 and close; reloaded, linked, 크게 보기 or on a phone it is a page, drawn as one (no card,
  * no dialog head): the page's title and way back, the form on the page, the project first among the pills, and 취소 ·
@@ -134,9 +134,9 @@ ${next.body}`) : isUntouched ? '' : previous.body;
   </div>;
   // The page is a page: its title and way back are the page's, the form its body on the page itself, the actions its foot row.
   const back = projectId
-    ? <BackLink to="/w/$workspaceId/p/$projectId" params={{ workspaceId, projectId }} label="이슈" />
-    : <BackLink to="/w/$workspaceId" params={{ workspaceId }} label="이슈" />;
-  const leave = () => void router.navigate({ href: projectId ? `/w/${workspaceId}/p/${projectId}` : `/w/${workspaceId}` });
+    ? <BackLink to="/workspaces/$workspaceId/projects/$projectId" params={{ workspaceId, projectId }} label="이슈" />
+    : <BackLink to="/workspaces/$workspaceId" params={{ workspaceId }} label="이슈" />;
+  const leave = () => void router.navigate({ href: projectId ? `/workspaces/${workspaceId}/projects/${projectId}` : `/workspaces/${workspaceId}` });
   return <PageFrame title="새 이슈" width="narrow" back={back}>
     <div className={styles.page} onKeyDown={keys}>
       {titleField}

@@ -31,7 +31,7 @@ export function JoinPage() {
             try { await command('POST', '/api/v1/invitation-acceptances', { token }); }
             catch (failure) { if (request === generation.current) { setError(authError(failure)); setBusy(false); } return; }
             if (request !== generation.current) return; setToken(''); try { await selectWorkspace(preview.workspaceId); } catch { /* Optional preference only. */ }
-            await client.invalidateQueries({ queryKey: ['workspaces'] }); await navigate({ to: '/w/$workspaceId', params: { workspaceId: preview.workspaceId } });
+            await client.invalidateQueries({ queryKey: ['workspaces'] }); await navigate({ to: '/workspaces/$workspaceId', params: { workspaceId: preview.workspaceId } });
           }} /> : <Text>초대받은 이메일의 계정으로 전환해 주세요.</Text>}
           <Button label="다른 계정으로 로그인" variant="ghost" isDisabled={busy} onClick={async () => { try { await logout(); await client.cancelQueries(); client.clear(); client.setQueryData(sessionQueryOptions.queryKey, null); } catch (failure) { setError(authError(failure)); } }} />
         </> : <VStack gap={6}>

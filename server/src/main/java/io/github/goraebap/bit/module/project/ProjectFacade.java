@@ -11,7 +11,7 @@ public interface ProjectFacade {
 
     ProjectRef findByKey(CurrentUser actor, String workspaceId, String key);
 
-    long allocateWorkItemNumber(CurrentUser actor, String workspaceId, String projectId);
+    long allocateIssueNumber(CurrentUser actor, String workspaceId, String projectId);
 
     long allocateDecisionNumber(CurrentUser actor, String workspaceId, String projectId);
 

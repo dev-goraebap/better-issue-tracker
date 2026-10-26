@@ -31,7 +31,7 @@ MCP 도구는 Controller와 같은 진입점이다. 도구는 각 모듈의 Faca
 - **단일 진입점 (`save`)**: jOOQ는 JPA와 달리 변경 감지(Dirty Checking) 메커니즘이 없다. 모든 상태 변경은 반드시 `save` 메서드를 명시적으로 호출해야 하며, `save`는 신규 삽입(INSERT)과 수정(UPDATE)의 단일 영속화 진입점으로 작동한다.
 - **도메인 원본 유지**: 명령 처리 시 화면용 Query DTO를 도메인 상태 판정의 근거로 사용하지 않는다. 항상 영속성 저장소에서 온전한 애그리거트 원본을 복원하여 비즈니스 규칙을 평가해야 한다.
 - **기록 주체**: 만들거나 바꾼 행에는 사람 ID와 함께, API 키로 들어온 요청이면 키의 `agent_name`을 `*_agent` 열에 남긴다(D-021).
-- **다형 대상**: `link`·`activity`·`comment`를 만들 때는 대상(`work_item`, `decision`, `session_record`, `artifact`, `code_ref`)의 존재를 소유 모듈의 Facade로 먼저 확인한다. DB가 FK로 검사하지 않기 때문이다(D-014, D-020).
+- **다형 대상**: `link`·`activity`·`comment`를 만들 때는 대상(`issue`, `decision`, `session_record`, `artifact`, `code_ref`)의 존재를 소유 모듈의 Facade로 먼저 확인한다. DB가 FK로 검사하지 않기 때문이다(D-014, D-020).
 
 ### 저장소 메서드 이름과 여러 건 처리
 
@@ -39,12 +39,12 @@ MCP 도구는 Controller와 같은 진입점이다. 도구는 각 모듈의 Faca
 
 | 용도 | 이름 | 예 |
 | :--- | :--- | :--- |
-| 식별자로 복원 | `findById`, `findAllById` | `workItemRepository.findById(id)` |
+| 식별자로 복원 | `findById`, `findAllById` | `issueRepository.findById(id)` |
 | 행을 잠그고 복원 | `find…ForUpdate` | `findByIdForUpdate(id)` |
 | 조건으로 조회 | `find…By…` | `findAllByProjectId(projectId)` |
 | 존재·개수 | `exists…By…`, `count…By…` | `existsByNameAndIdNot(name, id)`, `countByProjectId(projectId)` |
 | 저장 | `save`, `saveAll` | 신규와 변경을 모두 처리한다 |
-| 삭제 | `deleteById`, `delete…By…` | `deleteAllByWorkItemId(workItemId)` |
+| 삭제 | `deleteById`, `delete…By…` | `deleteAllByIssueId(issueId)` |
 | 여러 행 일괄 수정 | `update…`, `clear…By…` | `updateOrder(orderedIds)`, `clearAssigneeByUserId(userId)` |
 | 명시적 잠금 | `lock…` | `lockTree()` |
 
@@ -93,7 +93,7 @@ MCP 도구는 Controller와 같은 진입점이다. 도구는 각 모듈의 Faca
 - **읽기/쓰기 분리**: 조회 유스케이스는 `@Transactional(readOnly = true)`, 상태 변경 유스케이스는 일반 쓰기 `@Transactional`을 적용한다.
 - **트랜잭션 범위**: 원칙적으로 1개의 트랜잭션은 1개의 애그리거트 변경만을 담당한다. 원자적 무결성이 반드시 요구되는 다중 애그리거트 조율은 설계상 명시적으로 합의된 경우에 한해 허용한다.
 - **외부 호출 금지**: SQLite는 쓰기 잠금이 DB 전체에 하나이고 모든 트랜잭션이 `BEGIN IMMEDIATE`로 시작한다. 트랜잭션 안에서 외부 API 호출, 메일 발송, 문서 변환, PDF 생성처럼 오래 걸리는 일을 하지 않는다. 트랜잭션은 할 일과 상태(`pending` 등)만 기록하고, 작업은 커밋 뒤 트랜잭션 밖에서 돌린 다음 결과를 짧은 트랜잭션으로 갱신한다(D-028, D-031, D-032).
-- **번호 발급**: 작업항목·결정·세션 번호는 `project.last_*_number`를 같은 쓰기 트랜잭션 안에서 증가시켜 받는다(`06-schema.md` 3절).
+- **번호 발급**: 이슈·결정·세션 번호는 `project.last_*_number`를 같은 쓰기 트랜잭션 안에서 증가시켜 받는다(`06-schema.md` 3절).
 
 ---
 
@@ -110,15 +110,15 @@ MCP 도구는 Controller와 같은 진입점이다. 도구는 각 모듈의 Faca
 
 | 접미사 | 상호작용 방향 | 구현 위치 | 역할 및 예시 |
 | :--- | :--- | :--- | :--- |
-| **`*Facade`** | 모듈이 기능을 제공하고, 다른 모듈이 호출 | 선언 모듈의 `application` | 다른 모듈과 MCP에 노출하는 서비스 진입점 (예: `WorkItemFacade`) |
+| **`*Facade`** | 모듈이 기능을 제공하고, 다른 모듈이 호출 | 선언 모듈의 `application` | 다른 모듈과 MCP에 노출하는 서비스 진입점 (예: `IssueFacade`) |
 | **`*Spi`** | 모듈이 인터페이스를 선언하고 타 모듈이 구현 (전략 패턴) | 인터페이스를 구현하는 외부 모듈 | 선언 모듈의 확장점. 아래 모듈이 위 모듈의 값을 알아야 할 때 순환 없이 끼우는 방법 |
 | **`*Event`** | 모듈이 발행하고, 다른 모듈이 비동기/동기 구독 | 불변 `record` | 비즈니스 사건 전파 |
-| **접미사 없음** | 계약 간에 주고받는 데이터 및 주체 타입 | 선언 모듈의 루트 패키지 | 데이터 전송 모델 (예: `WorkItemSummary`) |
+| **접미사 없음** | 계약 간에 주고받는 데이터 및 주체 타입 | 선언 모듈의 루트 패키지 | 데이터 전송 모델 (예: `IssueSummary`) |
 
 ### 계약 구현 및 모듈 캡슐화 규칙
 - **구현 위치 검증**: 계약 인터페이스의 올바른 구현 위치는 ArchUnit 테스트를 통해 지속적으로 검증한다.
 - **Facade 구현체**:
-  - `application`의 Service 클래스가 직접 인터페이스를 구현하며, 클래스명에 Facade 접미사를 붙이지 않는다 (예: `WorkItemService implements WorkItemFacade`).
+  - `application`의 Service 클래스가 직접 인터페이스를 구현하며, 클래스명에 Facade 접미사를 붙이지 않는다 (예: `IssueService implements IssueFacade`).
   - 기능 단위로 단일 Facade를 두는 것을 기본으로 하며, 처음부터 메서드별로 파편화하지 않는다. 단, 호출 모듈별 사용 메서드가 완전히 분리되거나 서로 다른 애그리거트의 규칙을 복합적으로 떠안게 될 경우에 한해 분할한다.
   - 외부 모듈과 MCP에서 들어오는 호출 역시 Controller와 마찬가지로 application 계층을 통과하게 함으로써, 권한 검사, 동시성 충돌 판정, 수정자·에이전트 기록 등의 공통 업무 규칙을 단일 지점에서 강제한다.
 - **역할 분리**: 단일 인터페이스 내에 기능 제공(Facade)과 확장점(Spi)이 혼재하는 경우, 명확히 두 개의 계약으로 분리한다.

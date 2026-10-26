@@ -13,7 +13,7 @@ public interface SessionFacade {
             Draft draft,
             List<Person> participants,
             List<DecisionFacade.Draft> decisions,
-            List<String> workItemIds);
+            List<String> issueIds);
 
     Ref findByRef(CurrentUser actor, String workspaceId, String projectId, String reference);
 

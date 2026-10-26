@@ -16,9 +16,9 @@ description: 컴포넌트·파일 명명, FSD 배치, 렌더링 순수성 규칙
 ### 파일 및 식별자 명명 체계
 | 분류 | 명명 규칙 | 예시 |
 | :--- | :--- | :--- |
-| **컴포넌트 및 파일명** | PascalCase (컴포넌트명과 파일명 일치) | `WorkItemTable.tsx`, `UserAvatar.tsx` |
+| **컴포넌트 및 파일명** | PascalCase (컴포넌트명과 파일명 일치) | `IssueTable.tsx`, `UserAvatar.tsx` |
 | **페이지 컴포넌트** | `*Page` 접미사 필수 | `DecisionListPage.tsx`, `ArtifactDetailPage.tsx` |
-| **커스텀 훅 (Hook)** | `use*`로 시작하는 camelCase | `useWorkItemFilter.ts`, `useDisclosure.ts` |
+| **커스텀 훅 (Hook)** | `use*`로 시작하는 camelCase | `useIssueFilter.ts`, `useDisclosure.ts` |
 | **일반 유틸 및 설정** | kebab-case | `date-utils.ts`, `auth-interceptor.ts` |
 
 ---

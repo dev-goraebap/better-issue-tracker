@@ -2,6 +2,12 @@
 
 최신이 위다. 형식은 `skill-repair`를 따른다.
 
+## 2026-10-26 · 이슈 이름과 주소 반영 (D-084)
+- 증상: 코드·API·MCP의 작업항목(work item)이 이슈(issue)로, 화면 주소가 `/workspaces/…/projects/…/issues/…`로 바뀌었는데 참고 문서가 옛 이름(`work_item`, `/work-items`, `/w/…/p/…`, `get_work_item_context`)을 예로 들고 있었다
+- 층: 참고 문서.
+- 수정: `references/01-database.md`의 작업항목·work item·옛 주소를 이슈·issue·새 주소로 바꿨다
+- 확인: 바꾼 뒤 이 스킬의 SKILL.md·references에 `work_item`·`work-item`·`/w/$`가 남지 않았다
+
 ## 2026-10-26 · ID 형식 반영 (BIT-1, D-083)
 - 증상: 모든 ID가 UUID에서 10자 ID로 바뀌었는데(커밋 `eecd083`, 운영 배포) 참고 문서가 여전히 "기본 키는 UUID v4"라고 해서 새 표가 UUID를 만들 수 있었다
 - 층: 참고 문서.

@@ -21,7 +21,7 @@ public interface LinkFacade {
             String projectId,
             String sessionId,
             List<String> decisionIds,
-            List<String> workItemIds);
+            List<String> issueIds);
     /** Only the decision state-transition transaction coordinates this protected relation. */
     String connectSupersession(CurrentUser actor, String workspaceId, String replacementId, String oldDecisionId);
 }

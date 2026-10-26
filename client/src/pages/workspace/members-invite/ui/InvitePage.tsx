@@ -10,7 +10,7 @@ import { InviteRowFields } from './InviteRowFields';
 import styles from './invite.module.css';
 
 /**
- * 구성원 초대 at /w/$workspaceId/members/invite, as 호호 HR's 사원 등록 (D-079): a row per person, its email and role
+ * 구성원 초대 at /workspaces/$workspaceId/members/invite, as 호호 HR's 사원 등록 (D-079): a row per person, its email and role
  * (the owner may invite admins; an admin members and viewers), 행 추가 under them, and 'N명 초대' in the page's foot.
  * Several addresses pasted into one email (a column from a sheet, a list from a message) fill a row each. Each
  * invitation is a one-time link lasting seven days, shown once on the page that follows: a row per person with its
@@ -32,7 +32,7 @@ export function InvitePage() {
     window.addEventListener('pagehide', clear);
     return () => window.removeEventListener('pagehide', clear);
   }, []);
-  const back = <BackLink to="/w/$workspaceId/members" params={{ workspaceId }} search={{ view: 'invitations' }} label="구성원" />;
+  const back = <BackLink to="/workspaces/$workspaceId/members" params={{ workspaceId }} search={{ view: 'invitations' }} label="구성원" />;
   if (workspace && !canManage(workspace.myRole)) return <PageFrame title="구성원 초대" back={back} width="narrow">
     <PageState kind="not-found" title="초대할 수 없습니다" description="워크스페이스의 소유자와 관리자만 구성원을 초대합니다." />
   </PageFrame>;

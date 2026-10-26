@@ -63,7 +63,7 @@ BIT/
   - `application`: Controller, Service, QueryService, Query 포트, `Requests`/`Views` record 묶음, `*ErrorCode`
   - `domain`: 순수 Java 엔티티·VO·Repository 포트
   - `infrastructure`: `Jooq*Repository`, `Jooq*Query`, 외부 어댑터 (package-private)
-  - Facade는 Service가 직접 구현한다 (`WorkItemService implements WorkItemFacade`).
+  - Facade는 Service가 직접 구현한다 (`IssueService implements IssueFacade`).
 - **명령**: 애그리거트 복원 → 업무 메서드 → `Repository.save()`. **조회**: jOOQ로 화면 DTO에 직접 투영, 필터·정렬·페이징은 DB에서.
 - **모듈 간 읽기**: 표시용 정보는 페이지 확정 후 Facade로 배치 조회, 검색·정렬에 쓰는 값은 SQL로 직접 읽기. 명령은 반드시 Facade.
 - **명명**: 저장소 메서드는 Spring Data 어휘(`findById`, `find…ForUpdate`, `exists…By`). `find*`는 Optional, `get*`은 없으면 예외.
@@ -97,7 +97,7 @@ BIT/
 - **이름**: 테이블 단수 snake_case. PK 열 `<table>_id`, PK 제약 `<table>_pkey`.
   FK `<t>_<col>_<ref>_<refcol>_fk`, 고유 인덱스 `ux_`, 일반 인덱스 `ix_`, CHECK `ck_`.
 - **ID**: 애플리케이션이 `Ids.newId()`로 만든 10자 글자(`A-Za-z0-9`, 첫 글자 영문)를 텍스트로 저장 (D-083).
-  (작업항목 키 `PRJ-42` 같은 사람용 번호는 별도 열 — `02-domain-model.md`)
+  (이슈 키 `PRJ-42` 같은 사람용 번호는 별도 열 — `02-domain-model.md`)
 - **감사 열**: 필요한 테이블에 `created_at/by`, `updated_at/by`, `deleted_at/by`. 시각은 UTC 텍스트, 소수 6자리 고정.
 - **소프트 삭제**: `deleted_at` 하나. 고유 제약은 `WHERE deleted_at IS NULL` 부분 인덱스.
 - **마이그레이션**: `V<n>__<이름>.sql` 추가만. 적용된 파일 수정·`flyway repair` 금지.
@@ -134,7 +134,7 @@ Kaneo와 SandboxHr의 전체 레이아웃이 비슷하므로 SandboxHr 셸을 �
 
 ## 7. 커밋·검증
 - 서버 완료 기준 `./gradlew check`, 화면 완료 기준 `npm run check`.
-- 커밋 메시지에 작업항목 키를 넣는다(BIT 자체 도그푸딩 시작 후).
+- 커밋 메시지에 이슈 키를 넣는다(BIT 자체 도그푸딩 시작 후).
 
 ## 8. 에이전트 스킬 관리 방법론
 SandboxHr `AGENTS.md`, `skill-repair` 스킬, `scripts/sync-skills.mjs`를 그대로 따른다.
@@ -159,7 +159,7 @@ SandboxHr `AGENTS.md`, `skill-repair` 스킬, `scripts/sync-skills.mjs`를 그�
 | 스킬 이름 `hohr-*` | `bit-*` (예: `bit-backend`) |
 | Java 패키지 `store.hohoco`, 제품명 `HOHR`/`PRODUCT_NAME`, npm `hohoco-client` | 패키지 `io.github.goraebap.bit` (D-025), 제품명 `BIT` (D-024), npm `bit-client` |
 | 이미지·볼륨·DB 파일 `hohoco`, 쿠키 `hohohr_session`, API 키 접두사 `hohr_` | `bit` 계열로 |
-| 모듈 그룹 `office`·`projects`와 HR 업무 모듈(approval, vacation …) | BIT 모듈 (workspace, project, workitem, decision, session, artifact, coderef, link, file …) |
+| 모듈 그룹 `office`·`projects`와 HR 업무 모듈(approval, vacation …) | BIT 모듈 (workspace, project, issue, decision, session, artifact, coderef, link, file …) |
 | 결재 SPI 규칙, `LEAVE_*` 등 오류 코드 예시 | 제외 |
 | 회사 서버·도메인·GitLab 러너·배포자 고정·사내망 IP·Redmine/레거시 이관 | 제외 |
 | 로켓 로딩·풍경 일러스트·호호타운 등 고유 연출 | 제외 (기본 로딩 표시만) |

@@ -1,13 +1,13 @@
 import { PageState } from '@/shared/ui';
 import { pathOf, searchOf } from '@/shared/lib/routed-panel';
-import type { IssueSearch } from '@/entities/work-item';
+import type { IssueSearch } from '@/entities/issue';
 import { IssueDetail } from '@/widgets/issue-detail';
 import { NewIssue } from '@/widgets/issue-editor';
 
 /** An issue's address, as the issue pages open it in their modal. */
-export const ISSUE_PATH = /^\/w\/([^/]+)\/p\/([^/]+)\/work-items\/(?!new$)([^/]+)$/;
+export const ISSUE_PATH = /^\/w\/([^/]+)\/p\/([^/]+)\/issues\/(?!new$)([^/]+)$/;
 /** 새 이슈's address, in a project or in 전체. */
-export const NEW_PATH = /^\/w\/([^/]+)(?:\/p\/([^/]+)\/work-items|\/issues)\/new$/;
+export const NEW_PATH = /^\/w\/([^/]+)(?:\/p\/([^/]+)\/issues|\/issues)\/new$/;
 
 /** The page the issue pages' modal shows, by its address: an issue (IssueDetail) or 새 이슈 (NewIssue), each its own frame. */
 export function IssuePanel({ href }: { href: string }) {

@@ -3,7 +3,7 @@ import { ApiError, bootstrapQueryOptions, capabilitiesQueryOptions, keyQueryOpti
 import { followHistory } from '@/shared/lib/history-trail';
 import { isId, ownSearch } from '@/shared/lib/route-search';
 import { projectKey, projectQuery } from '@/entities/project';
-import { byRefQuery, parseIssueSearch, parseNewIssueSearch } from '@/entities/work-item';
+import { byRefQuery, parseIssueSearch, parseNewIssueSearch } from '@/entities/issue';
 import { workspaceKey, workspacePagesQuery, workspaceQuery, workspacesQuery } from '@/entities/workspace';
 import { BootstrapPage } from '@/pages/entry/bootstrap';
 import { ChangePasswordPage } from '@/pages/entry/change-password';
@@ -61,11 +61,11 @@ async function resume(suffix = '') {
   if (session.mustChangePassword) throw redirect({ to: '/change-password' });
   const activeWorkspaceId = session.activeWorkspaceId;
   if (activeWorkspaceId) {
-    try { await routeRead(() => queryClient.fetchQuery(workspaceQuery(activeWorkspaceId))); throw redirect({ href: `/w/${activeWorkspaceId}${suffix}` }); }
+    try { await routeRead(() => queryClient.fetchQuery(workspaceQuery(activeWorkspaceId))); throw redirect({ href: `/workspaces/${activeWorkspaceId}${suffix}` }); }
     catch (error) { if (!(error instanceof ApiError && error.status === 404)) throw error; }
   }
   const spaces = await routeRead(() => queryClient.fetchQuery(workspacesQuery()));
-  if (spaces.items.length === 1 && !spaces.nextCursor) throw redirect({ href: `/w/${spaces.items[0]!.id}${suffix}` });
+  if (spaces.items.length === 1 && !spaces.nextCursor) throw redirect({ href: `/workspaces/${spaces.items[0]!.id}${suffix}` });
   throw redirect({ to: '/workspaces' });
 }
 /** A project the address names, or back to the workspace's projects when it is gone. */
@@ -74,7 +74,7 @@ async function loadProject(w: string, p: string) {
   catch (error) {
     if (!(error instanceof ApiError && error.status === 404)) throw error;
     queryClient.removeQueries({ queryKey: projectKey(w, p) });
-    throw redirect({ href: `/w/${w}/projects` });
+    throw redirect({ href: `/workspaces/${w}/projects` });
   }
 }
 /** An address that only leads to another. */
@@ -91,7 +91,7 @@ const chooser = createRoute({ getParentRoute: () => workspace, path: '/workspace
   loader: () => queryClient.prefetchInfiniteQuery(workspacePagesQuery()) });
 
 // A workspace the member belongs to; one they lost (404) or an address that names none sends them to choose.
-const scoped = createRoute({ getParentRoute: () => workspace, path: '/w/$workspaceId', beforeLoad: async ({ params }) => {
+const scoped = createRoute({ getParentRoute: () => workspace, path: '/workspaces/$workspaceId', beforeLoad: async ({ params }) => {
   const id = params.workspaceId;
   if (!isId(id)) throw redirect({ to: '/workspaces' });
   try { await routeRead(() => queryClient.fetchQuery({ ...workspaceQuery(id), staleTime: GUARD_FRESH_MS })); }
@@ -108,7 +108,7 @@ const home = createRoute({ getParentRoute: () => scoped, path: '/', component: I
 const issuesNew = createRoute({ getParentRoute: () => scoped, path: '/issues/new', component: NewIssuePage, validateSearch: ownSearch(parseNewIssueSearch) });
 const inbox = createRoute({ getParentRoute: () => scoped, path: '/inbox', component: InboxPage });
 // 내 작업 is a view now (담당자 filter, D-066); its old address leads home.
-const myTasks = createRoute({ getParentRoute: () => scoped, path: '/my-tasks', beforeLoad: ({ params }) => leadTo(`/w/${params.workspaceId}`) });
+const myTasks = createRoute({ getParentRoute: () => scoped, path: '/my-tasks', beforeLoad: ({ params }) => leadTo(`/workspaces/${params.workspaceId}`) });
 const members = createRoute({ getParentRoute: () => scoped, path: '/members', component: MembersPage, validateSearch: ownSearch(parseMembersSearch),
   loader: ({ params }) => loadMembers(queryClient, params.workspaceId) });
 // 구성원 초대 is a page of rows, as 호호 HR's 사원 등록 (D-079).
@@ -118,30 +118,30 @@ const projects = createRoute({ getParentRoute: () => scoped, path: '/projects', 
   loaderDeps: ({ search }) => search, loader: ({ params, deps }) => loadProjects(queryClient, params.workspaceId, deps) });
 
 // A project is one page of its issues (D-066); an issue opens at its own address, its edit form under it.
-const projectItems = createRoute({ getParentRoute: () => scoped, path: '/p/$projectId', component: IssuesPage, validateSearch: ownSearch(parseIssueSearch),
+const projectItems = createRoute({ getParentRoute: () => scoped, path: '/projects/$projectId', component: IssuesPage, validateSearch: ownSearch(parseIssueSearch),
   loader: async ({ params }) => { await loadProject(params.workspaceId, params.projectId); await loadIssues(queryClient, params.workspaceId, params.projectId); } });
-const itemNew = createRoute({ getParentRoute: () => scoped, path: '/p/$projectId/work-items/new', component: NewIssuePage, validateSearch: ownSearch(parseNewIssueSearch),
+const itemNew = createRoute({ getParentRoute: () => scoped, path: '/projects/$projectId/issues/new', component: NewIssuePage, validateSearch: ownSearch(parseNewIssueSearch),
   loader: ({ params }) => loadProject(params.workspaceId, params.projectId) });
-const itemDetail = createRoute({ getParentRoute: () => scoped, path: '/p/$projectId/work-items/$workItemId', component: IssuePage, validateSearch: ownSearch(parseIssueSearch),
-  loader: async ({ params }) => { await loadProject(params.workspaceId, params.projectId); await loadIssue(queryClient, params.workspaceId, params.projectId, params.workItemId); } });
-const itemEdit = createRoute({ getParentRoute: () => scoped, path: '/p/$projectId/work-items/$workItemId/edit', component: IssueEditPage,
-  loader: async ({ params }) => { await loadProject(params.workspaceId, params.projectId); await loadIssue(queryClient, params.workspaceId, params.projectId, params.workItemId); } });
-// A key such as BIT-42 (an agent's or a commit's reference) leads to its issue.
-const itemReference = createRoute({ getParentRoute: () => scoped, path: '/r/$reference', loader: async ({ params }) => {
+const itemDetail = createRoute({ getParentRoute: () => scoped, path: '/projects/$projectId/issues/$issueId', component: IssuePage, validateSearch: ownSearch(parseIssueSearch),
+  loader: async ({ params }) => { await loadProject(params.workspaceId, params.projectId); await loadIssue(queryClient, params.workspaceId, params.projectId, params.issueId); } });
+const itemEdit = createRoute({ getParentRoute: () => scoped, path: '/projects/$projectId/issues/$issueId/edit', component: IssueEditPage,
+  loader: async ({ params }) => { await loadProject(params.workspaceId, params.projectId); await loadIssue(queryClient, params.workspaceId, params.projectId, params.issueId); } });
+// A key such as BIT-42 (an agent's or a commit's reference) leads to its issue; /issues/new above wins over it.
+const itemReference = createRoute({ getParentRoute: () => scoped, path: '/issues/$reference', loader: async ({ params }) => {
   const item = await routeRead(() => queryClient.fetchQuery(byRefQuery(params.workspaceId, params.reference)));
-  return leadTo(`/w/${params.workspaceId}/p/${item.projectId}/work-items/${item.id}`);
+  return leadTo(`/workspaces/${params.workspaceId}/projects/${item.projectId}/issues/${item.id}`);
 } });
 
 // 워크스페이스 설정 turns the menu into the workspace's settings: its pages, then each project's (D-061).
-const settingsStart = createRoute({ getParentRoute: () => scoped, path: '/settings', beforeLoad: ({ params }) => leadTo(`/w/${params.workspaceId}/settings/general`) });
+const settingsStart = createRoute({ getParentRoute: () => scoped, path: '/settings', beforeLoad: ({ params }) => leadTo(`/workspaces/${params.workspaceId}/settings/general`) });
 const settings = createRoute({ getParentRoute: () => scoped, path: '/settings/$section', component: WorkspaceSettingsPage,
   loader: ({ params }) => loadWorkspaceSettings(queryClient, params.workspaceId, params.section) });
 const projectSettingsStart = createRoute({ getParentRoute: () => scoped, path: '/settings/projects/$projectId',
-  beforeLoad: ({ params }) => leadTo(`/w/${params.workspaceId}/settings/projects/${params.projectId}/general`) });
+  beforeLoad: ({ params }) => leadTo(`/workspaces/${params.workspaceId}/settings/projects/${params.projectId}/general`) });
 const projectSettings = createRoute({ getParentRoute: () => scoped, path: '/settings/projects/$projectId/$section', component: ProjectSettingsPage,
   loader: ({ params }) => loadProject(params.workspaceId, params.projectId) });
-const oldProjectSettings = createRoute({ getParentRoute: () => scoped, path: '/p/$projectId/settings',
-  beforeLoad: ({ params }) => leadTo(`/w/${params.workspaceId}/settings/projects/${params.projectId}/general`) });
+const oldProjectSettings = createRoute({ getParentRoute: () => scoped, path: '/projects/$projectId/settings',
+  beforeLoad: ({ params }) => leadTo(`/workspaces/${params.workspaceId}/settings/projects/${params.projectId}/general`) });
 
 // The member's own settings, outside any workspace.
 const profile = createRoute({ getParentRoute: () => workspace, path: '/settings/profile', component: ProfilePage });
@@ -151,6 +151,9 @@ const keys = createRoute({ getParentRoute: () => workspace, path: '/settings/api
   loader: () => queryClient.prefetchInfiniteQuery(keyQueryOptions) });
 // Addresses from before workspaces were in the address lead to the same page in the member's workspace.
 const legacy = ['/inbox', '/my-tasks', '/members', '/documents'].map(path => createRoute({ getParentRoute: () => workspace, path, beforeLoad: () => resume(path) }));
+// The short addresses before D-084 (/w/…/p/…/work-items/…, /w/…/r/BIT-42) lead to the same page under the plural ones.
+const shortAddress = createRoute({ getParentRoute: () => workspace, path: '/w/$', beforeLoad: ({ location }) => leadTo(location.href
+  .replace(/^\/w\//, '/workspaces/').replace(/\/p\/([^/?#]+)/, '/projects/$1').replace('/work-items/', '/issues/').replace(/\/r\/([^/?#]+)/, '/issues/$1')) });
 
 // The entry screens, outside the app's frame.
 const login = createRoute({ getParentRoute: () => rootRoute, path: '/login', component: LoginPage, beforeLoad: () => entryGuard(false) });
@@ -167,7 +170,7 @@ const routeTree = rootRoute.addChildren([
       projectItems, itemNew, itemDetail, itemEdit, itemReference,
       settingsStart, settings, projectSettingsStart, projectSettings, oldProjectSettings,
     ]),
-    profile, security, keys, appearance, ...legacy,
+    profile, security, keys, appearance, ...legacy, shortAddress,
   ]),
   login, setup, join, forcedPassword,
 ]);

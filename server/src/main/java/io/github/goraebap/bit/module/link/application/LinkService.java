@@ -34,28 +34,28 @@ public class LinkService implements LinkFacade {
             String projectId,
             String sessionId,
             List<String> decisionIds,
-            List<String> workItemIds) {
+            List<String> issueIds) {
         workspaceFacade.requireAccess(actor, workspaceId, WorkspaceFacade.Action.WRITE_WORK);
         if (decisionIds == null
-                || workItemIds == null
+                || issueIds == null
                 || decisionIds.size() > 20
-                || workItemIds.size() > 100
+                || issueIds.size() > 100
                 || sessionId == null
                 || decisionIds.stream().anyMatch(java.util.Objects::isNull)
-                || workItemIds.stream().anyMatch(java.util.Objects::isNull))
+                || issueIds.stream().anyMatch(java.util.Objects::isNull))
             throw LinkErrorCode.LINK_RELATION_INVALID.raise();
         var decisions = new LinkedHashSet<>(decisionIds);
-        var workItems = new LinkedHashSet<>(workItemIds);
+        var issues = new LinkedHashSet<>(issueIds);
         targets.requireAllInProject(actor, workspaceId, projectId, TargetType.session_record, Set.of(sessionId), true);
         if (!decisions.isEmpty())
             targets.requireAllInProject(actor, workspaceId, projectId, TargetType.decision, decisions, true);
-        if (!workItems.isEmpty())
-            targets.requireAllInProject(actor, workspaceId, projectId, TargetType.work_item, workItems, true);
+        if (!issues.isEmpty())
+            targets.requireAllInProject(actor, workspaceId, projectId, TargetType.issue, issues, true);
         var edges = new ArrayList<Link.Edge>();
         for (String id : decisions)
             edges.add(edge(TargetType.decision, id, "derives_from", TargetType.session_record, sessionId));
-        for (String id : workItems)
-            edges.add(edge(TargetType.session_record, sessionId, "relates_to", TargetType.work_item, id));
+        for (String id : issues)
+            edges.add(edge(TargetType.session_record, sessionId, "relates_to", TargetType.issue, id));
         var existing = repository.findAllActive(workspaceId, edges).stream()
                 .map(Link::edge)
                 .collect(Collectors.toSet());

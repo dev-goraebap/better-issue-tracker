@@ -1,16 +1,16 @@
-import { spanOf, type WorkItem } from '@/entities/work-item';
+import { spanOf, type Issue } from '@/entities/issue';
 
 // SandboxHr's month layout (team-calendar/model/layout and stack), with only bars over whole days: an issue has days,
 // never times (D-071).
 
 /** An issue with a day, drawn as a bar across its days. */
-export type Bar = { item: WorkItem; start: string; end: string };
+export type Bar = { item: Issue; start: string; end: string };
 export type PlacedBar = { bar: Bar; column: number; span: number; lane: number; fromBefore: boolean; toAfter: boolean };
 /** A week of the month: its bars in their lanes and, per day, how many did not fit (for "+N개 더"). */
 export type MonthWeek = { days: string[]; bars: PlacedBar[]; lanes: number; hidden: number[] };
 
 /** The issues with a day, as bars over the days they cover. */
-export const barsOf = (items: readonly WorkItem[]): Bar[] => items.flatMap(item => {
+export const barsOf = (items: readonly Issue[]): Bar[] => items.flatMap(item => {
   const span = spanOf(item);
   return span ? [{ item, ...span }] : [];
 });

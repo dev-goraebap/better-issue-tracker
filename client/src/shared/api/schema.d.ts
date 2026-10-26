@@ -132,23 +132,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/work-items": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["list_2"];
-        put?: never;
-        post: operations["create_3"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/work-items/{id}/unarchive": {
+    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/unarchive": {
         parameters: {
             query?: never;
             header?: never;
@@ -164,70 +148,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/work-items/{id}/restore": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["restore"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/work-items/{id}/move": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["move"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/work-items/{id}/archive": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["archive"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/unarchive": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["unarchive_1"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/workspaces/{workspaceId}/projects/{projectId}/restore": {
         parameters: {
             query?: never;
@@ -237,7 +157,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["restore_1"];
+        post: operations["restore"];
         delete?: never;
         options?: never;
         head?: never;
@@ -254,6 +174,86 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["add"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/issues": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_2"];
+        put?: never;
+        post: operations["create_3"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/issues/{id}/unarchive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["unarchive_1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/issues/{id}/restore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["restore_1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/issues/{id}/move": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["move"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/issues/{id}/archive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["archive"];
         delete?: never;
         options?: never;
         head?: never;
@@ -500,7 +500,7 @@ export interface paths {
         patch: operations["revise_1"];
         trace?: never;
     };
-    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/work-items/{id}": {
+    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/issues/{id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -612,38 +612,6 @@ export interface paths {
         patch: operations["rename_1"];
         trace?: never;
     };
-    "/api/v1/workspaces/{workspaceId}/work-items": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["listWorkspace"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/workspaces/{workspaceId}/work-items/by-ref/{reference}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["byRef"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/workspaces/{workspaceId}/view-tweaks": {
         parameters: {
             query?: never;
@@ -676,7 +644,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/work-items/counts": {
+    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/issues/counts": {
         parameters: {
             query?: never;
             header?: never;
@@ -716,6 +684,38 @@ export interface paths {
             cookie?: never;
         };
         get: operations["mine"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{workspaceId}/issues": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listWorkspace"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{workspaceId}/issues/by-ref/{reference}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["byRef"];
         put?: never;
         post?: never;
         delete?: never;
@@ -949,7 +949,14 @@ export interface components {
             icon?: string | null;
             color?: string | null;
         };
-        CreateWorkItem: {
+        ProjectVersion: {
+            /** Format: int64 */
+            expectedVersion: number;
+        };
+        AddProjectMember: {
+            userId: string;
+        };
+        CreateIssue: {
             title: string;
             description?: string | null;
             /** @enum {string|null} */
@@ -965,23 +972,16 @@ export interface components {
             /** @description Workspace labels to attach; omitted or null attaches none */
             labelIds?: string[] | null;
         };
-        WorkItemVersion: {
+        IssueVersion: {
             /** Format: int64 */
             expectedVersion: number;
         };
-        MoveWorkItem: {
+        MoveIssue: {
             /** Format: int64 */
             expectedVersion: number;
             targetColumnId: string | null;
             beforeItemId?: string | null;
             afterItemId?: string | null;
-        };
-        ProjectVersion: {
-            /** Format: int64 */
-            expectedVersion: number;
-        };
-        AddProjectMember: {
-            userId: string;
         };
         CreateBoardColumn: {
             /** Format: int64 */
@@ -1007,7 +1007,7 @@ export interface components {
         };
         CreateComment: {
             /** @enum {string} */
-            targetType: "work_item" | "decision" | "session_record" | "artifact";
+            targetType: "issue" | "decision" | "session_record" | "artifact";
             targetId: string;
             /** @description Markdown */
             body: string;
@@ -1096,7 +1096,7 @@ export interface components {
             icon?: string | null;
             color?: string | null;
         };
-        UpdateWorkItem: {
+        UpdateIssue: {
             /** Format: int64 */
             expectedVersion: number;
             title?: string;
@@ -1144,62 +1144,6 @@ export interface components {
         ChangeRole: {
             /** @enum {string} */
             role: "owner" | "admin" | "member" | "viewer";
-        };
-        WorkItem: {
-            id: string;
-            workspaceId: string;
-            projectId: string;
-            /** Format: int64 */
-            number: number;
-            key: string;
-            title: string;
-            description: string | null;
-            columnId: string | null;
-            /**
-             * @description Category of the column; null in the backlog
-             * @enum {string|null}
-             */
-            columnCategory: "todo" | "doing" | "done" | null;
-            /** @description Live labels, system labels first and then by name */
-            labels: components["schemas"]["WorkItemLabel"][];
-            /** Format: double */
-            position: number;
-            /** @enum {string|null} */
-            priority: "low" | "medium" | "high" | "urgent" | null;
-            /** @enum {string|null} */
-            triggerType: "request" | "finding" | "external" | "improvement" | "planned" | null;
-            assigneeId: string | null;
-            assigneeName: string | null;
-            /** Format: date */
-            startDate: string | null;
-            /** Format: date */
-            dueDate: string | null;
-            /** Format: date-time */
-            closedAt: string | null;
-            /** Format: date-time */
-            archivedAt: string | null;
-            /** Format: date-time */
-            deletedAt: string | null;
-            /** Format: int64 */
-            version: number;
-            /** Format: date-time */
-            createdAt: string;
-            createdBy: string;
-            createdByAgent: string | null;
-            /** Format: date-time */
-            updatedAt: string;
-            updatedBy: string;
-            updatedByAgent: string | null;
-        };
-        WorkItemLabel: {
-            id: string;
-            name: string;
-            color: string;
-            system: boolean;
-        };
-        WorkItems: {
-            items: components["schemas"]["WorkItem"][];
-            nextCursor: string | null;
         };
         IssueView: {
             id: string;
@@ -1294,7 +1238,63 @@ export interface components {
             items: components["schemas"]["Project"][];
             nextCursor: string | null;
         };
-        WorkItemColumnCount: {
+        Issue: {
+            id: string;
+            workspaceId: string;
+            projectId: string;
+            /** Format: int64 */
+            number: number;
+            key: string;
+            title: string;
+            description: string | null;
+            columnId: string | null;
+            /**
+             * @description Category of the column; null in the backlog
+             * @enum {string|null}
+             */
+            columnCategory: "todo" | "doing" | "done" | null;
+            /** @description Live labels, system labels first and then by name */
+            labels: components["schemas"]["IssueLabel"][];
+            /** Format: double */
+            position: number;
+            /** @enum {string|null} */
+            priority: "low" | "medium" | "high" | "urgent" | null;
+            /** @enum {string|null} */
+            triggerType: "request" | "finding" | "external" | "improvement" | "planned" | null;
+            assigneeId: string | null;
+            assigneeName: string | null;
+            /** Format: date */
+            startDate: string | null;
+            /** Format: date */
+            dueDate: string | null;
+            /** Format: date-time */
+            closedAt: string | null;
+            /** Format: date-time */
+            archivedAt: string | null;
+            /** Format: date-time */
+            deletedAt: string | null;
+            /** Format: int64 */
+            version: number;
+            /** Format: date-time */
+            createdAt: string;
+            createdBy: string;
+            createdByAgent: string | null;
+            /** Format: date-time */
+            updatedAt: string;
+            updatedBy: string;
+            updatedByAgent: string | null;
+        };
+        IssueLabel: {
+            id: string;
+            name: string;
+            color: string;
+            system: boolean;
+        };
+        Issues: {
+            items: components["schemas"]["Issue"][];
+            nextCursor: string | null;
+        };
+        IssueColumnCount: {
             columnId: string | null;
             /** Format: int64 */
             count: number;
@@ -1704,183 +1704,7 @@ export interface operations {
             };
         };
     };
-    list_2: {
-        parameters: {
-            query?: {
-                /** @description A column id of the project, or backlog */
-                column?: string;
-                assigneeId?: string | null;
-                /** @description Any of these labels (repeatable). Deleted labels match nothing */
-                labelId?: string[];
-                /** @description Any of todo, doing, done, or none for items without a status (repeatable) */
-                category?: string[];
-                /** @description true: has a start or due date. false: has neither */
-                hasDates?: boolean | null;
-                priority?: string[];
-                triggerType?: string[];
-                q?: string;
-                archived?: boolean;
-                deleted?: boolean;
-                closed?: boolean;
-                /** @description Keeps items whose start..due span (one day when only one is set) ends on or after it */
-                from?: string;
-                /** @description Keeps items whose start..due span starts on or before it */
-                to?: string;
-                size?: number;
-                cursor?: string;
-                sort?: string;
-                direction?: string;
-            };
-            header?: never;
-            path: {
-                workspaceId: string;
-                projectId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["WorkItems"];
-                };
-            };
-        };
-    };
-    create_3: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                workspaceId: string;
-                projectId: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CreateWorkItem"];
-            };
-        };
-        responses: {
-            /** @description 작업항목 생성 */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
     unarchive: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                workspaceId: string;
-                projectId: string;
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["WorkItemVersion"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    restore: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                workspaceId: string;
-                projectId: string;
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["WorkItemVersion"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    move: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                workspaceId: string;
-                projectId: string;
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["MoveWorkItem"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    archive: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                workspaceId: string;
-                projectId: string;
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["WorkItemVersion"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    unarchive_1: {
         parameters: {
             query?: never;
             header?: never;
@@ -1905,7 +1729,7 @@ export interface operations {
             };
         };
     };
-    restore_1: {
+    restore: {
         parameters: {
             query?: never;
             header?: never;
@@ -1948,6 +1772,182 @@ export interface operations {
         responses: {
             /** @description Member added (or already there) */
             204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    list_2: {
+        parameters: {
+            query?: {
+                /** @description A column id of the project, or backlog */
+                column?: string;
+                assigneeId?: string | null;
+                /** @description Any of these labels (repeatable). Deleted labels match nothing */
+                labelId?: string[];
+                /** @description Any of todo, doing, done, or none for items without a status (repeatable) */
+                category?: string[];
+                /** @description true: has a start or due date. false: has neither */
+                hasDates?: boolean | null;
+                priority?: string[];
+                triggerType?: string[];
+                q?: string;
+                archived?: boolean;
+                deleted?: boolean;
+                closed?: boolean;
+                /** @description Keeps items whose start..due span (one day when only one is set) ends on or after it */
+                from?: string;
+                /** @description Keeps items whose start..due span starts on or before it */
+                to?: string;
+                size?: number;
+                cursor?: string;
+                sort?: string;
+                direction?: string;
+            };
+            header?: never;
+            path: {
+                workspaceId: string;
+                projectId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Issues"];
+                };
+            };
+        };
+    };
+    create_3: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+                projectId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateIssue"];
+            };
+        };
+        responses: {
+            /** @description 이슈 생성 */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    unarchive_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+                projectId: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["IssueVersion"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    restore_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+                projectId: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["IssueVersion"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    move: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+                projectId: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MoveIssue"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    archive: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+                projectId: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["IssueVersion"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -2570,7 +2570,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["WorkItem"];
+                    "application/json": components["schemas"]["Issue"];
                 };
             };
         };
@@ -2612,7 +2612,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["UpdateWorkItem"];
+                "application/json": components["schemas"]["UpdateIssue"];
             };
         };
         responses: {
@@ -2973,77 +2973,6 @@ export interface operations {
             };
         };
     };
-    listWorkspace: {
-        parameters: {
-            query?: {
-                /** @description Any of these projects (repeatable). Archived and deleted projects are always left out */
-                projectId?: string[];
-                /** @description Any of these columns (repeatable); use category=none for items without a status */
-                columnId?: string[];
-                assigneeId?: string | null;
-                /** @description Any of these labels (repeatable). Deleted labels match nothing */
-                labelId?: string[];
-                /** @description Any of todo, doing, done, or none for items without a status (repeatable) */
-                category?: string[];
-                /** @description true: has a start or due date. false: has neither */
-                hasDates?: boolean | null;
-                priority?: string[];
-                triggerType?: string[];
-                q?: string;
-                archived?: boolean;
-                deleted?: boolean;
-                closed?: boolean;
-                /** @description Keeps items whose start..due span (one day when only one is set) ends on or after it */
-                from?: string;
-                /** @description Keeps items whose start..due span starts on or before it */
-                to?: string;
-                size?: number;
-                cursor?: string;
-                sort?: string;
-                direction?: string;
-            };
-            header?: never;
-            path: {
-                workspaceId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["WorkItems"];
-                };
-            };
-        };
-    };
-    byRef: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                workspaceId: string;
-                reference: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["WorkItem"];
-                };
-            };
-        };
-    };
     tweaks: {
         parameters: {
             query?: never;
@@ -3069,7 +2998,7 @@ export interface operations {
     timeline: {
         parameters: {
             query: {
-                targetType: "work_item" | "decision" | "session_record" | "artifact" | "code_ref";
+                targetType: "issue" | "decision" | "session_record" | "artifact" | "code_ref";
                 targetId: string;
                 cursor?: string;
                 size?: number;
@@ -3135,7 +3064,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["WorkItemColumnCount"][];
+                    "application/json": components["schemas"]["IssueColumnCount"][];
                 };
             };
         };
@@ -3203,7 +3132,78 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["WorkItems"];
+                    "application/json": components["schemas"]["Issues"];
+                };
+            };
+        };
+    };
+    listWorkspace: {
+        parameters: {
+            query?: {
+                /** @description Any of these projects (repeatable). Archived and deleted projects are always left out */
+                projectId?: string[];
+                /** @description Any of these columns (repeatable); use category=none for items without a status */
+                columnId?: string[];
+                assigneeId?: string | null;
+                /** @description Any of these labels (repeatable). Deleted labels match nothing */
+                labelId?: string[];
+                /** @description Any of todo, doing, done, or none for items without a status (repeatable) */
+                category?: string[];
+                /** @description true: has a start or due date. false: has neither */
+                hasDates?: boolean | null;
+                priority?: string[];
+                triggerType?: string[];
+                q?: string;
+                archived?: boolean;
+                deleted?: boolean;
+                closed?: boolean;
+                /** @description Keeps items whose start..due span (one day when only one is set) ends on or after it */
+                from?: string;
+                /** @description Keeps items whose start..due span starts on or before it */
+                to?: string;
+                size?: number;
+                cursor?: string;
+                sort?: string;
+                direction?: string;
+            };
+            header?: never;
+            path: {
+                workspaceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Issues"];
+                };
+            };
+        };
+    };
+    byRef: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+                reference: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Issue"];
                 };
             };
         };

@@ -10,8 +10,8 @@ description: BIT 시스템 구성·제약·모듈 경계·런타임 흐름·선�
 
 ## 1. 소개와 목표
 
-사람과 에이전트가 남긴 세션·결정·산출물·작업항목·코드를 하나의 흐름으로 잇는 설치형(Self-hosted) 경량 ALM이다 (`docs/01-vision.md`).
-- **핵심 흐름**: `트리거 → 결정 → 작업항목 → 변경(문서 개정·커밋) → 완료`가 끊기지 않게 잇는다 (`docs/02-domain-model.md`).
+사람과 에이전트가 남긴 세션·결정·산출물·이슈·코드를 하나의 흐름으로 잇는 설치형(Self-hosted) 경량 ALM이다 (`docs/01-vision.md`).
+- **핵심 흐름**: `트리거 → 결정 → 이슈 → 변경(문서 개정·커밋) → 완료`가 끊기지 않게 잇는다 (`docs/02-domain-model.md`).
 - **품질 우선순위**: 에이전트가 1순위 사용자(API·MCP 먼저, UI는 그 위에), 가벼움(Kaneo 수준), "왜"의 추적성, 외부 기능 없이도 실행됨, 모바일·데스크톱 적응형 사용성.
 - **설정 분리**: 프로젝트·워크스페이스 운영 값은 사용자 설정으로, 스토리지·메일·Git 토큰 등 자격 증명은 운영 환경 설정으로 분리한다.
 
@@ -34,13 +34,13 @@ description: BIT 시스템 구성·제약·모듈 경계·런타임 흐름·선�
 | 사용자 역할 | 주요 업무 범위 |
 | :--- | :--- |
 | **인스턴스 관리자** | 첫 가입자(D-009). 사용자·임시 비밀번호 발급(D-027), 선택 기능의 연결 상태 확인 |
-| **워크스페이스 멤버** | `owner`·`admin`·`member`·`viewer` 4개 고정 역할. 프로젝트·작업항목·결정·세션·문서함 사용 |
+| **워크스페이스 멤버** | `owner`·`admin`·`member`·`viewer` 4개 고정 역할. 프로젝트·이슈·결정·세션·문서함 사용 |
 | **에이전트** | 별도 계정 없이 사람의 API 키(Bearer)로 REST·MCP 호출. 키의 `agent_name`이 기록에 남는다 (D-021) |
 | **운영자** | 컨테이너·데이터 볼륨·환경 설정, 백업·복구 |
 
 ### 외부 연동 경계
 - 외부 연동은 메일(SMTP), Git 호스팅(웹훅·읽기 API), S3 호환 스토리지로 한정한다. 문서 텍스트 변환(D-031)과 PDF 생성(D-032)은 서버 안 어댑터다.
-- 외부 제공자 장애가 작업항목·결정 조회 같은 핵심 기능의 장애로 번지지 않게 트랜잭션 밖 비동기 처리로 격리한다.
+- 외부 제공자 장애가 이슈·결정 조회 같은 핵심 기능의 장애로 번지지 않게 트랜잭션 밖 비동기 처리로 격리한다.
 
 ---
 
@@ -78,13 +78,13 @@ dev.sh             로컬 실행
 
 ### 백엔드 (모듈 구조)
 - 패키지 루트: `io.github.goraebap.bit` 아래 `module/<업무>`와 `shared/<기반>/`로 나눈다. 컨텍스트 그룹은 두지 않고 모든 모듈을 `module/` 바로 아래에 둔다.
-- 모듈: `iam`, `workspace`, `project`, `workitem`, `decision`, `session`, `artifact`, `coderef`, `link`, `file`, `notification` (`docs/06-schema.md`).
+- 모듈: `iam`, `workspace`, `project`, `issue`, `decision`, `session`, `artifact`, `coderef`, `link`, `file`, `notification` (`docs/06-schema.md`).
 - 모듈 내부 계층: 공개 루트 계약, `application`(Controller, Service, Query), `domain`(Entity, Value Object, Repository 포트), `infrastructure`(jOOQ 구현체 `Jooq*Repository`, 외부 어댑터. package-private).
 - 모듈 간 참조: 공개 계약(`*Facade`, `*Spi`, `*Event`)으로만 통신하고, 애그리거트 간에는 객체 대신 ID로 참조한다. 순환 참조는 금지한다. ArchUnit(`ArchitectureTest`)이 강제한다.
 - 문서에서 정해진 의존 방향:
   - MCP는 업무를 소유하지 않는다. MCP 도구는 각 모듈의 Facade를 직접 부르고 REST API를 다시 부르지 않는다 (`docs/07-mcp.md`).
   - `artifact`는 정본·파생본을 `file`의 `blob`으로 가리킨다. 다른 모듈의 첨부도 `file`의 `attachment`로 붙인다.
-  - `link`는 만들 때 대상(작업항목·결정·세션·산출물·코드 참조)이 있는지 검사한다 (D-014).
+  - `link`는 만들 때 대상(이슈·결정·세션·산출물·코드 참조)이 있는지 검사한다 (D-014).
 - 선택 기능 어댑터(D-030)는 기능을 쓰는 모듈의 `infrastructure`에 두고, 포트는 그 모듈 또는 `shared`에 둔다.
 
 ---
@@ -95,7 +95,7 @@ dev.sh             로컬 실행
 - **명령 처리**: 폼 입력 → 클라이언트 검증 → 서버 요청 → 인증·권한 검증 → 트랜잭션 내 불변식 평가 → `Repository.save()` → 관련 Query 키 무효화·재조회.
 - **에이전트 호출**: MCP `/api/mcp` → API 키 인증(키 주인의 워크스페이스 역할로 판정) → 모듈 Facade → 기록에 `agent_name`을 남긴다 (D-021, D-022).
 - **파일 업로드와 변환**: 사전 서명 PUT 직접 업로드 → 업무 모듈이 권한 확인 후 확정 → 크기·MIME 검증. 문서 텍스트 변환(D-031)과 PDF 생성(D-032)은 트랜잭션 밖 작업으로 돈다.
-- **Git 웹훅**: 수신 → 커밋을 코드 참조로 기록하고 작업항목과 `implements`로 잇는다 → 바뀐 md만 호스팅 API로 받아 산출물 현재 내용을 갱신한다 (D-028). 받은 뒤 처리는 트랜잭션 밖에서 한다.
+- **Git 웹훅**: 수신 → 커밋을 코드 참조로 기록하고 이슈와 `implements`로 잇는다 → 바뀐 md만 호스팅 API로 받아 산출물 현재 내용을 갱신한다 (D-028). 받은 뒤 처리는 트랜잭션 밖에서 한다.
 
 ---
 
@@ -147,7 +147,7 @@ dev.sh             로컬 실행
 
 ## BIT에서 정할 것
 
-- 모듈 간 의존 방향 중 문서에 없는 것(예: `decision`↔`workitem`, `coderef`↔`workitem`, `notification`을 누가 부르나). 정하면 `ArchitectureTest` 규칙과 이 절을 같이 고친다.
+- 모듈 간 의존 방향 중 문서에 없는 것(예: `decision`↔`issue`, `coderef`↔`issue`, `notification`을 누가 부르나). 정하면 `ArchitectureTest` 규칙과 이 절을 같이 고친다.
 - MCP 어댑터의 패키지 위치(모듈인지 `shared`인지)와 실시간 변경(SSE)을 맡는 곳.
 - 업무 기준 시간대(SandboxHr는 `Asia/Seoul` 고정, 이미지 `TZ` 포함). 개인 셀프호스팅이라 설정으로 둘지.
 - 일부만 채운 선택 기능 설정(예: SMTP 주소만 있고 비밀번호 없음)을 기동 실패로 볼지, 기능 꺼짐으로 볼지.

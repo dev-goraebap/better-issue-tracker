@@ -1,7 +1,7 @@
 import { useId } from 'react';
 import { IconButton, MoreMenu } from '@astryxdesign/core';
 import { NavIcon, PageTabs, type PageTab } from '@/shared/ui';
-import type { IssueView } from '@/entities/work-item';
+import type { IssueView } from '@/entities/issue';
 import styles from './views.module.css';
 
 /**

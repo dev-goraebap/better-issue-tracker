@@ -14,8 +14,8 @@ export const WORKSPACE_MENU: readonly MenuEntry[] = [
 
 /**
  * The workspace's settings, which 워크스페이스 설정 opens: the menu turns into these, headed by 돌아가기 (or Esc). The
- * workspace's pages first, then each project's under its name (D-061). Addresses: /w/$workspaceId/settings/…, a project's
- * /w/$workspaceId/settings/projects/$projectId/….
+ * workspace's pages first, then each project's under its name (D-061). Addresses: /workspaces/$workspaceId/settings/…, a project's
+ * /workspaces/$workspaceId/settings/projects/$projectId/….
  */
 export const WORKSPACE_SETTINGS_MENU: readonly MenuEntry[] = [
   { path: '/general', label: '일반', icon: 'settings' },
@@ -35,17 +35,17 @@ export const ACCOUNT_MENU: readonly MenuEntry[] = [
   { path: '/settings/security', label: '시큐리티', icon: 'lock' },
 ];
 
-export const workspacePath = (workspaceId: string, path = '') => `/w/${workspaceId}${path}`;
-export const projectPath = (workspaceId: string, projectId: string, path = '') => `/w/${workspaceId}/p/${projectId}${path}`;
-export const workspaceSettingsPath = (workspaceId: string, path = '/general') => `/w/${workspaceId}/settings${path}`;
-export const projectSettingsPath = (workspaceId: string, projectId: string, path = '/general') => `/w/${workspaceId}/settings/projects/${projectId}${path}`;
+export const workspacePath = (workspaceId: string, path = '') => `/workspaces/${workspaceId}${path}`;
+export const projectPath = (workspaceId: string, projectId: string, path = '') => `/workspaces/${workspaceId}/projects/${projectId}${path}`;
+export const workspaceSettingsPath = (workspaceId: string, path = '/general') => `/workspaces/${workspaceId}/settings${path}`;
+export const projectSettingsPath = (workspaceId: string, projectId: string, path = '/general') => `/workspaces/${workspaceId}/settings/projects/${projectId}${path}`;
 
 /** Where an address is: its workspace, project, the menu entry it belongs to, and the item a page shows. */
 export type AppPlace = {
   workspaceId?: string; projectId?: string;
   /** The workspace menu entry's path ('' for 홈), when the page is the workspace's. */
   workspaceSection?: string;
-  /** A work item's page, or 'new' for 새 이슈. */
+  /** An issue's page, or 'new' for 새 이슈. */
   itemId?: string;
   /** The item's page is its 편집 form. */
   isEditing?: boolean;
@@ -70,6 +70,6 @@ export function appPlace(pathname: string): AppPlace {
   const project = /^\/p\/([^/]+)(\/.*)?$/.exec(rest);
   if (!project) return { workspaceId, workspaceSection: rest.startsWith('/inbox') ? '/inbox' : rest };
   const [, projectId, inner = ''] = project;
-  const item = /^\/work-items\/([^/]+)(\/edit)?$/.exec(inner);
+  const item = /^\/issues\/([^/]+)(\/edit)?$/.exec(inner);
   return { workspaceId, projectId, itemId: item?.[1], isEditing: !!item?.[2] };
 }

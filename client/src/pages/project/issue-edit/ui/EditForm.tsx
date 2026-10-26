@@ -4,14 +4,14 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useReturnTo } from '@/shared/lib/history-trail';
 import { authError } from '@/shared/api';
 import { FormMessage, MarkdownEditor, PageFoot, PageFrame } from '@/shared/ui';
-import { refreshItems, updateItem, type WorkItem } from '@/entities/work-item';
+import { refreshItems, updateItem, type Issue } from '@/entities/issue';
 import styles from './edit-form.module.css';
 
 /**
  * The edit page's form: the draft is the member's until saved, whatever is read again meanwhile, and it saves over the
  * version it opened with (the description in the Markdown editor, D-076; Ctrl + Enter saves from it), so a save someone made since is a conflict (409) said under the form, never overwritten.
  */
-export function EditForm({ item, back }: { item: WorkItem; back: ReactNode }) {
+export function EditForm({ item, back }: { item: Issue; back: ReactNode }) {
   const returnTo = useReturnTo();
   const client = useQueryClient();
   const formId = useId();
@@ -23,7 +23,7 @@ export function EditForm({ item, back }: { item: WorkItem; back: ReactNode }) {
   const [error, setError] = useState('');
   const titleError = isChecked && !title.trim() ? '제목을 입력해 주세요.' : undefined;
   // Back to the issue through history when it is the page before, so back from there does not return to the form.
-  const leave = () => returnTo({ to: '/w/$workspaceId/p/$projectId/work-items/$workItemId', params: { workspaceId: item.workspaceId, projectId: item.projectId, workItemId: item.id } });
+  const leave = () => returnTo({ to: '/workspaces/$workspaceId/projects/$projectId/issues/$issueId', params: { workspaceId: item.workspaceId, projectId: item.projectId, issueId: item.id } });
   const save = async () => {
     setChecked(true);
     if (!title.trim() || isBusy) return;

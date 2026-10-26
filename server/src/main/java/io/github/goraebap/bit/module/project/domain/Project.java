@@ -14,7 +14,7 @@ public final class Project {
     private String icon;
     private String color;
     private final int position;
-    private long lastWorkItemNumber;
+    private long lastIssueNumber;
     private long lastDecisionNumber;
     private long lastSessionNumber;
     private Instant archivedAt;
@@ -29,7 +29,7 @@ public final class Project {
             String icon,
             String color,
             int position,
-            long lastWorkItemNumber,
+            long lastIssueNumber,
             long lastDecisionNumber,
             long lastSessionNumber,
             Instant archivedAt,
@@ -42,7 +42,7 @@ public final class Project {
         this.icon = icon;
         this.color = color;
         this.position = position;
-        this.lastWorkItemNumber = lastWorkItemNumber;
+        this.lastIssueNumber = lastIssueNumber;
         this.lastDecisionNumber = lastDecisionNumber;
         this.lastSessionNumber = lastSessionNumber;
         this.archivedAt = archivedAt;
@@ -84,7 +84,7 @@ public final class Project {
             String icon,
             String color,
             int position,
-            long lastWorkItemNumber,
+            long lastIssueNumber,
             long lastDecisionNumber,
             long lastSessionNumber,
             Instant archivedAt,
@@ -98,7 +98,7 @@ public final class Project {
                 icon,
                 color,
                 position,
-                lastWorkItemNumber,
+                lastIssueNumber,
                 lastDecisionNumber,
                 lastSessionNumber,
                 archivedAt,
@@ -147,9 +147,9 @@ public final class Project {
         return lastSessionNumber;
     }
 
-    public long allocateWorkItemNumber() {
-        lastWorkItemNumber = Math.incrementExact(lastWorkItemNumber);
-        return lastWorkItemNumber;
+    public long allocateIssueNumber() {
+        lastIssueNumber = Math.incrementExact(lastIssueNumber);
+        return lastIssueNumber;
     }
 
     public void touch(String actor, String agent, Instant now) {

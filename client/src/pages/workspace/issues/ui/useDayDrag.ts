@@ -1,14 +1,14 @@
 import { useEffect, useEffectEvent, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
-import type { WorkItem } from '@/entities/work-item';
+import type { Issue } from '@/entities/issue';
 import { daysBetween } from '../model/dates';
 
 /** A press that moves less than this many pixels is a click, not a drag. */
 const DRAG_THRESHOLD = 4;
 
 /** An issue being carried across the month: the day it was picked up on and the day under the pointer now. */
-export type DayDrag = { item: WorkItem; from: string; to: string };
+export type DayDrag = { item: Issue; from: string; to: string };
 
-type Press = { item: WorkItem; from: string; x: number; y: number };
+type Press = { item: Issue; from: string; x: number; y: number };
 
 /** The day cell under a point, by its data-day. */
 const dayAt = (x: number, y: number) =>
@@ -19,7 +19,7 @@ const dayAt = (x: number, y: number) =>
  * day it was pressed, so a bar over several days moves by as many days as the pointer does, keeping its length. Escape
  * drops it.
  */
-export function useDayDrag(onMove: (item: WorkItem, days: number) => void) {
+export function useDayDrag(onMove: (item: Issue, days: number) => void) {
   const [drag, setDrag] = useState<DayDrag | null>(null);
   const press = useRef<Press | null>(null);
   const current = useRef<DayDrag | null>(null);
@@ -62,7 +62,7 @@ export function useDayDrag(onMove: (item: WorkItem, days: number) => void) {
   return {
     drag,
     wasDragged: () => dragged.current,
-    press: (pointer: ReactPointerEvent, item: WorkItem) => {
+    press: (pointer: ReactPointerEvent, item: Issue) => {
       if (pointer.button !== 0 || pointer.pointerType === 'touch') return;
       const from = dayAt(pointer.clientX, pointer.clientY);
       if (!from) return;

@@ -1,5 +1,5 @@
 import { useEffect, useEffectEvent, useId, useLayoutEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type MouseEvent as ReactMouseEvent, type PointerEvent as ReactPointerEvent } from 'react';
-import type { WorkItem } from '@/entities/work-item';
+import type { Issue } from '@/entities/issue';
 import { placeOf, spotOf, stepSpot, withCardAt, type BoardSpot, type MoveLane, type MovePlace, type StepKey } from '../model/board-move';
 
 /** A mouse or pen press that moves this many pixels picks the card up; less is a click. */
@@ -12,9 +12,9 @@ const EDGE = 56;
 const SPEED = 18;
 const STEP_KEYS: readonly string[] = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'] satisfies StepKey[];
 
-export type BoardLane = MoveLane<WorkItem> & { name: string };
-type Carry = { item: WorkItem; spot: BoardSpot; by: 'pointer' | 'keys' };
-type Press = { item: WorkItem; pointerId: number; isTouch: boolean; x: number; y: number; card: HTMLElement; timer?: number };
+export type BoardLane = MoveLane<Issue> & { name: string };
+type Carry = { item: Issue; spot: BoardSpot; by: 'pointer' | 'keys' };
+type Press = { item: Issue; pointerId: number; isTouch: boolean; x: number; y: number; card: HTMLElement; timer?: number };
 
 const speed = (depth: number) => Math.ceil((Math.min(depth, EDGE) / EDGE) * SPEED);
 
@@ -33,7 +33,7 @@ function scrollParent(element: HTMLElement): HTMLElement {
  * Enter. While carried the card is shown where it would land, a copy of it follows the pointer and the board scrolls
  * at its edges; Escape puts it back. A drop is shown in place until it is saved (onMove), and every step is read out.
  */
-export function useBoardMove<Lane extends BoardLane>(lanes: readonly Lane[], canMove: boolean, ghostClass: string, onMove: (item: WorkItem, place: MovePlace) => Promise<unknown>) {
+export function useBoardMove<Lane extends BoardLane>(lanes: readonly Lane[], canMove: boolean, ghostClass: string, onMove: (item: Issue, place: MovePlace) => Promise<unknown>) {
   const board = useRef<HTMLDivElement>(null);
   const [carry, setCarry] = useState<Carry | null>(null);
   const [saving, setSaving] = useState<{ id: string; spot: BoardSpot } | null>(null);
@@ -188,7 +188,7 @@ export function useBoardMove<Lane extends BoardLane>(lanes: readonly Lane[], can
     if (!carry && !saving) keepsFocus.current = null;
   });
 
-  const onKeyDown = (event: ReactKeyboardEvent, item: WorkItem) => {
+  const onKeyDown = (event: ReactKeyboardEvent, item: Issue) => {
     const now = carried.current;
     if (!now) {
       if (event.key !== ' ' || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
@@ -213,7 +213,7 @@ export function useBoardMove<Lane extends BoardLane>(lanes: readonly Lane[], can
     } else if (event.key === 'Tab') cancel();
   };
 
-  const onPointerDown = (event: ReactPointerEvent<HTMLElement>, item: WorkItem) => {
+  const onPointerDown = (event: ReactPointerEvent<HTMLElement>, item: Issue) => {
     if (event.button !== 0 || carried.current || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
     release();
     const at: Press = { item, pointerId: event.pointerId, isTouch: event.pointerType === 'touch', x: event.clientX, y: event.clientY, card: event.currentTarget };
@@ -241,9 +241,9 @@ export function useBoardMove<Lane extends BoardLane>(lanes: readonly Lane[], can
     said,
     carry,
     /** The lanes as shown: the carried card where it would land, a saving one where it was put down. */
-    shown: at ? withCardAt<WorkItem, Lane>(lanes, at.item.id, at.spot) : [...lanes],
+    shown: at ? withCardAt<Issue, Lane>(lanes, at.item.id, at.spot) : [...lanes],
     /** What a card's link takes: its id, how it is carried, and the hands that carry it. */
-    cardProps: (item: WorkItem) => (canMove ? {
+    cardProps: (item: Issue) => (canMove ? {
       'data-card': item.id,
       'data-movable': true,
       'data-carried': carry?.item.id === item.id ? carry.by : undefined,

@@ -50,9 +50,9 @@ export function PropertyPicker({ label, options, value, onChange, icon, isMultip
     } else if (event.key === 'Enter' && shown[at]) { event.preventDefault(); pick(shown[at].value); }
     else if (!query && /^[1-9]$/.test(event.key) && shown[Number(event.key) - 1]) { event.preventDefault(); pick(shown[Number(event.key) - 1]!.value); }
   };
-  const shownValue = chosen.length === 0 ? undefined
-    : isMultiple ? options.filter(option => chosen.includes(option.value))
-    : options.filter(option => option.value === chosen[0]);
+  // A value whose option is not there (yet), such as an assignee before the members load, shows as none.
+  const matched = isMultiple ? options.filter(option => chosen.includes(option.value)) : options.filter(option => option.value === chosen[0]);
+  const shownValue = matched.length === 0 ? undefined : matched;
   const pill = (ref?: (node: HTMLElement | null) => void, onClick?: () => void) => <span ref={ref} className={styles.wrap}>
     <button type="button" className={styles.pill} data-empty={!shownValue || undefined} aria-haspopup={isMobile ? 'dialog' : 'listbox'} aria-expanded={isOpen}
       aria-label={`${label}: ${shownValue ? shownValue.map(option => option.label).join(', ') : '없음'}`} onClick={onClick ?? (() => open(true))}>

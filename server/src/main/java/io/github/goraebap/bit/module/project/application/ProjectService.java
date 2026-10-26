@@ -1,7 +1,7 @@
 package io.github.goraebap.bit.module.project.application;
 
 import io.github.goraebap.bit.module.project.ColumnCategory;
-import io.github.goraebap.bit.module.project.ColumnWorkItemSpi;
+import io.github.goraebap.bit.module.project.ColumnIssueSpi;
 import io.github.goraebap.bit.module.project.ProjectFacade;
 import io.github.goraebap.bit.module.project.domain.BoardColumn;
 import io.github.goraebap.bit.module.project.domain.Project;
@@ -25,7 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class ProjectService implements ProjectFacade {
     private final ProjectRepository projectRepository;
     private final WorkspaceFacade workspaceFacade;
-    private final ObjectProvider<ColumnWorkItemSpi> columnWorkItemSpiProvider;
+    private final ObjectProvider<ColumnIssueSpi> columnIssueSpiProvider;
     private final Clock clock;
 
     @Override
@@ -54,9 +54,9 @@ public class ProjectService implements ProjectFacade {
 
     @Override
     @Transactional
-    public long allocateWorkItemNumber(CurrentUser actor, String workspaceId, String projectId) {
+    public long allocateIssueNumber(CurrentUser actor, String workspaceId, String projectId) {
         var p = access(actor, workspaceId, projectId, true, false);
-        long number = p.allocateWorkItemNumber();
+        long number = p.allocateIssueNumber();
         projectRepository.save(p);
         return number;
     }
@@ -380,7 +380,7 @@ public class ProjectService implements ProjectFacade {
         c.configure(name, color, finalColumn, resolved, actor.userId(), agent(actor), clock.instant());
         projectRepository.save(c);
         if (changed)
-            columnWorkItemSpiProvider.getObject().reclassify(actor, workspaceId, projectId, columnId, finalColumn);
+            columnIssueSpiProvider.getObject().reclassify(actor, workspaceId, projectId, columnId, finalColumn);
         touch(p, actor);
     }
 
@@ -400,7 +400,7 @@ public class ProjectService implements ProjectFacade {
         if (c.finalColumn()) assertAnotherFinal(projectId, columnId);
         if (columnId.equals(targetColumnId)) throw ProjectErrorCode.PROJECT_COLUMN_TARGET_INVALID.raise();
         var target = targetColumnId == null ? null : column(projectId, targetColumnId);
-        columnWorkItemSpiProvider
+        columnIssueSpiProvider
                 .getObject()
                 .transfer(
                         actor,

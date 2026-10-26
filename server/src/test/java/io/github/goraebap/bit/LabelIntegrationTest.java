@@ -3,17 +3,17 @@ package io.github.goraebap.bit;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowableOfType;
 
+import io.github.goraebap.bit.module.issue.application.IssueQueryService;
+import io.github.goraebap.bit.module.issue.application.IssueRequests;
+import io.github.goraebap.bit.module.issue.application.IssueService;
+import io.github.goraebap.bit.module.issue.application.IssueViews;
+import io.github.goraebap.bit.module.issue.domain.Issue;
 import io.github.goraebap.bit.module.label.application.LabelRequests;
 import io.github.goraebap.bit.module.label.application.LabelService;
 import io.github.goraebap.bit.module.label.application.LabelViews;
 import io.github.goraebap.bit.module.project.ColumnCategory;
 import io.github.goraebap.bit.module.project.application.ProjectRequests;
 import io.github.goraebap.bit.module.project.application.ProjectService;
-import io.github.goraebap.bit.module.workitem.application.WorkItemQueryService;
-import io.github.goraebap.bit.module.workitem.application.WorkItemRequests;
-import io.github.goraebap.bit.module.workitem.application.WorkItemService;
-import io.github.goraebap.bit.module.workitem.application.WorkItemViews;
-import io.github.goraebap.bit.module.workitem.domain.WorkItem;
 import io.github.goraebap.bit.module.workspace.application.WorkspaceService;
 import io.github.goraebap.bit.shared.domain.Ids;
 import io.github.goraebap.bit.shared.error.BusinessException;
@@ -68,10 +68,10 @@ class LabelIntegrationTest {
     private ProjectService projectService;
 
     @Autowired
-    private WorkItemService workItemService;
+    private IssueService issueService;
 
     @Autowired
-    private WorkItemQueryService workItemQueryService;
+    private IssueQueryService issueQueryService;
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
@@ -94,8 +94,8 @@ class LabelIntegrationTest {
     void prepare() {
         for (String table : List.of(
                 "activity",
-                "work_item_label",
-                "work_item",
+                "issue_label",
+                "issue",
                 "board_column",
                 "project_member",
                 "project_key",
@@ -199,78 +199,75 @@ class LabelIntegrationTest {
     }
 
     @Test
-    void workItemLabelsAreValidatedReplacedClearedAndHideDeletedLabels() throws Exception {
+    void issueLabelsAreValidatedReplacedClearedAndHideDeletedLabels() throws Exception {
         String project = projectService.create(owner, workspace, "Project", "LB", null);
         String bug = labelService.create(owner, workspace, "bug", "#cc0000");
         String api = labelService.create(owner, workspace, "API", "#0000cc");
         String other = workspaceService.create(owner, "Other", "other-" + Ids.newId());
         String foreign = labelService.create(owner, other, "Foreign", "#123456");
-        String id = workItemService.create(
-                owner, workspace, project, details("Labelled"), null, Set.of(bug, decision, api));
-        assertThat(labels(workItemQueryService.get(owner, workspace, project, id)))
-                .containsExactly(decision, api, bug);
-        assertThat(workItemQueryService
+        String id =
+                issueService.create(owner, workspace, project, details("Labelled"), null, Set.of(bug, decision, api));
+        assertThat(labels(issueQueryService.get(owner, workspace, project, id))).containsExactly(decision, api, bug);
+        assertThat(issueQueryService
                         .get(owner, workspace, project, id)
                         .labels()
                         .getFirst()
                         .system())
                 .isTrue();
-        assertThat(code(() -> workItemService.create(owner, workspace, project, details("X"), null, Set.of(foreign))))
-                .isEqualTo("WORKITEM_LABEL_INVALID");
-        assertThat(code(() ->
-                        workItemService.create(owner, workspace, project, details("X"), null, Set.of(Ids.newId()))))
-                .isEqualTo("WORKITEM_LABEL_INVALID");
+        assertThat(code(() -> issueService.create(owner, workspace, project, details("X"), null, Set.of(foreign))))
+                .isEqualTo("ISSUE_LABEL_INVALID");
+        assertThat(code(() -> issueService.create(owner, workspace, project, details("X"), null, Set.of(Ids.newId()))))
+                .isEqualTo("ISSUE_LABEL_INVALID");
 
-        var keep = new WorkItemRequests.Update();
+        var keep = new IssueRequests.Update();
         keep.setExpectedVersion(0L);
         keep.setTitle("Renamed");
-        workItemService.revise(owner, workspace, project, id, keep);
-        var kept = workItemQueryService.get(owner, workspace, project, id);
+        issueService.revise(owner, workspace, project, id, keep);
+        var kept = issueQueryService.get(owner, workspace, project, id);
         assertThat(labels(kept)).containsExactly(decision, api, bug);
-        var replace = new WorkItemRequests.Update();
+        var replace = new IssueRequests.Update();
         replace.setExpectedVersion(kept.version());
         replace.setLabelIds(List.of(bug));
-        workItemService.revise(owner, workspace, project, id, replace);
-        var replaced = workItemQueryService.get(owner, workspace, project, id);
+        issueService.revise(owner, workspace, project, id, replace);
+        var replaced = issueQueryService.get(owner, workspace, project, id);
         assertThat(labels(replaced)).containsExactly(bug);
         assertThat(replaced.version()).isEqualTo(kept.version() + 1);
-        var same = new WorkItemRequests.Update();
+        var same = new IssueRequests.Update();
         same.setExpectedVersion(replaced.version());
         same.setLabelIds(List.of(bug, bug));
-        workItemService.revise(owner, workspace, project, id, same);
-        assertThat(workItemQueryService.get(owner, workspace, project, id).version())
+        issueService.revise(owner, workspace, project, id, same);
+        assertThat(issueQueryService.get(owner, workspace, project, id).version())
                 .isEqualTo(replaced.version());
-        var cross = new WorkItemRequests.Update();
+        var cross = new IssueRequests.Update();
         cross.setExpectedVersion(replaced.version());
         cross.setLabelIds(List.of(bug, foreign));
-        assertThat(code(() -> workItemService.revise(owner, workspace, project, id, cross)))
-                .isEqualTo("WORKITEM_LABEL_INVALID");
-        var clear = new WorkItemRequests.Update();
+        assertThat(code(() -> issueService.revise(owner, workspace, project, id, cross)))
+                .isEqualTo("ISSUE_LABEL_INVALID");
+        var clear = new IssueRequests.Update();
         clear.setExpectedVersion(replaced.version());
         clear.setLabelIds(List.of());
-        workItemService.revise(owner, workspace, project, id, clear);
-        assertThat(workItemQueryService.get(owner, workspace, project, id).labels())
+        issueService.revise(owner, workspace, project, id, clear);
+        assertThat(issueQueryService.get(owner, workspace, project, id).labels())
                 .isEmpty();
-        assertThat(jdbcTemplate.queryForObject(
-                        "SELECT count(*) FROM work_item_label WHERE work_item_id=?", Integer.class, id))
+        assertThat(jdbcTemplate.queryForObject("SELECT count(*) FROM issue_label WHERE issue_id=?", Integer.class, id))
                 .isZero();
 
-        String shown = workItemService.create(owner, workspace, project, details("Shown"), null, Set.of(bug, api));
+        String shown = issueService.create(owner, workspace, project, details("Shown"), null, Set.of(bug, api));
         labelService.delete(owner, workspace, api, 0);
-        assertThat(labels(workItemQueryService.get(owner, workspace, project, shown)))
+        assertThat(labels(issueQueryService.get(owner, workspace, project, shown)))
                 .containsExactly(bug);
-        var list = new WorkItemRequests.ListRequest();
+        var list = new IssueRequests.ListRequest();
         list.setLabelId(List.of(api));
-        assertThat(workItemQueryService
+        assertThat(issueQueryService
                         .list(owner, workspace, project, false, list)
                         .items())
                 .isEmpty();
         list.setLabelId(List.of(bug));
-        assertThat(workItemQueryService.list(owner, workspace, project, false, list).items().stream()
-                        .map(WorkItemViews.Item::id))
+        assertThat(issueQueryService.list(owner, workspace, project, false, list).items().stream()
+                        .map(IssueViews.Item::id))
                 .containsExactly(shown);
-        assertThat(code(() -> workItemService.create(owner, workspace, project, details("X"), null, Set.of(api))))
-                .isEqualTo("WORKITEM_LABEL_INVALID");
+        assertThat(code(() -> issueService.create(owner, workspace, project, details("X"), null, Set.of(api))))
+                .isEqualTo("ISSUE_LABEL_INVALID");
 
         String password = "label integration password phrase";
         jdbcTemplate.update(
@@ -278,7 +275,7 @@ class LabelIntegrationTest {
                 passwordEncoder.encode(password),
                 owner.userId());
         try (var client = login(owner, password)) {
-            String base = "/api/v1/workspaces/" + workspace + "/projects/" + project + "/work-items";
+            String base = "/api/v1/workspaces/" + workspace + "/projects/" + project + "/issues";
             var created = http(
                     client,
                     "POST",
@@ -312,34 +309,33 @@ class LabelIntegrationTest {
         var c2 = projectService.columns(owner, workspace, p2);
         String bug = labelService.create(owner, workspace, "bug", "#cc0000");
         var day = LocalDate.of(2026, 11, 10);
-        String todo = workItemService.create(
+        String todo = issueService.create(
                 owner, workspace, p1, details("Todo one"), c1.getFirst().id(), Set.of(bug));
-        String doing = workItemService.create(
+        String doing = issueService.create(
                 owner,
                 workspace,
                 p2,
                 dated("Doing two", day, day.plusDays(5)),
                 c2.get(1).id());
-        String done = workItemService.create(
+        String done = issueService.create(
                 owner, workspace, p2, dated("Done two", null, day), c2.getLast().id());
-        String backlog = workItemService.create(
+        String backlog = issueService.create(
                 owner, workspace, p1, dated("Backlog one", day.plusDays(20), null), null, Set.of(bug));
-        workItemService.create(owner, workspace, archivedProject, details("Hidden archived"), null);
-        workItemService.create(owner, workspace, deletedProject, details("Hidden deleted"), null);
+        issueService.create(owner, workspace, archivedProject, details("Hidden archived"), null);
+        issueService.create(owner, workspace, deletedProject, details("Hidden deleted"), null);
         projectService.archive(owner, workspace, archivedProject, 0, true);
         projectService.delete(owner, workspace, deletedProject, 0);
 
-        assertThat(ids(new WorkItemRequests.WorkspaceListRequest()))
-                .containsExactlyInAnyOrder(todo, doing, done, backlog);
-        var byProject = new WorkItemRequests.WorkspaceListRequest();
+        assertThat(ids(new IssueRequests.WorkspaceListRequest())).containsExactlyInAnyOrder(todo, doing, done, backlog);
+        var byProject = new IssueRequests.WorkspaceListRequest();
         byProject.setProjectId(List.of(p2));
         assertThat(ids(byProject)).containsExactlyInAnyOrder(doing, done);
         byProject.setProjectId(List.of(archivedProject));
         assertThat(ids(byProject)).isEmpty();
-        var byLabel = new WorkItemRequests.WorkspaceListRequest();
+        var byLabel = new IssueRequests.WorkspaceListRequest();
         byLabel.setLabelId(List.of(bug));
         assertThat(ids(byLabel)).containsExactlyInAnyOrder(todo, backlog);
-        var byCategory = new WorkItemRequests.WorkspaceListRequest();
+        var byCategory = new IssueRequests.WorkspaceListRequest();
         byCategory.setCategory(List.of("todo,doing"));
         assertThat(ids(byCategory)).containsExactlyInAnyOrder(todo, doing);
         byCategory.setCategory(List.of("none"));
@@ -348,15 +344,15 @@ class LabelIntegrationTest {
         assertThat(ids(byCategory)).containsExactlyInAnyOrder(done, backlog);
         byCategory.setCategory(List.of("finished"));
         assertThat(code(() -> ids(byCategory))).isEqualTo("COMMON_INVALID_REQUEST");
-        var byColumn = new WorkItemRequests.WorkspaceListRequest();
+        var byColumn = new IssueRequests.WorkspaceListRequest();
         byColumn.setColumnId(List.of(c1.getFirst().id(), c2.getLast().id()));
         assertThat(ids(byColumn)).containsExactlyInAnyOrder(todo, done);
-        var dates = new WorkItemRequests.WorkspaceListRequest();
+        var dates = new IssueRequests.WorkspaceListRequest();
         dates.setHasDates(true);
         assertThat(ids(dates)).containsExactlyInAnyOrder(doing, done, backlog);
         dates.setHasDates(false);
         assertThat(ids(dates)).containsExactly(todo);
-        var range = new WorkItemRequests.WorkspaceListRequest();
+        var range = new IssueRequests.WorkspaceListRequest();
         range.setFrom(day.plusDays(3));
         range.setTo(day.plusDays(4));
         assertThat(ids(range)).containsExactly(doing);
@@ -364,11 +360,11 @@ class LabelIntegrationTest {
         range.setTo(day);
         assertThat(ids(range)).containsExactlyInAnyOrder(doing, done);
 
-        var page = new WorkItemRequests.WorkspaceListRequest();
+        var page = new IssueRequests.WorkspaceListRequest();
         page.setSize(3);
-        var first = workItemQueryService.listWorkspace(owner, workspace, page);
+        var first = issueQueryService.listWorkspace(owner, workspace, page);
         page.setCursor(first.nextCursor());
-        var second = workItemQueryService.listWorkspace(owner, workspace, page);
+        var second = issueQueryService.listWorkspace(owner, workspace, page);
         assertThat(first.items()).hasSize(3);
         assertThat(second.items()).hasSize(1);
         assertThat(second.nextCursor()).isNull();
@@ -379,20 +375,20 @@ class LabelIntegrationTest {
         assertThat(doingItem.columnCategory()).isEqualTo(ColumnCategory.doing);
         assertThat(doingItem.key()).isEqualTo("TWO-1");
 
-        var projectList = new WorkItemRequests.ListRequest();
+        var projectList = new IssueRequests.ListRequest();
         projectList.setCategory(List.of("none"));
-        assertThat(workItemQueryService.list(owner, workspace, p1, false, projectList).items().stream()
-                        .map(WorkItemViews.Item::id))
+        assertThat(issueQueryService.list(owner, workspace, p1, false, projectList).items().stream()
+                        .map(IssueViews.Item::id))
                 .containsExactly(backlog);
 
         CurrentUser viewer = identity("viewer");
         membership(viewer, "viewer");
-        assertThat(workItemQueryService
-                        .listWorkspace(viewer, workspace, new WorkItemRequests.WorkspaceListRequest())
+        assertThat(issueQueryService
+                        .listWorkspace(viewer, workspace, new IssueRequests.WorkspaceListRequest())
                         .items())
                 .hasSize(4);
         CurrentUser outsider = identity("outsider");
-        String path = "/api/v1/workspaces/" + workspace + "/work-items";
+        String path = "/api/v1/workspaces/" + workspace + "/issues";
         try (var client = login(viewer)) {
             var response = http(client, "GET", path + "?projectId=" + p1 + "&labelId=" + bug + "&category=none", null);
             expect(response, 200);
@@ -450,8 +446,8 @@ class LabelIntegrationTest {
         cleared.setCategory(null);
         assertThat(code(() -> projectService.reviseColumn(owner, workspace, project, waiting, cleared)))
                 .isEqualTo("COMMON_INVALID_REQUEST");
-        String item = workItemService.create(owner, workspace, project, details("Moved"), waiting);
-        assertThat(workItemQueryService.get(owner, workspace, project, item).columnCategory())
+        String item = issueService.create(owner, workspace, project, details("Moved"), waiting);
+        assertThat(issueQueryService.get(owner, workspace, project, item).columnCategory())
                 .isEqualTo(ColumnCategory.todo);
     }
 
@@ -463,22 +459,22 @@ class LabelIntegrationTest {
                 .category();
     }
 
-    private List<String> ids(WorkItemRequests.WorkspaceListRequest request) {
-        return workItemQueryService.listWorkspace(owner, workspace, request).items().stream()
-                .map(WorkItemViews.Item::id)
+    private List<String> ids(IssueRequests.WorkspaceListRequest request) {
+        return issueQueryService.listWorkspace(owner, workspace, request).items().stream()
+                .map(IssueViews.Item::id)
                 .toList();
     }
 
-    private static List<String> labels(WorkItemViews.Item item) {
-        return item.labels().stream().map(WorkItemViews.Label::id).toList();
+    private static List<String> labels(IssueViews.Item item) {
+        return item.labels().stream().map(IssueViews.Label::id).toList();
     }
 
-    private static WorkItem.Details details(String title) {
-        return new WorkItem.Details(title, null, null, null, null, null, null);
+    private static Issue.Details details(String title) {
+        return new Issue.Details(title, null, null, null, null, null, null);
     }
 
-    private static WorkItem.Details dated(String title, LocalDate start, LocalDate due) {
-        return new WorkItem.Details(title, null, null, null, null, start, due);
+    private static Issue.Details dated(String title, LocalDate start, LocalDate due) {
+        return new Issue.Details(title, null, null, null, null, start, due);
     }
 
     private static LabelRequests.Update update(long version, String name, String color) {

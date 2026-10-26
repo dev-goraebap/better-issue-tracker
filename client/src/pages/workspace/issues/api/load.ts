@@ -2,7 +2,7 @@ import type { QueryClient } from '@tanstack/react-query';
 import { labelsQuery } from '@/entities/label';
 import { columnsQuery } from '@/entities/project';
 import { memberPagesQuery } from '@/entities/workspace';
-import { scopeItemsQuery, tweaksQuery, viewsQuery } from '@/entities/work-item';
+import { scopeItemsQuery, tweaksQuery, viewsQuery } from '@/entities/issue';
 
 /** What 전체 or a project's issue page shows first: the scope's first page of issues, the views and tweaks, labels, members, the columns. */
 export function loadIssues(client: QueryClient, workspaceId: string, projectId?: string) {

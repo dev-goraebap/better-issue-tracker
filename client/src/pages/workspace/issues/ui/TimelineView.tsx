@@ -1,5 +1,5 @@
 import { useLayoutEffect, useRef, type CSSProperties, type ReactNode } from 'react';
-import { IssueLink, spanOf, StatusBadge, type IssueSearch, type WorkItem } from '@/entities/work-item';
+import { IssueLink, spanOf, StatusBadge, type IssueSearch, type Issue } from '@/entities/issue';
 import { currentDay } from '../model/dates';
 import styles from './timeline.module.css';
 
@@ -12,7 +12,7 @@ const dayNumber = (day: string) => Date.parse(`${day}T00:00:00Z`) / DAY;
  * sideways, the months over each week's first date, today an accent pill ruled down the rows; it opens with today in
  * view. An issue without a day is not drawn here.
  */
-export function TimelineView({ workspaceId, items, search, empty }: { workspaceId: string; items: readonly WorkItem[]; search: IssueSearch; empty: ReactNode }) {
+export function TimelineView({ workspaceId, items, search, empty }: { workspaceId: string; items: readonly Issue[]; search: IssueSearch; empty: ReactNode }) {
   const box = useRef<HTMLDivElement>(null);
   const today = currentDay();
   // Opens on today: its column a third of the way across the days in view. Only on opening: a later read (labels,

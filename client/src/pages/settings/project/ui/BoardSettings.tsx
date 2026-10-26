@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { authError } from '@/shared/api';
 import { CompactDialog, FormMessage, NavIcon, QueryMessage, Select, SettingsCard, SettingsHead, SettingsRow, StatusToken } from '@/shared/ui';
 import { columnsQuery, deleteColumn, refreshProjects, reorderColumns, type BoardColumn, type Project } from '@/entities/project';
-import { CATEGORY_LABELS, StatusBadge } from '@/entities/work-item';
+import { CATEGORY_LABELS, StatusBadge } from '@/entities/issue';
 import { ColumnDialog } from './ColumnDialog';
 import styles from './project-settings.module.css';
 

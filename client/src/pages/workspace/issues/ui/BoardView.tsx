@@ -2,12 +2,12 @@ import { IconButton, useToast } from '@astryxdesign/core';
 import { useQueryClient } from '@tanstack/react-query';
 import { authError } from '@/shared/api';
 import { DefaultAvatar, NavIcon } from '@/shared/ui';
-import { CATEGORIES, CATEGORY_LABELS, IssueLink, moveItem, PriorityMark, refreshItems, StatusBadge, type ColumnCategory, type IssueSearch, type WorkItem } from '@/entities/work-item';
+import { CATEGORIES, CATEGORY_LABELS, IssueLink, moveItem, PriorityMark, refreshItems, StatusBadge, type ColumnCategory, type IssueSearch, type Issue } from '@/entities/issue';
 import type { Scope } from '../model/scope';
 import { useBoardMove } from './useBoardMove';
 import styles from './board.module.css';
 
-type Lane = { key: string; name: string; category: ColumnCategory; cards: WorkItem[]; columnId?: string };
+type Lane = { key: string; name: string; category: ColumnCategory; cards: Issue[]; columnId?: string };
 
 /**
  * The board view: a lane per status across the card's whole width, scrolling sideways inside its own box so the page
@@ -17,10 +17,10 @@ type Lane = { key: string; name: string; category: ColumnCategory; cards: WorkIt
  * a project a card is carried to another lane or place (useBoardMove) by mouse, by a resting finger or by the keys,
  * which moves the issue there.
  */
-export function BoardView({ scope, items, search, onCreate }: { scope: Scope; items: readonly WorkItem[]; search: IssueSearch; onCreate?: (status: string) => void }) {
+export function BoardView({ scope, items, search, onCreate }: { scope: Scope; items: readonly Issue[]; search: IssueSearch; onCreate?: (status: string) => void }) {
   const client = useQueryClient();
   const toast = useToast();
-  const byPosition = (a: WorkItem, b: WorkItem) => a.position - b.position || a.id.localeCompare(b.id);
+  const byPosition = (a: Issue, b: Issue) => a.position - b.position || a.id.localeCompare(b.id);
   const lanes: Lane[] = scope.project
     ? [...scope.columns].sort((a, b) => a.position - b.position).map(column => ({ key: column.id, name: column.name, category: column.category, columnId: column.id,
       cards: items.filter(item => item.columnId === column.id).sort(byPosition) }))

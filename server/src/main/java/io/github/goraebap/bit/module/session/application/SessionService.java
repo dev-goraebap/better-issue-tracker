@@ -47,15 +47,15 @@ public class SessionService implements SessionFacade {
             Draft draft,
             List<Person> people,
             List<DecisionFacade.Draft> decisions,
-            List<String> workItemIds) {
+            List<String> issueIds) {
         projectFacade.requireAccess(actor, workspaceId, projectId, true);
         var details = details(draft);
         var participants = participants(actor, workspaceId, people);
         if (decisions == null
                 || decisions.size() > 20
-                || workItemIds == null
-                || workItemIds.size() > 100
-                || workItemIds.stream().anyMatch(Objects::isNull))
+                || issueIds == null
+                || issueIds.size() > 100
+                || issueIds.stream().anyMatch(Objects::isNull))
             throw SessionErrorCode.SESSION_RECORD_INVALID_INPUT.raise();
         var now = clock.instant();
         long number = projectFacade.allocateSessionNumber(actor, workspaceId, projectId);
@@ -65,7 +65,7 @@ public class SessionService implements SessionFacade {
                 ? List.<String>of()
                 : decisionFacade.createAll(actor, workspaceId, projectId, decisions);
         linkFacade.connectSessionRecord(
-                actor, workspaceId, projectId, record.id(), ids, List.copyOf(new LinkedHashSet<>(workItemIds)));
+                actor, workspaceId, projectId, record.id(), ids, List.copyOf(new LinkedHashSet<>(issueIds)));
         changed(actor, workspaceId, record, "created", List.of());
         return record.id();
     }

@@ -347,9 +347,117 @@
         }
       }
     },
-    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/work-items" : {
+    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/unarchive" : {
+      "post" : {
+        "tags" : [ "project-controller" ],
+        "operationId" : "unarchive",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "projectId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ProjectVersion"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/restore" : {
+      "post" : {
+        "tags" : [ "project-controller" ],
+        "operationId" : "restore",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "projectId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ProjectVersion"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/members" : {
+      "post" : {
+        "tags" : [ "project-member-controller" ],
+        "operationId" : "add",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "projectId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/AddProjectMember"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "204" : {
+            "description" : "Member added (or already there)"
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/issues" : {
       "get" : {
-        "tags" : [ "work-item-controller" ],
+        "tags" : [ "issue-controller" ],
         "operationId" : "list_2",
         "parameters" : [ {
           "name" : "workspaceId",
@@ -524,7 +632,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/WorkItems"
+                  "$ref" : "#/components/schemas/Issues"
                 }
               }
             }
@@ -532,7 +640,7 @@
         }
       },
       "post" : {
-        "tags" : [ "work-item-controller" ],
+        "tags" : [ "issue-controller" ],
         "operationId" : "create_3",
         "parameters" : [ {
           "name" : "workspaceId",
@@ -553,7 +661,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/CreateWorkItem"
+                "$ref" : "#/components/schemas/CreateIssue"
               }
             }
           },
@@ -561,15 +669,15 @@
         },
         "responses" : {
           "201" : {
-            "description" : "작업항목 생성"
+            "description" : "이슈 생성"
           }
         }
       }
     },
-    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/work-items/{id}/unarchive" : {
+    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/issues/{id}/unarchive" : {
       "post" : {
-        "tags" : [ "work-item-controller" ],
-        "operationId" : "unarchive",
+        "tags" : [ "issue-controller" ],
+        "operationId" : "unarchive_1",
         "parameters" : [ {
           "name" : "workspaceId",
           "in" : "path",
@@ -596,7 +704,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/WorkItemVersion"
+                "$ref" : "#/components/schemas/IssueVersion"
               }
             }
           },
@@ -609,10 +717,10 @@
         }
       }
     },
-    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/work-items/{id}/restore" : {
+    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/issues/{id}/restore" : {
       "post" : {
-        "tags" : [ "work-item-controller" ],
-        "operationId" : "restore",
+        "tags" : [ "issue-controller" ],
+        "operationId" : "restore_1",
         "parameters" : [ {
           "name" : "workspaceId",
           "in" : "path",
@@ -639,7 +747,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/WorkItemVersion"
+                "$ref" : "#/components/schemas/IssueVersion"
               }
             }
           },
@@ -652,9 +760,9 @@
         }
       }
     },
-    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/work-items/{id}/move" : {
+    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/issues/{id}/move" : {
       "post" : {
-        "tags" : [ "work-item-controller" ],
+        "tags" : [ "issue-controller" ],
         "operationId" : "move",
         "parameters" : [ {
           "name" : "workspaceId",
@@ -682,7 +790,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/MoveWorkItem"
+                "$ref" : "#/components/schemas/MoveIssue"
               }
             }
           },
@@ -695,9 +803,9 @@
         }
       }
     },
-    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/work-items/{id}/archive" : {
+    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/issues/{id}/archive" : {
       "post" : {
-        "tags" : [ "work-item-controller" ],
+        "tags" : [ "issue-controller" ],
         "operationId" : "archive",
         "parameters" : [ {
           "name" : "workspaceId",
@@ -725,7 +833,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/WorkItemVersion"
+                "$ref" : "#/components/schemas/IssueVersion"
               }
             }
           },
@@ -734,114 +842,6 @@
         "responses" : {
           "200" : {
             "description" : "OK"
-          }
-        }
-      }
-    },
-    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/unarchive" : {
-      "post" : {
-        "tags" : [ "project-controller" ],
-        "operationId" : "unarchive_1",
-        "parameters" : [ {
-          "name" : "workspaceId",
-          "in" : "path",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
-          "name" : "projectId",
-          "in" : "path",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/ProjectVersion"
-              }
-            }
-          },
-          "required" : true
-        },
-        "responses" : {
-          "200" : {
-            "description" : "OK"
-          }
-        }
-      }
-    },
-    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/restore" : {
-      "post" : {
-        "tags" : [ "project-controller" ],
-        "operationId" : "restore_1",
-        "parameters" : [ {
-          "name" : "workspaceId",
-          "in" : "path",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
-          "name" : "projectId",
-          "in" : "path",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/ProjectVersion"
-              }
-            }
-          },
-          "required" : true
-        },
-        "responses" : {
-          "200" : {
-            "description" : "OK"
-          }
-        }
-      }
-    },
-    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/members" : {
-      "post" : {
-        "tags" : [ "project-member-controller" ],
-        "operationId" : "add",
-        "parameters" : [ {
-          "name" : "workspaceId",
-          "in" : "path",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
-          "name" : "projectId",
-          "in" : "path",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/AddProjectMember"
-              }
-            }
-          },
-          "required" : true
-        },
-        "responses" : {
-          "204" : {
-            "description" : "Member added (or already there)"
           }
         }
       }
@@ -1628,9 +1628,9 @@
         }
       }
     },
-    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/work-items/{id}" : {
+    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/issues/{id}" : {
       "get" : {
-        "tags" : [ "work-item-controller" ],
+        "tags" : [ "issue-controller" ],
         "operationId" : "get_2",
         "parameters" : [ {
           "name" : "workspaceId",
@@ -1660,7 +1660,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/WorkItem"
+                  "$ref" : "#/components/schemas/Issue"
                 }
               }
             }
@@ -1668,7 +1668,7 @@
         }
       },
       "delete" : {
-        "tags" : [ "work-item-controller" ],
+        "tags" : [ "issue-controller" ],
         "operationId" : "delete_2",
         "parameters" : [ {
           "name" : "workspaceId",
@@ -1708,7 +1708,7 @@
         }
       },
       "patch" : {
-        "tags" : [ "work-item-controller" ],
+        "tags" : [ "issue-controller" ],
         "operationId" : "revise_2",
         "parameters" : [ {
           "name" : "workspaceId",
@@ -1736,7 +1736,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/UpdateWorkItem"
+                "$ref" : "#/components/schemas/UpdateIssue"
               }
             }
           },
@@ -2213,9 +2213,489 @@
         }
       }
     },
-    "/api/v1/workspaces/{workspaceId}/work-items" : {
+    "/api/v1/workspaces/{workspaceId}/view-tweaks" : {
       "get" : {
-        "tags" : [ "work-item-controller" ],
+        "tags" : [ "view-controller" ],
+        "operationId" : "tweaks",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/IssueViewTweak"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/timeline" : {
+      "get" : {
+        "tags" : [ "comment-controller" ],
+        "operationId" : "timeline",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "targetType",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "issue", "decision", "session_record", "artifact", "code_ref" ]
+          }
+        }, {
+          "name" : "targetId",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "cursor",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "size",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 100,
+            "maximum" : 200,
+            "minimum" : 1
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Timeline"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/issues/counts" : {
+      "get" : {
+        "tags" : [ "issue-controller" ],
+        "operationId" : "counts",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "projectId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "column",
+          "in" : "query",
+          "description" : "A column id of the project, or backlog",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "description" : "A column id of the project, or backlog"
+          }
+        }, {
+          "name" : "assigneeId",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : [ "string", "null" ]
+          }
+        }, {
+          "name" : "labelId",
+          "in" : "query",
+          "description" : "Any of these labels (repeatable). Deleted labels match nothing",
+          "required" : false,
+          "schema" : {
+            "type" : "array",
+            "description" : "Any of these labels (repeatable). Deleted labels match nothing",
+            "items" : {
+              "type" : "string",
+              "description" : "Any of these labels (repeatable). Deleted labels match nothing"
+            }
+          }
+        }, {
+          "name" : "category",
+          "in" : "query",
+          "description" : "Any of todo, doing, done, or none for items without a status (repeatable)",
+          "required" : false,
+          "schema" : {
+            "type" : "array",
+            "description" : "Any of todo, doing, done, or none for items without a status (repeatable)",
+            "items" : {
+              "type" : "string",
+              "description" : "Any of todo, doing, done, or none for items without a status (repeatable)"
+            }
+          }
+        }, {
+          "name" : "hasDates",
+          "in" : "query",
+          "description" : "true: has a start or due date. false: has neither",
+          "required" : false,
+          "schema" : {
+            "type" : [ "boolean", "null" ],
+            "description" : "true: has a start or due date. false: has neither"
+          }
+        }, {
+          "name" : "priority",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          }
+        }, {
+          "name" : "triggerType",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          }
+        }, {
+          "name" : "q",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "maxLength" : 200,
+            "minLength" : 0
+          }
+        }, {
+          "name" : "archived",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "boolean"
+          }
+        }, {
+          "name" : "deleted",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "boolean"
+          }
+        }, {
+          "name" : "closed",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "boolean"
+          }
+        }, {
+          "name" : "from",
+          "in" : "query",
+          "description" : "Keeps items whose start..due span (one day when only one is set) ends on or after it",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "format" : "date",
+            "description" : "Keeps items whose start..due span (one day when only one is set) ends on or after it"
+          }
+        }, {
+          "name" : "to",
+          "in" : "query",
+          "description" : "Keeps items whose start..due span starts on or before it",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "format" : "date",
+            "description" : "Keeps items whose start..due span starts on or before it"
+          }
+        }, {
+          "name" : "size",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "maximum" : 100,
+            "minimum" : 1
+          }
+        }, {
+          "name" : "cursor",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "sort",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "direction",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/IssueColumnCount"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/project-members" : {
+      "get" : {
+        "tags" : [ "project-member-controller" ],
+        "operationId" : "list_4",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProjectMemberships"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/my-tasks" : {
+      "get" : {
+        "tags" : [ "issue-controller" ],
+        "operationId" : "mine",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "column",
+          "in" : "query",
+          "description" : "A column id of the project, or backlog",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "description" : "A column id of the project, or backlog"
+          }
+        }, {
+          "name" : "assigneeId",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : [ "string", "null" ]
+          }
+        }, {
+          "name" : "labelId",
+          "in" : "query",
+          "description" : "Any of these labels (repeatable). Deleted labels match nothing",
+          "required" : false,
+          "schema" : {
+            "type" : "array",
+            "description" : "Any of these labels (repeatable). Deleted labels match nothing",
+            "items" : {
+              "type" : "string",
+              "description" : "Any of these labels (repeatable). Deleted labels match nothing"
+            }
+          }
+        }, {
+          "name" : "category",
+          "in" : "query",
+          "description" : "Any of todo, doing, done, or none for items without a status (repeatable)",
+          "required" : false,
+          "schema" : {
+            "type" : "array",
+            "description" : "Any of todo, doing, done, or none for items without a status (repeatable)",
+            "items" : {
+              "type" : "string",
+              "description" : "Any of todo, doing, done, or none for items without a status (repeatable)"
+            }
+          }
+        }, {
+          "name" : "hasDates",
+          "in" : "query",
+          "description" : "true: has a start or due date. false: has neither",
+          "required" : false,
+          "schema" : {
+            "type" : [ "boolean", "null" ],
+            "description" : "true: has a start or due date. false: has neither"
+          }
+        }, {
+          "name" : "priority",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          }
+        }, {
+          "name" : "triggerType",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          }
+        }, {
+          "name" : "q",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "maxLength" : 200,
+            "minLength" : 0
+          }
+        }, {
+          "name" : "archived",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "boolean"
+          }
+        }, {
+          "name" : "deleted",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "boolean"
+          }
+        }, {
+          "name" : "closed",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "boolean"
+          }
+        }, {
+          "name" : "from",
+          "in" : "query",
+          "description" : "Keeps items whose start..due span (one day when only one is set) ends on or after it",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "format" : "date",
+            "description" : "Keeps items whose start..due span (one day when only one is set) ends on or after it"
+          }
+        }, {
+          "name" : "to",
+          "in" : "query",
+          "description" : "Keeps items whose start..due span starts on or before it",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "format" : "date",
+            "description" : "Keeps items whose start..due span starts on or before it"
+          }
+        }, {
+          "name" : "size",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "maximum" : 100,
+            "minimum" : 1
+          }
+        }, {
+          "name" : "cursor",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "sort",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "direction",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Issues"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/issues" : {
+      "get" : {
+        "tags" : [ "issue-controller" ],
         "operationId" : "listWorkspace",
         "parameters" : [ {
           "name" : "workspaceId",
@@ -2400,7 +2880,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/WorkItems"
+                  "$ref" : "#/components/schemas/Issues"
                 }
               }
             }
@@ -2408,9 +2888,9 @@
         }
       }
     },
-    "/api/v1/workspaces/{workspaceId}/work-items/by-ref/{reference}" : {
+    "/api/v1/workspaces/{workspaceId}/issues/by-ref/{reference}" : {
       "get" : {
-        "tags" : [ "work-item-controller" ],
+        "tags" : [ "issue-controller" ],
         "operationId" : "byRef",
         "parameters" : [ {
           "name" : "workspaceId",
@@ -2433,487 +2913,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/WorkItem"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/workspaces/{workspaceId}/view-tweaks" : {
-      "get" : {
-        "tags" : [ "view-controller" ],
-        "operationId" : "tweaks",
-        "parameters" : [ {
-          "name" : "workspaceId",
-          "in" : "path",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "responses" : {
-          "200" : {
-            "description" : "OK",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "array",
-                  "items" : {
-                    "$ref" : "#/components/schemas/IssueViewTweak"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/workspaces/{workspaceId}/timeline" : {
-      "get" : {
-        "tags" : [ "comment-controller" ],
-        "operationId" : "timeline",
-        "parameters" : [ {
-          "name" : "workspaceId",
-          "in" : "path",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
-          "name" : "targetType",
-          "in" : "query",
-          "required" : true,
-          "schema" : {
-            "type" : "string",
-            "enum" : [ "work_item", "decision", "session_record", "artifact", "code_ref" ]
-          }
-        }, {
-          "name" : "targetId",
-          "in" : "query",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
-          "name" : "cursor",
-          "in" : "query",
-          "required" : false,
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
-          "name" : "size",
-          "in" : "query",
-          "required" : false,
-          "schema" : {
-            "type" : "integer",
-            "format" : "int32",
-            "default" : 100,
-            "maximum" : 200,
-            "minimum" : 1
-          }
-        } ],
-        "responses" : {
-          "200" : {
-            "description" : "OK",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Timeline"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/work-items/counts" : {
-      "get" : {
-        "tags" : [ "work-item-controller" ],
-        "operationId" : "counts",
-        "parameters" : [ {
-          "name" : "workspaceId",
-          "in" : "path",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
-          "name" : "projectId",
-          "in" : "path",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
-          "name" : "column",
-          "in" : "query",
-          "description" : "A column id of the project, or backlog",
-          "required" : false,
-          "schema" : {
-            "type" : "string",
-            "description" : "A column id of the project, or backlog"
-          }
-        }, {
-          "name" : "assigneeId",
-          "in" : "query",
-          "required" : false,
-          "schema" : {
-            "type" : [ "string", "null" ]
-          }
-        }, {
-          "name" : "labelId",
-          "in" : "query",
-          "description" : "Any of these labels (repeatable). Deleted labels match nothing",
-          "required" : false,
-          "schema" : {
-            "type" : "array",
-            "description" : "Any of these labels (repeatable). Deleted labels match nothing",
-            "items" : {
-              "type" : "string",
-              "description" : "Any of these labels (repeatable). Deleted labels match nothing"
-            }
-          }
-        }, {
-          "name" : "category",
-          "in" : "query",
-          "description" : "Any of todo, doing, done, or none for items without a status (repeatable)",
-          "required" : false,
-          "schema" : {
-            "type" : "array",
-            "description" : "Any of todo, doing, done, or none for items without a status (repeatable)",
-            "items" : {
-              "type" : "string",
-              "description" : "Any of todo, doing, done, or none for items without a status (repeatable)"
-            }
-          }
-        }, {
-          "name" : "hasDates",
-          "in" : "query",
-          "description" : "true: has a start or due date. false: has neither",
-          "required" : false,
-          "schema" : {
-            "type" : [ "boolean", "null" ],
-            "description" : "true: has a start or due date. false: has neither"
-          }
-        }, {
-          "name" : "priority",
-          "in" : "query",
-          "required" : false,
-          "schema" : {
-            "type" : "array",
-            "items" : {
-              "type" : "string"
-            }
-          }
-        }, {
-          "name" : "triggerType",
-          "in" : "query",
-          "required" : false,
-          "schema" : {
-            "type" : "array",
-            "items" : {
-              "type" : "string"
-            }
-          }
-        }, {
-          "name" : "q",
-          "in" : "query",
-          "required" : false,
-          "schema" : {
-            "type" : "string",
-            "maxLength" : 200,
-            "minLength" : 0
-          }
-        }, {
-          "name" : "archived",
-          "in" : "query",
-          "required" : false,
-          "schema" : {
-            "type" : "boolean"
-          }
-        }, {
-          "name" : "deleted",
-          "in" : "query",
-          "required" : false,
-          "schema" : {
-            "type" : "boolean"
-          }
-        }, {
-          "name" : "closed",
-          "in" : "query",
-          "required" : false,
-          "schema" : {
-            "type" : "boolean"
-          }
-        }, {
-          "name" : "from",
-          "in" : "query",
-          "description" : "Keeps items whose start..due span (one day when only one is set) ends on or after it",
-          "required" : false,
-          "schema" : {
-            "type" : "string",
-            "format" : "date",
-            "description" : "Keeps items whose start..due span (one day when only one is set) ends on or after it"
-          }
-        }, {
-          "name" : "to",
-          "in" : "query",
-          "description" : "Keeps items whose start..due span starts on or before it",
-          "required" : false,
-          "schema" : {
-            "type" : "string",
-            "format" : "date",
-            "description" : "Keeps items whose start..due span starts on or before it"
-          }
-        }, {
-          "name" : "size",
-          "in" : "query",
-          "required" : false,
-          "schema" : {
-            "type" : "integer",
-            "format" : "int32",
-            "maximum" : 100,
-            "minimum" : 1
-          }
-        }, {
-          "name" : "cursor",
-          "in" : "query",
-          "required" : false,
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
-          "name" : "sort",
-          "in" : "query",
-          "required" : false,
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
-          "name" : "direction",
-          "in" : "query",
-          "required" : false,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "responses" : {
-          "200" : {
-            "description" : "OK",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "array",
-                  "items" : {
-                    "$ref" : "#/components/schemas/WorkItemColumnCount"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/workspaces/{workspaceId}/project-members" : {
-      "get" : {
-        "tags" : [ "project-member-controller" ],
-        "operationId" : "list_4",
-        "parameters" : [ {
-          "name" : "workspaceId",
-          "in" : "path",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "responses" : {
-          "200" : {
-            "description" : "OK",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProjectMemberships"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/workspaces/{workspaceId}/my-tasks" : {
-      "get" : {
-        "tags" : [ "work-item-controller" ],
-        "operationId" : "mine",
-        "parameters" : [ {
-          "name" : "workspaceId",
-          "in" : "path",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
-          "name" : "column",
-          "in" : "query",
-          "description" : "A column id of the project, or backlog",
-          "required" : false,
-          "schema" : {
-            "type" : "string",
-            "description" : "A column id of the project, or backlog"
-          }
-        }, {
-          "name" : "assigneeId",
-          "in" : "query",
-          "required" : false,
-          "schema" : {
-            "type" : [ "string", "null" ]
-          }
-        }, {
-          "name" : "labelId",
-          "in" : "query",
-          "description" : "Any of these labels (repeatable). Deleted labels match nothing",
-          "required" : false,
-          "schema" : {
-            "type" : "array",
-            "description" : "Any of these labels (repeatable). Deleted labels match nothing",
-            "items" : {
-              "type" : "string",
-              "description" : "Any of these labels (repeatable). Deleted labels match nothing"
-            }
-          }
-        }, {
-          "name" : "category",
-          "in" : "query",
-          "description" : "Any of todo, doing, done, or none for items without a status (repeatable)",
-          "required" : false,
-          "schema" : {
-            "type" : "array",
-            "description" : "Any of todo, doing, done, or none for items without a status (repeatable)",
-            "items" : {
-              "type" : "string",
-              "description" : "Any of todo, doing, done, or none for items without a status (repeatable)"
-            }
-          }
-        }, {
-          "name" : "hasDates",
-          "in" : "query",
-          "description" : "true: has a start or due date. false: has neither",
-          "required" : false,
-          "schema" : {
-            "type" : [ "boolean", "null" ],
-            "description" : "true: has a start or due date. false: has neither"
-          }
-        }, {
-          "name" : "priority",
-          "in" : "query",
-          "required" : false,
-          "schema" : {
-            "type" : "array",
-            "items" : {
-              "type" : "string"
-            }
-          }
-        }, {
-          "name" : "triggerType",
-          "in" : "query",
-          "required" : false,
-          "schema" : {
-            "type" : "array",
-            "items" : {
-              "type" : "string"
-            }
-          }
-        }, {
-          "name" : "q",
-          "in" : "query",
-          "required" : false,
-          "schema" : {
-            "type" : "string",
-            "maxLength" : 200,
-            "minLength" : 0
-          }
-        }, {
-          "name" : "archived",
-          "in" : "query",
-          "required" : false,
-          "schema" : {
-            "type" : "boolean"
-          }
-        }, {
-          "name" : "deleted",
-          "in" : "query",
-          "required" : false,
-          "schema" : {
-            "type" : "boolean"
-          }
-        }, {
-          "name" : "closed",
-          "in" : "query",
-          "required" : false,
-          "schema" : {
-            "type" : "boolean"
-          }
-        }, {
-          "name" : "from",
-          "in" : "query",
-          "description" : "Keeps items whose start..due span (one day when only one is set) ends on or after it",
-          "required" : false,
-          "schema" : {
-            "type" : "string",
-            "format" : "date",
-            "description" : "Keeps items whose start..due span (one day when only one is set) ends on or after it"
-          }
-        }, {
-          "name" : "to",
-          "in" : "query",
-          "description" : "Keeps items whose start..due span starts on or before it",
-          "required" : false,
-          "schema" : {
-            "type" : "string",
-            "format" : "date",
-            "description" : "Keeps items whose start..due span starts on or before it"
-          }
-        }, {
-          "name" : "size",
-          "in" : "query",
-          "required" : false,
-          "schema" : {
-            "type" : "integer",
-            "format" : "int32",
-            "maximum" : 100,
-            "minimum" : 1
-          }
-        }, {
-          "name" : "cursor",
-          "in" : "query",
-          "required" : false,
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
-          "name" : "sort",
-          "in" : "query",
-          "required" : false,
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
-          "name" : "direction",
-          "in" : "query",
-          "required" : false,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "responses" : {
-          "200" : {
-            "description" : "OK",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/WorkItems"
+                  "$ref" : "#/components/schemas/Issue"
                 }
               }
             }
@@ -3441,7 +3441,27 @@
         },
         "required" : [ "key", "name" ]
       },
-      "CreateWorkItem" : {
+      "ProjectVersion" : {
+        "type" : "object",
+        "properties" : {
+          "expectedVersion" : {
+            "type" : "integer",
+            "format" : "int64",
+            "minimum" : 0
+          }
+        },
+        "required" : [ "expectedVersion" ]
+      },
+      "AddProjectMember" : {
+        "type" : "object",
+        "properties" : {
+          "userId" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "userId" ]
+      },
+      "CreateIssue" : {
         "type" : "object",
         "properties" : {
           "title" : {
@@ -3488,7 +3508,7 @@
         },
         "required" : [ "title" ]
       },
-      "WorkItemVersion" : {
+      "IssueVersion" : {
         "type" : "object",
         "properties" : {
           "expectedVersion" : {
@@ -3499,7 +3519,7 @@
         },
         "required" : [ "expectedVersion" ]
       },
-      "MoveWorkItem" : {
+      "MoveIssue" : {
         "type" : "object",
         "properties" : {
           "expectedVersion" : {
@@ -3518,26 +3538,6 @@
           }
         },
         "required" : [ "expectedVersion", "targetColumnId" ]
-      },
-      "ProjectVersion" : {
-        "type" : "object",
-        "properties" : {
-          "expectedVersion" : {
-            "type" : "integer",
-            "format" : "int64",
-            "minimum" : 0
-          }
-        },
-        "required" : [ "expectedVersion" ]
-      },
-      "AddProjectMember" : {
-        "type" : "object",
-        "properties" : {
-          "userId" : {
-            "type" : "string"
-          }
-        },
-        "required" : [ "userId" ]
       },
       "CreateBoardColumn" : {
         "type" : "object",
@@ -3604,7 +3604,7 @@
         "properties" : {
           "targetType" : {
             "type" : "string",
-            "enum" : [ "work_item", "decision", "session_record", "artifact" ]
+            "enum" : [ "issue", "decision", "session_record", "artifact" ]
           },
           "targetId" : {
             "type" : "string"
@@ -3886,7 +3886,7 @@
         },
         "required" : [ "expectedVersion" ]
       },
-      "UpdateWorkItem" : {
+      "UpdateIssue" : {
         "type" : "object",
         "properties" : {
           "expectedVersion" : {
@@ -4011,144 +4011,6 @@
           }
         },
         "required" : [ "role" ]
-      },
-      "WorkItem" : {
-        "type" : "object",
-        "properties" : {
-          "id" : {
-            "type" : "string"
-          },
-          "workspaceId" : {
-            "type" : "string"
-          },
-          "projectId" : {
-            "type" : "string"
-          },
-          "number" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "key" : {
-            "type" : "string"
-          },
-          "title" : {
-            "type" : "string"
-          },
-          "description" : {
-            "type" : [ "string", "null" ]
-          },
-          "columnId" : {
-            "type" : [ "string", "null" ]
-          },
-          "columnCategory" : {
-            "type" : [ "string", "null" ],
-            "description" : "Category of the column; null in the backlog",
-            "enum" : [ "todo", "doing", "done", null ]
-          },
-          "labels" : {
-            "type" : "array",
-            "description" : "Live labels, system labels first and then by name",
-            "items" : {
-              "$ref" : "#/components/schemas/WorkItemLabel"
-            }
-          },
-          "position" : {
-            "type" : "number",
-            "format" : "double"
-          },
-          "priority" : {
-            "type" : [ "string", "null" ],
-            "enum" : [ "low", "medium", "high", "urgent", null ]
-          },
-          "triggerType" : {
-            "type" : [ "string", "null" ],
-            "enum" : [ "request", "finding", "external", "improvement", "planned", null ]
-          },
-          "assigneeId" : {
-            "type" : [ "string", "null" ]
-          },
-          "assigneeName" : {
-            "type" : [ "string", "null" ]
-          },
-          "startDate" : {
-            "type" : [ "string", "null" ],
-            "format" : "date"
-          },
-          "dueDate" : {
-            "type" : [ "string", "null" ],
-            "format" : "date"
-          },
-          "closedAt" : {
-            "type" : [ "string", "null" ],
-            "format" : "date-time"
-          },
-          "archivedAt" : {
-            "type" : [ "string", "null" ],
-            "format" : "date-time"
-          },
-          "deletedAt" : {
-            "type" : [ "string", "null" ],
-            "format" : "date-time"
-          },
-          "version" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "createdAt" : {
-            "type" : "string",
-            "format" : "date-time"
-          },
-          "createdBy" : {
-            "type" : "string"
-          },
-          "createdByAgent" : {
-            "type" : [ "string", "null" ]
-          },
-          "updatedAt" : {
-            "type" : "string",
-            "format" : "date-time"
-          },
-          "updatedBy" : {
-            "type" : "string"
-          },
-          "updatedByAgent" : {
-            "type" : [ "string", "null" ]
-          }
-        },
-        "required" : [ "archivedAt", "assigneeId", "assigneeName", "closedAt", "columnCategory", "columnId", "createdAt", "createdBy", "createdByAgent", "deletedAt", "description", "dueDate", "id", "key", "labels", "number", "position", "priority", "projectId", "startDate", "title", "triggerType", "updatedAt", "updatedBy", "updatedByAgent", "version", "workspaceId" ]
-      },
-      "WorkItemLabel" : {
-        "type" : "object",
-        "properties" : {
-          "id" : {
-            "type" : "string"
-          },
-          "name" : {
-            "type" : "string"
-          },
-          "color" : {
-            "type" : "string"
-          },
-          "system" : {
-            "type" : "boolean"
-          }
-        },
-        "required" : [ "color", "id", "name", "system" ]
-      },
-      "WorkItems" : {
-        "type" : "object",
-        "properties" : {
-          "items" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/WorkItem"
-            }
-          },
-          "nextCursor" : {
-            "type" : [ "string", "null" ]
-          }
-        },
-        "required" : [ "items", "nextCursor" ]
       },
       "IssueView" : {
         "type" : "object",
@@ -4383,7 +4245,145 @@
         },
         "required" : [ "items", "nextCursor" ]
       },
-      "WorkItemColumnCount" : {
+      "Issue" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string"
+          },
+          "workspaceId" : {
+            "type" : "string"
+          },
+          "projectId" : {
+            "type" : "string"
+          },
+          "number" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "key" : {
+            "type" : "string"
+          },
+          "title" : {
+            "type" : "string"
+          },
+          "description" : {
+            "type" : [ "string", "null" ]
+          },
+          "columnId" : {
+            "type" : [ "string", "null" ]
+          },
+          "columnCategory" : {
+            "type" : [ "string", "null" ],
+            "description" : "Category of the column; null in the backlog",
+            "enum" : [ "todo", "doing", "done", null ]
+          },
+          "labels" : {
+            "type" : "array",
+            "description" : "Live labels, system labels first and then by name",
+            "items" : {
+              "$ref" : "#/components/schemas/IssueLabel"
+            }
+          },
+          "position" : {
+            "type" : "number",
+            "format" : "double"
+          },
+          "priority" : {
+            "type" : [ "string", "null" ],
+            "enum" : [ "low", "medium", "high", "urgent", null ]
+          },
+          "triggerType" : {
+            "type" : [ "string", "null" ],
+            "enum" : [ "request", "finding", "external", "improvement", "planned", null ]
+          },
+          "assigneeId" : {
+            "type" : [ "string", "null" ]
+          },
+          "assigneeName" : {
+            "type" : [ "string", "null" ]
+          },
+          "startDate" : {
+            "type" : [ "string", "null" ],
+            "format" : "date"
+          },
+          "dueDate" : {
+            "type" : [ "string", "null" ],
+            "format" : "date"
+          },
+          "closedAt" : {
+            "type" : [ "string", "null" ],
+            "format" : "date-time"
+          },
+          "archivedAt" : {
+            "type" : [ "string", "null" ],
+            "format" : "date-time"
+          },
+          "deletedAt" : {
+            "type" : [ "string", "null" ],
+            "format" : "date-time"
+          },
+          "version" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "createdAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "createdBy" : {
+            "type" : "string"
+          },
+          "createdByAgent" : {
+            "type" : [ "string", "null" ]
+          },
+          "updatedAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "updatedBy" : {
+            "type" : "string"
+          },
+          "updatedByAgent" : {
+            "type" : [ "string", "null" ]
+          }
+        },
+        "required" : [ "archivedAt", "assigneeId", "assigneeName", "closedAt", "columnCategory", "columnId", "createdAt", "createdBy", "createdByAgent", "deletedAt", "description", "dueDate", "id", "key", "labels", "number", "position", "priority", "projectId", "startDate", "title", "triggerType", "updatedAt", "updatedBy", "updatedByAgent", "version", "workspaceId" ]
+      },
+      "IssueLabel" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "color" : {
+            "type" : "string"
+          },
+          "system" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "color", "id", "name", "system" ]
+      },
+      "Issues" : {
+        "type" : "object",
+        "properties" : {
+          "items" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Issue"
+            }
+          },
+          "nextCursor" : {
+            "type" : [ "string", "null" ]
+          }
+        },
+        "required" : [ "items", "nextCursor" ]
+      },
+      "IssueColumnCount" : {
         "type" : "object",
         "properties" : {
           "columnId" : {

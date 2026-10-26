@@ -1,7 +1,7 @@
 package io.github.goraebap.bit.module.link;
 
 public enum TargetType {
-    work_item,
+    issue,
     decision,
     session_record,
     artifact,

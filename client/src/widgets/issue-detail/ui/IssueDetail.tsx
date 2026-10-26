@@ -12,16 +12,16 @@ import { columnsQuery } from '@/entities/project';
 import { canManage, canWrite as canWriteIn, useMembers, workspaceQuery } from '@/entities/workspace';
 import {
   archiveItem, deleteItem, itemQuery, labelOptions, LabelTokens, moveItem, NO_STATUS, peopleOptions, PersonCell, priorityOptions, PriorityMark, refreshItems,
-  StatusBadge, statusOptions, updateItem, type IssueSearch, type Priority, type WorkItem,
-} from '@/entities/work-item';
+  StatusBadge, statusOptions, updateItem, type IssueSearch, type Priority, type Issue,
+} from '@/entities/issue';
 import { refreshTimeline } from '../api/timeline';
 import { IssueActivity } from './IssueActivity';
 import { IssueDescription } from './IssueDescription';
 import styles from './detail.module.css';
 
 /**
- * An issue read in full, wherever it is shown (D-069): on its own page (/w/$workspaceId/p/$projectId/work-items/
- * $workItemId) or in the modal the issue pages open it in at the same address (RoutedPanel), Surface drawing the frame of
+ * An issue read in full, wherever it is shown (D-069): on its own page (/workspaces/$workspaceId/projects/$projectId/issues/
+ * $issueId) or in the modal the issue pages open it in at the same address (RoutedPanel), Surface drawing the frame of
  * either: the page's title row and back, or the modal's head with 크게 보기 and close. Every issue opens here, whatever
  * it is (D-066).
  *
@@ -40,7 +40,7 @@ export function IssueDetail({ workspaceId, projectId, id, search }: { workspaceI
   const navigate = useNavigate();
   const client = useQueryClient();
   const toast = useToast();
-  const list = { to: '/w/$workspaceId/p/$projectId', params: { workspaceId, projectId }, search } as const;
+  const list = { to: '/workspaces/$workspaceId/projects/$projectId', params: { workspaceId, projectId }, search } as const;
   const [isDeleting, setDeleting] = useState(false);
   // Changes run one after another, each over the version the last one left (saving two pills quickly is not a conflict).
   const queue = useRef<Promise<unknown>>(Promise.resolve());
@@ -59,19 +59,19 @@ export function IssueDetail({ workspaceId, projectId, id, search }: { workspaceI
     <PageState kind="not-found" title="이슈를 찾을 수 없습니다" description="지워졌거나 주소가 바뀌었습니다. 목록에서 다시 찾아보세요." />
   </Surface>;
   // A change shows in the lists and, as a line of activity, in the issue's timeline.
-  const refresh = () => Promise.allSettled([refreshItems(client, workspaceId, projectId), refreshTimeline(client, workspaceId, 'work_item', id)]);
+  const refresh = () => Promise.allSettled([refreshItems(client, workspaceId, projectId), refreshTimeline(client, workspaceId, 'issue', id)]);
   const itemKey = itemQuery(workspaceId, projectId, id).queryKey;
   /** Saves one change over the latest version once the changes before it are done; answers whether it was saved. */
   const save = (change: (version: number) => Promise<unknown>): Promise<boolean> => {
     const run = queue.current.then(async () => {
-      try { await change(client.getQueryData<WorkItem>(itemKey)?.version ?? item.version); return true; }
+      try { await change(client.getQueryData<Issue>(itemKey)?.version ?? item.version); return true; }
       catch (failure) { toast({ body: authError(failure) }); return false; }
       finally { await refresh(); }
     });
     queue.current = run;
     return run;
   };
-  const patch = (body: Omit<components['schemas']['UpdateWorkItem'], 'expectedVersion'>) => save(version => updateItem(workspaceId, projectId, id, { expectedVersion: version, ...body }));
+  const patch = (body: Omit<components['schemas']['UpdateIssue'], 'expectedVersion'>) => save(version => updateItem(workspaceId, projectId, id, { expectedVersion: version, ...body }));
   const column = columns.find(each => each.id === item.columnId);
   // A viewer reads each property as a mark; a member changes it with its pill.
   const properties: [string, ReactNode][] = canWrite ? [
@@ -91,9 +91,9 @@ export function IssueDetail({ workspaceId, projectId, id, search }: { workspaceI
   const leave = () => { if (panel) panel.onClose(); else void navigate(list); };
   return <Surface title={item.title} wrapsTitle back={back} width="default" actions={<>
     {canWrite && <Button label="편집" variant="secondary" size={panel ? 'sm' : undefined} icon={<NavIcon name="edit" />}
-      onClick={() => void navigate({ to: '/w/$workspaceId/p/$projectId/work-items/$workItemId/edit', params: { workspaceId, projectId, workItemId: id } })} />}
+      onClick={() => void navigate({ to: '/workspaces/$workspaceId/projects/$projectId/issues/$issueId/edit', params: { workspaceId, projectId, issueId: id } })} />}
     <MoreMenu label="이슈 메뉴" variant="ghost" size={panel ? 'sm' : undefined} placement="end" items={[
-      { label: '링크 복사', icon: <NavIcon name="link" />, onClick: () => void navigator.clipboard?.writeText(`${window.location.origin}/w/${workspaceId}/p/${projectId}/work-items/${id}`) },
+      { label: '링크 복사', icon: <NavIcon name="link" />, onClick: () => void navigator.clipboard?.writeText(`${window.location.origin}/workspaces/${workspaceId}/projects/${projectId}/issues/${id}`) },
       ...(canWrite ? [
         { label: item.archivedAt ? '보관 해제' : '보관', icon: <NavIcon name="documents" />, onClick: () => { void save(version => archiveItem(workspaceId, projectId, id, version, !item.archivedAt)).then(isSaved => { if (isSaved && !item.archivedAt) leave(); }); } },
         { label: '삭제', icon: <NavIcon name="delete" />, onClick: () => setDeleting(true) },

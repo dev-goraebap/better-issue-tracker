@@ -37,8 +37,8 @@ class McpServerConfig {
     private static final Logger LOG = LoggerFactory.getLogger(McpServerConfig.class);
     private static final String INSTRUCTIONS = """
             BIT는 이슈·결정기록·근거를 한곳에 두는 이슈 트래커입니다. 이슈는 ORM-14처럼 '프로젝트 키-번호' 참조로 가리킵니다.
-            작업을 시작하면 get_work_item_context로 이슈의 설명과 댓글·활동을 먼저 읽고, 진행 상황과 결과는 add_comment로 남기세요.
-            상태는 move_work_item으로 옮깁니다(할 일·진행 중·완료 같은 칸 이름이나 todo/doing/done).
+            작업을 시작하면 get_issue_context로 이슈의 설명과 댓글·활동을 먼저 읽고, 진행 상황과 결과는 add_comment로 남기세요.
+            상태는 move_issue으로 옮깁니다(할 일·진행 중·완료 같은 칸 이름이나 todo/doing/done).
             의미 있는 판단은 labels에 '결정기록'을 넣은 이슈로 남기고, 본문은 ## 배경 / ## 선택지 / ## 결정 / ## 이유 / ## 기각한 대안 / ## 후속 작업 으로 씁니다.
             본문과 댓글은 마크다운입니다. 워크스페이스가 여럿이면 workspace 인자로 이름이나 슬러그를 주세요.""";
 

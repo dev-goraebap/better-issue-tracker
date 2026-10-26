@@ -1,7 +1,7 @@
 import type { CSSProperties, ReactNode } from 'react';
 import { DefaultAvatar } from '@/shared/ui';
 import { dateText } from '@/shared/lib/date-text';
-import { IssueLink, type IssueSearch, type WorkItem } from '@/entities/work-item';
+import { IssueLink, type IssueSearch, type Issue } from '@/entities/issue';
 import styles from './cards.module.css';
 
 /**
@@ -9,7 +9,7 @@ import styles from './cards.module.css';
  * columns, each tinted by its first label's colour: the label, the title, a few lines of its description, then who it is
  * for and when it was made. A card opens its issue's page.
  */
-export function CardsView({ workspaceId, items, search, empty }: { workspaceId: string; items: readonly WorkItem[]; search: IssueSearch; empty: ReactNode }) {
+export function CardsView({ workspaceId, items, search, empty }: { workspaceId: string; items: readonly Issue[]; search: IssueSearch; empty: ReactNode }) {
   if (items.length === 0) return empty;
   return <ul className={styles.keep} aria-label="카드">{items.map(issue => {
     const label = issue.labels[0];
