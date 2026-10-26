@@ -50,6 +50,11 @@ final class AuthenticationFilter extends OncePerRequestFilter {
                 && user.method() == CurrentUser.Method.API_KEY;
     }
 
+    /** A repository host's webhook delivery (D-087): no session or key; its signature is checked where it lands. */
+    static boolean hook(HttpServletRequest request) {
+        return request.getMethod().equals("POST") && request.getRequestURI().matches("/api/v1/hooks/[^/]+");
+    }
+
     static boolean publicInfo(HttpServletRequest request) {
         return Set.of("GET", "HEAD").contains(request.getMethod())
                 && Set.of("/api/v1/health", "/api/v1/capabilities", "/api/v1/auth/bootstrap", "/api/v1/auth/csrf")
@@ -59,7 +64,7 @@ final class AuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws ServletException, IOException {
-        if (!request.getRequestURI().startsWith("/api")) {
+        if (!request.getRequestURI().startsWith("/api") || hook(request)) {
             chain.doFilter(request, response);
             return;
         }

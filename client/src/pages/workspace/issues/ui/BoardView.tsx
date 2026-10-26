@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { IconButton, useToast } from '@astryxdesign/core';
 import { useQueryClient } from '@tanstack/react-query';
 import { authError } from '@/shared/api';
@@ -18,7 +19,9 @@ type Lane = { key: string; name: string; category: ColumnCategory; cards: Issue[
  * a project a card is carried to another lane or place (useBoardMove) by mouse, by a resting finger or by the keys,
  * which moves the issue there.
  */
-export function BoardView({ scope, items, search, onCreate }: { scope: Scope; items: readonly Issue[]; search: IssueSearch; onCreate?: (status: string) => void }) {
+export function BoardView({ scope, items, search, onCreate, badges }: {
+  scope: Scope; items: readonly Issue[]; search: IssueSearch; onCreate?: (status: string) => void; badges?: ReadonlyMap<string, ReactNode>;
+}) {
   const client = useQueryClient();
   const toast = useToast();
   const byPosition = (a: Issue, b: Issue) => a.position - b.position || a.id.localeCompare(b.id);
@@ -46,7 +49,7 @@ export function BoardView({ scope, items, search, onCreate }: { scope: Scope; it
           <IssueLink workspaceId={scope.workspaceId} item={item} search={search} className={styles.card} {...move.cardProps(item)}>
             <span className={styles.cardKey}>{item.key}</span>
             <span className={styles.cardTitle}>{item.title}</span>
-            <span className={styles.cardMeta}>{item.priority ? <PriorityMark priority={item.priority} /> : <span />}{item.assigneeId && <DefaultAvatar seed={item.assigneeId} name={item.assigneeName ?? ''} size={20} />}</span>
+            <span className={styles.cardMeta}><span className={styles.cardMarks}>{item.priority && <PriorityMark priority={item.priority} />}{badges?.get(item.id)}</span>{item.assigneeId && <DefaultAvatar seed={item.assigneeId} name={item.assigneeName ?? ''} size={20} />}</span>
           </IssueLink>
         </li>)}</ul>
       </section>)}

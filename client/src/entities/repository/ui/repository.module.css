@@ -1,0 +1,34 @@
+/* The states as GitHub colours them: open green, merged purple, closed red, a draft grey. */
+.links, .link, .badge { --pr-open: #3fb950; --pr-merged: #a371f7; --pr-closed: #f85149; --pr-draft: var(--color-icon-secondary); }
+
+/* An issue's code links: a row each, its mark, its words, its state and a hint that it opens elsewhere. */
+.links { display: flex; flex-direction: column; gap: 2px; margin: 0; padding: 0; list-style: none; }
+.link { display: flex; align-items: center; gap: var(--spacing-2); min-block-size: 2rem; padding: 0 var(--spacing-2); border-radius: var(--radius-element);
+  color: var(--color-text-primary); font-size: 0.8125rem; text-decoration: none; }
+.link:hover { background: var(--color-overlay-hover); }
+.link:focus-visible { outline: var(--focus-outline-width) var(--focus-outline-style) var(--focus-outline-color); }
+.linkIcon { display: inline-grid; place-items: center; flex-shrink: 0; inline-size: 1rem; block-size: 1rem; color: var(--color-icon-secondary); }
+.linkIcon svg { inline-size: 0.9375rem; block-size: 0.9375rem; }
+.linkIcon[data-state="open"] { color: var(--pr-open); }
+.linkIcon[data-state="merged"] { color: var(--pr-merged); }
+.linkIcon[data-state="closed"] { color: var(--pr-closed); }
+.linkText { display: flex; align-items: baseline; gap: var(--spacing-1-5, 0.375rem); flex: 1; min-inline-size: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.number { color: var(--color-text-secondary); font-variant-numeric: tabular-nums; }
+.sha, .branch { font-family: var(--font-family-mono, ui-monospace, monospace); font-size: 0.75rem; color: var(--color-text-secondary); }
+.branch { color: var(--color-text-primary); }
+.state { flex-shrink: 0; padding: 1px 6px; border-radius: var(--radius-full); font-size: 0.6875rem; font-weight: 500; color: var(--pr-draft);
+  background: color-mix(in srgb, currentColor 14%, transparent); }
+.state[data-state="open"] { color: var(--pr-open); }
+.state[data-state="merged"] { color: var(--pr-merged); }
+.state[data-state="closed"] { color: var(--pr-closed); }
+.external { display: inline-flex; flex-shrink: 0; color: var(--color-icon-tertiary, var(--color-icon-secondary)); opacity: 0; transition: opacity var(--duration-fast); }
+.external svg { inline-size: 0.75rem; block-size: 0.75rem; }
+.link:hover .external, .link:focus-visible .external { opacity: 1; }
+
+/* A card's or row's badge: the request's icon in its state's colour and its number. */
+.badge { display: inline-flex; align-items: center; gap: 3px; flex-shrink: 0; block-size: 1.125rem; padding: 0 5px; border-radius: var(--radius-full);
+  font-size: 0.6875rem; font-weight: 500; font-variant-numeric: tabular-nums; color: var(--pr-draft); background: color-mix(in srgb, currentColor 12%, transparent); }
+.badge svg { inline-size: 0.6875rem; block-size: 0.6875rem; }
+.badge[data-state="open"] { color: var(--pr-open); }
+.badge[data-state="merged"] { color: var(--pr-merged); }
+.badge[data-state="closed"] { color: var(--pr-closed); }

@@ -5,6 +5,7 @@ import { PageFrame, PageState, QueryMessage } from '@/shared/ui';
 import { projectQuery } from '@/entities/project';
 import { canManage as canManageIn, workspaceQuery } from '@/entities/workspace';
 import { BoardSettings } from './BoardSettings';
+import { IntegrationSettings } from './IntegrationSettings';
 import { ProjectGeneralSettings } from './ProjectGeneralSettings';
 
 /**
@@ -22,6 +23,7 @@ export function ProjectSettingsPage() {
   return <PageFrame title={project.data ? `${project.data.name} · ${entry.label}` : entry.label} icon={entry.icon} width="narrow">
     {!project.data ? <QueryMessage pending={project.isPending} error={project.error} retry={() => { void project.refetch(); }} />
       : section === 'general' ? <ProjectGeneralSettings key={project.data.id} project={project.data} canManage={canManage} />
+      : section === 'integrations' ? <IntegrationSettings project={project.data} canManage={canManage} />
       : <BoardSettings project={project.data} canManage={canManage} />}
   </PageFrame>;
 }

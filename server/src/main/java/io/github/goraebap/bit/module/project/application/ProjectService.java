@@ -509,7 +509,7 @@ public class ProjectService implements ProjectFacade {
     }
 
     private static String agent(CurrentUser actor) {
-        return actor.method() == CurrentUser.Method.API_KEY ? actor.agentName() : null;
+        return actor.agent();
     }
 
     private static void version(long actual, long expected) {

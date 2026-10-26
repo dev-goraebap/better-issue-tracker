@@ -85,6 +85,14 @@ public class CommentService implements CommentFacade {
         changed(actor, target, comment, "comment_restored");
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public java.util.Optional<String> body(CurrentUser actor, String workspaceId, String commentId) {
+        var comment = access(actor, workspaceId, commentId);
+        targetFacade.requireAccess(actor, workspaceId, comment.targetType(), comment.targetId(), false);
+        return comment.audit().deletedAt() != null ? java.util.Optional.empty() : java.util.Optional.of(comment.body());
+    }
+
     private Comment access(CurrentUser actor, String workspaceId, String id) {
         workspaceFacade.requireAccess(actor, workspaceId, WorkspaceFacade.Action.READ);
         return commentRepository.findById(workspaceId, id).orElseThrow(CommentErrorCode.COMMENT_NOT_FOUND::raise);
@@ -114,6 +122,6 @@ public class CommentService implements CommentFacade {
     }
 
     private static String agent(CurrentUser actor) {
-        return actor.method() == CurrentUser.Method.API_KEY ? actor.agentName() : null;
+        return actor.agent();
     }
 }

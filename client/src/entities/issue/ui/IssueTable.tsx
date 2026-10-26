@@ -17,8 +17,10 @@ import styles from './issue.module.css';
  * without a property leaves its cell empty. Headers with a sortKey set the order. A project's list names each status
  * by its column (columnNames); 전체 by the column's category.
  */
-export function IssueTable({ workspaceId, rows, search, columns, columnNames, order, foot }: {
+export function IssueTable({ workspaceId, rows, search, columns, columnNames, order, foot, badges }: {
   workspaceId: string; rows: Issue[]; search: IssueSearch; columns: readonly ViewColumn[]; columnNames?: ReadonlyMap<string, string>; order: ListSort; foot?: ReactNode;
+  /** What another part of the app adds after an issue's title (its pull requests, D-087), by issue id. */
+  badges?: ReadonlyMap<string, ReactNode>;
 }) {
   const sheet = useMemo<SheetColumn<Issue>[]>(() => {
     const cells: Record<ViewColumn, Omit<SheetColumn<Issue>, 'key'>> = {
@@ -34,9 +36,10 @@ export function IssueTable({ workspaceId, rows, search, columns, columnNames, or
       { key: 'title', header: '제목', sortKey: 'title', render: row => <>
         <span className={styles.key}>{row.key}</span>
         <IssueLink workspaceId={workspaceId} item={row} search={search} className={SHEET_ROW_LINK}>{row.title}</IssueLink>
+        {badges?.get(row.id)}
       </> },
       ...columns.map(column => ({ key: column, ...cells[column] })),
     ];
-  }, [workspaceId, search, columns, columnNames]);
+  }, [workspaceId, search, columns, columnNames, badges]);
   return <SheetTable label="이슈 목록" columns={sheet} rows={rows} rowKey={row => row.id} order={order} minWidth={`${24 + columns.length * 7}rem`} foot={foot} />;
 }

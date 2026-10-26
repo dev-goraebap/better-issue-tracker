@@ -14,6 +14,7 @@ import {
   archiveItem, deleteItem, itemQuery, labelOptions, LabelTokens, moveItem, NO_STATUS, peopleOptions, PersonCell, priorityOptions, PriorityMark, refreshItems,
   StatusBadge, statusOptions, updateItem, type IssueSearch, type Priority, type Issue,
 } from '@/entities/issue';
+import { branchName, codeLinksQuery, CodeLinkList, integrationsQuery } from '@/entities/repository';
 import { refreshTimeline } from '../api/timeline';
 import { IssueActivity } from './IssueActivity';
 import { IssueDescription } from './IssueDescription';
@@ -48,6 +49,8 @@ export function IssueDetail({ workspaceId, projectId, id, search }: { workspaceI
   const result = useQuery(itemQuery(workspaceId, projectId, id));
   const columns = useQuery(columnsQuery(workspaceId, projectId)).data ?? [];
   const labels = useQuery(labelsQuery(workspaceId)).data ?? [];
+  const hasRepository = (useQuery(integrationsQuery(workspaceId, projectId)).data ?? []).length > 0;
+  const links = useQuery({ ...codeLinksQuery(workspaceId, projectId, id), enabled: hasRepository }).data ?? [];
   const members = useMembers(workspaceId).items;
   const role = useQuery(workspaceQuery(workspaceId)).data?.myRole;
   const canWrite = canWriteIn(role);
@@ -90,11 +93,16 @@ export function IssueDetail({ workspaceId, projectId, id, search }: { workspaceI
     ...(item.dueDate ? [['기한', <span className={styles.dated}><NavIcon name="calendar" />{dateText(item.dueDate)}</span>] as [string, ReactNode]] : []),
   ];
   const leave = () => { if (panel) panel.onClose(); else void navigate(list); };
+  const copyBranch = () => {
+    const branch = branchName(item.key, item.title);
+    void navigator.clipboard?.writeText(branch).then(() => toast({ body: `브랜치 이름을 복사했습니다: ${branch}` }), () => toast({ body: '복사하지 못했습니다' }));
+  };
   return <Surface title={item.title} wrapsTitle back={back} width="default" actions={<>
     {canWrite && <SettingsAction label="편집" tooltip="편집" icon="edit"
       onClick={() => void navigate({ to: '/workspaces/$workspaceId/projects/$projectId/issues/$issueId/edit', params: { workspaceId, projectId, issueId: id } })} />}
     <MoreMenu label="이슈 메뉴" variant="ghost" size={panel ? 'sm' : undefined} placement="end" items={[
       { label: '링크 복사', icon: <NavIcon name="link" />, onClick: () => void navigator.clipboard?.writeText(`${window.location.origin}/workspaces/${workspaceId}/projects/${projectId}/issues/${id}`) },
+      { label: '브랜치 이름 복사', icon: <NavIcon name="branch" />, onClick: copyBranch },
       ...(canWrite ? [
         { label: item.archivedAt ? '보관 해제' : '보관', icon: <NavIcon name="documents" />, onClick: () => { void save(version => archiveItem(workspaceId, projectId, id, version, !item.archivedAt)).then(isSaved => { if (isSaved && !item.archivedAt) leave(); }); } },
         { label: '삭제', icon: <NavIcon name="delete" />, onClick: () => setDeleting(true) },
@@ -107,6 +115,11 @@ export function IssueDetail({ workspaceId, projectId, id, search }: { workspaceI
           <SectionHeader id="detail-body" title="설명" />
           <IssueDescription key={item.id} value={item.description ?? ''} canWrite={canWrite} onSave={description => patch({ description })} />
         </section>
+        {(hasRepository || links.length > 0) && <section aria-labelledby="detail-code">
+          <SectionHeader id="detail-code" title="연결된 코드" actions={<SettingsAction label="브랜치 이름 복사" tooltip="브랜치 이름 복사" icon="branch" onClick={copyBranch} />} />
+          {links.length > 0 ? <CodeLinkList links={links} />
+            : <p className={styles.codeHint}>브랜치나 커밋, PR 제목에 <code>{item.key}</code>를 넣으면 여기에 붙습니다. 브랜치 이름은 오른쪽 버튼으로 복사하세요.</p>}
+        </section>}
         <IssueActivity workspaceId={workspaceId} projectId={projectId} issueId={id} canWrite={canWrite} canModerate={canManage(role)} />
       </VStack>
       <aside className={styles.aside} aria-label="속성">

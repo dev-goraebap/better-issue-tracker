@@ -47,8 +47,9 @@ class AuthSecurityConfig {
                 .csrf(c -> c.csrfTokenRepository(signedCsrfTokens)
                         .sessionAuthenticationStrategy(new NullAuthenticatedSessionStrategy())
                         .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler())
-                        .requireCsrfProtectionMatcher(request ->
-                                !AuthenticationFilter.safe(request) && !AuthenticationFilter.bearer(request)))
+                        .requireCsrfProtectionMatcher(request -> !AuthenticationFilter.safe(request)
+                                && !AuthenticationFilter.bearer(request)
+                                && !AuthenticationFilter.hook(request)))
                 .authorizeHttpRequests(a -> a.dispatcherTypeMatchers(DispatcherType.ERROR, DispatcherType.FORWARD)
                         .permitAll()
                         .requestMatchers(
@@ -180,6 +181,11 @@ class AuthSecurityConfig {
                         .authenticated()
                         .requestMatchers(HttpMethod.DELETE, "/api/v1/workspaces/*/comments/*")
                         .authenticated()
+                        // Repository integrations (D-087): badges for issue lists, and the hosts' signed webhooks.
+                        .requestMatchers(HttpMethod.GET, "/api/v1/workspaces/*/pull-requests")
+                        .authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/hooks/*")
+                        .permitAll()
                         .requestMatchers("/api", "/api/**")
                         .denyAll()
                         .requestMatchers(HttpMethod.GET, "/**")

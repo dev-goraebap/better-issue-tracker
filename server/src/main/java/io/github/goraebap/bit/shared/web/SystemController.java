@@ -5,15 +5,18 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 import javax.sql.DataSource;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 class SystemController {
     private final DataSource dataSource;
+    private final boolean gitIntegration;
 
-    SystemController(DataSource dataSource) {
+    SystemController(DataSource dataSource, @Value("${app.git.encryption-key:}") String gitKey) {
         this.dataSource = dataSource;
+        this.gitIntegration = gitKey != null && !gitKey.isBlank();
     }
 
     @Operation(summary = "Check the server and its database")
@@ -31,6 +34,6 @@ class SystemController {
     @Operation(summary = "Read available optional capabilities")
     @GetMapping(value = "/api/v1/capabilities", produces = "application/json")
     SystemViews.Capabilities capabilities() {
-        return new SystemViews.Capabilities(false, false, true, false, false);
+        return new SystemViews.Capabilities(false, gitIntegration, true, false, false);
     }
 }

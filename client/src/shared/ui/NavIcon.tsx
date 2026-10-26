@@ -3,7 +3,7 @@ import {
   ChevronDown, ChevronLeft, ChevronRight, ChevronsUpDown, CircleCheck, CircleDot, Clock, Copy, Ellipsis, File, FileText, Filter, Flag, Folder, GitBranch, GripVertical, Hash, House,
   Inbox, KanbanSquare, LayoutGrid, LayoutList, Link, ListFilter, ListTodo, Lock, LogOut, Mail, Maximize2, MessageSquare, Milestone, PanelLeft, Paperclip,
   Pencil, Plus, RefreshCw, Repeat, Rows3, Scale, Search, Settings, Shield, SlidersHorizontal, Sparkles, Table2, Tag, Trash2, User, Users, Workflow, X,
-  ArrowUp, Bold, Bug, LayoutTemplate, Code, Heading1, Heading2, Heading3, Italic, List, ListChecks, ListOrdered, Minus, Redo2, SquareCode, Strikethrough, TextQuote, Type, Undo2, Unlink,
+  ArrowUp, Bold, Bug, LayoutTemplate, Download, ExternalLink, GitCommitHorizontal, GitMerge, GitPullRequest, GitPullRequestClosed, GitPullRequestDraft, Unplug, Webhook, Code, Heading1, Heading2, Heading3, Italic, List, ListChecks, ListOrdered, Minus, Redo2, SquareCode, Strikethrough, TextQuote, Type, Undo2, Unlink,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -97,6 +97,16 @@ const icons: Record<string, LucideIcon> = {
   // Issue templates (D-077).
   bug: Bug,
   template: LayoutTemplate,
+  // Repository integrations (D-087).
+  'pull-request': GitPullRequest,
+  'pull-request-draft': GitPullRequestDraft,
+  'pull-request-closed': GitPullRequestClosed,
+  merge: GitMerge,
+  commit: GitCommitHorizontal,
+  webhook: Webhook,
+  download: Download,
+  external: ExternalLink,
+  unplug: Unplug,
 };
 
 /** A menu or action icon by name; an unknown name draws a plain file rather than nothing. */

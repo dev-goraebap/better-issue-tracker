@@ -204,6 +204,6 @@ public class DecisionService implements DecisionFacade {
     }
 
     private static String agent(CurrentUser actor) {
-        return actor.method() == CurrentUser.Method.API_KEY ? actor.agentName() : null;
+        return actor.agent();
     }
 }

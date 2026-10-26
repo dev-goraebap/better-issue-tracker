@@ -201,7 +201,8 @@ public class IamService {
     @Transactional(readOnly = true)
     public IamFacade.User actor(CurrentUser actor, boolean sessionOnly) {
         Identity identity = requireActor(actor, sessionOnly);
-        if (iamRepository.findPassword(identity.id()).orElseThrow().mustChange())
+        if (actor.method() != CurrentUser.Method.INTEGRATION
+                && iamRepository.findPassword(identity.id()).orElseThrow().mustChange())
             throw AuthErrorCode.AUTH_FORBIDDEN.raise();
         return summary(identity);
     }
@@ -271,6 +272,13 @@ public class IamService {
         if (actor == null) throw AuthErrorCode.AUTH_UNAUTHENTICATED.raise();
         if (sessionOnly && actor.method() != CurrentUser.Method.SESSION) throw AuthErrorCode.AUTH_FORBIDDEN.raise();
         Instant now = clock.instant();
+        // A repository host's webhook acts as the member who connected the repository (D-087); the server made this
+        // identity after checking the delivery's signature, so there is no credential to look up.
+        if (actor.method() == CurrentUser.Method.INTEGRATION) {
+            if (actor.credentialId() != null || actor.agentName() == null)
+                throw AuthErrorCode.AUTH_UNAUTHENTICATED.raise();
+            return iamRepository.findUser(actor.userId()).orElseThrow(AuthErrorCode.AUTH_UNAUTHENTICATED::raise);
+        }
         if (actor.method() == CurrentUser.Method.SESSION) {
             if (iamRepository
                     .findSession(actor.credentialId())

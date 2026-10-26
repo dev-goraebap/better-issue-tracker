@@ -9,6 +9,9 @@ public interface LabelFacade {
     /** Live labels of the workspace among the given ids; unknown, deleted and foreign ids are left out. */
     Map<String, LabelRef> findAllById(CurrentUser actor, String workspaceId, Set<String> labelIds);
 
+    /** The live label of that name (letter case aside), made with the colour when there is none (D-087). */
+    String ensure(CurrentUser actor, String workspaceId, String name, String color);
+
     /** The workspace's live labels, system labels first and then by name. */
     java.util.List<LabelRef> findAll(CurrentUser actor, String workspaceId);
 

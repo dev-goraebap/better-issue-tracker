@@ -25,6 +25,7 @@ export const WORKSPACE_SETTINGS_MENU: readonly MenuEntry[] = [
 export const PROJECT_SETTINGS_MENU: readonly MenuEntry[] = [
   { path: '/general', label: '일반', icon: 'settings' },
   { path: '/board', label: '보드 칸', icon: 'board' },
+  { path: '/integrations', label: '저장소 연동', icon: 'branch' },
 ];
 
 /** The member's own settings, which the profile card's gear opens, outside any workspace (/settings/…). */

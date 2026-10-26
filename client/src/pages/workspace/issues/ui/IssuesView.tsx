@@ -1,14 +1,15 @@
 import { useMemo, useState } from 'react';
 import { Button, useToast } from '@astryxdesign/core';
 import { useMediaQuery } from '@astryxdesign/core/hooks';
-import { useQueries, useQueryClient } from '@tanstack/react-query';
+import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { MOBILE_QUERY } from '@/shared/config';
-import { authError } from '@/shared/api';
+import { authError, capabilitiesQueryOptions } from '@/shared/api';
 import { useGo } from '@/shared/lib/routed-panel';
 import { DefaultAvatar, ListSummary, ListToolbar, PageState, useFillRoom, type ListDisplay, type ListFilter, type ListSort, type ListViews } from '@/shared/ui';
 import type { Label } from '@/entities/label';
 import { columnsQuery } from '@/entities/project';
 import type { Member } from '@/entities/workspace';
+import { PullBadge, pullBadgesQuery } from '@/entities/repository';
 import {
   CATEGORY_LABELS, FILTER_KEYS, filterIssues, IssueRows, IssueTable, NO_FILTER, PRIORITIES, refreshItems, setViewTweak, SYSTEM_LABEL, updateItem,
   updateView, VIEW_COLUMNS, VIEW_LAYOUTS, VIEW_SORT_KEYS, type effectiveView, type IssueSearch, type IssueView, type ViewColumn, type ViewLayout, type ViewSort, type ViewTweak,
@@ -55,6 +56,16 @@ export function IssuesView({ scope, view, tweak, effective, issues, labels, memb
   const { workspaceId } = scope;
   const canEdit = view.canEdit;
   const rows = useMemo(() => filterIssues(issues, effective.filters, effective.sort, search.q), [issues, effective.filters, effective.sort, search.q]);
+  // The pull requests of the issues on screen, for their badges, when the server keeps repository integrations (D-087).
+  const hasRepositories = useQuery(capabilitiesQueryOptions).data?.gitIntegration ?? false;
+  const badgeIds = rows.slice(0, 500).map(row => row.id);
+  const badgeProjects = [...new Set(rows.slice(0, 500).map(row => row.projectId))];
+  const pulls = useQuery({ ...pullBadgesQuery(workspaceId, badgeProjects, badgeIds), enabled: hasRepositories && badgeIds.length > 0 }).data;
+  const badges = useMemo(() => {
+    const byIssue = new Map<string, NonNullable<typeof pulls>>();
+    for (const pull of pulls ?? []) byIssue.set(pull.issueId, [...(byIssue.get(pull.issueId) ?? []), pull]);
+    return new Map([...byIssue].map(([id, list]) => [id, <PullBadge key={id} pulls={list} />]));
+  }, [pulls]);
   // A row names its status by its column (검토 중), in 전체 too: there every project's columns are read.
   const allColumns = useQueries({ queries: scope.project ? [] : scope.projects.map(project => columnsQuery(scope.workspaceId, project.id)) });
   // Kept as one string so the map changes only when a column does (the query results are new arrays each render).
@@ -133,10 +144,10 @@ export function IssuesView({ scope, view, tweak, effective, issues, labels, memb
       filters={filters} onFiltersChange={changeFilters} order={order} views={views} display={display} applied={applied}
       action={create && { label: '새 이슈', icon: 'plus', onClick: create, isCreate: true }} />
     {effective.layout === 'list' && (rows.length === 0 ? empty('이슈', '첫 이슈를 만들면 여기에 보입니다.') : isMobile
-      ? <><IssueRows workspaceId={workspaceId} rows={visible} search={search} columns={effective.columns} columnNames={columnNames} />{summary}</>
-      : <IssueTable workspaceId={workspaceId} rows={visible} search={search} columns={effective.columns} columnNames={columnNames} order={order} foot={summary} />)}
+      ? <><IssueRows workspaceId={workspaceId} rows={visible} search={search} columns={effective.columns} columnNames={columnNames} badges={badges} />{summary}</>
+      : <IssueTable workspaceId={workspaceId} rows={visible} search={search} columns={effective.columns} columnNames={columnNames} order={order} foot={summary} badges={badges} />)}
     {effective.layout === 'board' && (withStatus.length === 0 && !scope.project ? empty('상태가 있는 이슈', '이슈에 상태를 정하면 칸반의 칸에 놓입니다.')
-      : <BoardView scope={scope} items={withStatus} search={search} onCreate={onCreate} />)}
+      : <BoardView scope={scope} items={withStatus} search={search} onCreate={onCreate} badges={badges} />)}
     {effective.layout === 'calendar' && <div ref={calendarRoom} className={styles.calendarRoom}>
       <div className={styles.calendarBar}><CalendarBar day={search.date ?? currentDay()} onPlace={date => go({ date: date === currentDay() ? undefined : date })} /></div>
       <IssueCalendar workspaceId={workspaceId} items={rows} anchor={search.date ?? currentDay()} onOpen={href => openPage(href)}

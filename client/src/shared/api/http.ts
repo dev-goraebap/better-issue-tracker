@@ -1,7 +1,8 @@
 import type { components } from './schema';
 
 export class ApiError extends Error {
-  constructor(public readonly status: number, public readonly code: string, public readonly traceId?: string) {
+  /** detail: the server's own sentence for this failure; shown only where it is written for people (authError). */
+  constructor(public readonly status: number, public readonly code: string, public readonly traceId?: string, public readonly detail?: string) {
     super('요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.');
     this.name = 'ApiError';
   }
@@ -14,15 +15,17 @@ export function notifySessionExpired() { onUnauthorized(); }
 async function failure(response: Response, quiet = false): Promise<never> {
   let code = 'COMMON_REQUEST_FAILED';
   let traceId: string | undefined;
+  let detail: string | undefined;
   if (response.headers.get('content-type')?.includes('application/problem+json')) {
     const problem: unknown = await response.json();
     if (problem && typeof problem === 'object') {
       if ('code' in problem && typeof problem.code === 'string') code = problem.code;
       if ('traceId' in problem && typeof problem.traceId === 'string') traceId = problem.traceId;
+      if ('detail' in problem && typeof problem.detail === 'string') detail = problem.detail;
     }
   }
   if (response.status === 401 && code !== 'AUTH_INVALID_CREDENTIALS' && !quiet) onUnauthorized();
-  throw new ApiError(response.status, code, traceId);
+  throw new ApiError(response.status, code, traceId, detail);
 }
 export async function readJson<T>(path: string, signal?: AbortSignal, quietUnauthorized = false): Promise<T> {
   const response = await fetch(path, { signal, credentials: 'same-origin', headers: { Accept: 'application/json' } });
@@ -115,6 +118,8 @@ export function authError(error: unknown): string {
     WORKSPACE_INVITATION_LOGIN_REQUIRED: '이미 계정이 있습니다. 기존 계정으로 로그인해 주세요.',
     WORKSPACE_INVITATION_ACCOUNT_MISMATCH: '초대받은 이메일의 계정으로 로그인해 주세요.',
   };
+  // A repository host's refusal is written for people (D-087): its reason, such as a token without access, is shown.
+  if (error.code.startsWith('INTEGRATION_') && error.detail) return error.detail;
   return messages[error.code] ?? error.message;
 }
 

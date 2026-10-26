@@ -846,6 +846,125 @@
         }
       }
     },
+    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/integrations" : {
+      "get" : {
+        "tags" : [ "integration-controller" ],
+        "operationId" : "list_3",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "projectId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/RepositoryIntegration"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post" : {
+        "tags" : [ "integration-controller" ],
+        "summary" : "Connect a repository: the token is checked against the host before it is kept",
+        "operationId" : "connect",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "projectId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ConnectRepository"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "description" : "연결됨",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/RepositoryIntegration"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/integrations/{integrationId}/import" : {
+      "post" : {
+        "tags" : [ "integration-controller" ],
+        "summary" : "Bring in the repository's open issues with their comments, and link its open pull requests",
+        "operationId" : "importOpen",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "projectId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "integrationId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/IssueImport"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/workspaces/{workspaceId}/projects/{projectId}/columns" : {
       "get" : {
         "tags" : [ "project-controller" ],
@@ -991,7 +1110,7 @@
     "/api/v1/workspaces/{workspaceId}/labels" : {
       "get" : {
         "tags" : [ "label-controller" ],
-        "operationId" : "list_3",
+        "operationId" : "list_4",
         "parameters" : [ {
           "name" : "workspaceId",
           "in" : "path",
@@ -1749,6 +1868,161 @@
         }
       }
     },
+    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/integrations/{integrationId}" : {
+      "delete" : {
+        "tags" : [ "integration-controller" ],
+        "operationId" : "disconnect",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "projectId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "integrationId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        }
+      },
+      "patch" : {
+        "tags" : [ "integration-controller" ],
+        "operationId" : "revise_3",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "projectId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "integrationId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ReviseRepositoryIntegration"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/RepositoryIntegration"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/integration-rules" : {
+      "get" : {
+        "tags" : [ "integration-controller" ],
+        "operationId" : "rules",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "projectId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/IntegrationRules"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch" : {
+        "tags" : [ "integration-controller" ],
+        "operationId" : "setRules",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "projectId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SetIntegrationRules"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/IntegrationRules"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/workspaces/{workspaceId}/projects/{projectId}/columns/{columnId}" : {
       "get" : {
         "tags" : [ "project-controller" ],
@@ -1944,7 +2218,7 @@
       },
       "patch" : {
         "tags" : [ "label-controller" ],
-        "operationId" : "revise_3",
+        "operationId" : "revise_4",
         "parameters" : [ {
           "name" : "workspaceId",
           "in" : "path",
@@ -2013,7 +2287,7 @@
       },
       "patch" : {
         "tags" : [ "comment-controller" ],
-        "operationId" : "revise_4",
+        "operationId" : "revise_5",
         "parameters" : [ {
           "name" : "workspaceId",
           "in" : "path",
@@ -2301,6 +2575,93 @@
         }
       }
     },
+    "/api/v1/workspaces/{workspaceId}/pull-requests" : {
+      "get" : {
+        "tags" : [ "code-link-controller" ],
+        "summary" : "The pull and merge requests of the given issues of the given projects, for badges",
+        "operationId" : "pulls",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "projects",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "issues",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/PullRequestBadge"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/issues/{issueId}/code-links" : {
+      "get" : {
+        "tags" : [ "integration-controller" ],
+        "operationId" : "links",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "projectId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "issueId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/CodeLink"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/workspaces/{workspaceId}/projects/{projectId}/issues/counts" : {
       "get" : {
         "tags" : [ "issue-controller" ],
@@ -2492,7 +2853,7 @@
     "/api/v1/workspaces/{workspaceId}/project-members" : {
       "get" : {
         "tags" : [ "project-member-controller" ],
-        "operationId" : "list_4",
+        "operationId" : "list_5",
         "parameters" : [ {
           "name" : "workspaceId",
           "in" : "path",
@@ -3039,7 +3400,7 @@
     "/api/v1/me/workspaces" : {
       "get" : {
         "tags" : [ "workspace-controller" ],
-        "operationId" : "list_5",
+        "operationId" : "list_6",
         "parameters" : [ {
           "name" : "cursor",
           "in" : "query",
@@ -3539,6 +3900,111 @@
         },
         "required" : [ "expectedVersion", "targetColumnId" ]
       },
+      "ConnectRepository" : {
+        "type" : "object",
+        "properties" : {
+          "provider" : {
+            "type" : "string",
+            "enum" : [ "github", "gitlab", "gitea" ]
+          },
+          "baseUrl" : {
+            "type" : [ "string", "null" ],
+            "description" : "The host's web address; GitHub and GitLab default to their public sites, Gitea needs one",
+            "maxLength" : 255,
+            "minLength" : 0
+          },
+          "repository" : {
+            "type" : "string",
+            "description" : "owner/name, or GitLab's group/project path",
+            "maxLength" : 255,
+            "minLength" : 0
+          },
+          "token" : {
+            "type" : "string",
+            "maxLength" : 500,
+            "minLength" : 0
+          }
+        },
+        "required" : [ "provider", "repository", "token" ]
+      },
+      "RepositoryIntegration" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string"
+          },
+          "provider" : {
+            "type" : "string",
+            "enum" : [ "github", "gitlab", "gitea" ]
+          },
+          "baseUrl" : {
+            "type" : "string",
+            "description" : "The host's web address"
+          },
+          "repository" : {
+            "type" : "string",
+            "description" : "owner/name, or GitLab's group/project path"
+          },
+          "webUrl" : {
+            "type" : "string"
+          },
+          "accountLogin" : {
+            "type" : [ "string", "null" ],
+            "description" : "Whose the token is, when the host says"
+          },
+          "webhookUrl" : {
+            "type" : "string",
+            "description" : "Where the host delivers its webhooks"
+          },
+          "webhookSecret" : {
+            "type" : "string",
+            "description" : "The secret the webhooks are signed with, for registering it by hand"
+          },
+          "webhookRegistered" : {
+            "type" : "boolean",
+            "description" : "Whether BIT registered the webhook itself; otherwise the manager registers it"
+          },
+          "syncsIssues" : {
+            "type" : "boolean"
+          },
+          "commentsLink" : {
+            "type" : "boolean"
+          },
+          "active" : {
+            "type" : "boolean"
+          },
+          "lastEventAt" : {
+            "type" : [ "string", "null" ],
+            "format" : "date-time"
+          },
+          "lastError" : {
+            "type" : [ "string", "null" ]
+          },
+          "version" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        },
+        "required" : [ "accountLogin", "active", "baseUrl", "commentsLink", "id", "lastError", "lastEventAt", "provider", "repository", "syncsIssues", "version", "webUrl", "webhookRegistered", "webhookSecret", "webhookUrl" ]
+      },
+      "IssueImport" : {
+        "type" : "object",
+        "properties" : {
+          "issues" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "comments" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "pullRequests" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        },
+        "required" : [ "comments", "issues", "pullRequests" ]
+      },
       "CreateBoardColumn" : {
         "type" : "object",
         "properties" : {
@@ -3931,6 +4397,95 @@
         },
         "required" : [ "expectedVersion" ]
       },
+      "ReviseRepositoryIntegration" : {
+        "type" : "object",
+        "properties" : {
+          "expectedVersion" : {
+            "type" : "integer",
+            "format" : "int64",
+            "minimum" : 0
+          },
+          "syncsIssues" : {
+            "type" : [ "boolean", "null" ]
+          },
+          "commentsLink" : {
+            "type" : [ "boolean", "null" ]
+          },
+          "token" : {
+            "type" : [ "string", "null" ],
+            "description" : "A new token, checked against the host",
+            "maxLength" : 500,
+            "minLength" : 0
+          }
+        },
+        "required" : [ "expectedVersion" ]
+      },
+      "SetIntegrationRule" : {
+        "type" : "object",
+        "properties" : {
+          "event" : {
+            "type" : "string",
+            "enum" : [ "branch_push", "pr_opened", "pr_merged", "issue_opened", "issue_closed" ]
+          },
+          "set" : {
+            "type" : "boolean",
+            "description" : "false clears it back to the default"
+          },
+          "columnId" : {
+            "type" : [ "string", "null" ],
+            "description" : "The column to move to; null not to move"
+          }
+        },
+        "required" : [ "event" ]
+      },
+      "SetIntegrationRules" : {
+        "type" : "object",
+        "properties" : {
+          "items" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/SetIntegrationRule"
+            },
+            "maxItems" : 5,
+            "minItems" : 0
+          }
+        },
+        "required" : [ "items" ]
+      },
+      "IntegrationRule" : {
+        "type" : "object",
+        "properties" : {
+          "event" : {
+            "type" : "string",
+            "enum" : [ "branch_push", "pr_opened", "pr_merged", "issue_opened", "issue_closed" ]
+          },
+          "set" : {
+            "type" : "boolean",
+            "description" : "Whether the project set it; otherwise the default column below is used"
+          },
+          "columnId" : {
+            "type" : [ "string", "null" ],
+            "description" : "The column it moves to; null when it does not move"
+          },
+          "defaultColumnId" : {
+            "type" : [ "string", "null" ],
+            "description" : "The column the default moves to"
+          }
+        },
+        "required" : [ "columnId", "defaultColumnId", "event", "set" ]
+      },
+      "IntegrationRules" : {
+        "type" : "object",
+        "properties" : {
+          "items" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/IntegrationRule"
+            }
+          }
+        },
+        "required" : [ "items" ]
+      },
       "UpdateBoardColumn" : {
         "type" : "object",
         "properties" : {
@@ -4171,6 +4726,32 @@
         },
         "required" : [ "action", "actorAgent", "actorId", "actorName", "after", "at", "before", "body", "editedAt", "field", "id", "kind", "version" ]
       },
+      "PullRequestBadge" : {
+        "type" : "object",
+        "properties" : {
+          "issueId" : {
+            "type" : "string"
+          },
+          "provider" : {
+            "type" : "string",
+            "enum" : [ "github", "gitlab", "gitea" ]
+          },
+          "number" : {
+            "type" : "string"
+          },
+          "url" : {
+            "type" : "string"
+          },
+          "title" : {
+            "type" : "string"
+          },
+          "state" : {
+            "type" : "string",
+            "enum" : [ "open", "draft", "merged", "closed" ]
+          }
+        },
+        "required" : [ "issueId", "number", "provider", "state", "title", "url" ]
+      },
       "Project" : {
         "type" : "object",
         "properties" : {
@@ -4382,6 +4963,48 @@
           }
         },
         "required" : [ "items", "nextCursor" ]
+      },
+      "CodeLink" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string"
+          },
+          "provider" : {
+            "type" : "string",
+            "enum" : [ "github", "gitlab", "gitea" ]
+          },
+          "kind" : {
+            "type" : "string",
+            "enum" : [ "issue", "branch", "pull_request", "commit" ]
+          },
+          "externalId" : {
+            "type" : "string",
+            "description" : "A number, a branch name or a commit sha"
+          },
+          "url" : {
+            "type" : "string"
+          },
+          "title" : {
+            "type" : "string"
+          },
+          "state" : {
+            "type" : "string",
+            "enum" : [ "open", "draft", "merged", "closed" ]
+          },
+          "author" : {
+            "type" : [ "string", "null" ]
+          },
+          "detail" : {
+            "type" : [ "string", "null" ],
+            "description" : "A pull request's branch, a commit's branch"
+          },
+          "updatedAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        },
+        "required" : [ "author", "detail", "externalId", "id", "kind", "provider", "state", "title", "updatedAt", "url" ]
       },
       "IssueColumnCount" : {
         "type" : "object",
@@ -4630,7 +5253,7 @@
           },
           "authenticationMethod" : {
             "type" : "string",
-            "enum" : [ "SESSION", "API_KEY" ]
+            "enum" : [ "SESSION", "API_KEY", "INTEGRATION" ]
           },
           "agentName" : {
             "type" : [ "string", "null" ]

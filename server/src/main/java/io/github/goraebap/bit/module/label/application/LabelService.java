@@ -76,6 +76,18 @@ public class LabelService implements LabelFacade {
         return label.id();
     }
 
+    @Override
+    @Transactional
+    public String ensure(CurrentUser actor, String workspaceId, String name, String color) {
+        workspaceFacade.requireAccess(actor, workspaceId, WorkspaceFacade.Action.WRITE_WORK);
+        String wanted = name.strip();
+        return labelRepository.findAllByWorkspaceId(workspaceId).stream()
+                .filter(label -> label.name().equalsIgnoreCase(wanted))
+                .map(Label::id)
+                .findFirst()
+                .orElseGet(() -> create(actor, workspaceId, wanted, color));
+    }
+
     @Transactional
     public void revise(CurrentUser actor, String workspaceId, String labelId, LabelRequests.Update request) {
         workspaceFacade.requireAccess(actor, workspaceId, WorkspaceFacade.Action.WRITE_WORK);
@@ -138,6 +150,6 @@ public class LabelService implements LabelFacade {
     }
 
     private static String agent(CurrentUser actor) {
-        return actor.method() == CurrentUser.Method.API_KEY ? actor.agentName() : null;
+        return actor.agent();
     }
 }

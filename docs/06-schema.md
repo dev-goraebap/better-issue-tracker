@@ -174,17 +174,16 @@ erDiagram
 - **개정 사유**는 열이 아니라 `link`(이슈/결정 `revises` 산출물)다. 변경 요약은 사람이 쓰는 글이라 열로 둔다.
 - 폴더 `folder_id`가 NULL이면 문서함 맨 위에 있다.
 
-## 7. coderef — Git 참조
+## 7. coderef — 저장소 연동 (`V11__repository_integration.sql`, D-087)
 
 | 테이블 | 열 | 제약·인덱스 |
 |---|---|---|
-| `git_repository` | `git_repository_id`, `project_id`, `provider varchar(8)`, `url varchar(512)`, `external_id varchar(128)`, `default_branch varchar(128)`, `webhook_secret_hash varchar(128)`, `read_token_encrypted text?`, `read_token_expires_at?`, 감사 | `ux_git_repository_project_id_url`, `ck_..._provider` (github, gitlab, gitea) |
-| `code_ref` | `code_ref_id`, `git_repository_id`, `kind varchar(16)`, `external_id varchar(128)`, `title text?`, `author_name varchar(128)?`, `author_email varchar(256)?`, `url varchar(512)`, `state varchar(16)?`, `occurred_at`, `created_at`, `updated_at` | `ux_code_ref_repository_id_kind_external_id`, `ix_code_ref_repository_id_occurred_at`, `ck_..._kind` (commit, merge_request, branch) |
+| `repository_integration` | `repository_integration_id`, `workspace_id`, `project_id`, `provider varchar(8)`, `base_url`(호스트 웹 주소), `repository`(owner/name·GitLab 경로), `external_repository_id?`(GitLab 프로젝트 번호), `web_url`, `token_cipher text`, `webhook_secret_cipher text`(둘 다 AES-GCM, 키는 `app.git.encryption-key`), `webhook_id?`(BIT가 등록했을 때), `account_login?`, `syncs_issues`, `comments_link`, `is_active`, `last_event_at?`, `last_error?`, `version`, 생성·수정 감사 | `ux_repository_integration_project_id_provider`(프로젝트마다 호스트별 1개), `(project_id, workspace_id)` → `project` 복합 FK, `ck_..._provider` (github, gitlab, gitea) |
+| `code_link` | `code_link_id`, `repository_integration_id`, `issue_id`, `kind varchar(16)`, `external_id`(번호·브랜치 이름·SHA), `url`, `title`, `state varchar(16)`, `author?`, `detail?`(PR의 브랜치, 커밋의 브랜치, 브랜치의 마지막 커밋), `created_at`, `updated_at` | `ux_code_link_integration_kind_external_issue`, `ix_code_link_issue_id`, 연동을 지우면 함께 지움(`ON DELETE CASCADE`), `ck_..._kind` (issue, branch, pull_request, commit), `ck_..._state` (open, draft, merged, closed) |
+| `integration_rule` | `project_id`, `event varchar(16)`, `board_column_id?`(null: 옮기지 않음), `updated_at`, `updated_by` | PK `(project_id, event)`, `ck_..._event` (branch_push, pr_opened, pr_merged, issue_opened, issue_closed). 행이 없으면 칸의 분류로 정한 기본 칸 |
 
-- 프로젝트 하나에 저장소 여러 개를 붙일 수 있다 (Kaneo는 1개).
-- **커밋 단위로 기록한다**: push 웹훅의 커밋마다 `code_ref` 행을 만들고, 메시지에서 이슈 키를 찾아 `link`(`implements`)를 만든다. `external_id`는 커밋이면 SHA, MR이면 번호, 브랜치면 이름.
-- **Git 정본 읽기(D-028)**: 연결할 때 읽기 전용 토큰을 받아 `read_token_encrypted`에 암호화해 둔다(키는 첫 실행 때 생성하는 비밀값).
-  커밋 웹훅이 오면 그 저장소를 정본으로 쓰는 산출물의 경로가 바뀌었는지 보고, 바뀐 md만 호스팅 API로 받는다. 만료 7일 전부터 화면에 알린다.
+- 카네오처럼 프로젝트마다 호스트별로 저장소 하나다. `kind=issue`인 행이 BIT 이슈와 저장소 이슈를 잇는 미러다.
+- 처음 설계한 `git_repository`·`code_ref`(커밋 행 + `link implements`)는 만들지 않았다. 브랜치·PR·커밋이 모두 이슈 하나에 붙는 표시라 `code_link` 하나로 둔다. Git 정본 문서 읽기(D-028의 md)는 문서함과 함께 다시 정한다.
 
 ## 8. link · activity · comment — 대상이 여럿인 테이블
 

@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
 import { once } from 'node:events';
 import test from 'node:test';
-import { ApiError, readJson } from '../src/shared/api/http';
+import { ApiError, authError, readJson } from '../src/shared/api/http';
 
 test('JSON reads send their Accept header and preserve the response', async () => {
   const server = createServer((request, response) => {
@@ -49,4 +49,9 @@ test('problem responses expose the code and trace without displaying server deta
 test('aborted reads propagate cancellation', async () => {
   const signal = AbortSignal.abort();
   await assert.rejects(readJson('http://127.0.0.1:1', signal), { name: 'AbortError' });
+});
+
+test('a repository host refusal shows its reason while other details stay hidden', () => {
+  assert.equal(authError(new ApiError(400, 'INTEGRATION_HOST_REFUSED', undefined, '토큰이 거절되었습니다')), '토큰이 거절되었습니다');
+  assert.ok(!authError(new ApiError(503, 'MAIL_NOT_CONFIGURED', undefined, 'internal detail')).includes('internal detail'));
 });

@@ -260,6 +260,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/integrations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_3"];
+        put?: never;
+        /** Connect a repository: the token is checked against the host before it is kept */
+        post: operations["connect"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/integrations/{integrationId}/import": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Bring in the repository's open issues with their comments, and link its open pull requests */
+        post: operations["importOpen"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/workspaces/{workspaceId}/projects/{projectId}/columns": {
         parameters: {
             query?: never;
@@ -315,7 +349,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_3"];
+        get: operations["list_4"];
         put?: never;
         post: operations["create_4"];
         delete?: never;
@@ -516,6 +550,38 @@ export interface paths {
         patch: operations["revise_2"];
         trace?: never;
     };
+    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/integrations/{integrationId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["disconnect"];
+        options?: never;
+        head?: never;
+        patch: operations["revise_3"];
+        trace?: never;
+    };
+    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/integration-rules": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["rules"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["setRules"];
+        trace?: never;
+    };
     "/api/v1/workspaces/{workspaceId}/projects/{projectId}/columns/{columnId}": {
         parameters: {
             query?: never;
@@ -545,7 +611,7 @@ export interface paths {
         delete: operations["delete_3"];
         options?: never;
         head?: never;
-        patch: operations["revise_3"];
+        patch: operations["revise_4"];
         trace?: never;
     };
     "/api/v1/workspaces/{workspaceId}/comments/{commentId}": {
@@ -561,7 +627,7 @@ export interface paths {
         delete: operations["delete_4"];
         options?: never;
         head?: never;
-        patch: operations["revise_4"];
+        patch: operations["revise_5"];
         trace?: never;
     };
     "/api/v1/workspaces/{id}": {
@@ -644,6 +710,39 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workspaces/{workspaceId}/pull-requests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The pull and merge requests of the given issues of the given projects, for badges */
+        get: operations["pulls"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/issues/{issueId}/code-links": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["links"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/workspaces/{workspaceId}/projects/{projectId}/issues/counts": {
         parameters: {
             query?: never;
@@ -667,7 +766,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_4"];
+        get: operations["list_5"];
         put?: never;
         post?: never;
         delete?: never;
@@ -763,7 +862,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_5"];
+        get: operations["list_6"];
         put?: never;
         post?: never;
         delete?: never;
@@ -983,6 +1082,49 @@ export interface components {
             beforeItemId?: string | null;
             afterItemId?: string | null;
         };
+        ConnectRepository: {
+            /** @enum {string} */
+            provider: "github" | "gitlab" | "gitea";
+            /** @description The host's web address; GitHub and GitLab default to their public sites, Gitea needs one */
+            baseUrl?: string | null;
+            /** @description owner/name, or GitLab's group/project path */
+            repository: string;
+            token: string;
+        };
+        RepositoryIntegration: {
+            id: string;
+            /** @enum {string} */
+            provider: "github" | "gitlab" | "gitea";
+            /** @description The host's web address */
+            baseUrl: string;
+            /** @description owner/name, or GitLab's group/project path */
+            repository: string;
+            webUrl: string;
+            /** @description Whose the token is, when the host says */
+            accountLogin: string | null;
+            /** @description Where the host delivers its webhooks */
+            webhookUrl: string;
+            /** @description The secret the webhooks are signed with, for registering it by hand */
+            webhookSecret: string;
+            /** @description Whether BIT registered the webhook itself; otherwise the manager registers it */
+            webhookRegistered: boolean;
+            syncsIssues: boolean;
+            commentsLink: boolean;
+            active: boolean;
+            /** Format: date-time */
+            lastEventAt: string | null;
+            lastError: string | null;
+            /** Format: int64 */
+            version: number;
+        };
+        IssueImport: {
+            /** Format: int32 */
+            issues: number;
+            /** Format: int32 */
+            comments: number;
+            /** Format: int32 */
+            pullRequests: number;
+        };
         CreateBoardColumn: {
             /** Format: int64 */
             expectedVersion: number;
@@ -1113,6 +1255,38 @@ export interface components {
             /** @description Omitted: labels are kept. Present: the whole set is replaced; [] or null clears it */
             labelIds?: string[] | null;
         };
+        ReviseRepositoryIntegration: {
+            /** Format: int64 */
+            expectedVersion: number;
+            syncsIssues?: boolean | null;
+            commentsLink?: boolean | null;
+            /** @description A new token, checked against the host */
+            token?: string | null;
+        };
+        SetIntegrationRule: {
+            /** @enum {string} */
+            event: "branch_push" | "pr_opened" | "pr_merged" | "issue_opened" | "issue_closed";
+            /** @description false clears it back to the default */
+            set?: boolean;
+            /** @description The column to move to; null not to move */
+            columnId?: string | null;
+        };
+        SetIntegrationRules: {
+            items: components["schemas"]["SetIntegrationRule"][];
+        };
+        IntegrationRule: {
+            /** @enum {string} */
+            event: "branch_push" | "pr_opened" | "pr_merged" | "issue_opened" | "issue_closed";
+            /** @description Whether the project set it; otherwise the default column below is used */
+            set: boolean;
+            /** @description The column it moves to; null when it does not move */
+            columnId: string | null;
+            /** @description The column the default moves to */
+            defaultColumnId: string | null;
+        };
+        IntegrationRules: {
+            items: components["schemas"]["IntegrationRule"][];
+        };
         UpdateBoardColumn: {
             /** Format: int64 */
             expectedVersion: number;
@@ -1207,6 +1381,16 @@ export interface components {
             before: string | null;
             after: string | null;
         };
+        PullRequestBadge: {
+            issueId: string;
+            /** @enum {string} */
+            provider: "github" | "gitlab" | "gitea";
+            number: string;
+            url: string;
+            title: string;
+            /** @enum {string} */
+            state: "open" | "draft" | "merged" | "closed";
+        };
         Project: {
             id: string;
             workspaceId: string;
@@ -1293,6 +1477,24 @@ export interface components {
         Issues: {
             items: components["schemas"]["Issue"][];
             nextCursor: string | null;
+        };
+        CodeLink: {
+            id: string;
+            /** @enum {string} */
+            provider: "github" | "gitlab" | "gitea";
+            /** @enum {string} */
+            kind: "issue" | "branch" | "pull_request" | "commit";
+            /** @description A number, a branch name or a commit sha */
+            externalId: string;
+            url: string;
+            title: string;
+            /** @enum {string} */
+            state: "open" | "draft" | "merged" | "closed";
+            author: string | null;
+            /** @description A pull request's branch, a commit's branch */
+            detail: string | null;
+            /** Format: date-time */
+            updatedAt: string;
         };
         IssueColumnCount: {
             columnId: string | null;
@@ -1385,7 +1587,7 @@ export interface components {
             instanceAdmin: boolean;
             mustChangePassword: boolean;
             /** @enum {string} */
-            authenticationMethod: "SESSION" | "API_KEY";
+            authenticationMethod: "SESSION" | "API_KEY" | "INTEGRATION";
             agentName?: string | null;
         };
         Spaces: {
@@ -1955,6 +2157,80 @@ export interface operations {
             };
         };
     };
+    list_3: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+                projectId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RepositoryIntegration"][];
+                };
+            };
+        };
+    };
+    connect: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+                projectId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConnectRepository"];
+            };
+        };
+        responses: {
+            /** @description 연결됨 */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RepositoryIntegration"];
+                };
+            };
+        };
+    };
+    importOpen: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+                projectId: string;
+                integrationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IssueImport"];
+                };
+            };
+        };
+    };
     columns: {
         parameters: {
             query?: never;
@@ -2053,7 +2329,7 @@ export interface operations {
             };
         };
     };
-    list_3: {
+    list_4: {
         parameters: {
             query?: never;
             header?: never;
@@ -2625,6 +2901,106 @@ export interface operations {
             };
         };
     };
+    disconnect: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+                projectId: string;
+                integrationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    revise_3: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+                projectId: string;
+                integrationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReviseRepositoryIntegration"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RepositoryIntegration"];
+                };
+            };
+        };
+    };
+    rules: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+                projectId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IntegrationRules"];
+                };
+            };
+        };
+    };
+    setRules: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+                projectId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetIntegrationRules"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IntegrationRules"];
+                };
+            };
+        };
+    };
     column: {
         parameters: {
             query?: never;
@@ -2746,7 +3122,7 @@ export interface operations {
             };
         };
     };
-    revise_3: {
+    revise_4: {
         parameters: {
             query?: never;
             header?: never;
@@ -2794,7 +3170,7 @@ export interface operations {
             };
         };
     };
-    revise_4: {
+    revise_5: {
         parameters: {
             query?: never;
             header?: never;
@@ -3022,6 +3398,55 @@ export interface operations {
             };
         };
     };
+    pulls: {
+        parameters: {
+            query: {
+                projects: string;
+                issues: string;
+            };
+            header?: never;
+            path: {
+                workspaceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PullRequestBadge"][];
+                };
+            };
+        };
+    };
+    links: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+                projectId: string;
+                issueId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CodeLink"][];
+                };
+            };
+        };
+    };
     counts: {
         parameters: {
             query?: {
@@ -3069,7 +3494,7 @@ export interface operations {
             };
         };
     };
-    list_4: {
+    list_5: {
         parameters: {
             query?: never;
             header?: never;
@@ -3279,7 +3704,7 @@ export interface operations {
             };
         };
     };
-    list_5: {
+    list_6: {
         parameters: {
             query?: {
                 cursor?: string;

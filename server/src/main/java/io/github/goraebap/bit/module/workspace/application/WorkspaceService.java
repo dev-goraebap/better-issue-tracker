@@ -105,11 +105,8 @@ public class WorkspaceService implements WorkspaceFacade {
         workspaceRepository.saveAll(
                 List.of(Membership.create(w.id(), actor.userId(), WorkspaceRole.owner, clock.instant())));
         assertOwner(w.id());
-        applicationEventPublisher.publishEvent(new WorkspaceCreatedEvent(
-                w.id(),
-                actor.userId(),
-                actor.method() == CurrentUser.Method.API_KEY ? actor.agentName() : null,
-                w.createdAt()));
+        applicationEventPublisher.publishEvent(
+                new WorkspaceCreatedEvent(w.id(), actor.userId(), actor.agent(), w.createdAt()));
         return w.id();
     }
 
@@ -194,11 +191,7 @@ public class WorkspaceService implements WorkspaceFacade {
         access(actor, id, Action.EDIT_SETTINGS);
         if (!present) return;
         var w = space(id);
-        w.rename(
-                name,
-                actor.userId(),
-                actor.method() == CurrentUser.Method.API_KEY ? actor.agentName() : null,
-                clock.instant());
+        w.rename(name, actor.userId(), actor.agent(), clock.instant());
         workspaceRepository.save(w);
     }
 

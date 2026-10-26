@@ -242,6 +242,63 @@ public class IssueService implements IssueFacade, ColumnIssueSpi {
         applyOrder(actor, ordered, targetColumnId, targetFinal);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public Snapshot get(CurrentUser actor, String workspaceId, String projectId, String issueId) {
+        var project = projectFacade.requireAccess(actor, workspaceId, projectId, false);
+        var w = issueRepository.findById(projectId, issueId, false).orElseThrow(IssueErrorCode.ISSUE_NOT_FOUND::raise);
+        var d = w.details();
+        return new Snapshot(
+                w.id(),
+                w.projectId(),
+                w.number(),
+                project.key() + "-" + w.number(),
+                d.title(),
+                d.description(),
+                text(d.priority()),
+                w.columnId(),
+                w.labelIds(),
+                w.version());
+    }
+
+    @Override
+    @Transactional
+    public String create(CurrentUser actor, String workspaceId, String projectId, NewIssue issue) {
+        var details = new Issue.Details(
+                issue.title(), issue.description(), priority(issue.priority()), null, null, null, null);
+        return create(actor, workspaceId, projectId, details, issue.columnId(), issue.labelIds());
+    }
+
+    @Override
+    @Transactional
+    public void revise(CurrentUser actor, String workspaceId, String projectId, String issueId, Revision revision) {
+        var w = access(actor, workspaceId, projectId, issueId, true, false);
+        var request = new IssueRequests.Update();
+        request.setExpectedVersion(w.version());
+        if (revision.title() != null) request.setTitle(revision.title());
+        if (revision.description() != null) request.setDescription(revision.description());
+        if (revision.priority() != null) request.setPriority(priority(revision.priority()));
+        if (revision.labelIds() != null) request.setLabelIds(List.copyOf(revision.labelIds()));
+        revise(actor, workspaceId, projectId, issueId, request);
+    }
+
+    @Override
+    @Transactional
+    public void moveTo(CurrentUser actor, String workspaceId, String projectId, String issueId, String columnId) {
+        var w = access(actor, workspaceId, projectId, issueId, true, false);
+        if (Objects.equals(w.columnId(), columnId)) return;
+        move(actor, workspaceId, projectId, issueId, w.version(), columnId, null, null);
+    }
+
+    private static Issue.Priority priority(String value) {
+        if (value == null || value.isBlank()) return null;
+        try {
+            return Issue.Priority.valueOf(value.strip().toLowerCase(Locale.ROOT));
+        } catch (IllegalArgumentException unknown) {
+            return null;
+        }
+    }
+
     private Issue access(
             CurrentUser actor, String workspaceId, String projectId, String id, boolean writing, boolean deleted) {
         projectFacade.requireAccess(actor, workspaceId, projectId, writing);
@@ -316,6 +373,6 @@ public class IssueService implements IssueFacade, ColumnIssueSpi {
     }
 
     private static String agent(CurrentUser actor) {
-        return actor.method() == CurrentUser.Method.API_KEY ? actor.agentName() : null;
+        return actor.agent();
     }
 }
