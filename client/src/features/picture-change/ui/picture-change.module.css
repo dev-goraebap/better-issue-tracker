@@ -1,0 +1,9 @@
+/* The picture as it is, large, beside a line on how a new one is cut. */
+.current { display: flex; align-items: center; gap: var(--spacing-4); }
+.hint { margin: 0; font-size: 0.8125rem; color: var(--color-text-secondary); }
+
+/* The cropper's frame, then its zoom. Its height yields to short windows, so the slider and the buttons under it stay in
+   the dialog. */
+.cropper { display: flex; flex-direction: column; gap: var(--spacing-3); }
+.cropArea { position: relative; inline-size: 100%; block-size: min(20rem, 40dvh); border-radius: var(--radius-container); overflow: hidden;
+  background: var(--color-background-muted); }

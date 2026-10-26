@@ -2,6 +2,7 @@ package io.github.goraebap.bit.module.iam.application;
 
 import io.github.goraebap.bit.shared.error.CommonErrorCode;
 import io.github.goraebap.bit.shared.web.CurrentUser;
+import io.github.goraebap.bit.shared.web.PictureBytes;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -91,6 +92,27 @@ class AuthController {
             @AuthenticationPrincipal CurrentUser actor, @Valid @RequestBody IamRequests.Rename body) {
         iamService.rename(actor, body);
         return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/me/avatar")
+    @ApiResponse(responseCode = "204", description = "Picture changed")
+    ResponseEntity<Void> changeAvatar(
+            @AuthenticationPrincipal CurrentUser actor, @Valid @RequestBody IamRequests.Avatar body) {
+        iamService.changeAvatar(actor, body);
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/me/avatar")
+    @ApiResponse(responseCode = "204", description = "Picture removed")
+    ResponseEntity<Void> removeAvatar(@AuthenticationPrincipal CurrentUser actor) {
+        iamService.removeAvatar(actor);
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping(value = "/users/{userId}/avatar/{pictureId}", produces = "image/jpeg")
+    ResponseEntity<byte[]> avatar(@PathVariable String userId, @PathVariable String pictureId) {
+        var file = iamService.avatarBytes(userId, pictureId);
+        return PictureBytes.of(file.contentType(), file.body());
     }
 
     @PutMapping("/me/password")
