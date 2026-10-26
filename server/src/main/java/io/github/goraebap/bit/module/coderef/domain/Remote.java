@@ -1,5 +1,6 @@
 package io.github.goraebap.bit.module.coderef.domain;
 
+import java.time.Instant;
 import java.util.List;
 
 /** What the hosts' APIs and webhooks carry, in common terms (D-087). Text fields are as the host sent them. */
@@ -59,7 +60,10 @@ public final class Remote {
             String sender)
             implements Event {}
 
-    /** action: opened, reopened, closed or edited (title, body or labels changed). */
+    /**
+     * action: opened, reopened, closed or edited (title, body or labels changed). updatedAt: when the issue last changed
+     * as the host tells it (null when it does not), so a late delivery older than BIT's own last write is not applied.
+     */
     public record IssueEvent(
             String action,
             String number,
@@ -68,7 +72,8 @@ public final class Remote {
             String url,
             List<String> labels,
             boolean fromPull,
-            String sender)
+            String sender,
+            Instant updatedAt)
             implements Event {
         public IssueEvent {
             labels = labels == null ? null : List.copyOf(labels);

@@ -249,9 +249,10 @@ class RepositoryIntegrationTest {
         assertThat(link("branch", login)).isEqualTo("bit-1-login");
         assertThat(link("commit", login)).isEqualTo("abc1234def");
         assertThat(column(login)).isEqualTo(columns.get("진행 중"));
-        // Moves that came from the repository are not sent back to it.
-        assertThat(received.stream().filter(r -> r.method.equals("PATCH")).count())
-                .isEqualTo(1);
+        // A move the repository's code made is news to its issue: the status label follows (BIT-18).
+        assertThat(JSON.convertValue(
+                        sent("PATCH", "/api/v3/repos/acme/app/issues/101").path("labels"), List.class))
+                .contains("status:진행 중");
 
         // A pull request for it moves it to review, and its merge finishes it.
         Map<String, Object> pr = Map.of(
@@ -275,6 +276,9 @@ class RepositoryIntegrationTest {
                 "pull_request",
                 Map.of("action", "opened", "sender", Map.of("login", "alice"), "pull_request", pr));
         assertThat(column(login)).isEqualTo(columns.get("검토 중"));
+        assertThat(JSON.convertValue(
+                        sent("PATCH", "/api/v3/repos/acme/app/issues/101").path("labels"), List.class))
+                .contains("status:검토 중");
         var merged = new java.util.HashMap<>(pr);
         merged.put("merged", true);
         hook(
@@ -283,8 +287,44 @@ class RepositoryIntegrationTest {
                 "pull_request",
                 Map.of("action", "closed", "sender", Map.of("login", "alice"), "pull_request", merged));
         assertThat(column(login)).isEqualTo(columns.get("완료"));
+        var closing = sent("PATCH", "/api/v3/repos/acme/app/issues/101");
+        assertThat(closing.path("state").asString()).isEqualTo("closed");
+        assertThat(JSON.convertValue(closing.path("labels"), List.class)).contains("status:완료");
         assertThat(jdbcTemplate.queryForObject("SELECT state FROM code_link WHERE kind='pull_request'", String.class))
                 .isEqualTo("merged");
+
+        // A late echo of an earlier write (its label a column behind, older than BIT's last write) moves nothing back;
+        // a change made there after it still counts.
+        hook(
+                integration.id(),
+                integration.webhookSecret(),
+                "issues",
+                Map.of(
+                        "action",
+                        "labeled",
+                        "sender",
+                        Map.of("login", "bit-bot"),
+                        "issue",
+                        edited(
+                                101,
+                                List.of("priority:high", "status:진행 중"),
+                                Instant.now().minusSeconds(60))));
+        assertThat(column(login)).isEqualTo(columns.get("완료"));
+        hook(
+                integration.id(),
+                integration.webhookSecret(),
+                "issues",
+                Map.of(
+                        "action",
+                        "labeled",
+                        "sender",
+                        Map.of("login", "alice"),
+                        "issue",
+                        edited(
+                                101,
+                                List.of("priority:high", "status:검토 중"),
+                                Instant.now().plusSeconds(60))));
+        assertThat(column(login)).isEqualTo(columns.get("검토 중"));
         assertThat(integrationService.pulls(owner, workspace, List.of(login), List.of(project)))
                 .singleElement()
                 .satisfies(badge -> assertThat(badge.number()).isEqualTo("12"));
@@ -412,6 +452,16 @@ class RepositoryIntegrationTest {
                 labels.stream().map(name -> Map.of("name", name)).toList(),
                 "user",
                 Map.of("login", "carol"));
+    }
+
+    /** BIT's mirror of "Login fails on Safari" as GitHub tells of it at a given time, with these labels. */
+    private static Map<String, Object> edited(int number, List<String> labels, Instant updatedAt) {
+        var issue = new java.util.HashMap<>(issue(number, "Login fails on Safari", "", labels));
+        issue.remove("body");
+        issue.put(
+                "updated_at",
+                updatedAt.truncatedTo(java.time.temporal.ChronoUnit.SECONDS).toString());
+        return issue;
     }
 
     private void hook(String integrationId, String secret, String event, Map<String, Object> payload) throws Exception {

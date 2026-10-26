@@ -3,6 +3,7 @@ package io.github.goraebap.bit.module.coderef.infrastructure;
 import static io.github.goraebap.bit.module.coderef.infrastructure.HostHttp.at;
 import static io.github.goraebap.bit.module.coderef.infrastructure.HostHttp.bool;
 import static io.github.goraebap.bit.module.coderef.infrastructure.HostHttp.s;
+import static io.github.goraebap.bit.module.coderef.infrastructure.HostHttp.time;
 
 import io.github.goraebap.bit.module.coderef.domain.GitHost;
 import io.github.goraebap.bit.module.coderef.domain.GitHostException;
@@ -238,7 +239,8 @@ class GitHubHost implements GitHost {
                 issue.url(),
                 issue.labels(),
                 p.at("/issue/pull_request").isObject(),
-                sender));
+                sender,
+                time(p, "/issue/updated_at")));
     }
 
     private static Remote.Issue issue(JsonNode each) {

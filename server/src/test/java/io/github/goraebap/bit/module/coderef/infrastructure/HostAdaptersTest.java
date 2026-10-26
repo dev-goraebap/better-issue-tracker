@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import io.github.goraebap.bit.module.coderef.domain.Remote;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.util.HexFormat;
 import java.util.Map;
 import javax.crypto.Mac;
@@ -62,9 +63,11 @@ class HostAdaptersTest {
 
         var labeled = github.read(Map.of("x-github-event", "issues"), bytes("""
                 {"action":"labeled","sender":{"login":"bob"},"issue":{"number":5,"title":"T","body":"B","state":"open",
-                 "html_url":"https://github.com/acme/app/issues/5","labels":[{"name":"priority:high"}],"user":{"login":"bob"}}}"""));
+                 "html_url":"https://github.com/acme/app/issues/5","labels":[{"name":"priority:high"}],"user":{"login":"bob"},
+                 "updated_at":"2026-10-26T06:43:04Z"}}"""));
         assertThat(labeled).singleElement().isInstanceOfSatisfying(Remote.IssueEvent.class, i -> {
             assertThat(i.action()).isEqualTo("edited");
+            assertThat(i.updatedAt()).isEqualTo(Instant.parse("2026-10-26T06:43:04Z"));
             assertThat(i.labels()).containsExactly("priority:high");
             assertThat(i.fromPull()).isFalse();
         });
@@ -96,6 +99,14 @@ class HostAdaptersTest {
         assertThat(gitlab.read(Map.of("x-gitlab-event", "Issue Hook"), bytes("""
                 {"object_attributes":{"action":"open","iid":1,"confidential":true}}""")))
                 .isEmpty();
+        // GitLab's older hooks write the time as `2026-10-26 06:43:04 UTC`, newer ones as ISO-8601.
+        var updated = gitlab.read(Map.of("x-gitlab-event", "Issue Hook"), bytes("""
+                {"user":{"username":"carol"},"labels":[{"title":"status:진행 중"}],"object_attributes":{"action":"update",
+                 "iid":4,"title":"T","description":"","url":"u","updated_at":"2026-10-26 06:43:04 UTC"}}"""));
+        assertThat(updated).singleElement().isInstanceOfSatisfying(Remote.IssueEvent.class, i -> {
+            assertThat(i.action()).isEqualTo("edited");
+            assertThat(i.updatedAt()).isEqualTo(Instant.parse("2026-10-26T06:43:04Z"));
+        });
     }
 
     @Test

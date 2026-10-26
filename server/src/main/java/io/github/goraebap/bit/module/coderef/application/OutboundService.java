@@ -34,7 +34,7 @@ import org.springframework.transaction.support.TransactionTemplate;
  * the repository's issue, a changed title, description, priority, labels or column changes it (a done column closes
  * it), a comment is copied. It runs after the change commits, one at a time off the request, so a slow or failing
  * host never holds a request or a transaction; a failure is kept on the integration for its settings to show.
- * Changes that came from a repository's webhook are not sent back.
+ * Changes that came from a repository's issue are not sent back; a column its code moved an issue to is (moved).
  */
 @Service
 public class OutboundService {
@@ -93,6 +93,15 @@ public class OutboundService {
                 || event.projectId() == null
                 || Hosts.fromHost(event.actorAgent())) return;
         executor.execute(() -> forEach(event.projectId(), integration -> copy(integration, event)));
+    }
+
+    /**
+     * A column a repository's code moved an issue to (a branch pushed, a pull request opened or merged): made in the
+     * host's name, so issueChanged lets it pass, but news to the mirrored issues, whose status label and open or closed
+     * state follow. Called once the move has committed.
+     */
+    void moved(String workspaceId, String projectId, String issueId) {
+        executor.execute(() -> forEach(projectId, integration -> update(integration, workspaceId, issueId)));
     }
 
     /** Tells the repository's issue a BIT issue follows it, after a manager brought it in or its webhook did. */

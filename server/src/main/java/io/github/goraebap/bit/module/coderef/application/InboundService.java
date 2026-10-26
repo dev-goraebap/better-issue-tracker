@@ -17,6 +17,7 @@ import io.github.goraebap.bit.module.project.ProjectFacade;
 import io.github.goraebap.bit.shared.error.BusinessException;
 import io.github.goraebap.bit.shared.web.CurrentUser;
 import java.time.Clock;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -252,10 +253,14 @@ public class InboundService {
 
     private void issued(Scene scene, Remote.IssueEvent event) {
         if (event.fromPull()) return;
-        var mirrored = mirrors(scene, event.number());
+        var links = mirrorLinks(scene, event.number());
+        var mirrored = links.stream()
+                .filter(mirror -> !stale(mirror, event.updatedAt()))
+                .map(CodeLink::issueId)
+                .toList();
         switch (event.action()) {
             case "opened" -> {
-                if (!mirrored.isEmpty() || References.fromBit(event.body()) || !scene.integration.syncsIssues()) return;
+                if (!links.isEmpty() || References.fromBit(event.body()) || !scene.integration.syncsIssues()) return;
                 createMirror(
                         scene,
                         event.number(),
@@ -381,9 +386,12 @@ public class InboundService {
                     case pr_merged, issue_closed -> category != ColumnCategory.done;
                     case issue_opened -> true;
                 };
-        if (moves)
-            target.ifPresent(id -> issueFacade.moveTo(
-                    Hosts.actor(scene.integration, sender), scene.workspaceId, scene.projectId, issueId, id));
+        if (!moves) return;
+        issueFacade.moveTo(
+                Hosts.actor(scene.integration, sender), scene.workspaceId, scene.projectId, issueId, target.get());
+        // What the repository's issue did it knows already; what its code did, its issue is told.
+        if (event == RuleEvent.branch_push || event == RuleEvent.pr_opened || event == RuleEvent.pr_merged)
+            outboundService.moved(scene.workspaceId, scene.projectId, issueId);
     }
 
     private void to(Scene scene, String issueId, Optional<String> column) {
@@ -421,13 +429,22 @@ public class InboundService {
     }
 
     private List<String> mirrors(Scene scene, String number) {
+        return mirrorLinks(scene, number).stream().map(CodeLink::issueId).toList();
+    }
+
+    private List<CodeLink> mirrorLinks(Scene scene, String number) {
         if (number == null) return List.of();
-        return transactionTemplate
-                .execute(status ->
-                        codeLinkRepository.findAllByExternalId(scene.integration.id(), CodeLink.Kind.issue, number))
-                .stream()
-                .map(CodeLink::issueId)
-                .toList();
+        return transactionTemplate.execute(
+                status -> codeLinkRepository.findAllByExternalId(scene.integration.id(), CodeLink.Kind.issue, number));
+    }
+
+    /**
+     * Whether a delivery tells of the repository's issue as it was before BIT last wrote to it: a late echo of an
+     * earlier write (its labels a column behind, its close undone since), which must not move the issue back. Hosts
+     * give the time to the second, so an edit there in the same second as BIT's write is taken as the older.
+     */
+    private static boolean stale(CodeLink mirror, Instant changedAt) {
+        return changedAt != null && !changedAt.isAfter(mirror.updatedAt());
     }
 
     /** A repository's labels in BIT's terms: priority:x, status:<column> and the rest as workspace labels. */

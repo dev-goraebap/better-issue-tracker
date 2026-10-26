@@ -11,6 +11,9 @@ import java.security.InvalidKeyException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
+import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.time.format.DateTimeParseException;
 import java.util.HexFormat;
 import java.util.Map;
 import javax.crypto.Mac;
@@ -112,6 +115,18 @@ final class HostHttp {
     static String at(JsonNode node, String pointer) {
         var value = node == null ? null : node.at(pointer);
         return value == null || value.isNull() || value.isMissingNode() ? null : value.asString();
+    }
+
+    /** A timestamp as ISO-8601 or GitLab's older `2026-10-26 06:43:04 UTC`, or null when missing or unreadable. */
+    static Instant time(JsonNode node, String pointer) {
+        String value = at(node, pointer);
+        if (value == null || value.isBlank()) return null;
+        try {
+            return OffsetDateTime.parse(value.strip().replaceFirst("^(\\S+) (\\S+) UTC$", "$1T$2Z"))
+                    .toInstant();
+        } catch (DateTimeParseException unreadable) {
+            return null;
+        }
     }
 
     static boolean bool(JsonNode node, String pointer) {

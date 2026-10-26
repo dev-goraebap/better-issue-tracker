@@ -3,6 +3,7 @@ package io.github.goraebap.bit.module.coderef.infrastructure;
 import static io.github.goraebap.bit.module.coderef.infrastructure.HostHttp.at;
 import static io.github.goraebap.bit.module.coderef.infrastructure.HostHttp.bool;
 import static io.github.goraebap.bit.module.coderef.infrastructure.HostHttp.s;
+import static io.github.goraebap.bit.module.coderef.infrastructure.HostHttp.time;
 
 import io.github.goraebap.bit.module.coderef.domain.GitHost;
 import io.github.goraebap.bit.module.coderef.domain.GitHostException;
@@ -220,7 +221,15 @@ class GiteaHost implements GitHost {
         if (action == null) return List.of();
         var issue = issue(p.path("issue"));
         return List.of(new Remote.IssueEvent(
-                action, issue.number(), issue.title(), issue.body(), issue.url(), issue.labels(), false, sender));
+                action,
+                issue.number(),
+                issue.title(),
+                issue.body(),
+                issue.url(),
+                issue.labels(),
+                false,
+                sender,
+                time(p, "/issue/updated_at")));
     }
 
     /** The repository's label ids for these names, making the missing ones in BIT's grey. */
