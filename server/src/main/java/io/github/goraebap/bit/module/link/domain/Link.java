@@ -30,7 +30,11 @@ public final class Link {
                                     && toType == TargetType.artifact;
                         case "supersedes" -> fromType == TargetType.decision && toType == TargetType.decision;
                         case "blocks", "subtask_of" -> workPair;
-                        case "relates_to" -> workPair || sessionWork;
+                        case "relates_to" ->
+                            workPair
+                                    || sessionWork
+                                    || fromType == TargetType.document && toType == TargetType.work_item
+                                    || fromType == TargetType.work_item && toType == TargetType.document;
                         default -> false;
                     };
             if (!valid) throw new IllegalArgumentException("Invalid relation for these targets");

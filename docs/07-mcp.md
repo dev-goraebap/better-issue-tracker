@@ -33,6 +33,11 @@
 | `update_work_item` | workitem | 준 값만 바꿈. `none`으로 지움. 버전은 도구가 최신으로 맞춤 |
 | `move_work_item` | workitem | 칸 이름·분류(todo/doing/done)·backlog로 옮기기, 보관·해제 |
 | `add_comment` | workitem | 업무에 마크다운 댓글 |
+| `list_documents` | document | 폴더 경로로 열거나 제목·라벨·프로젝트로 찾기, 최근 고친 순, 커서 페이징 |
+| `get_document` | document | 문서 하나: 위치, 라벨, 마크다운 본문, 연결된 업무, 댓글과 활동 |
+| `create_document` | document | 새 문서. 프로젝트는 키, 폴더는 경로(없으면 만듦), 라벨은 이름 |
+| `update_document` | document | 준 값만 바꿈(본문 통째로, 라벨 목록으로). project·folder를 주면 옮김 |
+| `link_document` | document | 문서를 업무와 잇거나(`relates_to`) 끊기 |
 
 - **가리키는 법**: 업무는 `ORM-14`, 프로젝트는 키, 칸·사람·라벨은 이름. 워크스페이스가 하나면 생략하고, 여럿이면 `workspace`에 이름이나 슬러그를 준다. 참조만 주면 속한 워크스페이스에서 찾아본다.
 - **결정**: 결정 엔티티 도구 대신 `labels: ["결정기록"]`을 단 업무로 만든다(D-085). 결정기록은 앞으로 다른 작업이 따라야 할 선택만 담고 그 선택이 나온 작업 업무와 따로 만든다. 본문은 맥락 / 결정 / 검토한 대안이고, 확정한 결정은 고치지 않고 새 결정기록으로 대체한다. 서버 안내문(instructions)과 도구 설명에 같은 기준을 적어 두었다. 업무끼리 잇는 도구와 결정 상태(제안·확정·대체)를 바꾸는 도구는 아직 없어, 그때까지는 본문에 참조를 적는다.

@@ -10,7 +10,7 @@ description: 서버 모듈의 명명, 패키지·클래스 배치, 예외 처리
 ## 1. 명명 규칙 및 패키지 구조
 
 ### 모듈 및 계층 명명
-- 모듈 이름은 **단수형 소문자**를 사용한다 (예: `work_item`, `decision`, `artifact`, `link`, `coderef`, `iam`).
+- 모듈 이름은 **단수형 소문자**를 사용한다 (예: `workitem`, `decision`, `document`, `link`, `coderef`, `iam`).
 - 모듈 루트에는 공개 계약(`*Facade`, `*Spi`, `*Event`, 접미사 없는 데이터 타입)만 둔다.
 - 모듈 내부 계층은 `application`, `domain`, `infrastructure` 3개 계층으로 분리한다.
 

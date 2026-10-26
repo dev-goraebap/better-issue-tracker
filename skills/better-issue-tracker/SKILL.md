@@ -151,5 +151,12 @@ BIT 프로젝트는 GitHub, GitLab, Gitea 저장소와 연결될 수 있다. 연
 | `update_work_item` | 제목, 설명, 라벨, 담당자, 날짜 고치기(준 값만 바뀜) |
 | `move_work_item` | 칸(할 일, 진행 중, 완료 등) 옮기기, 보관 |
 | `add_comment` | 진행, 결과, 막힌 점 남기기 |
+| `list_documents` | 문서 찾기(`query`, `label`, `project`) 또는 폴더 열기(`folder`: "설계/화면") |
+| `get_document` | 문서 하나를 본문, 연결된 업무, 댓글까지 읽기 |
+| `create_document` | 요구사항·설계·기획·회의록처럼 오래 두고 고쳐 가며 보는 글 남기기(없는 폴더는 만듦) |
+| `update_document` | 문서 본문·제목·라벨 고치기, `project`·`folder`로 옮기기 |
+| `link_document` | 문서를 그 문서가 다루는 업무와 잇기(`remove: true`면 끊기) |
+
+문서 도구가 목록에 없으면 문서가 없는 서버다(D-093 전). 그때 긴 글은 업무 설명에 쓴다.
 
 도구 이름이 이 표와 다르거나 `Unknown tool` 오류가 나면, 서버가 업데이트됐는데 연결이 옛 도구 목록을 들고 있는 것이다. 사용자에게 MCP 서버를 다시 연결하거나 새 세션을 열어 달라고 한다. 0.8 이후에 나와 이름을 issue로 바꿨던 서버(D-084~D-091 사이)는 업무 도구 이름이 `get_issue_context`, `list_issues`, `create_issue`, `update_issue`, `move_issue`이다. 연결된 서버의 도구 목록에 있는 이름을 쓴다.

@@ -163,24 +163,18 @@ erDiagram
 
 - `work_item_view_order`: 홈(`scope='home'`)과 프로젝트마다(`scope`=프로젝트 ID) 따로 둔 뷰 순서. `view_keys`는 뷰 ID와 `all`(전체 업무)의 JSON 배열이고, 첫 뷰가 그 범위의 기본 뷰다. 배열에 없는 뷰는 워크스페이스 순서(전체 업무, 그다음 `position`)로 뒤에 붙는다. 행이 없는 범위는 워크스페이스 순서를 쓴다. 뷰를 지워도 배열은 고치지 않고 조회에서 뺀다. 순서를 바꾸는 사람이 볼 수 없는 키(다른 사람의 개인 뷰)는 바꾼 순서 뒤에 남긴다.
 
-## 6. artifact — 문서함
-
-> **대체됨 (2026-10-26, D-093)**: 문서함은 `folder`와 마크다운 `document`로 다시 설계한다(구현 업무에서 정함). 아래 산출물 표는 만들지 않는다.
+## 6. document — 문서와 폴더 (`V15__documents.sql`, D-093)
 
 | 테이블 | 열 | 제약·인덱스 |
 |---|---|---|
-| `folder` | `folder_id`, `workspace_id`, `parent_folder_id uuid?`, `name varchar(128)`, 감사 | `ux_folder_workspace_id_parent_name` (coalesce(parent_folder_id,''), name, deleted_at IS NULL) |
-| `artifact` | `artifact_id`, `workspace_id`, `folder_id uuid?`, `title varchar(200)`, `description text?`, `kind varchar(8)`, `doc_id varchar(32)?`, `source_type varchar(16)`, `git_repository_id uuid?`, `git_path varchar(512)?`, `git_branch varchar(128)?`, 감사 | `ux_artifact_workspace_id_doc_id` (doc_id IS NOT NULL, deleted_at IS NULL), `ck_..._kind` (file, managed), `ck_..._source_type` (upload, markdown, git), `ck_..._git` (source_type = git이면 git 열 필수) |
-| `artifact_project` | `artifact_project_id`, `artifact_id`, `project_id`, `created_at` | `ux_artifact_project_artifact_id_project_id` |
-| `artifact_version` | `artifact_version_id`, `artifact_id`, `status varchar(16)`, `version_label varchar(16)?`, `blob_id uuid?`, `git_commit_sha varchar(40)?`, `git_ref varchar(128)?`, `change_summary text?`, `released_at?`, `released_by?`, 감사 | `ux_artifact_version_artifact_id_open` (status IN (current, draft)), `ck_..._status` (current, draft, released, superseded) |
-| `artifact_rendition` | `artifact_rendition_id`, `artifact_version_id`, `kind varchar(8)`, `blob_id uuid?`, `status varchar(8)`, `converter varchar(64)?`, `error_message text?`, `created_at`, `updated_at` | `ux_artifact_rendition_version_id_kind`, `ck_..._kind` (text, pdf), `ck_..._status` (pending, done, failed) |
+| `folder` | `folder_id`, `workspace_id`, `project_id?`, `parent_folder_id?`, `name varchar(128)`, `version`, 감사 | `ux_folder_area_parent_name` (workspace_id, coalesce(project_id,''), coalesce(parent_folder_id,''), lower(name), deleted_at IS NULL), `ck_folder_name` (앞뒤 공백 없음, `/` 없음), 프로젝트 FK는 (project_id, workspace_id) |
+| `document` | `document_id`, `workspace_id`, `project_id?`, `folder_id?`, `title varchar(200)`, `body text`(마크다운, 200,000자 이하), `version`, 감사 | `ix_document_workspace_id_project_id_folder_id`, `ix_document_workspace_id_updated_at_id` |
+| `document_label` | `document_label_id`, `document_id`, `label_id`, `created_at`, `created_by`, `created_by_agent?` | `ux_document_label_document_id_label_id` |
 
-- **1차(D-019)**: `kind`는 항상 `file`, `doc_id`는 비어 있다. 산출물마다 `artifact_version` 행이 하나(`status = current`)이고, 다시 올리면 그 행을 덮어쓴다(이전 blob은 정리 대상).
-- **관리 문서(이후)**: `status`가 `draft → released → superseded`로 쓰인다. 열린 행(current 또는 draft)은 산출물당 하나라 D-013(초안 한 칸)을 DB가 지킨다. 열과 인덱스는 1차부터 만들어 두므로 테이블을 쪼개는 마이그레이션이 필요 없다.
-- **정본(D-016)**: 업로드·플랫폼 Markdown이면 `blob_id`, Git이면 `git_commit_sha`(+ 확정 시 `git_ref`). 1차의 Git 정본은 추적 브랜치의 최신 커밋을 `current` 행에 갱신한다.
-- **파생본**: 텍스트 변환·PDF는 `artifact_rendition`. 변환은 트랜잭션 밖 작업이 만들고 상태만 갱신한다. `converter`에 도구와 버전을 남겨, 도구가 바뀌면 다시 만들 수 있게 한다.
-- **개정 사유**는 열이 아니라 `link`(업무/결정 `revises` 산출물)다. 변경 요약은 사람이 쓰는 글이라 열로 둔다.
-- 폴더 `folder_id`가 NULL이면 문서함 맨 위에 있다.
+- **부분(part)**: 문서와 폴더는 프로젝트의 부분(`project_id`)이나 워크스페이스 자체의 부분(`project_id` NULL)에 속한다. 프로젝트 폴더는 프로젝트 자체라 행이 없고 이름을 바꾸거나 지울 수 없다. `parent_folder_id`·`folder_id`가 NULL이면 그 부분의 맨 위다. 폴더는 같은 부분 안에서만 옮기고, 자기 안으로는 옮기지 못한다. 비어 있어야 지운다.
+- **라벨·연결·댓글**: 라벨은 업무와 같은 워크스페이스 라벨이다. 업무와의 연결은 `link`의 `relates_to`(from `document`, to `work_item`)이고, 댓글·활동은 대상 종류 `document`다. V15가 link·activity·comment의 CHECK에 `document`를 더했다.
+- **첨부**: 문서 본문의 파일은 파일 모듈(9절)의 첨부로 붙일 예정이다(첨부 주인에 문서 추가는 아직).
+- 예전 산출물 설계(`artifact`·`artifact_version`·`artifact_rendition`, D-016·D-018·D-019)는 D-093으로 대체되어 만들지 않았다.
 
 ## 7. coderef — 저장소 연동 (`V11__repository_integration.sql`, D-087)
 

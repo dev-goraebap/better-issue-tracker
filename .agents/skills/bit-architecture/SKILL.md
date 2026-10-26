@@ -78,12 +78,12 @@ dev.sh             로컬 실행
 
 ### 백엔드 (모듈 구조)
 - 패키지 루트: `io.github.goraebap.bit` 아래 `module/<업무>`와 `shared/<기반>/`로 나눈다. 컨텍스트 그룹은 두지 않고 모든 모듈을 `module/` 바로 아래에 둔다.
-- 모듈: `iam`, `workspace`, `project`, `work_item`, `decision`, `session`, `artifact`, `coderef`, `link`, `file`, `notification` (`docs/06-schema.md`).
+- 모듈: `iam`, `workspace`, `project`, `workitem`, `decision`, `session`, `document`, `coderef`, `link`, `file`, `notification` (`docs/06-schema.md`).
 - 모듈 내부 계층: 공개 루트 계약, `application`(Controller, Service, Query), `domain`(Entity, Value Object, Repository 포트), `infrastructure`(jOOQ 구현체 `Jooq*Repository`, 외부 어댑터. package-private).
 - 모듈 간 참조: 공개 계약(`*Facade`, `*Spi`, `*Event`)으로만 통신하고, 애그리거트 간에는 객체 대신 ID로 참조한다. 순환 참조는 금지한다. ArchUnit(`ArchitectureTest`)이 강제한다.
 - 문서에서 정해진 의존 방향:
   - MCP는 업무를 소유하지 않는다. MCP 도구는 각 모듈의 Facade를 직접 부르고 REST API를 다시 부르지 않는다 (`docs/07-mcp.md`).
-  - `artifact`는 정본·파생본을 `file`의 `blob`으로 가리킨다. 다른 모듈의 첨부도 `file`의 `attachment`로 붙인다.
+  - 업무·댓글·문서(D-093)의 파일은 `file`의 `attachment`로 붙인다. 문서를 첨부 주인에 더하는 일은 문서 화면(BIT-41)과 함께 한다.
   - `link`는 만들 때 대상(업무·결정·세션·산출물·코드 참조)이 있는지 검사한다 (D-014).
 - 선택 기능 어댑터(D-030)는 기능을 쓰는 모듈의 `infrastructure`에 두고, 포트는 그 모듈 또는 `shared`에 둔다.
 

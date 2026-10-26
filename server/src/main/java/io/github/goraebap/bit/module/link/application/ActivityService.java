@@ -45,7 +45,8 @@ public class ActivityService {
                             "dueDate",
                             "labels",
                             "column",
-                            "archived"));
+                            "archived"),
+            TargetType.document, Set.of("title", "body", "labels", "place"));
     private final ActivityRepository activityRepository;
     private final JsonMapper jsonMapper;
 

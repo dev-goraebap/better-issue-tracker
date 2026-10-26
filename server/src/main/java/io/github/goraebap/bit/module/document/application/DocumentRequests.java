@@ -1,0 +1,151 @@
+package io.github.goraebap.bit.module.document.application;
+
+import com.fasterxml.jackson.annotation.JsonAnySetter;
+import io.github.goraebap.bit.module.document.domain.Document;
+import io.github.goraebap.bit.module.document.domain.Folder;
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+import java.util.List;
+import java.util.Set;
+
+public final class DocumentRequests {
+    private DocumentRequests() {}
+
+    @Schema(name = "CreateDocument")
+    public record Create(
+            @Schema(
+                    nullable = true,
+                    description = "The project whose part holds it; omitted or null for the workspace's own")
+            String projectId,
+
+            @Schema(nullable = true, description = "A folder of that part; omitted or null for the part's top")
+            String folderId,
+
+            @NotBlank @Size(max = Document.TITLE_MAX) String title,
+
+            @Size(max = Document.BODY_MAX) @Schema(nullable = true, description = "Markdown; omitted or null is empty")
+            String body,
+
+            @Size(max = DocumentService.MAX_LABELS) @Schema(nullable = true)
+            List<@NotNull String> labelIds) {
+        public Create {
+            labelIds = labelIds == null ? null : List.copyOf(labelIds);
+        }
+
+        Set<String> labels() {
+            return labelIds == null ? Set.of() : Set.copyOf(labelIds);
+        }
+    }
+
+    @Schema(name = "UpdateDocument")
+    public static final class Update {
+        @NotNull @Min(0) private Long expectedVersion;
+
+        @Size(max = Document.TITLE_MAX) private String title;
+
+        @Size(max = Document.BODY_MAX) private String body;
+
+        @Size(max = DocumentService.MAX_LABELS) private List<@NotNull String> labelIds;
+
+        private boolean hasTitle, hasBody, hasLabelIds;
+
+        public Long getExpectedVersion() {
+            return expectedVersion;
+        }
+
+        public void setExpectedVersion(Long value) {
+            expectedVersion = value;
+        }
+
+        public String getTitle() {
+            return title;
+        }
+
+        public void setTitle(String value) {
+            title = value;
+            hasTitle = true;
+        }
+
+        @Schema(description = "Markdown")
+        public String getBody() {
+            return body;
+        }
+
+        public void setBody(String value) {
+            body = value;
+            hasBody = true;
+        }
+
+        @Schema(description = "Replaces the document's labels")
+        public List<String> getLabelIds() {
+            return labelIds;
+        }
+
+        public void setLabelIds(List<String> value) {
+            labelIds = value == null ? List.of() : List.copyOf(value);
+            hasLabelIds = true;
+        }
+
+        public boolean hasTitle() {
+            return hasTitle;
+        }
+
+        public boolean hasBody() {
+            return hasBody;
+        }
+
+        public boolean hasLabelIds() {
+            return hasLabelIds;
+        }
+
+        Set<String> labels() {
+            return Set.copyOf(labelIds);
+        }
+
+        @JsonAnySetter
+        public void unknown(String key, Object value) {
+            throw new IllegalArgumentException("Unsupported document field");
+        }
+    }
+
+    @Schema(name = "MoveDocument")
+    public record Move(
+            @NotNull @Min(0) Long expectedVersion,
+
+            @Schema(nullable = true, description = "The project whose part takes it; null for the workspace's own")
+            String projectId,
+
+            @Schema(nullable = true, description = "A folder of that part; null for its top")
+            String folderId) {}
+
+    @Schema(name = "DocumentVersion")
+    public record Version(@NotNull @Min(0) Long expectedVersion) {}
+
+    @Schema(name = "LinkDocument")
+    public record Link(@NotBlank String workItemId) {}
+
+    @Schema(name = "CreateFolder")
+    public record CreateFolder(
+            @Schema(nullable = true, description = "The project whose part holds it; null for the workspace's own")
+            String projectId,
+
+            @Schema(nullable = true, description = "The folder holding it; null for the part's top")
+            String parentId,
+
+            @NotBlank @Size(max = Folder.NAME_MAX) String name) {}
+
+    @Schema(name = "RenameFolder")
+    public record RenameFolder(
+            @NotNull @Min(0) Long expectedVersion,
+            @NotBlank @Size(max = Folder.NAME_MAX) String name) {}
+
+    @Schema(name = "MoveFolder")
+    public record MoveFolder(
+            @NotNull @Min(0) Long expectedVersion,
+
+            @Schema(nullable = true, description = "The folder of the same part to move under; null for its top")
+            String parentId) {}
+}

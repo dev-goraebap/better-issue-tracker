@@ -34,7 +34,7 @@ description: 서버·라우트·입력 상태 소유권, 쿼리 키, mutation과
   - 예시:
     - `['workItems', projectId, filters]`
     - `['decisions', projectId, filters]`
-    - `['artifacts', workspaceId, filters]`
+    - `['documents', workspaceId, filters]`
     - `['session', 'me']`
 - **소유권 분산**: 모든 쿼리 키를 `shared` 레이어의 거대한 전역 상수로 몰아넣지 않고, 각 도메인 슬라이스가 자신의 쿼리 키를 캡슐화하여 소유한다.
 

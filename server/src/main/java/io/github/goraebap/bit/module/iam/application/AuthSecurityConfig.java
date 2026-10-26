@@ -200,6 +200,34 @@ class AuthSecurityConfig {
                         .authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/v1/hooks/*")
                         .permitAll()
+                        // Documents and their folders (D-093).
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/v1/workspaces/*/documents",
+                                "/api/v1/workspaces/*/documents/**",
+                                "/api/v1/workspaces/*/folders")
+                        .authenticated()
+                        .requestMatchers(
+                                HttpMethod.HEAD,
+                                "/api/v1/workspaces/*/documents",
+                                "/api/v1/workspaces/*/documents/**",
+                                "/api/v1/workspaces/*/folders")
+                        .authenticated()
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/api/v1/workspaces/*/documents",
+                                "/api/v1/workspaces/*/documents/**",
+                                "/api/v1/workspaces/*/folders",
+                                "/api/v1/workspaces/*/folders/**")
+                        .authenticated()
+                        .requestMatchers(
+                                HttpMethod.PATCH, "/api/v1/workspaces/*/documents/*", "/api/v1/workspaces/*/folders/*")
+                        .authenticated()
+                        .requestMatchers(
+                                HttpMethod.DELETE,
+                                "/api/v1/workspaces/*/documents/**",
+                                "/api/v1/workspaces/*/folders/*")
+                        .authenticated()
                         // Files (D-029, D-090): starting an upload, and the local storage's signed URLs.
                         .requestMatchers(HttpMethod.POST, "/api/v1/files/uploads")
                         .authenticated()
