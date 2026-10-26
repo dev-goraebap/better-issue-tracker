@@ -23,6 +23,7 @@ COPY --from=screens /src/client/dist screens/
 RUN mkdir -p /var/lib/bit && chown 10001:10001 /var/lib/bit
 USER 10001:10001
 ENV DB_PATH=/var/lib/bit/bit.db
+ENV STORAGE_LOCAL_ROOT=/var/lib/bit/files
 ENV APP_SCREENS=file:/app/screens/
 VOLUME /var/lib/bit
 EXPOSE 8080

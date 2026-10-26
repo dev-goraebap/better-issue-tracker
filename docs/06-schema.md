@@ -200,12 +200,18 @@ erDiagram
 - **activity / comment(D-020)**: 이슈뿐 아니라 결정·세션·산출물에도 붙는다. 연결 타임라인은 `activity`와 `link`를 시간순으로 합쳐 그린다.
 - **에이전트 표시(D-021)**: 사람 ID(`created_by`, `actor_id`)와 함께 API 키의 `agent_name`을 `*_agent` 열에 남긴다. 화면에는 "홍길동 (codex)"처럼 보인다.
 
-## 9. file — 파일 저장 (SandboxHr `file` 모듈을 그대로)
+## 9. file — 파일 저장 (SandboxHr `file` 모듈을 옮김, V13, D-090)
 
-`blob`, `attachment`(`owner_type`, `owner_id`, `name`, `position`), `pending_upload`를 SandboxHr `V1__schema.sql`에서 옮긴다.
+| 테이블 | 열 | 제약·인덱스 |
+| --- | --- | --- |
+| `pending_upload` | `pending_upload_id`, `blob_id`, `storage_key varchar(512)`, `purpose varchar(16)`, `filename varchar(256)`, `content_type`, `byte_size`(알린 크기), `dominant_color varchar(7)?`, `width?`, `height?`, `created_at`, `created_by`, `created_by_agent` | `ck_..._purpose` (attachment, picture), `ix_pending_upload_created_at` |
+| `blob` | `blob_id`, `storage_key`, `filename`, `content_type`, `byte_size`(저장소가 가진 크기), `dominant_color?`, `width?`, `height?`, 감사 | `ux_blob_storage_key`, `ck_blob_dominant_color`(`#` + 소문자 16진 6자) |
+| `attachment` | `attachment_id`(업로드 id를 그대로), `blob_id`, `owner_type varchar(16)`, `owner_id`, `position`, 감사 | `ck_..._owner_type` (issue, comment, user, workspace), `ix_attachment_owner`(지우지 않은 것) |
+
 - 산출물 정본과 파생본은 `artifact_version.blob_id`, `artifact_rendition.blob_id`로 `blob`을 직접 가리킨다.
-- 이슈 설명·댓글에 붙는 이미지 등은 `attachment`로 붙인다.
-- 업로드 흐름(사전 서명 PUT → 확정 → 크기·MIME 검증), 고아 blob 정리 배치도 SandboxHr와 같다.
+- 이슈 설명·댓글에 붙는 이미지 등은 `attachment`로 붙인다. 아바타(`user`)와 워크스페이스 로고(`workspace`)도 `attachment` 하나다.
+- 대표색과 크기는 브라우저가 잰 값이고 사진 자리 표시에만 쓴다(D-090). 아바타·로고는 서버가 디코딩한 크기로 바꿔 둔다.
+- 업로드 흐름(사전 서명 PUT → 확정 → 크기·시그니처 검증), 버린 blob과 하루 지난 업로드의 정리 배치도 SandboxHr와 같다.
 
 ## 10. notification (최소)
 

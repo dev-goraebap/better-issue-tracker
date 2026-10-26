@@ -73,6 +73,15 @@ class OpenApiContractTest {
     private io.github.goraebap.bit.module.coderef.domain.CodeLinkRepository codeLinkRepository;
 
     @MockitoBean
+    private io.github.goraebap.bit.module.file.domain.PendingUploadRepository pendingUploadRepository;
+
+    @MockitoBean
+    private io.github.goraebap.bit.module.file.domain.AttachmentRepository attachmentRepository;
+
+    @MockitoBean
+    private io.github.goraebap.bit.module.file.application.FileQuery fileQuery;
+
+    @MockitoBean
     private org.springframework.transaction.support.TransactionTemplate transactionTemplate;
 
     @Autowired

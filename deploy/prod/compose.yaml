@@ -9,6 +9,18 @@ services:
     environment:
       AUTH_COOKIE_SECURE: "${AUTH_COOKIE_SECURE:-true}"
       AUTH_ALLOWED_ORIGINS: "${AUTH_ALLOWED_ORIGINS:?Set the public application origin, e.g. https://bit.example.com}"
+      # Files (D-029, D-090). Left empty, files stay in the data volume (/var/lib/bit/files). Set STORAGE_ENDPOINT,
+      # STORAGE_BUCKET and the key pair for S3, Cloudflare R2 (https://<account>.r2.cloudflarestorage.com, region
+      # auto) or MinIO; the bucket needs CORS allowing PUT from AUTH_ALLOWED_ORIGINS. If the storage does not answer
+      # at start, files turn off; Settings > Server features shows why.
+      STORAGE_ENDPOINT: "${STORAGE_ENDPOINT:-}"
+      STORAGE_PUBLIC_ENDPOINT: "${STORAGE_PUBLIC_ENDPOINT:-}"
+      STORAGE_REGION: "${STORAGE_REGION:-auto}"
+      STORAGE_BUCKET: "${STORAGE_BUCKET:-}"
+      STORAGE_ACCESS_KEY: "${STORAGE_ACCESS_KEY:-}"
+      STORAGE_SECRET_KEY: "${STORAGE_SECRET_KEY:-}"
+      STORAGE_KEY_PREFIX: "${STORAGE_KEY_PREFIX:-}"
+      STORAGE_MAX_FILE_MB: "${STORAGE_MAX_FILE_MB:-20}"
     logging:
       driver: json-file
       options:

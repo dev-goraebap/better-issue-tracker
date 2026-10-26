@@ -45,10 +45,11 @@ description: 파일 모듈 소유권, 사전 서명 URL 업로드, 로컬·S3 �
 
 - 로컬 어댑터의 URL도 허용한 키·형식·크기와 만료를 HMAC으로 서명하므로 흐름과 화면 코드는 S3 호환 저장소와 같다. `/api/v1/storage`는 브라우저가 서명 URL로만 부르고 생성 타입으로 부르지 않으므로 OpenAPI 문서에 넣지 않는다(`@Hidden`).
 - 파일 저장소는 로컬 어댑터가 내장되어 있어 켜진 기능 목록(D-030)에서 항상 켜져 있다. 로컬이면 볼륨 백업은 사용자가 챙긴다. 두 어댑터를 모두 테스트한다.
-- **설정은 환경변수뿐이다 (D-089)**: `STORAGE_ENDPOINT`·`STORAGE_PUBLIC_ENDPOINT`(브라우저가 서명 URL로 닿는 주소, 없으면 `ENDPOINT`)·`STORAGE_REGION`·`STORAGE_BUCKET`·`STORAGE_ACCESS_KEY`·`STORAGE_SECRET_KEY`·`STORAGE_KEY_PREFIX`·`STORAGE_LOCAL_ROOT`·`STORAGE_MAX_FILE_MB`(기본 20). 관리자 화면에서는 입력하지 않고, 서버 기능 응답과 화면에 어댑터·버킷·시작할 때 한 연결 점검 결과만 보인다(비밀값 제외).
-- S3 호환을 설정했는데 연결이 안 되면 로컬로 바꾸지 않고 `objectStorage`를 끈다. 로컬로 바꾸면 파일이 두 저장소에 갈라진다.
+- **설정은 환경변수뿐이다 (D-090)**: `STORAGE_ENDPOINT`·`STORAGE_PUBLIC_ENDPOINT`(브라우저가 서명 URL로 닿는 주소, 없으면 `ENDPOINT`)·`STORAGE_REGION`·`STORAGE_BUCKET`·`STORAGE_ACCESS_KEY`·`STORAGE_SECRET_KEY`·`STORAGE_KEY_PREFIX`·`STORAGE_LOCAL_ROOT`·`STORAGE_MAX_FILE_MB`(기본 20). 관리자 화면에서는 입력하지 않고, 서버 기능 응답과 화면에 어댑터·버킷·시작할 때 한 연결 점검 결과만 보인다(비밀값 제외).
+- S3 호환을 설정했는데 연결이 안 되면 로컬로 바꾸지 않고 `objectStorage`를 끈다. 로컬로 바꾸면 파일이 두 저장소에 갈라진다. 점검 결과는 인스턴스 관리자만 `GET /api/v1/admin/storage`로 본다.
+- 브라우저가 S3 호환 저장소로 직접 PUT하므로 버킷의 CORS가 BIT 주소(`AUTH_ALLOWED_ORIGINS`)에서 오는 `PUT`·`GET`과 `Content-Type` 헤더를 허용해야 한다.
 
-### 사진 자리: 대표색과 크기 (D-089)
+### 사진 자리: 대표색과 크기 (D-090)
 - 브라우저가 올리기 전에 사진(PNG·JPEG·WebP·GIF)을 96px로 줄여 대표색(`#RRGGBB`)을 뽑고, 가로·세로와 함께 업로드 세션 요청에 싣는다. 각 값은 빠질 수 있다(재지 못한 사진, REST로 직접 올린 파일).
 - 서버는 형식과 범위만 검사해 첨부에 남기고, 첨부 응답에 같이 돌려준다. 이 값은 자리 표시에만 쓰므로 틀려도 색과 틀이 틀릴 뿐 접근에는 영향이 없다.
 - 화면은 그 크기로 자리를 잡아 대표색으로 칠하고, 사진이 오면 페이드인한다. 값이 없으면 중립색을 쓴다.
@@ -111,8 +112,9 @@ description: 파일 모듈 소유권, 사전 서명 URL 업로드, 로컬·S3 �
 | 파일 포맷 | 필수 검증 및 처리 절차 |
 | :--- | :--- |
 | **SVG (벡터 이미지)** | 스크립트 실행 위험을 방지하기 위해 `<script>`, `onload`/`onerror` 등 인라인 이벤트 핸들러, 외부 자원 참조, XML 외부 엔티티(XXE)를 완전히 제거하는 화이트리스트 기반 새니타이징(Sanitization)을 거친 후에만 게시를 허용한다. |
-| **PNG / JPEG (비트맵)** | 파일 헤더만 확인하지 않고 실제 이미지 디코딩 라이브러리를 통해 파일 손상 여부와 실제 픽셀 해상도를 검증하여 악성 페이로드가 숨겨진 변조 이미지를 차단한다. |
+| **비트맵 첨부 (PNG·JPEG·WebP·GIF)** | 확정할 때 확장자로 정한 형식의 시그니처와 저장소가 가진 실제 크기를 확인한다. 끝까지 디코딩하지 않는다(D-090, 확정 요청이 쓰기 트랜잭션 안에서 사진 전체를 내려받지 않게). 열 때는 서버가 정한 `Content-Type`과 `X-Content-Type-Options: nosniff`, 비공개 서명 URL로만 내려 주므로 깨진 사진은 보이지 않을 뿐 실행되지 않는다. |
+| **아바타·로고 (JPEG)** | 1MB 이하 정사각 JPEG만 받고, JDK 디코더로 끝까지 읽어 실제 픽셀 크기가 요청한 변 길이와 같은지 확인한다(1600만 픽셀 상한). |
 
-- **1차 형식과 크기 (D-089)**: PDF·HWP/HWPX·DOC/DOCX·XLS/XLSX·PPT/PPTX·JPEG/PNG/WebP/GIF·ZIP·MD/TXT/CSV. 녹음과 SVG는 받지 않는다(SVG는 위 새니타이징을 만들 때 연다). 파일 하나 기본 20MB(`STORAGE_MAX_FILE_MB`)이고 이슈 합계는 두지 않는다. 형식은 파일 이름의 확장자로 정하고, 저장된 바이트의 시작이 그 형식과 맞아야 한다.
+- **1차 형식과 크기 (D-090)**: PDF·HWP/HWPX·DOC/DOCX·XLS/XLSX·PPT/PPTX·JPEG/PNG/WebP/GIF·ZIP·MD/TXT/CSV. 녹음과 SVG는 받지 않는다(SVG는 위 새니타이징을 만들 때 연다). 파일 하나 기본 20MB(`STORAGE_MAX_FILE_MB`)이고 이슈 합계는 두지 않는다. 형식은 파일 이름의 확장자로 정하고, 저장된 바이트의 시작이 그 형식과 맞아야 한다.
 - **미검증 파일 격리**: 유효성 검증을 통과하지 못했거나 처리가 완료되지 않은 원시 파일 객체는 외부에 절대 노출하거나 공개 URL로 제공하지 않는다.
 - **텍스트 변환·PDF**: 산출물의 파생본은 트랜잭션 밖 작업이 만들고 `artifact_rendition`의 상태만 갱신한다. 1차 어댑터는 서버 안의 Apache POI + PDFBox(텍스트 변환, D-031)와 HTML 렌더링(PDF, D-032)이라 항상 켜져 있고, `converter`에 어댑터와 버전을 남긴다. 어댑터라 바꿀 수 있다(D-030).
