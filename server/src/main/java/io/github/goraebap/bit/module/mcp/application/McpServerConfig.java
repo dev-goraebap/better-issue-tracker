@@ -36,10 +36,13 @@ class McpServerConfig {
     private static final String ACTOR = "actor";
     private static final Logger LOG = LoggerFactory.getLogger(McpServerConfig.class);
     private static final String INSTRUCTIONS = """
-            BIT는 이슈·결정기록·근거를 한곳에 두는 이슈 트래커입니다. 이슈는 ORM-14처럼 '프로젝트 키-번호' 참조로 가리킵니다.
-            작업을 시작하면 get_issue_context로 이슈의 설명과 댓글·활동을 먼저 읽고, 진행 상황과 결과는 add_comment로 남기세요.
-            상태는 move_issue으로 옮깁니다(할 일·진행 중·완료 같은 칸 이름이나 todo/doing/done).
-            의미 있는 판단은 labels에 '결정기록'을 넣은 이슈로 남기고, 본문은 ## 배경 / ## 선택지 / ## 결정 / ## 이유 / ## 기각한 대안 / ## 후속 작업 으로 씁니다.
+            BIT는 이슈와 결정기록을 한곳에 두는 이슈 트래커입니다. 이슈는 ORM-14처럼 '프로젝트 키-번호' 참조로 가리킵니다.
+            코드나 문서를 바꾸는 일을 맡으면 고치기 전에 list_issues로 관련 이슈를 찾고, 없으면 create_issue로 만드세요.
+            get_issue_context로 설명과 댓글·활동을 읽고 시작하며, 진행과 결과(커밋, 검증)는 add_comment로 남깁니다. 작업 중 찾은 다른 문제는 따로 이슈로 만듭니다.
+            상태는 move_issue로 옮깁니다(할 일·진행 중·완료 같은 칸 이름이나 todo/doing/done).
+            결정기록은 앞으로 다른 작업이 따라야 할 선택(규칙·방식·제약)을 남기는 이슈입니다. 작업 이슈와 따로 만들고 labels에 '결정기록'을 넣습니다.
+            기존 결정을 뒤집을 때와, 여러 안 중 하나를 골라 이후 작업이 그것을 따라야 할 때만 씁니다. 한 번 하고 끝나는 선택이나 새 기능 추가 자체는 작업 이슈의 댓글로 충분합니다.
+            결정기록 본문은 ## 맥락 / ## 결정 / ## 검토한 대안(실제로 따져 본 안이 있을 때만)이고 섹션마다 몇 문장입니다. 맥락에 그 결정이 나온 이슈의 참조를 적고, 확정한 결정은 고치지 않고 새 결정기록으로 대체합니다.
             본문과 댓글은 마크다운입니다. 워크스페이스가 여럿이면 workspace 인자로 이름이나 슬러그를 주세요.""";
 
     @Bean

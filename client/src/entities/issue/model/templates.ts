@@ -5,31 +5,24 @@
 export type IssueTemplate = { id: string; name: string; icon: string; body: string; label: { system?: boolean; names?: readonly string[] } };
 
 /**
- * The templates a new issue starts from, as Linear's issue templates: a decision kept with its reasons and what was
- * turned down (BIT's 결정기록), a bug report that can be reproduced, and meeting notes ending in what was decided and
+ * The templates a new issue starts from, as Linear's issue templates: a decision that later work must follow, with its
+ * context and what was turned down (BIT's 결정기록, D-085), a bug report that can be reproduced, and meeting notes ending in what was decided and
  * who does what. Each is headings over empty lines to fill, the tasks as boxes.
  */
 export const ISSUE_TEMPLATES: readonly IssueTemplate[] = [
   {
     id: 'decision', name: '결정기록', icon: 'decision', label: { system: true },
-    body: `## 배경
+    body: `## 맥락
 
-무엇을 정해야 했고 왜 지금인지 적습니다.
-
-## 선택지
-
-- **A안**:
-- **B안**:
+무엇 때문에 정해야 했는지(문제, 요청, 제약)와 이 결정이 나온 이슈를 적습니다.
 
 ## 결정
 
-## 이유
+무엇을 하기로 했고 어디까지 적용하는지 적습니다.
 
-## 기각한 대안
+## 검토한 대안
 
-## 후속 작업
-
-- [ ] 할 일`,
+- 고르지 않은 안 (그 까닭)`,
   },
   {
     id: 'bug', name: '버그 리포트', icon: 'bug', label: { names: ['버그', 'bug'] },

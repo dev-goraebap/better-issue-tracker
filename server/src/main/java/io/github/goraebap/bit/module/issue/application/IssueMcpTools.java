@@ -89,7 +89,7 @@ class IssueMcpTools implements McpToolProvider {
                 new McpTool(
                         "create_issue",
                         "이슈 만들기",
-                        "새 이슈를 만들고 참조(예: ORM-20)를 돌려줍니다. 설명은 마크다운입니다. 의미 있는 판단은 labels에 '결정기록'을 넣고 설명을 ## 배경 / ## 선택지 / ## 결정 / ## 이유 / ## 기각한 대안 / ## 후속 작업 으로 쓰세요.",
+                        "새 이슈를 만들고 참조(예: ORM-20)를 돌려줍니다. 설명은 마크다운입니다. 결정기록(앞으로 다른 작업이 따라야 할 선택)은 작업 이슈와 따로 만들고, labels에 '결정기록'을 넣어 설명을 ## 맥락 / ## 결정 / ## 검토한 대안 으로 쓰세요.",
                         McpTool.input()
                                 .string("project", "프로젝트 키. 예: ORM", true)
                                 .string("title", "제목", true)
@@ -111,7 +111,7 @@ class IssueMcpTools implements McpToolProvider {
                 new McpTool(
                         "update_issue",
                         "이슈 고치기",
-                        "이슈의 준 값만 바꿉니다. 값을 지우려면 assignee·priority·start_date·due_date에 none을 주세요. labels는 준 목록으로 통째로 바꿉니다. 상태는 move_issue으로 옮깁니다.",
+                        "이슈의 준 값만 바꿉니다. 값을 지우려면 assignee·priority·start_date·due_date에 none을 주세요. labels는 준 목록으로 통째로 바꿉니다. 상태는 move_issue로 옮깁니다.",
                         McpTool.input()
                                 .string("ref", "이슈 참조. 예: ORM-14", true)
                                 .string("title", "새 제목", false)

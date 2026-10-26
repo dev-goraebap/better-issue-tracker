@@ -35,7 +35,7 @@
 | `add_comment` | issue | 이슈에 마크다운 댓글 |
 
 - **가리키는 법**: 이슈는 `ORM-14`, 프로젝트는 키, 칸·사람·라벨은 이름. 워크스페이스가 하나면 생략하고, 여럿이면 `workspace`에 이름이나 슬러그를 준다. 참조만 주면 속한 워크스페이스에서 찾아본다.
-- **결정**: 결정 엔티티 도구 대신, `labels: ["결정기록"]`과 결정 템플릿 본문(D-077)으로 이슈를 만든다. 서버 안내문(instructions)과 도구 설명에 형식을 적어 두었다.
+- **결정**: 결정 엔티티 도구 대신 `labels: ["결정기록"]`을 단 이슈로 만든다(D-085). 결정기록은 앞으로 다른 작업이 따라야 할 선택만 담고 그 선택이 나온 작업 이슈와 따로 만든다. 본문은 맥락 / 결정 / 검토한 대안이고, 확정한 결정은 고치지 않고 새 결정기록으로 대체한다. 서버 안내문(instructions)과 도구 설명에 같은 기준을 적어 두었다. 이슈끼리 잇는 도구와 결정 상태(제안·확정·대체)를 바꾸는 도구는 아직 없어, 그때까지는 본문에 참조를 적는다.
 - **오류**: 업무 오류는 `코드: 메시지`, 잘못된 인자는 무엇이 틀렸는지(예: 없는 칸이면 그 프로젝트의 칸 목록)를 도구 오류로 돌려준다.
 - **아직 없는 것**: 위 표 밖의 도구(검색·결정·세션·산출물·연결·추적·프로젝트 개요)는 그 기능이 생길 때 붙인다.
 
@@ -153,5 +153,5 @@ claude mcp add --transport http bit https://<BIT 주소>/api/mcp --header "Autho
 | `duplicate_task` | 드물게 쓰임 |
 | 시간 기록, 사용자 정의 필드 도구 | 해당 기능이 1차에 없음 (06-schema) |
 | `list_notifications` | 알림은 사람용 |
-| `update_task_status` / `update_task_assignee` / `update_task_due_date` 따로따로 | `move_issue`과 `update_issue` 하나로 합침 |
+| `update_task_status` / `update_task_assignee` / `update_task_due_date` 따로따로 | `move_issue`와 `update_issue` 하나로 합침 |
 | `create_task_relation` 등 관계 도구 | `link` 하나로 합침 (D-014) |

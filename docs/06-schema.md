@@ -115,9 +115,9 @@ erDiagram
 
 ### T-004 실제 V3 계약
 
-- V3에 project / project_key / board_column / issue을 추가했다. V1/V2는 수정하지 않는다. 작업 번호는 bigint이며 프로젝트 카운터와 같은 쓰기 트랜잭션에서 발급한다.
+- V3에 project / project_key / board_column / work_item(V10에서 `issue`로 바뀜)을 추가했다. V1/V2는 수정하지 않는다. 작업 번호는 bigint이며 프로젝트 카운터와 같은 쓰기 트랜잭션에서 발급한다.
 - 프로젝트·컬럼·작업에 version을 둔다. 새 감사 열에는 생성·수정·삭제의 사용자와 에이전트 이름을 함께 둔다. archived_at과 deleted_at은 별개다.
-- (project_id, workspace_id) 복합 키를 project_key가 참조해 다른 공간의 키 연결을 거부한다. (project_id, board_column_id) 복합 키를 issue이 참조해 다른 프로젝트의 컬럼 연결을 거부한다.
+- (project_id, workspace_id) 복합 키를 project_key가 참조해 다른 공간의 키 연결을 거부한다. (project_id, board_column_id) 복합 키를 issue가 참조해 다른 프로젝트의 컬럼 연결을 거부한다.
 - project_key는 삭제 여부와 무관하게 공간 내 고유하며, 프로젝트당 현재 키는 부분 인덱스로 최대 하나다. 생성·키 전환 서비스가 현재 키의 존재를 보장한다.
 - issue_label과 라벨 테이블은 라벨 구현 때 새 마이그레이션으로 추가한다. 프로젝트/작업 REST·화면·보드 이관 검증 전체가 끝난 상태는 아니다. 진행 결과는 T-004 지시서를 따른다.
 
