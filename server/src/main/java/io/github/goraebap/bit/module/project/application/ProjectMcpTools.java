@@ -24,7 +24,7 @@ class ProjectMcpTools implements McpToolProvider {
         return List.of(new McpTool(
                 "list_projects",
                 "프로젝트 목록",
-                "워크스페이스의 진행 중인 프로젝트를 워크스페이스 순서대로 돌려줍니다: 키(이슈 참조의 앞부분), 이름, 설명, 그리고 이슈를 옮길 수 있는 보드 칸.",
+                "워크스페이스의 진행 중인 프로젝트를 워크스페이스 순서대로 돌려줍니다: 키(업무 참조의 앞부분), 이름, 설명, 그리고 업무를 옮길 수 있는 보드 칸.",
                 McpTool.input()
                         .string("workspace", "워크스페이스 이름이나 슬러그. 속한 워크스페이스가 하나면 생략합니다.", false)
                         .build(),

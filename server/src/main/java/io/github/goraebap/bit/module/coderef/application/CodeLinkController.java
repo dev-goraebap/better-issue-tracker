@@ -18,17 +18,17 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping(value = "/api/v1/workspaces/{workspaceId}", produces = "application/json")
 @RequiredArgsConstructor
 class CodeLinkController {
-    private static final int MAX_ISSUES = 500;
+    private static final int MAX_WORK_ITEMS = 500;
     private final IntegrationService integrationService;
 
     @GetMapping("/pull-requests")
-    @Operation(summary = "The pull and merge requests of the given issues of the given projects, for badges")
+    @Operation(summary = "The pull and merge requests of the given work items of the given projects, for badges")
     List<CodeRefViews.Pull> pulls(
             @AuthenticationPrincipal CurrentUser actor,
             @PathVariable String workspaceId,
             @RequestParam String projects,
-            @RequestParam String issues) {
-        return integrationService.pulls(actor, workspaceId, ids(issues), ids(projects));
+            @RequestParam String workItems) {
+        return integrationService.pulls(actor, workspaceId, ids(workItems), ids(projects));
     }
 
     private static List<String> ids(String joined) {
@@ -37,7 +37,7 @@ class CodeLinkController {
                 .filter(each -> !each.isEmpty())
                 .distinct()
                 .toList();
-        if (ids.size() > MAX_ISSUES) throw CommonErrorCode.COMMON_INVALID_REQUEST.raise();
+        if (ids.size() > MAX_WORK_ITEMS) throw CommonErrorCode.COMMON_INVALID_REQUEST.raise();
         try {
             return ids.stream().map(Ids::parse).toList();
         } catch (IllegalArgumentException invalid) {

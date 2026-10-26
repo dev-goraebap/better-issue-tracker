@@ -39,7 +39,7 @@ export function ColumnDialog({ project, column, onClose }: { project: Project; c
     footer={<><Button label="취소" variant="ghost" onClick={onClose} isDisabled={isBusy} /><Button type="submit" label={column ? '저장' : '칸 만들기'} variant="primary" isLoading={isBusy} /></>}>
     <TextInput label="이름" value={name} onChange={setName} isRequired hasAutoFocus isDisabled={isBusy} placeholder="예: 검토 중" status={nameError ? { type: 'error', message: nameError } : undefined} />
     <Select label="분류" options={[...CATEGORIES]} value={isFinal ? 'done' : category} onChange={value => setCategory((value ?? 'doing') as Category)} isDisabled={isBusy || isFinal}
-      description="전체 보드에서 이 칸의 이슈가 놓일 곳입니다." />
+      description="전체 보드에서 이 칸의 업무가 놓일 곳입니다." />
     <Switch label="완료 칸" value={isFinal} onChange={setFinal} isDisabled={isBusy} />
     <FormMessage message={error} />
   </CompactDialog>;

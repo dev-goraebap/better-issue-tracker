@@ -65,7 +65,7 @@ class SessionRulesTest {
         assertThat(project.allocateDecisionNumber()).isEqualTo(1);
         assertThat(project.allocateDecisionNumber()).isEqualTo(2);
         assertThat(project.allocateSessionNumber()).isEqualTo(1);
-        assertThat(project.allocateIssueNumber()).isEqualTo(1);
+        assertThat(project.allocateWorkItemNumber()).isEqualTo(1);
         assertThat(project.version()).isZero();
     }
 }

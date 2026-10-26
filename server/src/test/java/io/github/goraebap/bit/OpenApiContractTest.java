@@ -43,7 +43,7 @@ class OpenApiContractTest {
     private io.github.goraebap.bit.module.project.domain.ProjectRepository projectRepository;
 
     @MockitoBean
-    private io.github.goraebap.bit.module.issue.domain.IssueRepository issueRepository;
+    private io.github.goraebap.bit.module.workitem.domain.WorkItemRepository workItemRepository;
 
     @MockitoBean
     private io.github.goraebap.bit.module.label.domain.LabelRepository labelRepository;
@@ -96,22 +96,23 @@ class OpenApiContractTest {
                 .getContentAsString();
         var mapper = JsonMapper.builder().build();
         var contract = mapper.readTree(body);
-        assertThat(contract.at("/components/schemas/Issue/properties/priority/enum")
+        assertThat(contract.at("/components/schemas/WorkItem/properties/priority/enum")
                         .get(4)
                         .isNull())
                 .isTrue();
-        assertThat(contract.at("/components/schemas/UpdateIssue/properties/description/type")
+        assertThat(contract.at("/components/schemas/UpdateWorkItem/properties/description/type")
                         .toString())
                 .contains("null");
-        assertThat(contract.at("/components/schemas/Issue/properties/columnId/type")
+        assertThat(contract.at("/components/schemas/WorkItem/properties/columnId/type")
                         .toString())
                 .contains("null");
-        assertThat(contract.at("/components/schemas/CreateIssue/properties/title")
+        assertThat(contract.at("/components/schemas/CreateWorkItem/properties/title")
                         .isMissingNode())
                 .isFalse();
-        assertThat(contract.at("/components/schemas/CreateIssue/properties/key").isMissingNode())
+        assertThat(contract.at("/components/schemas/CreateWorkItem/properties/key")
+                        .isMissingNode())
                 .isTrue();
-        assertThat(contract.at("/components/schemas/MoveIssue/properties/targetColumnId")
+        assertThat(contract.at("/components/schemas/MoveWorkItem/properties/targetColumnId")
                         .isMissingNode())
                 .isFalse();
         assertThat(contract.path("paths").has("/api/v1/auth/sessions")).isTrue();

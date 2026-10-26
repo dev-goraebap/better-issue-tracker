@@ -141,8 +141,8 @@ class AuthSecurityConfig {
                         .requestMatchers(
                                 HttpMethod.GET,
                                 "/api/v1/workspaces/*/my-tasks",
-                                "/api/v1/workspaces/*/issues",
-                                "/api/v1/workspaces/*/issues/by-ref/*",
+                                "/api/v1/workspaces/*/work-items",
+                                "/api/v1/workspaces/*/work-items/by-ref/*",
                                 "/api/v1/workspaces/*/labels",
                                 "/api/v1/workspaces/*/labels/*",
                                 "/api/v1/workspaces/*/views",
@@ -153,8 +153,8 @@ class AuthSecurityConfig {
                         .requestMatchers(
                                 HttpMethod.HEAD,
                                 "/api/v1/workspaces/*/my-tasks",
-                                "/api/v1/workspaces/*/issues",
-                                "/api/v1/workspaces/*/issues/by-ref/*",
+                                "/api/v1/workspaces/*/work-items",
+                                "/api/v1/workspaces/*/work-items/by-ref/*",
                                 "/api/v1/workspaces/*/labels",
                                 "/api/v1/workspaces/*/labels/*",
                                 "/api/v1/workspaces/*/views",
@@ -195,7 +195,7 @@ class AuthSecurityConfig {
                         .authenticated()
                         .requestMatchers(HttpMethod.DELETE, "/api/v1/workspaces/*/comments/*")
                         .authenticated()
-                        // Repository integrations (D-087): badges for issue lists, and the hosts' signed webhooks.
+                        // Repository integrations (D-087): badges for work item lists, and the hosts' signed webhooks.
                         .requestMatchers(HttpMethod.GET, "/api/v1/workspaces/*/pull-requests")
                         .authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/v1/hooks/*")

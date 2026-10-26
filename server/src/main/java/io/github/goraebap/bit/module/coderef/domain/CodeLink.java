@@ -12,7 +12,7 @@ import java.util.Objects;
 public record CodeLink(
         String id,
         String integrationId,
-        String issueId,
+        String workItemId,
         Kind kind,
         String externalId,
         String url,
@@ -38,7 +38,7 @@ public record CodeLink(
 
     public static CodeLink of(
             String integrationId,
-            String issueId,
+            String workItemId,
             Kind kind,
             String externalId,
             String url,
@@ -50,7 +50,7 @@ public record CodeLink(
         return new CodeLink(
                 Ids.newId(),
                 Objects.requireNonNull(integrationId),
-                Objects.requireNonNull(issueId),
+                Objects.requireNonNull(workItemId),
                 Objects.requireNonNull(kind),
                 cut(Objects.requireNonNull(externalId), 255),
                 cut(Objects.requireNonNull(url), 1000),
@@ -67,7 +67,7 @@ public record CodeLink(
         return new CodeLink(
                 id,
                 integrationId,
-                issueId,
+                workItemId,
                 kind,
                 externalId,
                 url,

@@ -11,7 +11,7 @@ import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-/** Who an agent works as over MCP (D-081), and the people of a workspace it may assign issues to. */
+/** Who an agent works as over MCP (D-081), and the people of a workspace it may assign work items to. */
 @Component
 @RequiredArgsConstructor
 class WorkspaceMcpTools implements McpToolProvider {

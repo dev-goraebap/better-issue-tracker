@@ -16,15 +16,15 @@ import { WorkspaceSwitcher } from '@/features/workspace-switcher';
 import { CreateProjectDialog } from '@/features/project-create';
 import { canManage, forgetWorkspace, workspaceQuery } from '@/entities/workspace';
 import { ProjectMark, projectsQuery, type Project } from '@/entities/project';
-import { itemQuery } from '@/entities/issue';
+import { itemQuery } from '@/entities/work-item';
 import { SidebarProjects } from './SidebarProjects';
 import styles from './app-layout.module.css';
 
-const SECTION_NAMES: Record<string, string> = { '/inbox': '알림', '/projects': '모든 프로젝트', '/issues/new': '새 이슈' };
+const SECTION_NAMES: Record<string, string> = { '/inbox': '알림', '/projects': '모든 프로젝트', '/work-items/new': '새 업무' };
 
 /**
  * The signed-in app's frame: ShellFrame with the workspace switcher and the bell at the menu's
- * head; 홈, 문서함 and 구성원 (D-071); 프로젝트 with its + and the active projects, each one page of issues (D-066); and
+ * head; 홈, 문서함 and 구성원 (D-071); 프로젝트 with its + and the active projects, each one page of work items (D-066); and
  * 워크스페이스 설정 and the member's card at its foot. On the home and a project's page the trail's second step is 홈 or
  * the project's name, a link to that scope's default view (D-088). The card's gear turns the menu into the member's own settings (/settings/…), and
  * 워크스페이스 설정 into the workspace's (its pages, then each project's, D-061): either way 돌아가기 or Esc goes back
@@ -113,7 +113,7 @@ export function AppLayout() {
     if (place.projectId) {
       steps.push(scopeStep(projectName(place.projectId) ?? '프로젝트', projectPath(workspaceId, place.projectId)));
       const key = item.data?.key;
-      if (place.itemId) steps.push({ label: place.itemId === 'new' ? '새 이슈' : key && place.isEditing ? `${key} 편집` : key ?? '이슈' });
+      if (place.itemId) steps.push({ label: place.itemId === 'new' ? '새 업무' : key && place.isEditing ? `${key} 편집` : key ?? '업무' });
     } else if (place.workspaceSection === '') steps.push(scopeStep('홈', home));
     else steps.push({ label: WORKSPACE_MENU.find(entry => entry.path === place.workspaceSection)?.label ?? SECTION_NAMES[place.workspaceSection ?? ''] ?? '페이지 찾기' });
   } else steps.push({ label: PRODUCT_NAME });
@@ -176,7 +176,7 @@ export function AppLayout() {
           href={project => projectPath(workspaceId, project.id)} mark={projectMark} onGo={go} />
         {!folded && canMakeProjects && projects.length === 0 && <button type="button" className={styles.firstProject} onClick={() => setCreatingProject(true)}>
           <span className={styles.firstProjectMark} aria-hidden="true"><NavIcon name="board" /></span>
-          <span className={styles.firstProjectText}><strong>첫 프로젝트 만들기</strong>이슈를 묶어 보드와 일정으로 봅니다.</span>
+          <span className={styles.firstProjectText}><strong>첫 프로젝트 만들기</strong>업무를 묶어 보드와 일정으로 봅니다.</span>
         </button>}
       </SideNavSection>}
     </SideNav>;

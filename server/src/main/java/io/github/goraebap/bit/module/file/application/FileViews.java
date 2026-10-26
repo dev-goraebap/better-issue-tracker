@@ -10,7 +10,7 @@ public final class FileViews {
 
     /**
      * Where to send the bytes: the browser sends the file with method to url, setting headers, before expiresAt. id is
-     * what the owning command, such as saving an issue, takes to bind the file, and what a text points at as
+     * what the owning command, such as saving a work item, takes to bind the file, and what a text points at as
      * {@code attachment:<id>} before it is saved.
      */
     @Schema(requiredProperties = {"id", "url", "method", "headers", "expiresAt"})

@@ -2,10 +2,10 @@ package io.github.goraebap.bit.module.view.application;
 
 import io.github.goraebap.bit.module.project.ProjectFacade;
 import io.github.goraebap.bit.module.view.ViewFacade;
-import io.github.goraebap.bit.module.view.domain.IssueView;
 import io.github.goraebap.bit.module.view.domain.ViewOrder;
 import io.github.goraebap.bit.module.view.domain.ViewRepository;
 import io.github.goraebap.bit.module.view.domain.ViewTweak;
+import io.github.goraebap.bit.module.view.domain.WorkItemView;
 import io.github.goraebap.bit.module.workspace.WorkspaceCreatedEvent;
 import io.github.goraebap.bit.module.workspace.WorkspaceFacade;
 import io.github.goraebap.bit.shared.domain.Ids;
@@ -36,7 +36,7 @@ public class ViewService implements ViewFacade {
     @Transactional(readOnly = true)
     public void requireAccess(CurrentUser actor, String workspaceId, String viewKey, boolean editing) {
         var rights = rights(actor, workspaceId);
-        if (IssueView.ALL.equals(viewKey)) {
+        if (WorkItemView.ALL.equals(viewKey)) {
             if (editing) throw ViewErrorCode.VIEW_NOT_FOUND.raise();
             return;
         }
@@ -62,7 +62,7 @@ public class ViewService implements ViewFacade {
     public List<ViewViews.Tweak> tweaks(CurrentUser actor, String workspaceId) {
         workspaceFacade.requireAccess(actor, workspaceId, WorkspaceFacade.Action.READ);
         var keys = new HashSet<String>();
-        keys.add(IssueView.ALL);
+        keys.add(WorkItemView.ALL);
         viewRepository.findAllVisible(workspaceId, actor.userId()).forEach(v -> keys.add(v.id()));
         // A view that became someone else's personal view or was deleted keeps no visible tweak.
         return viewRepository.findTweaks(workspaceId, actor.userId()).stream()
@@ -121,7 +121,7 @@ public class ViewService implements ViewFacade {
                 request.filters(),
                 request.sort(),
                 request.columns());
-        var view = IssueView.create(
+        var view = WorkItemView.create(
                 workspaceId,
                 actor.userId(),
                 request.isPersonal(),
@@ -192,19 +192,19 @@ public class ViewService implements ViewFacade {
     @TransactionalEventListener(phase = TransactionPhase.BEFORE_COMMIT)
     public void seed(WorkspaceCreatedEvent event) {
         viewRepository.saveAll(
-                IssueView.starters(event.workspaceId(), event.actorId(), event.actorAgent(), event.occurredAt()));
+                WorkItemView.starters(event.workspaceId(), event.actorId(), event.actorAgent(), event.occurredAt()));
     }
 
-    /** 전체 이슈 and the views the user sees, by key. */
+    /** 전체 업무 and the views the user sees, by key. */
     private Set<String> visibleKeys(String workspaceId, String userId) {
         var keys = new HashSet<String>();
-        keys.add(IssueView.ALL);
+        keys.add(WorkItemView.ALL);
         viewRepository.findAllVisible(workspaceId, userId).forEach(view -> keys.add(view.id()));
         return keys;
     }
 
     private record Rights(String me, boolean writer, boolean admin) {
-        boolean edits(IssueView view) {
+        boolean edits(WorkItemView view) {
             if (view.personal()) return view.ownerId().equals(me);
             return admin || writer && view.ownerId().equals(me);
         }
@@ -216,7 +216,7 @@ public class ViewService implements ViewFacade {
         return new Rights(actor.userId(), writer, admin);
     }
 
-    private IssueView visible(Rights rights, String workspaceId, String viewId) {
+    private WorkItemView visible(Rights rights, String workspaceId, String viewId) {
         return viewRepository
                 .findById(workspaceId, viewId)
                 .filter(view -> view.visibleTo(rights.me()))
@@ -225,7 +225,7 @@ public class ViewService implements ViewFacade {
 
     /** Tweaks are stored under "all" or the view id's canonical text. */
     private static String key(String viewKey) {
-        return IssueView.ALL.equals(viewKey) ? IssueView.ALL : id(viewKey);
+        return WorkItemView.ALL.equals(viewKey) ? WorkItemView.ALL : id(viewKey);
     }
 
     private static String id(String viewKey) {
@@ -236,40 +236,41 @@ public class ViewService implements ViewFacade {
         }
     }
 
-    private static IssueView.Definition definition(
+    private static WorkItemView.Definition definition(
             String name,
             String description,
             String icon,
             String color,
-            IssueView.Layout layout,
+            WorkItemView.Layout layout,
             Map<String, String> filters,
             ViewViews.Sort sort,
-            List<IssueView.Column> columns) {
+            List<WorkItemView.Column> columns) {
         var domainSort = sort == null ? null : domainSort(sort);
-        var problem = IssueView.Definition.check(name, description, icon, color, layout, filters, domainSort, columns);
+        var problem =
+                WorkItemView.Definition.check(name, description, icon, color, layout, filters, domainSort, columns);
         if (problem.isPresent())
             throw switch (problem.get()) {
                 case FILTERS -> ViewErrorCode.VIEW_FILTERS_INVALID.raise();
                 case COLUMNS -> ViewErrorCode.VIEW_COLUMNS_INVALID.raise();
                 case DEFINITION -> ViewErrorCode.VIEW_INVALID.raise();
             };
-        return IssueView.Definition.of(name, description, icon, color, layout, filters, domainSort, columns);
+        return WorkItemView.Definition.of(name, description, icon, color, layout, filters, domainSort, columns);
     }
 
-    private static IssueView.Sort domainSort(ViewViews.Sort sort) {
+    private static WorkItemView.Sort domainSort(ViewViews.Sort sort) {
         if (sort.key() == null || sort.direction() == null) throw ViewErrorCode.VIEW_INVALID.raise();
-        return new IssueView.Sort(sort.key(), sort.direction());
+        return new WorkItemView.Sort(sort.key(), sort.direction());
     }
 
-    private static ViewViews.Sort sort(IssueView.Sort sort) {
+    private static ViewViews.Sort sort(WorkItemView.Sort sort) {
         return sort == null ? null : new ViewViews.Sort(sort.key(), sort.direction());
     }
 
-    private static void version(IssueView view, Long expected) {
+    private static void version(WorkItemView view, Long expected) {
         if (expected == null || view.version() != expected) throw ViewErrorCode.VIEW_VERSION_CONFLICT.raise();
     }
 
-    private static ViewViews.View view(IssueView view, Rights rights) {
+    private static ViewViews.View view(WorkItemView view, Rights rights) {
         var d = view.definition();
         var f = d.filters();
         var a = view.audit();

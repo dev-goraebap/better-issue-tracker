@@ -1,7 +1,7 @@
 package io.github.goraebap.bit.module.file.domain;
 
 /**
- * What an upload is for, which decides the formats and size it may have (D-090): a file attached to an issue or a
+ * What an upload is for, which decides the formats and size it may have (D-090): a file attached to a work item or a
  * comment, up to the installation's limit (STORAGE_MAX_FILE_MB), or a member's or workspace's picture, which the browser
  * has already cut to a small square JPEG.
  */

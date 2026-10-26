@@ -35,7 +35,7 @@ public class ActivityService {
                             "deleted",
                             "replacementId"),
             TargetType.session_record, Set.of("title", "type", "summary", "occurredAt", "participants", "deleted"),
-            TargetType.issue,
+            TargetType.work_item,
                     Set.of(
                             "title",
                             "description",

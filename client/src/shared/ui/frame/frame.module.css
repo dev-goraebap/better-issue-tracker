@@ -11,7 +11,7 @@
 .actions { display: flex; align-items: center; gap: var(--spacing-1); }
 .close { display: inline-flex; }
 /* A panel's head (a detail's modal): its actions, 크게 보기 and close one set of 24px buttons with 16px icons, the expand
-   arrows a step smaller because they reach their box's corners (as 새 이슈's head). */
+   arrows a step smaller because they reach their box's corners (as 새 업무's head). */
 .head[data-full] .actions svg, .head[data-full] .close svg { inline-size: 1rem; block-size: 1rem; }
 .head[data-full] .actions svg:global(.lucide-maximize-2) { inline-size: 0.875rem; block-size: 0.875rem; }
 .body { flex: 1; min-block-size: 0; padding: var(--spacing-4) var(--spacing-6); overflow-y: auto; }
@@ -22,7 +22,7 @@
 /* A compact frame's body: its fields evenly spaced. */
 .stack { display: flex; flex-direction: column; gap: var(--spacing-4); }
 /*
- * A short window on a desktop (CompactDialog) as the quick form (새 이슈, D-070): head, body and foot on the modal's one
+ * A short window on a desktop (CompactDialog) as the quick form (새 업무, D-070): head, body and foot on the modal's one
  * surface with no rules between them, roomy (24px insets, a 20px title), the close and the actions 16px from the edge.
  * It keeps its content's height, by which the modal is sized, and a window taller than the modal may be scrolls in it
  * whole.

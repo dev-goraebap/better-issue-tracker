@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { activityText, foldTimeline, type ActivityNames } from '../src/widgets/issue-detail/model/activity-text';
-import type { TimelineEntry } from '../src/widgets/issue-detail/api/timeline';
+import { activityText, foldTimeline, type ActivityNames } from '../src/widgets/work-item-detail/model/activity-text';
+import type { TimelineEntry } from '../src/widgets/work-item-detail/api/timeline';
 
 const names: ActivityNames = {
   people: new Map([['u1', '김하늘'], ['u2', '박서준']]),
@@ -15,7 +15,7 @@ const entry = (patch: Partial<TimelineEntry>): TimelineEntry => ({
 });
 
 test('activity reads as a sentence with the particle its last word takes', () => {
-  assert.equal(activityText(entry({ action: 'created' }), names), '이슈를 만들었습니다');
+  assert.equal(activityText(entry({ action: 'created' }), names), '업무를 만들었습니다');
   assert.equal(activityText(entry({ field: 'priority', after: 'high' }), names), '우선순위를 높음으로 바꿨습니다');
   assert.equal(activityText(entry({ field: 'priority', after: 'medium' }), names), '우선순위를 보통으로 바꿨습니다');
   assert.equal(activityText(entry({ field: 'column', before: 'c1', after: 'c2' }), names), '상태를 할 일에서 진행 중으로 옮겼습니다');

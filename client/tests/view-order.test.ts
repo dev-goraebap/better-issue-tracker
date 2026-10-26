@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { orderViews } from '../src/entities/issue/model/view-order';
+import { orderViews } from '../src/entities/work-item/model/view-order';
 
 const views = [{ id: 'all' }, { id: 'backlog' }, { id: 'board' }, { id: 'calendar' }];
 const ids = (list: readonly { id: string }[]) => list.map(view => view.id);

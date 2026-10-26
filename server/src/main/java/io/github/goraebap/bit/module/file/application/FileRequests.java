@@ -23,7 +23,7 @@ public final class FileRequests {
 
             @NotNull @Positive Long size,
 
-            @Schema(description = "attachment(이슈 설명·댓글 파일, 기본) 또는 picture(아바타·로고, 정사각 JPEG 1MB 이하)")
+            @Schema(description = "attachment(업무 설명·댓글 파일, 기본) 또는 picture(아바타·로고, 정사각 JPEG 1MB 이하)")
             UploadPurpose purpose,
 
             @Pattern(regexp = ImageTraits.COLOR_PATTERN) @Schema(description = "사진 자리를 칠할 대표색(#RRGGBB)")

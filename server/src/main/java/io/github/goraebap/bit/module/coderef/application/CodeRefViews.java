@@ -107,9 +107,9 @@ public final class CodeRefViews {
 
     @Schema(
             name = "PullRequestBadge",
-            requiredProperties = {"issueId", "provider", "number", "url", "title", "state"})
+            requiredProperties = {"workItemId", "provider", "number", "url", "title", "state"})
     public record Pull(
-            String issueId, Provider provider, String number, String url, String title, CodeLink.State state) {}
+            String workItemId, Provider provider, String number, String url, String title, CodeLink.State state) {}
 
     @Schema(
             name = "IssueImport",

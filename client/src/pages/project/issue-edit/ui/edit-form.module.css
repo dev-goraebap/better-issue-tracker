@@ -1,9 +1,0 @@
-/*
- * The edit page drawn as 새 이슈's page (D-067, BIT-22): no boxes, the title in 20px/600 and the description as text on
- * the page, the properties as a row of pills under a hairline.
- */
-.form { display: flex; flex-direction: column; gap: var(--spacing-2); padding-block-start: var(--spacing-2); }
-.title { padding: 0; border: 0; outline: 0; background: none; font: inherit; font-size: 1.25rem; font-weight: 600; color: var(--color-text-primary); }
-.title::placeholder { color: var(--color-text-disabled); }
-.pills { display: flex; flex-wrap: wrap; gap: var(--spacing-1-5, 0.375rem); margin-block-start: var(--spacing-2); padding-block-start: var(--spacing-4);
-  border-block-start: 1px solid var(--color-border-subtle); }

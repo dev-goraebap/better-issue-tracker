@@ -9,21 +9,21 @@ public record ViewTweak(
         String workspaceId,
         String userId,
         String viewKey,
-        IssueView.Layout layout,
-        IssueView.Sort sort,
-        List<IssueView.Column> columns,
+        WorkItemView.Layout layout,
+        WorkItemView.Sort sort,
+        List<WorkItemView.Column> columns,
         Instant updatedAt) {
     public ViewTweak {
         Objects.requireNonNull(workspaceId, "workspaceId");
         Objects.requireNonNull(userId, "userId");
         Objects.requireNonNull(viewKey, "viewKey");
-        if (columns != null && !IssueView.validColumns(columns))
+        if (columns != null && !WorkItemView.validColumns(columns))
             throw new IllegalArgumentException("Invalid tweak columns");
         columns = columns == null ? null : List.copyOf(columns);
     }
 
-    public static boolean validColumns(List<IssueView.Column> columns) {
-        return columns == null || IssueView.validColumns(columns);
+    public static boolean validColumns(List<WorkItemView.Column> columns) {
+        return columns == null || WorkItemView.validColumns(columns);
     }
 
     public boolean isEmpty() {

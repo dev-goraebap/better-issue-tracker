@@ -90,8 +90,8 @@ class Hosts {
         return publicUrl + "/api/v1/hooks/" + integrationId;
     }
 
-    String issueUrl(String workspaceId, String reference) {
-        return publicUrl + "/workspaces/" + workspaceId + "/issues/" + reference;
+    String workItemUrl(String workspaceId, String reference) {
+        return publicUrl + "/workspaces/" + workspaceId + "/work-items/" + reference;
     }
 
     /** The column an event moves to: the project's rule, else the default by the columns' kinds. Empty: stay. */

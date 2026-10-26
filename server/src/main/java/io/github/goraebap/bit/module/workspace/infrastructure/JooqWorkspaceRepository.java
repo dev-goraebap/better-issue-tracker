@@ -261,7 +261,8 @@ class JooqWorkspaceRepository implements WorkspaceRepository {
     }
 
     @Override
-    public void revokePending(String workspace, String issuer, WorkspaceRole retainedRole, String actor, Instant now) {
+    public void revokePending(
+            String workspace, String workItemr, WorkspaceRole retainedRole, String actor, Instant now) {
         Condition invalid = retainedRole == null || !retainedRole.editsSettings()
                 ? DSL.trueCondition()
                 : retainedRole == WorkspaceRole.admin ? WORKSPACE_INVITATION.ROLE.eq("admin") : DSL.falseCondition();
@@ -272,7 +273,7 @@ class JooqWorkspaceRepository implements WorkspaceRepository {
                 .set(WORKSPACE_INVITATION.REVOKED_BY, actor)
                 .where(WORKSPACE_INVITATION.WORKSPACE_ID.eq(workspace))
                 .and(WORKSPACE_INVITATION.STATUS.eq("pending"))
-                .and(issuer == null ? DSL.noCondition() : WORKSPACE_INVITATION.INVITED_BY.eq(issuer))
+                .and(workItemr == null ? DSL.noCondition() : WORKSPACE_INVITATION.INVITED_BY.eq(workItemr))
                 .and(invalid)
                 .execute();
     }

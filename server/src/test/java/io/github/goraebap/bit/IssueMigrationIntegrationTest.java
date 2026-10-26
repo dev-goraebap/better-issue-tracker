@@ -155,7 +155,7 @@ class IssueMigrationIntegrationTest {
                     "created",
                     NOW);
         }
-        Flyway.configure().dataSource(url, null, null).load().migrate();
+        Flyway.configure().dataSource(url, null, null).target("10").load().migrate();
         try (var connection = DriverManager.getConnection(url)) {
             var jdbc = jdbc(connection);
             assertThat(jdbc.queryForList(

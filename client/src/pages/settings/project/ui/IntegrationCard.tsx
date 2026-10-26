@@ -12,8 +12,8 @@ import styles from './project-settings.module.css';
 
 /**
  * One connected repository (D-087), as Kaneo's connected panel: where it is and whose token speaks for it; the webhook
- * (registered by BIT, or its address and secret to register by hand, with when one last arrived); whether issues are
- * kept in step and whether a mirrored issue is told about it; bringing in the open issues; a new token; and
+ * (registered by BIT, or its address and secret to register by hand, with when one last arrived); whether work items and
+ * repository issues are kept in step and whether a mirrored issue is told about it; bringing in the open issues; a new token; and
  * disconnecting. Only those who manage the project change it.
  */
 export function IntegrationCard({ project, integration, canManage }: { project: Project; integration: Integration; canManage: boolean }) {
@@ -55,23 +55,23 @@ export function IntegrationCard({ project, integration, canManage }: { project: 
           {canManage && <CopyLine label={integration.provider === 'gitlab' ? 'Secret token' : 'Secret'} value={integration.webhookSecret} isSecret onCopy={() => copy(integration.webhookSecret, '비밀값')} />}
         </div>
       </SettingsRow>}
-    <SettingsRow label="저장소 이슈와 동기화" description="BIT 이슈를 만들면 저장소 이슈가 생기고, 제목·설명·우선순위·라벨·칸과 댓글이 서로 반영됩니다. 끄면 브랜치·PR·커밋 연결만 남습니다.">
+    <SettingsRow label="저장소 이슈와 동기화" description="BIT 업무를 만들면 저장소 이슈가 생기고, 제목·설명·우선순위·라벨·칸과 댓글이 서로 반영됩니다. 끄면 브랜치·PR·커밋 연결만 남습니다.">
       <Switch label="저장소 이슈와 동기화" isLabelHidden size="sm" value={integration.syncsIssues} isDisabled={!canManage || !!busy} onChange={value => { void configure({ syncsIssues: value }); }} />
     </SettingsRow>
-    <SettingsRow label="저장소 이슈에 BIT 링크 남기기" description="저장소에서 연 이슈를 BIT가 따라가기 시작하면 그 이슈에 BIT 이슈 링크를 댓글로 남깁니다.">
+    <SettingsRow label="저장소 이슈에 BIT 링크 남기기" description="저장소에서 연 이슈를 BIT가 따라가기 시작하면 그 이슈에 BIT 업무 링크를 댓글로 남깁니다.">
       <Switch label="저장소 이슈에 BIT 링크 남기기" isLabelHidden size="sm" value={integration.commentsLink} isDisabled={!canManage || !!busy} onChange={value => { void configure({ commentsLink: value }); }} />
     </SettingsRow>
-    {canManage && <SettingsRow label="열린 이슈 가져오기" description="저장소의 열린 이슈(최대 200개)와 그 댓글을 BIT 이슈로 가져오고, 열린 PR을 이슈에 잇습니다. 이미 가져온 이슈는 건너뜁니다.">
+    {canManage && <SettingsRow label="열린 이슈 가져오기" description="저장소의 열린 이슈(최대 200개)와 그 댓글을 BIT 업무로 가져오고, 열린 PR을 업무에 잇습니다. 이미 가져온 이슈는 건너뜁니다.">
       <Button label="가져오기" variant="secondary" size="sm" isLoading={busy === 'import'} isDisabled={!!busy && busy !== 'import'}
         onClick={() => { void run('import', async () => {
           const result = await importOpenIssues(project.workspaceId, project.id, integration.id);
-          toast({ body: `이슈 ${result.issues}개와 댓글 ${result.comments}개를 가져오고 PR ${result.pullRequests}개를 이었습니다` });
+          toast({ body: `저장소 이슈 ${result.issues}개와 댓글 ${result.comments}개를 가져오고 PR ${result.pullRequests}개를 이었습니다` });
         }); }} />
     </SettingsRow>}
-    {canManage && <SettingsRow label="연결 끊기" description="연결과 이슈에 붙은 브랜치·PR·커밋 기록을 지웁니다. 이슈와 저장소 이슈는 그대로 남습니다.">
+    {canManage && <SettingsRow label="연결 끊기" description="연결과 업무에 붙은 브랜치·PR·커밋 기록을 지웁니다. 업무와 저장소 이슈는 그대로 남습니다.">
       <SettingsAction label={`${name} 연결 끊기`} tooltip="연결 끊기" icon="unplug" tone="danger" isDisabled={!!busy} onClick={() => setAsking(true)} />
     </SettingsRow>}
-    {isAsking && <ConfirmDialog title={`${name} 연결을 끊을까요?`} description={`${integration.repository}와의 연결과 이슈에 붙은 코드 기록이 지워집니다. 다시 연결하면 새로 쌓입니다.`}
+    {isAsking && <ConfirmDialog title={`${name} 연결을 끊을까요?`} description={`${integration.repository}와의 연결과 업무에 붙은 코드 기록이 지워집니다. 다시 연결하면 새로 쌓입니다.`}
       confirmLabel="연결 끊기" variant="destructive" isPending={busy === 'disconnect'} onClose={() => setAsking(false)}
       onConfirm={() => { void run('disconnect', () => disconnectRepository(project.workspaceId, project.id, integration.id), `${name} 연결을 끊었습니다`).then(() => setAsking(false)); }} />}
     {isToken && <ConnectDialog project={project} provider={integration.provider} integration={integration} onClose={saved => { setToken(false); if (saved) toast({ body: '토큰을 바꿨습니다' }); }} />}

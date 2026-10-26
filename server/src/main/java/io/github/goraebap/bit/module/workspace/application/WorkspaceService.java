@@ -458,8 +458,8 @@ public class WorkspaceService implements WorkspaceFacade {
                 || workspaceRepository.findById(i.workspaceId()).isEmpty()
                 || iamFacade.user(i.invitedBy()).isEmpty())
             throw WorkspaceErrorCode.WORKSPACE_INVITATION_UNAVAILABLE.raise();
-        var issuer = workspaceRepository.findMember(i.workspaceId(), i.invitedBy());
-        if (issuer.isEmpty() || !issuer.get().role().manages(i.role()))
+        var workItemr = workspaceRepository.findMember(i.workspaceId(), i.invitedBy());
+        if (workItemr.isEmpty() || !workItemr.get().role().manages(i.role()))
             throw WorkspaceErrorCode.WORKSPACE_INVITATION_UNAVAILABLE.raise();
     }
 

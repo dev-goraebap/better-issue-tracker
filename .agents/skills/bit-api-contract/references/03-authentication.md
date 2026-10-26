@@ -75,7 +75,7 @@ description: 이메일 + 비밀번호 로그인, 메일 서버가 있을 때의 
 
 ### 보안 응답 헤더
 API와 화면의 모든 응답에 Spring Security 기본 헤더(`X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, HTTPS의 HSTS)와 함께 다음을 붙인다(`AuthSecurityConfig`).
-- `Referrer-Policy: strict-origin-when-cross-origin`: 다른 사이트로 나가는 링크에는 출처만 보내고 이슈·결정 ID가 든 경로는 보내지 않는다.
+- `Referrer-Policy: strict-origin-when-cross-origin`: 다른 사이트로 나가는 링크에는 출처만 보내고 업무·결정 ID가 든 경로는 보내지 않는다.
 - `Permissions-Policy`: 화면이 쓰지 않는 기기 기능(카메라, 마이크, 위치, 결제, USB, 시리얼, 블루투스)을 끈다. 화면이 이 기능을 쓰게 되면 목록에서 뺀다.
 - Content-Security-Policy는 아직 두지 않는다. 빌드된 화면이 읽는 스크립트·스타일 출처를 정리한 뒤 따로 적용한다.
 

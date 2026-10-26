@@ -11,7 +11,7 @@ type Draft = { from?: Label; name: string; color: string };
 
 /**
  * 라벨: the workspace's labels, shared by all its projects (D-009), each its colour and name. 새 라벨 and 고치기 open the
- * same short dialog (a name required and not taken, a colour); 삭제 asks first and takes the label off its issues. The
+ * same short dialog (a name required and not taken, a colour); 삭제 asks first and takes the label off its work items. The
  * system label (결정기록, D-066) keeps its name and cannot be deleted; its colour may change. A viewer reads them.
  */
 export function LabelsSettings({ workspaceId, canWrite }: { workspaceId: string; canWrite: boolean }) {
@@ -74,7 +74,7 @@ export function LabelsSettings({ workspaceId, canWrite }: { workspaceId: string;
       </fieldset>
       <FormMessage message={error} />
     </CompactDialog>
-    {deleting && <ConfirmDialog title={`'${deleting.name}' 라벨을 삭제할까요?`} description="이 라벨을 단 이슈에서 라벨이 빠집니다. 이슈는 그대로 남습니다." confirmLabel="삭제" variant="destructive"
+    {deleting && <ConfirmDialog title={`'${deleting.name}' 라벨을 삭제할까요?`} description="이 라벨을 단 업무에서 라벨이 빠집니다. 업무는 그대로 남습니다." confirmLabel="삭제" variant="destructive"
       isPending={isBusy} error={deleteError} onClose={() => { setDeleting(null); setDeleteError(null); }} onConfirm={() => { void remove(); }} />}
   </VStack>;
 }

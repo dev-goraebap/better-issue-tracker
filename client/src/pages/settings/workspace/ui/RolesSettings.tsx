@@ -7,8 +7,8 @@ import styles from './workspace-settings.module.css';
 
 /** What each role may do, the least first; a role may do all that the roles before it may (D-040, D-048, D-049). */
 const ABILITIES: readonly { label: string; from: Role }[] = [
-  { label: '이슈·결정·문서 보기', from: 'viewer' },
-  { label: '이슈와 라벨을 만들고 고치기', from: 'member' },
+  { label: '업무·결정·문서 보기', from: 'viewer' },
+  { label: '업무와 라벨을 만들고 고치기', from: 'member' },
   { label: '프로젝트 설정과 보드 칸', from: 'admin' },
   { label: '구성원 초대와 역할 변경', from: 'admin' },
   { label: '워크스페이스 이름 바꾸기', from: 'admin' },
@@ -17,8 +17,8 @@ const ABILITIES: readonly { label: string; from: Role }[] = [
 
 /** A role in a line: what it adds to the role before it. */
 const SUMMARIES: Record<Role, string> = {
-  viewer: '이슈·결정·문서를 볼 수만 있습니다.',
-  member: '이슈와 라벨을 만들고 고칩니다.',
+  viewer: '업무·결정·문서를 볼 수만 있습니다.',
+  member: '업무와 라벨을 만들고 고칩니다.',
   admin: '멤버가 하는 일에 더해 프로젝트 설정과 보드 칸, 구성원 초대와 역할, 워크스페이스 이름을 맡습니다.',
   owner: '관리자가 하는 일에 더해 워크스페이스를 지우고 소유권을 넘깁니다. 한 명뿐입니다.',
 };

@@ -91,12 +91,12 @@ class IntegrationController {
         return integrationService.setRules(actor, workspaceId, projectId, request);
     }
 
-    @GetMapping("/issues/{issueId}/code-links")
+    @GetMapping("/work-items/{workItemId}/code-links")
     List<CodeRefViews.Link> links(
             @AuthenticationPrincipal CurrentUser actor,
             @PathVariable String workspaceId,
             @PathVariable String projectId,
-            @PathVariable String issueId) {
-        return integrationService.links(actor, workspaceId, projectId, issueId);
+            @PathVariable String workItemId) {
+        return integrationService.links(actor, workspaceId, projectId, workItemId);
     }
 }

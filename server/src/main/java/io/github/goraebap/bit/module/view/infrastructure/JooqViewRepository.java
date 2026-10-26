@@ -1,15 +1,15 @@
 package io.github.goraebap.bit.module.view.infrastructure;
 
-import static io.github.goraebap.bit.jooq.tables.IssueView.ISSUE_VIEW;
-import static io.github.goraebap.bit.jooq.tables.IssueViewOrder.ISSUE_VIEW_ORDER;
-import static io.github.goraebap.bit.jooq.tables.IssueViewTweak.ISSUE_VIEW_TWEAK;
+import static io.github.goraebap.bit.jooq.tables.WorkItemView.WORK_ITEM_VIEW;
+import static io.github.goraebap.bit.jooq.tables.WorkItemViewOrder.WORK_ITEM_VIEW_ORDER;
+import static io.github.goraebap.bit.jooq.tables.WorkItemViewTweak.WORK_ITEM_VIEW_TWEAK;
 
-import io.github.goraebap.bit.jooq.tables.records.IssueViewOrderRecord;
-import io.github.goraebap.bit.jooq.tables.records.IssueViewRecord;
-import io.github.goraebap.bit.module.view.domain.IssueView;
+import io.github.goraebap.bit.jooq.tables.records.WorkItemViewOrderRecord;
+import io.github.goraebap.bit.jooq.tables.records.WorkItemViewRecord;
 import io.github.goraebap.bit.module.view.domain.ViewOrder;
 import io.github.goraebap.bit.module.view.domain.ViewRepository;
 import io.github.goraebap.bit.module.view.domain.ViewTweak;
+import io.github.goraebap.bit.module.view.domain.WorkItemView;
 import io.github.goraebap.bit.shared.persistence.AuditRecords;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -27,65 +27,65 @@ import tools.jackson.databind.json.JsonMapper;
 @RequiredArgsConstructor
 class JooqViewRepository implements ViewRepository {
     private static final TypeReference<Map<String, String>> FILTERS = new TypeReference<>() {};
-    private static final TypeReference<List<IssueView.Column>> COLUMNS = new TypeReference<>() {};
+    private static final TypeReference<List<WorkItemView.Column>> COLUMNS = new TypeReference<>() {};
     private static final TypeReference<List<String>> KEYS = new TypeReference<>() {};
     private final DSLContext dslContext;
     private final JsonMapper jsonMapper;
 
     @Override
-    public List<IssueView> findAllVisible(String workspaceId, String userId) {
+    public List<WorkItemView> findAllVisible(String workspaceId, String userId) {
         return dslContext
-                .selectFrom(ISSUE_VIEW)
-                .where(ISSUE_VIEW.WORKSPACE_ID.eq(workspaceId))
-                .and(ISSUE_VIEW.DELETED_AT.isNull())
-                .and(ISSUE_VIEW.IS_PERSONAL.isFalse().or(ISSUE_VIEW.OWNER_ID.eq(userId)))
-                .orderBy(ISSUE_VIEW.POSITION, ISSUE_VIEW.CREATED_AT, ISSUE_VIEW.ISSUE_VIEW_ID)
+                .selectFrom(WORK_ITEM_VIEW)
+                .where(WORK_ITEM_VIEW.WORKSPACE_ID.eq(workspaceId))
+                .and(WORK_ITEM_VIEW.DELETED_AT.isNull())
+                .and(WORK_ITEM_VIEW.IS_PERSONAL.isFalse().or(WORK_ITEM_VIEW.OWNER_ID.eq(userId)))
+                .orderBy(WORK_ITEM_VIEW.POSITION, WORK_ITEM_VIEW.CREATED_AT, WORK_ITEM_VIEW.WORK_ITEM_VIEW_ID)
                 .fetch(this::view);
     }
 
     @Override
-    public Optional<IssueView> findById(String workspaceId, String id) {
+    public Optional<WorkItemView> findById(String workspaceId, String id) {
         return dslContext
-                .selectFrom(ISSUE_VIEW)
-                .where(ISSUE_VIEW.WORKSPACE_ID.eq(workspaceId))
-                .and(ISSUE_VIEW.ISSUE_VIEW_ID.eq(id))
-                .and(ISSUE_VIEW.DELETED_AT.isNull())
+                .selectFrom(WORK_ITEM_VIEW)
+                .where(WORK_ITEM_VIEW.WORKSPACE_ID.eq(workspaceId))
+                .and(WORK_ITEM_VIEW.WORK_ITEM_VIEW_ID.eq(id))
+                .and(WORK_ITEM_VIEW.DELETED_AT.isNull())
                 .fetchOptional(this::view);
     }
 
     @Override
     public double nextPosition(String workspaceId) {
         Double max = dslContext
-                .select(DSL.max(ISSUE_VIEW.POSITION))
-                .from(ISSUE_VIEW)
-                .where(ISSUE_VIEW.WORKSPACE_ID.eq(workspaceId))
+                .select(DSL.max(WORK_ITEM_VIEW.POSITION))
+                .from(WORK_ITEM_VIEW)
+                .where(WORK_ITEM_VIEW.WORKSPACE_ID.eq(workspaceId))
                 .fetchOne(0, Double.class);
         return max == null ? 0 : Math.floor(max) + 1;
     }
 
     @Override
-    public void save(IssueView view) {
+    public void save(WorkItemView view) {
         var r = record(view);
         dslContext
-                .insertInto(ISSUE_VIEW)
+                .insertInto(WORK_ITEM_VIEW)
                 .set(r)
-                .onConflict(ISSUE_VIEW.ISSUE_VIEW_ID)
+                .onConflict(WORK_ITEM_VIEW.WORK_ITEM_VIEW_ID)
                 .doUpdate()
                 .set(r)
                 .execute();
     }
 
     @Override
-    public void saveAll(List<IssueView> views) {
+    public void saveAll(List<WorkItemView> views) {
         if (views.isEmpty()) return;
         dslContext
                 .batch(views.stream()
                         .map(view -> {
                             var r = record(view);
                             return dslContext
-                                    .insertInto(ISSUE_VIEW)
+                                    .insertInto(WORK_ITEM_VIEW)
                                     .set(r)
-                                    .onConflict(ISSUE_VIEW.ISSUE_VIEW_ID)
+                                    .onConflict(WORK_ITEM_VIEW.WORK_ITEM_VIEW_ID)
                                     .doUpdate()
                                     .set(r);
                         })
@@ -96,10 +96,10 @@ class JooqViewRepository implements ViewRepository {
     @Override
     public List<ViewTweak> findTweaks(String workspaceId, String userId) {
         return dslContext
-                .selectFrom(ISSUE_VIEW_TWEAK)
-                .where(ISSUE_VIEW_TWEAK.WORKSPACE_ID.eq(workspaceId))
-                .and(ISSUE_VIEW_TWEAK.IAM_USER_ID.eq(userId))
-                .orderBy(ISSUE_VIEW_TWEAK.VIEW_KEY)
+                .selectFrom(WORK_ITEM_VIEW_TWEAK)
+                .where(WORK_ITEM_VIEW_TWEAK.WORKSPACE_ID.eq(workspaceId))
+                .and(WORK_ITEM_VIEW_TWEAK.IAM_USER_ID.eq(userId))
+                .orderBy(WORK_ITEM_VIEW_TWEAK.VIEW_KEY)
                 .fetch(r -> {
                     var tweak = jsonMapper.readTree(r.getTweak());
                     var layout = tweak.path("layout");
@@ -109,13 +109,13 @@ class JooqViewRepository implements ViewRepository {
                             r.getWorkspaceId(),
                             r.getIamUserId(),
                             r.getViewKey(),
-                            layout.isMissingNode() ? null : IssueView.Layout.valueOf(layout.stringValue()),
+                            layout.isMissingNode() ? null : WorkItemView.Layout.valueOf(layout.stringValue()),
                             sort.isMissingNode()
                                     ? null
-                                    : new IssueView.Sort(
-                                            IssueView.SortKey.valueOf(
+                                    : new WorkItemView.Sort(
+                                            WorkItemView.SortKey.valueOf(
                                                     sort.path("key").stringValue()),
-                                            IssueView.Direction.valueOf(
+                                            WorkItemView.Direction.valueOf(
                                                     sort.path("direction").stringValue())),
                             columns.isMissingNode() ? null : jsonMapper.convertValue(columns, COLUMNS),
                             r.getUpdatedAt());
@@ -136,42 +136,45 @@ class JooqViewRepository implements ViewRepository {
             body.put("columns", tweak.columns().stream().map(Enum::name).toList());
         String json = jsonMapper.writeValueAsString(body);
         dslContext
-                .insertInto(ISSUE_VIEW_TWEAK)
-                .set(ISSUE_VIEW_TWEAK.WORKSPACE_ID, tweak.workspaceId())
-                .set(ISSUE_VIEW_TWEAK.IAM_USER_ID, tweak.userId())
-                .set(ISSUE_VIEW_TWEAK.VIEW_KEY, tweak.viewKey())
-                .set(ISSUE_VIEW_TWEAK.TWEAK, json)
-                .set(ISSUE_VIEW_TWEAK.UPDATED_AT, tweak.updatedAt())
-                .onConflict(ISSUE_VIEW_TWEAK.WORKSPACE_ID, ISSUE_VIEW_TWEAK.IAM_USER_ID, ISSUE_VIEW_TWEAK.VIEW_KEY)
+                .insertInto(WORK_ITEM_VIEW_TWEAK)
+                .set(WORK_ITEM_VIEW_TWEAK.WORKSPACE_ID, tweak.workspaceId())
+                .set(WORK_ITEM_VIEW_TWEAK.IAM_USER_ID, tweak.userId())
+                .set(WORK_ITEM_VIEW_TWEAK.VIEW_KEY, tweak.viewKey())
+                .set(WORK_ITEM_VIEW_TWEAK.TWEAK, json)
+                .set(WORK_ITEM_VIEW_TWEAK.UPDATED_AT, tweak.updatedAt())
+                .onConflict(
+                        WORK_ITEM_VIEW_TWEAK.WORKSPACE_ID,
+                        WORK_ITEM_VIEW_TWEAK.IAM_USER_ID,
+                        WORK_ITEM_VIEW_TWEAK.VIEW_KEY)
                 .doUpdate()
-                .set(ISSUE_VIEW_TWEAK.TWEAK, json)
-                .set(ISSUE_VIEW_TWEAK.UPDATED_AT, tweak.updatedAt())
+                .set(WORK_ITEM_VIEW_TWEAK.TWEAK, json)
+                .set(WORK_ITEM_VIEW_TWEAK.UPDATED_AT, tweak.updatedAt())
                 .execute();
     }
 
     @Override
     public void deleteTweak(String workspaceId, String userId, String viewKey) {
         dslContext
-                .deleteFrom(ISSUE_VIEW_TWEAK)
-                .where(ISSUE_VIEW_TWEAK.WORKSPACE_ID.eq(workspaceId))
-                .and(ISSUE_VIEW_TWEAK.IAM_USER_ID.eq(userId))
-                .and(ISSUE_VIEW_TWEAK.VIEW_KEY.eq(viewKey))
+                .deleteFrom(WORK_ITEM_VIEW_TWEAK)
+                .where(WORK_ITEM_VIEW_TWEAK.WORKSPACE_ID.eq(workspaceId))
+                .and(WORK_ITEM_VIEW_TWEAK.IAM_USER_ID.eq(userId))
+                .and(WORK_ITEM_VIEW_TWEAK.VIEW_KEY.eq(viewKey))
                 .execute();
     }
 
     @Override
     public void deleteAllTweaksByViewKey(String workspaceId, String viewKey) {
         dslContext
-                .deleteFrom(ISSUE_VIEW_TWEAK)
-                .where(ISSUE_VIEW_TWEAK.WORKSPACE_ID.eq(workspaceId))
-                .and(ISSUE_VIEW_TWEAK.VIEW_KEY.eq(viewKey))
+                .deleteFrom(WORK_ITEM_VIEW_TWEAK)
+                .where(WORK_ITEM_VIEW_TWEAK.WORKSPACE_ID.eq(workspaceId))
+                .and(WORK_ITEM_VIEW_TWEAK.VIEW_KEY.eq(viewKey))
                 .execute();
     }
 
-    private IssueViewRecord record(IssueView view) {
+    private WorkItemViewRecord record(WorkItemView view) {
         var d = view.definition();
-        var r = dslContext.newRecord(ISSUE_VIEW);
-        r.setIssueViewId(view.id());
+        var r = dslContext.newRecord(WORK_ITEM_VIEW);
+        r.setWorkItemViewId(view.id());
         r.setWorkspaceId(view.workspaceId());
         r.setOwnerId(view.ownerId());
         r.setIsPersonal(view.personal());
@@ -191,44 +194,44 @@ class JooqViewRepository implements ViewRepository {
         return r;
     }
 
-    private IssueView view(Record r) {
-        var definition = new IssueView.Definition(
-                r.get(ISSUE_VIEW.NAME),
-                r.get(ISSUE_VIEW.DESCRIPTION),
-                r.get(ISSUE_VIEW.ICON),
-                r.get(ISSUE_VIEW.COLOR),
-                IssueView.Layout.valueOf(r.get(ISSUE_VIEW.LAYOUT)),
-                jsonMapper.readValue(r.get(ISSUE_VIEW.FILTERS), FILTERS),
-                new IssueView.Sort(
-                        IssueView.SortKey.valueOf(r.get(ISSUE_VIEW.SORT_KEY)),
-                        IssueView.Direction.valueOf(r.get(ISSUE_VIEW.SORT_DIRECTION))),
-                jsonMapper.readValue(r.get(ISSUE_VIEW.COLUMNS), COLUMNS));
-        return IssueView.fromPersistence(
-                r.get(ISSUE_VIEW.ISSUE_VIEW_ID),
-                r.get(ISSUE_VIEW.WORKSPACE_ID),
-                r.get(ISSUE_VIEW.OWNER_ID),
-                r.get(ISSUE_VIEW.IS_PERSONAL),
+    private WorkItemView view(Record r) {
+        var definition = new WorkItemView.Definition(
+                r.get(WORK_ITEM_VIEW.NAME),
+                r.get(WORK_ITEM_VIEW.DESCRIPTION),
+                r.get(WORK_ITEM_VIEW.ICON),
+                r.get(WORK_ITEM_VIEW.COLOR),
+                WorkItemView.Layout.valueOf(r.get(WORK_ITEM_VIEW.LAYOUT)),
+                jsonMapper.readValue(r.get(WORK_ITEM_VIEW.FILTERS), FILTERS),
+                new WorkItemView.Sort(
+                        WorkItemView.SortKey.valueOf(r.get(WORK_ITEM_VIEW.SORT_KEY)),
+                        WorkItemView.Direction.valueOf(r.get(WORK_ITEM_VIEW.SORT_DIRECTION))),
+                jsonMapper.readValue(r.get(WORK_ITEM_VIEW.COLUMNS), COLUMNS));
+        return WorkItemView.fromPersistence(
+                r.get(WORK_ITEM_VIEW.WORK_ITEM_VIEW_ID),
+                r.get(WORK_ITEM_VIEW.WORKSPACE_ID),
+                r.get(WORK_ITEM_VIEW.OWNER_ID),
+                r.get(WORK_ITEM_VIEW.IS_PERSONAL),
                 definition,
-                r.get(ISSUE_VIEW.POSITION),
-                r.get(ISSUE_VIEW.VERSION),
+                r.get(WORK_ITEM_VIEW.POSITION),
+                r.get(WORK_ITEM_VIEW.VERSION),
                 AuditRecords.read(r));
     }
 
     @Override
     public List<ViewOrder> findOrders(String workspaceId) {
         return dslContext
-                .selectFrom(ISSUE_VIEW_ORDER)
-                .where(ISSUE_VIEW_ORDER.WORKSPACE_ID.eq(workspaceId))
-                .orderBy(ISSUE_VIEW_ORDER.SCOPE)
+                .selectFrom(WORK_ITEM_VIEW_ORDER)
+                .where(WORK_ITEM_VIEW_ORDER.WORKSPACE_ID.eq(workspaceId))
+                .orderBy(WORK_ITEM_VIEW_ORDER.SCOPE)
                 .fetch(this::order);
     }
 
     @Override
     public Optional<ViewOrder> findOrder(String workspaceId, String scope) {
         return dslContext
-                .selectFrom(ISSUE_VIEW_ORDER)
-                .where(ISSUE_VIEW_ORDER.WORKSPACE_ID.eq(workspaceId))
-                .and(ISSUE_VIEW_ORDER.SCOPE.eq(scope))
+                .selectFrom(WORK_ITEM_VIEW_ORDER)
+                .where(WORK_ITEM_VIEW_ORDER.WORKSPACE_ID.eq(workspaceId))
+                .and(WORK_ITEM_VIEW_ORDER.SCOPE.eq(scope))
                 .fetchOptional(this::order);
     }
 
@@ -236,23 +239,23 @@ class JooqViewRepository implements ViewRepository {
     public void saveOrder(ViewOrder order) {
         String keys = jsonMapper.writeValueAsString(order.viewKeys());
         dslContext
-                .insertInto(ISSUE_VIEW_ORDER)
-                .set(ISSUE_VIEW_ORDER.WORKSPACE_ID, order.workspaceId())
-                .set(ISSUE_VIEW_ORDER.SCOPE, order.scope())
-                .set(ISSUE_VIEW_ORDER.VIEW_KEYS, keys)
-                .set(ISSUE_VIEW_ORDER.UPDATED_AT, order.updatedAt())
-                .set(ISSUE_VIEW_ORDER.UPDATED_BY, order.updatedBy())
-                .set(ISSUE_VIEW_ORDER.UPDATED_BY_AGENT, order.updatedByAgent())
-                .onConflict(ISSUE_VIEW_ORDER.WORKSPACE_ID, ISSUE_VIEW_ORDER.SCOPE)
+                .insertInto(WORK_ITEM_VIEW_ORDER)
+                .set(WORK_ITEM_VIEW_ORDER.WORKSPACE_ID, order.workspaceId())
+                .set(WORK_ITEM_VIEW_ORDER.SCOPE, order.scope())
+                .set(WORK_ITEM_VIEW_ORDER.VIEW_KEYS, keys)
+                .set(WORK_ITEM_VIEW_ORDER.UPDATED_AT, order.updatedAt())
+                .set(WORK_ITEM_VIEW_ORDER.UPDATED_BY, order.updatedBy())
+                .set(WORK_ITEM_VIEW_ORDER.UPDATED_BY_AGENT, order.updatedByAgent())
+                .onConflict(WORK_ITEM_VIEW_ORDER.WORKSPACE_ID, WORK_ITEM_VIEW_ORDER.SCOPE)
                 .doUpdate()
-                .set(ISSUE_VIEW_ORDER.VIEW_KEYS, keys)
-                .set(ISSUE_VIEW_ORDER.UPDATED_AT, order.updatedAt())
-                .set(ISSUE_VIEW_ORDER.UPDATED_BY, order.updatedBy())
-                .set(ISSUE_VIEW_ORDER.UPDATED_BY_AGENT, order.updatedByAgent())
+                .set(WORK_ITEM_VIEW_ORDER.VIEW_KEYS, keys)
+                .set(WORK_ITEM_VIEW_ORDER.UPDATED_AT, order.updatedAt())
+                .set(WORK_ITEM_VIEW_ORDER.UPDATED_BY, order.updatedBy())
+                .set(WORK_ITEM_VIEW_ORDER.UPDATED_BY_AGENT, order.updatedByAgent())
                 .execute();
     }
 
-    private ViewOrder order(IssueViewOrderRecord r) {
+    private ViewOrder order(WorkItemViewOrderRecord r) {
         return new ViewOrder(
                 r.getWorkspaceId(),
                 r.getScope(),

@@ -1,4 +1,4 @@
-/* A project's key, as an issue's: quieter figures of one width; a long description cut to one line. */
+/* A project's key, as a work item's: quieter figures of one width; a long description cut to one line. */
 .key { font-size: 0.8125rem; font-variant-numeric: tabular-nums; color: var(--color-text-secondary); white-space: nowrap; }
 .clip { display: block; min-inline-size: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--color-text-secondary); }
 /* A table row's name after the project's mark (a phone card leads with it). */

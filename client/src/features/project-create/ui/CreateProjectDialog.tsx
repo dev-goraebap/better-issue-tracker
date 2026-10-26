@@ -13,7 +13,7 @@ const keyFrom = (name: string) => name.toUpperCase().replace(/[^A-Z0-9]/g, '').s
 const FIRST_MARK: Mark = { icon: 'board', color: '#5e6ad2' };
 
 /**
- * A new project as Linear's (the new issue's quick form, D-070): the workspace › 새 프로젝트 with close at the head;
+ * A new project as Linear's (the new work item's quick form, D-070): the workspace › 새 프로젝트 with close at the head;
  * then the project's mark (an icon and a colour, picked as a view's) and its name in large type without a box; a pill
  * holding its key, offered from the name until typed (2–10 Latin capitals and digits, not one the workspace has had,
  * said under the pills on submit); under a hairline its description in the Markdown editor (D-076), room to write that grows with it; and the create
@@ -64,12 +64,12 @@ export function CreateProjectDialog({ workspaceId, isOpen, onClose, onCreated }:
         <input className={styles.name} value={name} placeholder="프로젝트 이름" aria-label="프로젝트 이름" aria-required="true" data-autofocus disabled={isBusy}
           onChange={event => setName(event.target.value)} />
         <div className={styles.pills} role="group" aria-label="속성">
-          <label className={styles.pill} title={`이슈 번호가 ${shownKey || 'APP'}-1처럼 붙습니다.`}>
+          <label className={styles.pill} title={`업무 번호가 ${shownKey || 'APP'}-1처럼 붙습니다.`}>
             <NavIcon name="key" />
             <input className={styles.key} value={shownKey} placeholder="키" aria-label="프로젝트 키" disabled={isBusy} size={Math.max(3, shownKey.length)}
               onChange={event => { setKeyTyped(true); setKey(event.target.value.toUpperCase()); }} />
           </label>
-          <span className={styles.hint}>이슈 번호가 {shownKey || 'APP'}-1처럼 붙습니다.</span>
+          <span className={styles.hint}>업무 번호가 {shownKey || 'APP'}-1처럼 붙습니다.</span>
         </div>
         <FormMessage message={problem || error} />
         <div className={styles.description}>

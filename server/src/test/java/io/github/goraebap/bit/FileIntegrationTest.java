@@ -87,9 +87,9 @@ class FileIntegrationTest {
                 "attachment",
                 "blob",
                 "pending_upload",
-                "issue_view_order",
-                "issue_view_tweak",
-                "issue_view",
+                "work_item_view_order",
+                "work_item_view_tweak",
+                "work_item_view",
                 "label",
                 "workspace_invitation",
                 "workspace_member",
@@ -111,8 +111,8 @@ class FileIntegrationTest {
         expect(put(ticket, PNG.length, "image/jpeg"), 403);
         expect(put(ticket, PNG.length, "image/png"), 200);
 
-        String issue = Ids.newId();
-        var attached = fileService.attach(owner, List.of(ticket.path("id").asText()), FileOwner.ISSUE, issue);
+        String workItem = Ids.newId();
+        var attached = fileService.attach(owner, List.of(ticket.path("id").asText()), FileOwner.WORK_ITEM, workItem);
         assertThat(attached).singleElement().satisfies(file -> {
             assertThat(file.id()).isEqualTo(ticket.path("id").asText());
             assertThat(file.filename()).isEqualTo("화면.png");
@@ -121,12 +121,14 @@ class FileIntegrationTest {
             assertThat(file.width()).isEqualTo(2);
             assertThat(file.height()).isEqualTo(1);
         });
-        assertThat(fileService.attachmentsOf(FileOwner.ISSUE, List.of(issue)).get(issue))
+        assertThat(fileService
+                        .attachmentsOf(FileOwner.WORK_ITEM, List.of(workItem))
+                        .get(workItem))
                 .extracting(file -> file.id())
                 .containsExactly(ticket.path("id").asText());
 
         URI url = fileService
-                .openUrl(FileOwner.ISSUE, issue, ticket.path("id").asText(), false)
+                .openUrl(FileOwner.WORK_ITEM, workItem, ticket.path("id").asText(), false)
                 .orElseThrow();
         var opened = HttpClient.newHttpClient()
                 .send(
@@ -148,11 +150,11 @@ class FileIntegrationTest {
                         HttpResponse.BodyHandlers.discarding());
         assertThat(altered.statusCode()).isEqualTo(403);
         // An upload binds once; another owner cannot open it under its own name.
-        assertThat(code(() ->
-                        fileService.attach(owner, List.of(ticket.path("id").asText()), FileOwner.ISSUE, Ids.newId())))
+        assertThat(code(() -> fileService.attach(
+                        owner, List.of(ticket.path("id").asText()), FileOwner.WORK_ITEM, Ids.newId())))
                 .isEqualTo("FILE_UPLOAD_MISSING");
         assertThat(fileService.openUrl(
-                        FileOwner.COMMENT, issue, ticket.path("id").asText(), false))
+                        FileOwner.COMMENT, workItem, ticket.path("id").asText(), false))
                 .isEmpty();
     }
 
@@ -171,21 +173,21 @@ class FileIntegrationTest {
         byte[] page = "<html><script>alert(1)</script></html>".getBytes(StandardCharsets.UTF_8);
         var disguised = upload(session, "cat.png", page.length, null, null, null);
         expect(put(disguised, page, "image/png"), 200);
-        assertThatThrownBy(() ->
-                        fileService.attach(owner, List.of(disguised.path("id").asText()), FileOwner.ISSUE, Ids.newId()))
+        assertThatThrownBy(() -> fileService.attach(
+                        owner, List.of(disguised.path("id").asText()), FileOwner.WORK_ITEM, Ids.newId()))
                 .isInstanceOf(DomainRuleViolation.class)
                 .hasMessageContaining("파일 형식과 맞지 않습니다");
 
         var unsent = upload(session, "later.pdf", 10, null, null, null);
-        assertThat(code(() ->
-                        fileService.attach(owner, List.of(unsent.path("id").asText()), FileOwner.ISSUE, Ids.newId())))
+        assertThat(code(() -> fileService.attach(
+                        owner, List.of(unsent.path("id").asText()), FileOwner.WORK_ITEM, Ids.newId())))
                 .isEqualTo("FILE_NOT_STORED");
 
         var other = identity("other");
         var theirs = upload(login(other), "theirs.png", PNG.length, null, null, null);
         expect(put(theirs, PNG, "image/png"), 200);
-        assertThat(code(() ->
-                        fileService.attach(owner, List.of(theirs.path("id").asText()), FileOwner.ISSUE, Ids.newId())))
+        assertThat(code(() -> fileService.attach(
+                        owner, List.of(theirs.path("id").asText()), FileOwner.WORK_ITEM, Ids.newId())))
                 .isEqualTo("FILE_UPLOAD_MISSING");
 
         // Without a session no upload starts: the CSRF check refuses it before authentication does.
@@ -199,23 +201,24 @@ class FileIntegrationTest {
 
     @Test
     void discardedFilesLoseTheirBytesUnlessACopyStillKeepsThem() throws Exception {
-        String issue = Ids.newId();
+        String workItem = Ids.newId();
         String copyOwner = Ids.newId();
-        String id = attachPng(issue);
+        String id = attachPng(workItem);
         String key = jdbcTemplate.queryForObject(
                 "SELECT b.storage_key FROM blob b JOIN attachment a ON a.blob_id=b.blob_id WHERE a.attachment_id=?",
                 String.class,
                 id);
-        var copies = fileService.copy(FileOwner.ISSUE, issue, copyOwner, List.of(id, Ids.newId()), owner);
+        var copies = fileService.copy(FileOwner.WORK_ITEM, workItem, copyOwner, List.of(id, Ids.newId()), owner);
         assertThat(copies).containsOnlyKeys(id);
 
-        fileService.discard(FileOwner.ISSUE, issue, List.of(id), owner);
-        assertThat(fileService.attachmentsOf(FileOwner.ISSUE, List.of(issue))).isEmpty();
+        fileService.discard(FileOwner.WORK_ITEM, workItem, List.of(id), owner);
+        assertThat(fileService.attachmentsOf(FileOwner.WORK_ITEM, List.of(workItem)))
+                .isEmpty();
         assertThat(objectStorage.find(key)).isPresent();
-        assertThat(fileService.openUrl(FileOwner.ISSUE, copyOwner, copies.get(id), true))
+        assertThat(fileService.openUrl(FileOwner.WORK_ITEM, copyOwner, copies.get(id), true))
                 .isPresent();
 
-        fileService.discardAll(FileOwner.ISSUE, copyOwner, owner);
+        fileService.discardAll(FileOwner.WORK_ITEM, copyOwner, owner);
         assertThat(objectStorage.find(key)).isEmpty();
         assertThat(jdbcTemplate.queryForObject("SELECT deleted_by FROM blob WHERE storage_key=?", String.class, key))
                 .isEqualTo(owner.userId());
@@ -356,11 +359,11 @@ class FileIntegrationTest {
                 .isTrue();
     }
 
-    private String attachPng(String issue) throws Exception {
+    private String attachPng(String workItem) throws Exception {
         var ticket = upload(session, "shot.png", PNG.length, null, null, null);
         expect(put(ticket, PNG, "image/png"), 200);
         return fileService
-                .attach(owner, List.of(ticket.path("id").asText()), FileOwner.ISSUE, issue)
+                .attach(owner, List.of(ticket.path("id").asText()), FileOwner.WORK_ITEM, workItem)
                 .getFirst()
                 .id();
     }

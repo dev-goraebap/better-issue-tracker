@@ -7,9 +7,9 @@ import { createContext, useContext } from 'react';
  * page on its own. This list is the one place that says which pages these are.
  */
 const PANEL_PAGES = [
-  // An issue's page, over the issue pages it was opened from (D-069), and 새 이슈 in a project or in 전체 (D-070).
-  /^\/workspaces\/[^/]+\/projects\/[^/]+\/issues\/[^/]+$/,
-  /^\/workspaces\/[^/]+\/issues\/new$/,
+  // A work item's page, over the work item pages it was opened from (D-069), and 새 업무 in a project or in 전체 (D-070).
+  /^\/workspaces\/[^/]+\/projects\/[^/]+\/work-items\/[^/]+$/,
+  /^\/workspaces\/[^/]+\/work-items\/new$/,
 ];
 
 /** An address's path, without its search or hash. */

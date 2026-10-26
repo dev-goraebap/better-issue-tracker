@@ -6,6 +6,6 @@ import { PageFrame, PageState } from '@/shared/ui';
  */
 export function InboxPage() {
   return <PageFrame title="알림" icon="bell" chrome="header">
-    <PageState title="새 알림이 없습니다" description="나를 담당자로 지정하거나, 내 이슈의 상태가 바뀌면 여기에 모입니다." />
+    <PageState title="새 알림이 없습니다" description="나를 담당자로 지정하거나, 내 업무의 상태가 바뀌면 여기에 모입니다." />
   </PageFrame>;
 }

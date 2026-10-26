@@ -13,7 +13,7 @@ import styles from './project-settings.module.css';
 /**
  * 저장소 연동 (D-087), as Kaneo's Integrations: GitHub, GitLab and Gitea each a row to connect with a token, one
  * repository per host; a connected one gets its own card below (IntegrationCard), then the column each repository event
- * moves an issue to (IntegrationRules). When the server has no encryption key the feature is off and says so (D-030).
+ * moves a work item to (IntegrationRules). When the server has no encryption key the feature is off and says so (D-030).
  */
 export function IntegrationSettings({ project, canManage }: { project: Project; canManage: boolean }) {
   const capabilities = useQuery(capabilitiesQueryOptions);
@@ -23,7 +23,7 @@ export function IntegrationSettings({ project, canManage }: { project: Project; 
     return <PageState kind="empty" title="저장소 연동이 꺼져 있습니다" description="서버에 암호화 키(GIT_ENCRYPTION_KEY)가 없어 토큰을 보관할 수 없습니다. 인스턴스 관리자에게 문의해 주세요." />;
   const connected = integrations.data ?? [];
   return <VStack gap={8}>
-    <SettingsHead title="저장소 연동" description={`${project.name} 프로젝트를 GitHub·GitLab·Gitea 저장소와 잇습니다. 이슈 키(${project.key}-42)를 단 브랜치·PR·커밋이 이슈에 붙어 칸을 옮기고, 이슈는 저장소 이슈와 서로 반영됩니다.`} />
+    <SettingsHead title="저장소 연동" description={`${project.name} 프로젝트를 GitHub·GitLab·Gitea 저장소와 잇습니다. 업무 키(${project.key}-42)를 단 브랜치·PR·커밋이 업무에 붙어 칸을 옮기고, 업무는 저장소 이슈와 서로 반영됩니다.`} />
     <SettingsCard title="호스트" id="integration-hosts">
       {!integrations.data ? <QueryMessage pending={integrations.isPending} error={integrations.error} retry={() => { void integrations.refetch(); }} />
         : PROVIDERS.map(host => {

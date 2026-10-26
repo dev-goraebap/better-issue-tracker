@@ -47,7 +47,7 @@ public interface WorkspaceRepository {
             String beforeId,
             int limit);
 
-    void revokePending(String workspaceId, String issuer, WorkspaceRole retainedRole, String actor, Instant now);
+    void revokePending(String workspaceId, String workItemr, WorkspaceRole retainedRole, String actor, Instant now);
 
     record WorkspaceRow(String id, String name, String slug, WorkspaceRole myRole, Instant createdAt) {}
 }

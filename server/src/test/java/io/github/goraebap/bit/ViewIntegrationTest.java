@@ -7,8 +7,8 @@ import io.github.goraebap.bit.module.project.application.ProjectService;
 import io.github.goraebap.bit.module.view.application.ViewRequests;
 import io.github.goraebap.bit.module.view.application.ViewService;
 import io.github.goraebap.bit.module.view.application.ViewViews;
-import io.github.goraebap.bit.module.view.domain.IssueView;
 import io.github.goraebap.bit.module.view.domain.ViewOrder;
+import io.github.goraebap.bit.module.view.domain.WorkItemView;
 import io.github.goraebap.bit.module.workspace.application.WorkspaceService;
 import io.github.goraebap.bit.shared.domain.Ids;
 import io.github.goraebap.bit.shared.error.BusinessException;
@@ -47,7 +47,8 @@ import tools.jackson.databind.json.JsonMapper;
         })
 class ViewIntegrationTest {
     private static final JsonMapper JSON = JsonMapper.builder().build();
-    private static final List<IssueView.Column> USUAL = List.of(IssueView.Column.status, IssueView.Column.updated);
+    private static final List<WorkItemView.Column> USUAL =
+            List.of(WorkItemView.Column.status, WorkItemView.Column.updated);
 
     @LocalServerPort
     private int port;
@@ -84,9 +85,9 @@ class ViewIntegrationTest {
     @BeforeEach
     void prepare() {
         for (String table : List.of(
-                "issue_view_order",
-                "issue_view_tweak",
-                "issue_view",
+                "work_item_view_order",
+                "work_item_view_tweak",
+                "work_item_view",
                 "board_column",
                 "project_member",
                 "project_key",
@@ -114,19 +115,20 @@ class ViewIntegrationTest {
         var backlog = views.getFirst();
         assertThat(backlog.icon()).isEqualTo("rows");
         assertThat(backlog.color()).isEqualTo("#95959f");
-        assertThat(backlog.layout()).isEqualTo(IssueView.Layout.list);
+        assertThat(backlog.layout()).isEqualTo(WorkItemView.Layout.list);
         assertThat(backlog.filters().status()).isEqualTo("none");
-        assertThat(backlog.sort()).isEqualTo(new ViewViews.Sort(IssueView.SortKey.priority, IssueView.Direction.asc));
+        assertThat(backlog.sort())
+                .isEqualTo(new ViewViews.Sort(WorkItemView.SortKey.priority, WorkItemView.Direction.asc));
         assertThat(backlog.ownerId()).isEqualTo(owner.userId());
         assertThat(backlog.isPersonal()).isFalse();
         var decisions = views.getLast();
-        assertThat(decisions.layout()).isEqualTo(IssueView.Layout.history);
+        assertThat(decisions.layout()).isEqualTo(WorkItemView.Layout.history);
         assertThat(decisions.filters().label()).isEqualTo("system");
         assertThat(decisions.columns())
-                .containsExactly(IssueView.Column.assignee, IssueView.Column.labels, IssueView.Column.updated);
+                .containsExactly(WorkItemView.Column.assignee, WorkItemView.Column.labels, WorkItemView.Column.updated);
         assertThat(views.get(1).filters()).isEqualTo(new ViewViews.Filters(null, null, null, null));
         assertThat(views.get(1).sort())
-                .isEqualTo(new ViewViews.Sort(IssueView.SortKey.updated, IssueView.Direction.desc));
+                .isEqualTo(new ViewViews.Sort(WorkItemView.SortKey.updated, WorkItemView.Direction.desc));
         assertThat(views.stream().allMatch(ViewViews.View::canEdit)).isTrue();
         assertThat(viewService.list(admin, workspace).stream().allMatch(ViewViews.View::canEdit))
                 .isTrue();
@@ -197,10 +199,10 @@ class ViewIntegrationTest {
                 "list",
                 "#5e6ad2",
                 false,
-                IssueView.Layout.list,
+                WorkItemView.Layout.list,
                 Map.of(),
-                new ViewViews.Sort(IssueView.SortKey.title, IssueView.Direction.asc),
-                List.of(IssueView.Column.due, IssueView.Column.due));
+                new ViewViews.Sort(WorkItemView.SortKey.title, WorkItemView.Direction.asc),
+                List.of(WorkItemView.Column.due, WorkItemView.Column.due));
         assertThat(code(() -> viewService.create(member, workspace, twice))).isEqualTo("VIEW_COLUMNS_INVALID");
         var noSort = new ViewRequests.Create(
                 "No sort",
@@ -208,9 +210,9 @@ class ViewIntegrationTest {
                 "list",
                 "#5e6ad2",
                 false,
-                IssueView.Layout.list,
+                WorkItemView.Layout.list,
                 Map.of(),
-                new ViewViews.Sort(null, IssueView.Direction.asc),
+                new ViewViews.Sort(null, WorkItemView.Direction.asc),
                 USUAL);
         assertThat(code(() -> viewService.create(member, workspace, noSort))).isEqualTo("VIEW_INVALID");
 
@@ -225,11 +227,11 @@ class ViewIntegrationTest {
         assertThat(read.color()).isEqualTo("#4cb782");
         var patch = new ViewRequests.Update();
         patch.setExpectedVersion(0L);
-        patch.setLayout(IssueView.Layout.board);
+        patch.setLayout(WorkItemView.Layout.board);
         patch.setDescription("For triage");
         viewService.revise(member, workspace, id, patch);
         var patched = viewService.get(member, workspace, id);
-        assertThat(patched.layout()).isEqualTo(IssueView.Layout.board);
+        assertThat(patched.layout()).isEqualTo(WorkItemView.Layout.board);
         assertThat(patched.description()).isEqualTo("For triage");
         assertThat(patched.name()).isEqualTo("Spaced");
         assertThat(patched.filters().status()).isEqualTo("todo,none");
@@ -257,13 +259,13 @@ class ViewIntegrationTest {
     void tweaksAreEachMembersOwnAndFollowTheViewsTheyCanSee() {
         String board = viewService.list(owner, workspace).get(1).id();
         String mine = viewService.create(member, workspace, create("Mine", true, Map.of()));
-        viewService.putTweak(member, workspace, "all", tweak(IssueView.Layout.cards, null, null));
+        viewService.putTweak(member, workspace, "all", tweak(WorkItemView.Layout.cards, null, null));
         viewService.putTweak(
                 member,
                 workspace,
                 board,
-                tweak(null, new ViewViews.Sort(IssueView.SortKey.created, IssueView.Direction.asc), USUAL));
-        viewService.putTweak(member, workspace, mine, tweak(IssueView.Layout.timeline, null, null));
+                tweak(null, new ViewViews.Sort(WorkItemView.SortKey.created, WorkItemView.Direction.asc), USUAL));
+        viewService.putTweak(member, workspace, mine, tweak(WorkItemView.Layout.timeline, null, null));
         assertThat(viewService.tweaks(member, workspace).stream().map(ViewViews.Tweak::viewKey))
                 .containsExactlyInAnyOrder("all", board, mine);
         var boardTweak = viewService.tweaks(member, workspace).stream()
@@ -272,28 +274,29 @@ class ViewIntegrationTest {
                 .orElseThrow();
         assertThat(boardTweak.layout()).isNull();
         assertThat(boardTweak.columns()).isEqualTo(USUAL);
-        assertThat(boardTweak.sort().key()).isEqualTo(IssueView.SortKey.created);
-        viewService.putTweak(member, workspace, board, tweak(IssueView.Layout.list, null, null));
+        assertThat(boardTweak.sort().key()).isEqualTo(WorkItemView.SortKey.created);
+        viewService.putTweak(member, workspace, board, tweak(WorkItemView.Layout.list, null, null));
         var replaced = viewService.tweaks(member, workspace).stream()
                 .filter(t -> t.viewKey().equals(board))
                 .findFirst()
                 .orElseThrow();
-        assertThat(replaced.layout()).isEqualTo(IssueView.Layout.list);
+        assertThat(replaced.layout()).isEqualTo(WorkItemView.Layout.list);
         assertThat(replaced.sort()).isNull();
         assertThat(viewService.tweaks(other, workspace)).isEmpty();
 
-        assertThat(code(() -> viewService.putTweak(other, workspace, mine, tweak(IssueView.Layout.list, null, null))))
-                .isEqualTo("VIEW_NOT_FOUND");
         assertThat(code(() ->
-                        viewService.putTweak(other, workspace, "everything", tweak(IssueView.Layout.list, null, null))))
+                        viewService.putTweak(other, workspace, mine, tweak(WorkItemView.Layout.list, null, null))))
+                .isEqualTo("VIEW_NOT_FOUND");
+        assertThat(code(() -> viewService.putTweak(
+                        other, workspace, "everything", tweak(WorkItemView.Layout.list, null, null))))
                 .isEqualTo("VIEW_NOT_FOUND");
         assertThat(code(() -> viewService.putTweak(
                         member,
                         workspace,
                         "all",
-                        tweak(null, null, List.of(IssueView.Column.due, IssueView.Column.due)))))
+                        tweak(null, null, List.of(WorkItemView.Column.due, WorkItemView.Column.due)))))
                 .isEqualTo("VIEW_COLUMNS_INVALID");
-        viewService.putTweak(viewer, workspace, board, tweak(IssueView.Layout.calendar, null, null));
+        viewService.putTweak(viewer, workspace, board, tweak(WorkItemView.Layout.calendar, null, null));
 
         viewService.putTweak(member, workspace, "all", tweak(null, null, null));
         viewService.deleteTweak(member, workspace, mine);
@@ -302,7 +305,7 @@ class ViewIntegrationTest {
         viewService.delete(owner, workspace, board, 0);
         assertThat(viewService.tweaks(member, workspace)).isEmpty();
         assertThat(viewService.tweaks(viewer, workspace)).isEmpty();
-        assertThat(jdbcTemplate.queryForObject("SELECT count(*) FROM issue_view_tweak", Integer.class))
+        assertThat(jdbcTemplate.queryForObject("SELECT count(*) FROM work_item_view_tweak", Integer.class))
                 .isZero();
     }
 
@@ -374,17 +377,17 @@ class ViewIntegrationTest {
         String project = projectService.create(owner, workspace, "Orders", "ORD", null);
         assertThat(viewService.orders(member, workspace)).isEmpty();
 
-        viewService.putOrder(admin, workspace, ViewOrder.HOME, order(board, IssueView.ALL));
+        viewService.putOrder(admin, workspace, ViewOrder.HOME, order(board, WorkItemView.ALL));
         viewService.putOrder(owner, workspace, project, order(decisions));
         assertThat(viewService.orders(member, workspace))
                 .containsExactlyInAnyOrder(
-                        new ViewViews.Order(ViewOrder.HOME, List.of(board, IssueView.ALL)),
+                        new ViewViews.Order(ViewOrder.HOME, List.of(board, WorkItemView.ALL)),
                         new ViewViews.Order(project, List.of(decisions)));
 
         // The order is the workspace's to set; a key twice, an unknown view or a stranger's personal one is refused.
-        assertThat(code(() -> viewService.putOrder(member, workspace, ViewOrder.HOME, order(IssueView.ALL))))
+        assertThat(code(() -> viewService.putOrder(member, workspace, ViewOrder.HOME, order(WorkItemView.ALL))))
                 .isEqualTo("AUTH_FORBIDDEN");
-        assertThat(code(() -> viewService.putOrder(member, workspace, project, order(IssueView.ALL))))
+        assertThat(code(() -> viewService.putOrder(member, workspace, project, order(WorkItemView.ALL))))
                 .isEqualTo("AUTH_FORBIDDEN");
         assertThat(code(() -> viewService.putOrder(owner, workspace, ViewOrder.HOME, order(board, board))))
                 .isEqualTo("VIEW_ORDER_INVALID");
@@ -411,7 +414,7 @@ class ViewIntegrationTest {
                 board,
                 viewService.get(owner, workspace, board).version());
         assertThat(viewService.orders(owner, workspace))
-                .contains(new ViewViews.Order(ViewOrder.HOME, List.of(IssueView.ALL)));
+                .contains(new ViewViews.Order(ViewOrder.HOME, List.of(WorkItemView.ALL)));
     }
 
     private static ViewRequests.PutOrder order(String... keys) {
@@ -425,9 +428,9 @@ class ViewIntegrationTest {
                 "list",
                 "#4CB782",
                 personal,
-                IssueView.Layout.list,
+                WorkItemView.Layout.list,
                 filters,
-                new ViewViews.Sort(IssueView.SortKey.updated, IssueView.Direction.desc),
+                new ViewViews.Sort(WorkItemView.SortKey.updated, WorkItemView.Direction.desc),
                 USUAL);
     }
 
@@ -439,7 +442,7 @@ class ViewIntegrationTest {
     }
 
     private static ViewRequests.PutTweak tweak(
-            IssueView.Layout layout, ViewViews.Sort sort, List<IssueView.Column> columns) {
+            WorkItemView.Layout layout, ViewViews.Sort sort, List<WorkItemView.Column> columns) {
         return new ViewRequests.PutTweak(layout, sort, columns);
     }
 

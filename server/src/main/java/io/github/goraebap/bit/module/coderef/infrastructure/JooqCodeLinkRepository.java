@@ -18,20 +18,20 @@ class JooqCodeLinkRepository implements CodeLinkRepository {
     private final DSLContext dslContext;
 
     @Override
-    public List<CodeLink> findAllByIssueId(String issueId) {
+    public List<CodeLink> findAllByWorkItemId(String workItemId) {
         return dslContext
                 .selectFrom(CODE_LINK)
-                .where(CODE_LINK.ISSUE_ID.eq(issueId))
+                .where(CODE_LINK.WORK_ITEM_ID.eq(workItemId))
                 .orderBy(CODE_LINK.UPDATED_AT.desc(), CODE_LINK.CODE_LINK_ID)
                 .fetch(this::link);
     }
 
     @Override
-    public List<CodeLink> findAllByIssueIdIn(Collection<String> issueIds, CodeLink.Kind kind) {
-        if (issueIds.isEmpty()) return List.of();
+    public List<CodeLink> findAllByWorkItemIdIn(Collection<String> workItemIds, CodeLink.Kind kind) {
+        if (workItemIds.isEmpty()) return List.of();
         return dslContext
                 .selectFrom(CODE_LINK)
-                .where(CODE_LINK.ISSUE_ID.in(issueIds))
+                .where(CODE_LINK.WORK_ITEM_ID.in(workItemIds))
                 .and(CODE_LINK.KIND.eq(kind.name()))
                 .orderBy(CODE_LINK.UPDATED_AT.desc(), CODE_LINK.CODE_LINK_ID)
                 .fetch(this::link);
@@ -48,23 +48,23 @@ class JooqCodeLinkRepository implements CodeLinkRepository {
     }
 
     @Override
-    public Optional<CodeLink> find(String integrationId, CodeLink.Kind kind, String externalId, String issueId) {
+    public Optional<CodeLink> find(String integrationId, CodeLink.Kind kind, String externalId, String workItemId) {
         return dslContext
                 .selectFrom(CODE_LINK)
                 .where(CODE_LINK.REPOSITORY_INTEGRATION_ID.eq(integrationId))
                 .and(CODE_LINK.KIND.eq(kind.name()))
                 .and(CODE_LINK.EXTERNAL_ID.eq(externalId))
-                .and(CODE_LINK.ISSUE_ID.eq(issueId))
+                .and(CODE_LINK.WORK_ITEM_ID.eq(workItemId))
                 .fetchOptional(this::link);
     }
 
     @Override
-    public Optional<CodeLink> findMirror(String integrationId, String issueId) {
+    public Optional<CodeLink> findMirror(String integrationId, String workItemId) {
         return dslContext
                 .selectFrom(CODE_LINK)
                 .where(CODE_LINK.REPOSITORY_INTEGRATION_ID.eq(integrationId))
                 .and(CODE_LINK.KIND.eq(CodeLink.Kind.issue.name()))
-                .and(CODE_LINK.ISSUE_ID.eq(issueId))
+                .and(CODE_LINK.WORK_ITEM_ID.eq(workItemId))
                 .limit(1)
                 .fetchOptional(this::link);
     }
@@ -77,7 +77,7 @@ class JooqCodeLinkRepository implements CodeLinkRepository {
                     var r = dslContext.newRecord(CODE_LINK);
                     r.setCodeLinkId(l.id());
                     r.setRepositoryIntegrationId(l.integrationId());
-                    r.setIssueId(l.issueId());
+                    r.setWorkItemId(l.workItemId());
                     r.setKind(l.kind().name());
                     r.setExternalId(l.externalId());
                     r.setUrl(l.url());
@@ -102,7 +102,7 @@ class JooqCodeLinkRepository implements CodeLinkRepository {
         return new CodeLink(
                 r.getCodeLinkId(),
                 r.getRepositoryIntegrationId(),
-                r.getIssueId(),
+                r.getWorkItemId(),
                 CodeLink.Kind.valueOf(r.getKind()),
                 r.getExternalId(),
                 r.getUrl(),

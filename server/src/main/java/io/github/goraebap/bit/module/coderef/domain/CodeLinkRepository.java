@@ -6,18 +6,18 @@ import java.util.Optional;
 
 public interface CodeLinkRepository {
     /** An issue's links, newest first. */
-    List<CodeLink> findAllByIssueId(String issueId);
+    List<CodeLink> findAllByWorkItemId(String workItemId);
 
     /** The links of these issues of one kind, newest first. */
-    List<CodeLink> findAllByIssueIdIn(Collection<String> issueIds, CodeLink.Kind kind);
+    List<CodeLink> findAllByWorkItemIdIn(Collection<String> workItemIds, CodeLink.Kind kind);
 
     /** Every issue one repository thing is tied to. */
     List<CodeLink> findAllByExternalId(String integrationId, CodeLink.Kind kind, String externalId);
 
-    Optional<CodeLink> find(String integrationId, CodeLink.Kind kind, String externalId, String issueId);
+    Optional<CodeLink> find(String integrationId, CodeLink.Kind kind, String externalId, String workItemId);
 
     /** The repository issue an issue is mirrored with, if any. */
-    Optional<CodeLink> findMirror(String integrationId, String issueId);
+    Optional<CodeLink> findMirror(String integrationId, String workItemId);
 
     void saveAll(Collection<CodeLink> links);
 }
