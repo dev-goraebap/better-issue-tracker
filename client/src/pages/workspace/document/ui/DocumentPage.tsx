@@ -4,11 +4,12 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useParams } from '@tanstack/react-router';
 import { authError, isNotFound } from '@/shared/api';
 import { dateText } from '@/shared/lib/date-text';
-import { BackLink, ConfirmDialog, MarkdownView, NavIcon, PageFrame, PageState, QueryMessage, SettingsAction } from '@/shared/ui';
+import { afterOverlayClose } from '@/shared/lib/back-close';
+import { BackLink, ConfirmDialog, MarkdownView, NavIcon, PageFrame, PageState, QueryMessage, SectionHeader, SettingsAction } from '@/shared/ui';
 import { labelsQuery } from '@/entities/label';
 import { canManage, canWrite as canWriteIn, useMembers, workspaceQuery } from '@/entities/workspace';
 import { LabelTokens } from '@/entities/work-item';
-import { deleteDocument, documentIdOf, documentQuery, folderHref, refreshDocuments } from '@/entities/document';
+import { deleteDocument, documentIdOf, documentQuery, FolderLink, folderHref, refreshDocuments } from '@/entities/document';
 import { WorkItemActivity } from '@/widgets/work-item-detail';
 import { LinkedWorkItem } from './LinkedWorkItem';
 import styles from './document.module.css';
@@ -16,7 +17,7 @@ import styles from './document.module.css';
 /**
  * A document read, /workspaces/$workspaceId/documents/$documentRef (D-093, BIT-41): <제목>-<id>, the id opening it. Its
  * body rendered, then its 활동 and comments (D-078); beside it the folder it is in, its labels, who made it, and the
- * work items it is linked to with their commits. 편집 changes its title, body and labels on its own page; the menu
+ * work items with their commits under the body. 편집 changes its title, body and labels on its own page; the menu
  * copies its link or deletes it (it can be restored).
  */
 export function DocumentPage() {
@@ -49,7 +50,7 @@ export function DocumentPage() {
     try { await deleteDocument(workspaceId, document.id, document.version); }
     catch (failure) { toast({ body: authError(failure) }); return; }
     await refreshDocuments(client, workspaceId);
-    void navigate({ href: folderHref(workspaceId, document.projectId, folder?.id), replace: true });
+    afterOverlayClose(() => void navigate({ href: folderHref(workspaceId, document.projectId, folder?.id), replace: true }));
   };
   return <PageFrame title={document.title} wrapsTitle width="default" back={back} actions={<>
     {canWrite && <SettingsAction label="편집" tooltip="편집" icon="edit" onClick={edit} />}
@@ -60,22 +61,29 @@ export function DocumentPage() {
   </>}>
     <div className={styles.layout}>
       <div className={styles.main}>
-        <MarkdownView value={document.body} empty="본문이 없습니다." />
+        <section aria-labelledby="document-body">
+          <SectionHeader id="document-body" title="본문" />
+          <MarkdownView value={document.body} empty="본문이 없습니다." />
+        </section>
+        <section aria-labelledby="document-work">
+          <SectionHeader id="document-work" title="연결된 업무" />
+          {document.workItems.length > 0
+            ? <ul className={styles.items}>{document.workItems.map(item => <LinkedWorkItem key={item.linkId} workspaceId={workspaceId} item={item} />)}</ul>
+            : <p className={styles.none}>없음</p>}
+        </section>
         <WorkItemActivity workspaceId={workspaceId} projectId={document.projectId} workItemId={document.id} targetType="document"
           canWrite={canWrite} canModerate={canManage(role)} />
       </div>
       <aside className={styles.aside} aria-label="속성">
         <h2 className={styles.asideHead}>속성</h2>
         <dl className={styles.properties}>
-          <div className={styles.property}><dt>폴더</dt><dd><NavIcon name="documents" />{folder ? document.path.map(each => each.name).join(' › ') : '맨 위'}</dd></div>
-          <div className={styles.property}><dt>라벨</dt><dd>{document.labelIds.length > 0
-            ? <LabelTokens labels={labels.filter(label => document.labelIds.includes(label.id))} /> : '없음'}</dd></div>
-          <div className={styles.property}><dt>만든 사람</dt><dd>{name(document.createdBy)}{document.createdByAgent ? ` (${document.createdByAgent})` : ''}</dd></div>
+          <div className={styles.property}><dt className={styles.spoken}>폴더</dt><dd><NavIcon name="documents" />
+            <FolderLink workspaceId={workspaceId} projectId={document.projectId} folderId={folder?.id}>{folder ? document.path.map(each => each.name).join(' › ') : document.projectId ? '문서' : '문서함'}</FolderLink></dd></div>
+          <div className={styles.property}><dt className={styles.spoken}>만든 사람</dt><dd><NavIcon name="person" />{name(document.createdBy)}{document.createdByAgent ? ` (${document.createdByAgent})` : ''}</dd></div>
         </dl>
-        <h2 className={styles.asideHead}>연결된 업무</h2>
-        {document.workItems.length > 0
-          ? <ul className={styles.items}>{document.workItems.map(item => <LinkedWorkItem key={item.linkId} workspaceId={workspaceId} item={item} />)}</ul>
-          : <p className={styles.none}>없음</p>}
+        <h2 className={styles.asideHead}>라벨</h2>
+        <div className={styles.asideLabels}>{document.labelIds.length > 0
+          ? <LabelTokens labels={labels.filter(label => document.labelIds.includes(label.id))} /> : <span className={styles.none}>없음</span>}</div>
         <p className={styles.made}>{dateText(document.createdAt)} 만듦{document.updatedAt !== document.createdAt ? ` · ${dateText(document.updatedAt)} 고침` : ''}</p>
       </aside>
     </div>

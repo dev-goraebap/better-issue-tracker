@@ -1,6 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
 import { useParams, useSearch } from '@tanstack/react-router';
-import { projectQuery } from '@/entities/project';
 import { DocumentFolder } from '@/widgets/document-folder';
 
 /**
@@ -10,6 +8,5 @@ import { DocumentFolder } from '@/widgets/document-folder';
 export function ProjectDocumentsPage() {
   const { workspaceId, projectId } = useParams({ strict: false }) as { workspaceId: string; projectId: string };
   const { folder } = useSearch({ strict: false }) as { folder?: string };
-  const project = useQuery(projectQuery(workspaceId, projectId)).data;
-  return <DocumentFolder key={folder ?? 'top'} workspaceId={workspaceId} projectId={projectId} folderId={folder} title="문서" rootLabel={project?.name ?? '문서'} />;
+  return <DocumentFolder key={`${projectId}-${folder ?? 'top'}`} workspaceId={workspaceId} projectId={projectId} folderId={folder} title="문서" rootLabel="문서" />;
 }

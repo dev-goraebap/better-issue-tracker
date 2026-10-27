@@ -35,14 +35,14 @@ export function DocumentForm({ workspaceId, title, back, place, initial, saveLab
   return <PageFrame title={title} width="narrow" back={back}>
     <form id={formId} className={styles.form} noValidate onSubmit={event => { event.preventDefault(); void save(); }}>
       <input className={styles.title} value={draft.title} placeholder="문서 제목" aria-label="문서 제목" required autoFocus disabled={isBusy}
-        aria-invalid={titleError ? true : undefined} onChange={event => setDraft({ ...draft, title: event.target.value })} />
+        aria-invalid={titleError ? true : undefined} onChange={event => { const title = event.target.value; setDraft(previous => ({ ...previous, title })); }} />
       {titleError && <FormMessage message={titleError} />}
-      <MarkdownEditor value={draft.body} onChange={body => setDraft(previous => ({ ...previous, body }))} label="본문" minHeight="20rem" isDisabled={isBusy}
+      <MarkdownEditor value={draft.body} onChange={body => setDraft(previous => ({ ...previous, body }))} label="본문" minHeight="14rem" isDisabled={isBusy}
         onSubmit={() => { void save(); }} placeholder="쓰기 시작하세요… ( / 로 블록)" />
       <div className={styles.pills} role="group" aria-label="속성">
         <span className={styles.place}><NavIcon name="documents" />{place}</span>
         <PropertyPicker label="라벨" icon="label" options={labelOptions(labels)} value={draft.labelIds} isMultiple
-          onChange={value => setDraft({ ...draft, labelIds: (value as string[] | undefined) ?? [] })} />
+          onChange={value => setDraft(previous => ({ ...previous, labelIds: (value as string[] | undefined) ?? [] }))} />
       </div>
       <FormMessage message={error} />
     </form>

@@ -10,7 +10,9 @@ export type FolderRow =
   | { kind: 'folder'; id: string; folder: Folder }
   | { kind: 'document'; id: string; document: DocumentSummary };
 
-export const rowsOf = (projects: readonly { project: Project; part?: DocumentPart }[], folders: readonly Folder[], documents: readonly DocumentSummary[]): FolderRow[] => [
+export type ProjectFolder = { project: Project; part?: DocumentPart };
+
+export const rowsOf = (projects: readonly ProjectFolder[], folders: readonly Folder[], documents: readonly DocumentSummary[]): FolderRow[] => [
   ...projects.map(({ project, part }) => ({ kind: 'project' as const, id: project.id, project, part })),
   ...folders.map(folder => ({ kind: 'folder' as const, id: folder.id, folder })),
   ...documents.map(document => ({ kind: 'document' as const, id: document.id, document })),
