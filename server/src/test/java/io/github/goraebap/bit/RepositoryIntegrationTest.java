@@ -113,6 +113,7 @@ class RepositoryIntegrationTest {
         github.createContext("/", this::answer);
         github.start();
         for (String table : List.of(
+                "notification",
                 "code_link",
                 "integration_rule",
                 "repository_integration",

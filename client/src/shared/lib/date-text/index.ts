@@ -9,6 +9,13 @@ export function dateText(iso: string) {
 }
 /** 2026년 10월. */
 export const monthText = (iso: string) => `${dateOf(iso).getFullYear()}년 ${dateOf(iso).getMonth() + 1}월`;
+/** How long before something: 10분 전, 1시간 전, 1시간 30분 전, 1일 전. */
+export function beforeText(minutes: number) {
+  if (minutes < 60) return `${minutes}분 전`;
+  if (minutes % 1440 === 0) return `${minutes / 1440}일 전`;
+  return minutes % 60 === 0 ? `${minutes / 60}시간 전` : `${Math.floor(minutes / 60)}시간 ${minutes % 60}분 전`;
+}
+
 /** When something happened, as Linear says it: 방금, 5분 전, 3시간 전, 어제, then the day (10월 25일). */
 export function agoText(iso: string, now = Date.now()) {
   const minutes = Math.floor((now - new Date(iso).getTime()) / 60000);

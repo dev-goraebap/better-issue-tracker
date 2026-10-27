@@ -49,6 +49,9 @@ class OpenApiContractTest {
     private io.github.goraebap.bit.module.workitem.domain.RecurrenceRepository recurrenceRepository;
 
     @MockitoBean
+    private io.github.goraebap.bit.module.notification.domain.NotificationRepository notificationRepository;
+
+    @MockitoBean
     private io.github.goraebap.bit.module.label.domain.LabelRepository labelRepository;
 
     @MockitoBean

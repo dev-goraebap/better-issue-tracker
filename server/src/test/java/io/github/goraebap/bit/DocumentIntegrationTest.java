@@ -99,6 +99,7 @@ class DocumentIntegrationTest {
     @BeforeEach
     void prepare() {
         for (String table : List.of(
+                "notification",
                 "comment",
                 "activity",
                 "link",

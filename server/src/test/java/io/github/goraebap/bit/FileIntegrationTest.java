@@ -84,6 +84,7 @@ class FileIntegrationTest {
     @BeforeEach
     void prepare() throws Exception {
         for (String table : List.of(
+                "notification",
                 "attachment",
                 "blob",
                 "pending_upload",

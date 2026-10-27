@@ -50,6 +50,9 @@ public final class WorkItemRequests {
             @Schema(nullable = true, description = "A task's column; an event has none")
             String columnId,
 
+            @Min(0) @Max(WorkItem.MAX_REMINDER_MINUTES) @Schema(nullable = true, description = "An event's reminder, minutes before it starts")
+            Integer reminderMinutes,
+
             @Size(max = MAX_LABELS) @Schema(nullable = true, description = "Workspace labels to attach; omitted or null attaches none")
             List<@NotNull String> labelIds) {
         public Create {
@@ -133,6 +136,10 @@ public final class WorkItemRequests {
         private @Schema(nullable = true) Instant startsAt;
         private @Schema(nullable = true) Instant endsAt;
         private Boolean allDay;
+
+        @Min(0) @Max(WorkItem.MAX_REMINDER_MINUTES) private @Schema(nullable = true) Integer reminderMinutes;
+
+        private boolean hasReminderMinutes;
 
         @Size(max = MAX_LABELS) private List<@NotNull String> labelIds;
 
@@ -225,6 +232,19 @@ public final class WorkItemRequests {
 
         public Boolean getAllDay() {
             return allDay;
+        }
+
+        public Integer getReminderMinutes() {
+            return reminderMinutes;
+        }
+
+        public void setReminderMinutes(Integer value) {
+            reminderMinutes = value;
+            hasReminderMinutes = true;
+        }
+
+        public boolean hasReminderMinutes() {
+            return hasReminderMinutes;
         }
 
         public void setAllDay(Boolean value) {

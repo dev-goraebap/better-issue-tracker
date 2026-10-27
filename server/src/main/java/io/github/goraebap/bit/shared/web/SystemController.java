@@ -1,5 +1,6 @@
 package io.github.goraebap.bit.shared.web;
 
+import io.github.goraebap.bit.shared.mail.Mail;
 import io.github.goraebap.bit.shared.storage.StorageStatus;
 import io.swagger.v3.oas.annotations.Operation;
 import java.sql.Connection;
@@ -15,12 +16,17 @@ class SystemController {
     private final DataSource dataSource;
     private final boolean gitIntegration;
     private final StorageStatus storageStatus;
+    private final Mail mail;
 
     SystemController(
-            DataSource dataSource, @Value("${app.git.encryption-key:}") String gitKey, StorageStatus storageStatus) {
+            DataSource dataSource,
+            @Value("${app.git.encryption-key:}") String gitKey,
+            StorageStatus storageStatus,
+            Mail mail) {
         this.dataSource = dataSource;
         this.gitIntegration = gitKey != null && !gitKey.isBlank();
         this.storageStatus = storageStatus;
+        this.mail = mail;
     }
 
     @Operation(summary = "Check the server and its database")
@@ -39,6 +45,11 @@ class SystemController {
     @GetMapping(value = "/api/v1/capabilities", produces = "application/json")
     SystemViews.Capabilities capabilities() {
         return new SystemViews.Capabilities(
-                false, gitIntegration, storageStatus.available(), false, false, storageStatus.maxFileBytes());
+                mail.available(),
+                gitIntegration,
+                storageStatus.available(),
+                false,
+                false,
+                storageStatus.maxFileBytes());
     }
 }

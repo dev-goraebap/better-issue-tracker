@@ -1,0 +1,3 @@
+/* The inbox's rows reach the card's edges; a notice's words are a button that opens its work item (ITEM_ROW_LINK). */
+.flush ul > li { padding-inline: 0; }
+.open { padding: 0; border: 0; background: none; font: inherit; color: inherit; text-align: start; cursor: pointer; }

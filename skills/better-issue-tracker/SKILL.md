@@ -147,7 +147,7 @@ BIT 프로젝트는 GitHub, GitLab, Gitea 저장소와 연결될 수 있다. 연
 | `list_labels` | 쓸 수 있는 라벨 확인(`결정기록`은 시스템 라벨) |
 | `list_work_items` | 업무·결정기록 찾기(`query`, `label`, `include_closed`, `assignee`) |
 | `get_work_item_context` | 업무 하나를 설명, 댓글, 활동까지 읽기 |
-| `create_work_item` | 업무·결정기록 만들기. 일정은 `kind: "event"`와 `starts_at`·`ends_at`(예: `2026-10-28T10:00+09:00`), 사람이 여럿이면 `people`. 반복은 `repeat: "weekly"`(와 `repeat_on`, `repeat_until`) |
+| `create_work_item` | 업무·결정기록 만들기. 일정은 `kind: "event"`와 `starts_at`·`ends_at`(예: `2026-10-28T10:00+09:00`), 사람이 여럿이면 `people`. 반복은 `repeat: "weekly"`(와 `repeat_on`, `repeat_until`), 일정 알림은 `remind_before`(분) |
 | `update_work_item` | 제목, 설명, 라벨, 사람, 날짜·시각, 종류 고치기(준 값만 바뀜). 반복 업무의 이후 회차까지 고치려면 `scope: "following"`, 반복을 끝내려면 `repeat: "none"` |
 | `move_work_item` | 칸(할 일, 진행 중, 완료 등) 옮기기, 보관 |
 | `add_comment` | 진행, 결과, 막힌 점 남기기 |

@@ -1,4 +1,4 @@
-import { dateText } from '@/shared/lib/date-text';
+import { beforeText, dateText } from '@/shared/lib/date-text';
 import type { TimelineEntry } from '../api/timeline';
 
 /** The names an activity's values are read with: people, the project's columns, the workspace's labels, the priorities. */
@@ -64,6 +64,7 @@ export function activityText(entry: TimelineEntry, names: ActivityNames): string
     case 'startsAt': return after ? `시작 시각을 ${toward(timeText(after))} 정했습니다` : '시작 시각을 지웠습니다';
     case 'endsAt': return after ? `끝 시각을 ${toward(timeText(after))} 정했습니다` : '끝 시각을 지웠습니다';
     case 'allDay': return after === 'true' ? '종일 일정으로 바꿨습니다' : '시각 일정으로 바꿨습니다';
+    case 'reminder': return after === null ? '알림을 껐습니다' : `알림을 ${Number(after) === 0 ? '시작할 때' : beforeText(Number(after))}로 정했습니다`;
     case 'startDate': return after ? `시작일을 ${toward(dateText(after))} 정했습니다` : '시작일을 지웠습니다';
     case 'dueDate': return after ? `기한을 ${toward(dateText(after))} 정했습니다` : '기한을 지웠습니다';
     case 'column': {

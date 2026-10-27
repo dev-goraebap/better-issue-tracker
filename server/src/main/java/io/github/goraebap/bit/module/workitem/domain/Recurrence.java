@@ -104,7 +104,8 @@ public final class Recurrence {
             int spanDays,
             LocalTime startTime,
             Integer durationMinutes,
-            boolean allDay) {
+            boolean allDay,
+            Integer reminderMinutes) {
         public Template {
             peopleIds = peopleIds == null ? Set.of() : Set.copyOf(peopleIds);
             labelIds = labelIds == null ? Set.of() : Set.copyOf(labelIds);
@@ -135,7 +136,8 @@ public final class Recurrence {
                     span,
                     start,
                     minutes,
-                    d.allDay());
+                    d.allDay(),
+                    item.reminderMinutes());
         }
 
         /** An occurrence's details on its day: the dates moved to it, or its times on it in the rule's time zone. */

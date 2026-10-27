@@ -223,9 +223,9 @@ erDiagram
 
 | 테이블 | 열 | 제약·인덱스 |
 |---|---|---|
-| `notification` | `notification_id`, `recipient_id`, `workspace_id`, `type varchar(32)`, `target_type varchar(16)`, `target_id uuid`, `payload jsonb?`, `read_at?`, `created_at` | `ix_notification_recipient_id_read_at_created_at` |
+| `notification` | `notification_id`, `workspace_id`, `project_id?`, `recipient_id`, `type`(assigned·invited·commented·rescheduled·due_today·event_reminder), `target_type`(work_item), `target_id`, `actor_id?`, `actor_agent?`, `title`, `body`, `dedupe_key?`, `read_at?`, `mailed_at?`, `created_at` | `ix_notification_recipient_id_workspace_id_created_at`, `ix_notification_mailed_at_created_at`, `ux_notification_recipient_id_dedupe_key`(부분) |
 
-Kaneo 메뉴의 Inbox를 위한 최소 구성이다. 알림 설정 테이블은 1차에 넣지 않는다.
+받은함(위쪽 종)을 위한 표다(V18, BIT-39). 알림의 문장(`title`, `body`)은 만들 때 정해 받은함과 메일이 같다. `dedupe_key`는 작업이 만드는 알림(일정 시작 전, 기한 당일)을 한 사람에게 한 번만 남긴다. `mailed_at`은 메일을 보낸(또는 보내려다 거절된) 때다. 일정의 알림 시점은 `work_item.reminder_minutes`(일정만, 시작 몇 분 전)이고 반복 규칙도 같은 열을 둔다. 알림 설정 테이블은 1차에 넣지 않는다.
 
 ---
 

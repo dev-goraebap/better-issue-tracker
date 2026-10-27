@@ -17,6 +17,7 @@ import { CreateProjectDialog } from '@/features/project-create';
 import { canManage, forgetWorkspace, workspaceQuery } from '@/entities/workspace';
 import { ProjectMark, projectsQuery, type Project } from '@/entities/project';
 import { itemQuery } from '@/entities/work-item';
+import { unreadCountQuery } from '@/entities/notification';
 import { SidebarProjects } from './SidebarProjects';
 import styles from './app-layout.module.css';
 
@@ -88,9 +89,10 @@ export function AppLayout() {
     await navigate({ to: '/login' });
   };
 
-  // The notices' bell at the menu's head (a phone's header row). Notices are not made yet (T-006), so it is never lit.
+  // The notices' bell at the menu's head (a phone's header row), lit while any are unread (BIT-39).
   const inbox = workspacePath(workspaceId, '/inbox');
-  const bell = workspace && <NotificationBell count={0} href={inbox} onOpen={go(inbox)} />;
+  const unread = useQuery({ ...unreadCountQuery(workspaceId ?? ''), enabled: !!workspaceId }).data?.unread ?? 0;
+  const bell = workspace && <NotificationBell count={unread} href={inbox} onOpen={go(inbox)} />;
   const projectMark = (project: Project) => <ProjectMark project={project} />;
   const projectName = (id?: string) => projects.find(project => project.id === id)?.name;
   // The scope's step on the home and a project's pages (D-088): 홈 or the project's name, a link to the scope's bare

@@ -38,6 +38,7 @@ class WorkItemMcpTools implements McpToolProvider {
     private static final String WORKSPACE = "워크스페이스 이름이나 슬러그. 속한 워크스페이스가 하나면 생략합니다.";
     private static final String STATUS =
             "칸 이름(예: 진행 중), 분류(todo·doing·done), 또는 backlog(상태 없음). 프로젝트마다 칸이 다르니 list_projects로 확인합니다.";
+    private static final String REMIND = "일정 알림: 시작 몇 분 전에 참석자에게 알릴지(예: 10, 60, 1440). none이면 알리지 않음. 작업에는 쓰지 않습니다.";
     private static final String REPEAT_EVERY = "반복 간격: 2면 격주·격월 (기본 1)";
     private static final String REPEAT_ON = "매주 반복할 요일들: mon, tue, wed, thu, fri, sat, sun (생략하면 그 업무의 요일)";
     private static final String REPEAT_UNTIL = "마지막 회차가 올 수 있는 날 YYYY-MM-DD (생략하면 끝없이)";
@@ -120,6 +121,7 @@ class WorkItemMcpTools implements McpToolProvider {
                                 .string("starts_at", "일정 시작 시각. 예: 2026-10-28T10:00+09:00", false)
                                 .string("ends_at", "일정 끝 시각. 예: 2026-10-28T11:00+09:00", false)
                                 .bool("all_day", "true면 종일 일정(start_date·due_date를 씀)")
+                                .string("remind_before", REMIND + " 생략하면 시각 일정은 10분 전", false)
                                 .choice(
                                         "repeat",
                                         "반복: 회차마다 따로 업무가 생깁니다. 일정은 8주 앞까지, 작업은 이전 회차의 날이 오면 다음 하나",
@@ -151,6 +153,7 @@ class WorkItemMcpTools implements McpToolProvider {
                                 .string("starts_at", "일정 시작 시각(예: 2026-10-28T10:00+09:00) 또는 none", false)
                                 .string("ends_at", "일정 끝 시각 또는 none", false)
                                 .bool("all_day", "true면 종일 일정, false면 시각 일정")
+                                .string("remind_before", REMIND, false)
                                 .choice(
                                         "scope",
                                         "반복 업무를 고칠 범위: single(이 회차만, 기본) 또는 following(이 회차부터 이후 모두)",
@@ -279,7 +282,11 @@ class WorkItemMcpTools implements McpToolProvider {
         Set<String> labels = args.strings("labels")
                 .map(names -> labelIds(actor, workspace, names))
                 .orElse(Set.of());
-        String id = workItemService.create(actor, workspace, project.id(), kind, details, column, labels);
+        // A timed event reminds its attendees ten minutes before, as the screen's new event does, unless told.
+        Integer reminder = args.has("remind_before")
+                ? reminder(args.string("remind_before"))
+                : kind == WorkItem.Kind.event && details.startsAt() != null ? Integer.valueOf(10) : null;
+        String id = workItemService.create(actor, workspace, project.id(), kind, details, column, labels, reminder);
         if (args.has("repeat")) repeat(actor, workspace, project.id(), id, args);
         var item = workItemQueryService.get(actor, workspace, project.id(), id);
         return summary(item, columns);
@@ -299,6 +306,7 @@ class WorkItemMcpTools implements McpToolProvider {
             request.setStartsAt(instant(args, "starts_at").orElse(null));
         if (args.has("ends_at")) request.setEndsAt(instant(args, "ends_at").orElse(null));
         args.bool("all_day").ifPresent(request::setAllDay);
+        if (args.has("remind_before")) request.setReminderMinutes(reminder(args.string("remind_before")));
         args.strings("labels")
                 .ifPresent(names -> request.setLabelIds(List.copyOf(labelIds(actor, at.workspaceId(), names))));
         if (args.has("start_date"))
@@ -354,6 +362,17 @@ class WorkItemMcpTools implements McpToolProvider {
                         weekdays.isEmpty() ? null : weekdays,
                         args.date("repeat_until").orElse(null),
                         zone));
+    }
+
+    private static Integer reminder(String value) {
+        if (isNone(value)) return null;
+        try {
+            int minutes = Integer.parseInt(value.strip());
+            if (minutes >= 0 && minutes <= WorkItem.MAX_REMINDER_MINUTES) return minutes;
+        } catch (NumberFormatException invalid) {
+            // Said below.
+        }
+        throw new IllegalArgumentException("remind_before는 0에서 10080 사이의 분이거나 none입니다");
     }
 
     private static java.time.DayOfWeek weekday(String value) {
@@ -513,6 +532,7 @@ class WorkItemMcpTools implements McpToolProvider {
             view.put("startsAt", item.startsAt());
             view.put("endsAt", item.endsAt());
             view.put("allDay", item.allDay());
+            view.put("remindBefore", item.reminderMinutes());
         }
         if (item.recurrence() != null) {
             var rule = item.recurrence();

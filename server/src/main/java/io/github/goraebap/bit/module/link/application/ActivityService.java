@@ -48,6 +48,7 @@ public class ActivityService {
                             "startsAt",
                             "endsAt",
                             "allDay",
+                            "reminder",
                             "labels",
                             "column",
                             "archived"),

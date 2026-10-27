@@ -102,6 +102,7 @@ class TargetPersistenceIntegrationTest {
         jdbc.execute("DROP TRIGGER IF EXISTS reject_activity");
         jdbc.execute("DROP TRIGGER IF EXISTS reject_bundle");
         for (String table : List.of(
+                "notification",
                 "comment",
                 "activity",
                 "link",
