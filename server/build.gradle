@@ -9,7 +9,7 @@ plugins {
 }
 
 group = 'io.github.goraebap'
-version = '0.9.0'
+version = '0.10.0'
 ext['jooq.version'] = '3.21.6'
 java { toolchain { languageVersion = JavaLanguageVersion.of(21) } }
 repositories { mavenCentral() }
