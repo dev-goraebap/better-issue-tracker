@@ -2,6 +2,11 @@
 
 최신이 위다. 형식은 `skill-repair`를 따른다.
 
+## 2026-10-27 · 운영 문서 조회 연결
+- 요청: SDLC·arc42 운영 문서를 스킬이 MCP로 읽게 한다(BIT-62, D-098/BIT-63).
+- 수정: 공통 문서 조회 안내로 연결하고 영역별 제목 검색·본문 조회를 수행한다. 상세 지식은 스킬에 복제하지 않는다.
+- 확인: 운영 문서 지도와 해당 영역 문서를 list_documents/get_document로 읽고 설치본을 동기화한다.
+
 ## 2026-10-26 · 이슈 이름과 주소 반영 (D-084)
 - 증상: 코드·API·MCP의 작업항목(work item)이 이슈(issue)로, 화면 주소가 `/workspaces/…/projects/…/issues/…`로 바뀌었는데 참고 문서가 옛 이름(`work_item`, `/work-items`, `/w/…/p/…`, `get_work_item_context`)을 예로 들고 있었다
 - 층: 참고 문서.

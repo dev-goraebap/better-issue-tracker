@@ -3,6 +3,8 @@ name: bit-frontend
 description: BIT 화면(client/, React·TanStack Router/Query·Astryx·페이지 우선 FSD) 개발 환경·코드 스타일·데이터 흐름·레이아웃·디자인 시스템·화면 이동과 로딩. "화면 추가", "페이지 만들어줘", "보드 화면", "결정 목록 화면", "문서함 화면", "컴포넌트", "모바일 화면", "프론트 고쳐줘", tsx·css 파일을 만들거나 고칠 때, 화면 설계를 바꿀 때 쓴다.
 ---
 
+작업 전에 [운영 프로젝트 문서 읽기](../bit-architecture/references/project-documents.md)에 따라 해당 영역의 문서를 MCP로 읽는다. 스킬의 절차와 현재 코드 계약을 함께 적용한다.
+
 클라이언트는 `client/`의 React CSR 앱이다. URL은 TanStack Router, 서버 상태는 TanStack Query, 입력 초안은 로컬 상태가 소유하고, 코드는 페이지 우선 FSD로 배치한다. 화면은 서버가 켜져 있다고 알린 기능만 보인다(D-030).
 
 이 스킬은 SandboxHr `hohr-frontend`에서 옮겼다. 본문에 나오는 공용 부품(`PageFrame`, `ListToolbar`, `RequestBoundary` 등)은 SandboxHr `client/src`에 있는 이름이며, BIT에서 처음 만들 때 같은 이름과 역할로 가져온다.
