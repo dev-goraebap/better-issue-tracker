@@ -5,12 +5,16 @@ import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-quer
 import { useRouter } from '@tanstack/react-router';
 import { MOBILE_QUERY } from '@/shared/config';
 import { authError } from '@/shared/api';
-import { BackLink, DuePicker, EventTimePicker, FormMessage, MarkdownEditor, NavIcon, PageFoot, PageFrame, PropertyPicker, usePanelSurface, type EventTime } from '@/shared/ui';
+import {
+  BackLink, DuePicker, EventTimePicker, FormMessage, MarkdownEditor, NavIcon, PageFoot, PageFrame, PropertyPicker, RepeatPicker, usePanelSurface, type EventTime,
+  type Repeat,
+} from '@/shared/ui';
 import { labelsQuery } from '@/entities/label';
 import { columnsQuery, ProjectMark, projectsQuery, type BoardColumn, type Project } from '@/entities/project';
 import { useMembers } from '@/entities/workspace';
 import {
-  createItem, eventFields, WORK_ITEM_TEMPLATES, workItemHref, labelOptions, NO_STATUS, peopleOptions, priorityOptions, refreshItems, statusOptions, templateLabel,
+  createItem, eventFields, WORK_ITEM_TEMPLATES, workItemHref, labelOptions, NO_STATUS, peopleOptions, priorityOptions, refreshItems, repeatBody, repeatItem,
+  statusOptions, templateLabel,
   type Priority,
 } from '@/entities/work-item';
 import styles from './create-work-item.module.css';
@@ -19,7 +23,7 @@ const mark = (project: Project) => <ProjectMark project={project} size="xs" />;
 
 type Draft = {
   projectId?: string; title: string; body: string; templateId?: string; status?: string; priority: Priority; people: string[]; labelIds: string[]; dueDate?: string;
-  time: EventTime;
+  time: EventTime; repeat?: Repeat;
 };
 
 /** What 새 작업 and 새 일정 are called (D-092). */
@@ -81,6 +85,8 @@ export function NewWorkItem({ workspaceId, projectId, status, kind = 'task' }: {
       const id = await createItem(workspaceId, target.id, isEvent
         ? { ...common, kind: 'event', ...eventFields(draft.time), columnId: null }
         : { ...common, kind: 'task', priority: draft.priority, dueDate: draft.dueDate ?? null, columnId: shownStatus === NO_STATUS ? null : shownStatus });
+      // A repeating one is made first and then repeats from its own day (D-092), its later occurrences made by the server.
+      if (draft.repeat) await repeatItem(workspaceId, target.id, id, repeatBody(draft.repeat, 0));
       await refreshItems(client, workspaceId, target.id);
       const href = workItemHref(workspaceId, { id, projectId: target.id });
       // The toast lives in a layer above the router, so its way to the work item navigates rather than linking.
@@ -127,6 +133,7 @@ ${next.body}`) : isUntouched ? '' : previous.body;
       onChange={value => set({ people: (value as string[] | undefined) ?? [] })} />
     <PropertyPicker label="라벨" icon="label" options={labelOptions(labels)} value={draft.labelIds} isMultiple onChange={value => set({ labelIds: (value as string[] | undefined) ?? [] })} />
     {!isEvent && <DuePicker value={draft.dueDate} onChange={dueDate => set({ dueDate })} />}
+    <RepeatPicker value={draft.repeat} onChange={repeat => set({ repeat })} />
   </div>;
   const more = <Switch label="계속 만들기" size="sm" value={isMore} onChange={setMore} />;
   const submit = <Button label={`${name.noun} 만들기`} variant="primary" size={panel ? 'sm' : undefined} isDisabled={!canCreate} isLoading={isBusy} onClick={() => { void create(); }}

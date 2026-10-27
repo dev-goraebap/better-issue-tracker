@@ -13,6 +13,7 @@ import io.github.goraebap.bit.module.workitem.domain.WorkItem;
 import io.github.goraebap.bit.module.workitem.domain.WorkItemRepository;
 import io.github.goraebap.bit.shared.domain.Ids;
 import io.github.goraebap.bit.shared.persistence.AuditRecords;
+import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -92,6 +93,26 @@ class JooqWorkItemRepository implements WorkItemRepository {
     }
 
     @Override
+    public List<WorkItem> findOccurrencesAfter(String recurrenceId, LocalDate day) {
+        return items(dslContext
+                .selectFrom(WORK_ITEM)
+                .where(WORK_ITEM.RECURRENCE_ID.eq(recurrenceId))
+                .and(WORK_ITEM.OCCURRENCE_ON.gt(day))
+                .and(WORK_ITEM.DELETED_AT.isNull())
+                .orderBy(WORK_ITEM.OCCURRENCE_ON)
+                .fetch());
+    }
+
+    @Override
+    public Optional<LocalDate> findLatestOccurrence(String recurrenceId) {
+        return Optional.ofNullable(dslContext
+                .select(DSL.max(WORK_ITEM.OCCURRENCE_ON))
+                .from(WORK_ITEM)
+                .where(WORK_ITEM.RECURRENCE_ID.eq(recurrenceId))
+                .fetchOne(0, LocalDate.class));
+    }
+
+    @Override
     public List<Row> findAll(Query q, Point p, int limit) {
         Condition where = conditions(q);
         boolean position = q.sort().equals("position");
@@ -143,6 +164,8 @@ class JooqWorkItemRepository implements WorkItemRepository {
                         r.get(WORK_ITEM.POSITION).doubleValue(),
                         r.get(WORK_ITEM.CLOSED_AT),
                         r.get(WORK_ITEM.ARCHIVED_AT),
+                        r.get(WORK_ITEM.RECURRENCE_ID),
+                        r.get(WORK_ITEM.OCCURRENCE_ON),
                         r.get(WORK_ITEM.VERSION),
                         AuditRecords.read(r),
                         people.getOrDefault(r.get(WORK_ITEM.WORK_ITEM_ID), List.of())))
@@ -170,6 +193,8 @@ class JooqWorkItemRepository implements WorkItemRepository {
         r.setAllDay(d.allDay());
         r.setClosedAt(w.closedAt());
         r.setArchivedAt(w.archivedAt());
+        r.setRecurrenceId(w.recurrenceId());
+        r.setOccurrenceOn(w.occurrenceOn());
         r.setVersion(w.version());
         AuditRecords.write(r, w.audit());
         dslContext
@@ -382,6 +407,8 @@ class JooqWorkItemRepository implements WorkItemRepository {
                 r.get(WORK_ITEM.POSITION).doubleValue(),
                 r.get(WORK_ITEM.CLOSED_AT),
                 r.get(WORK_ITEM.ARCHIVED_AT),
+                r.get(WORK_ITEM.RECURRENCE_ID),
+                r.get(WORK_ITEM.OCCURRENCE_ON),
                 r.get(WORK_ITEM.VERSION),
                 AuditRecords.read(r));
     }

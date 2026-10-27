@@ -35,8 +35,16 @@ export const workspaceItemsQuery = (w: string, filters: TaskFilters = {}) => inf
 export const byRefQuery = (w: string, reference: string) => queryOptions({ queryKey: ['workspace', w, 'task-ref', reference], queryFn: ({ signal }) => readJson<WorkItem>(`/api/v1/workspaces/${encodeURIComponent(w)}/work-items/by-ref/${encodeURIComponent(reference)}`, signal), retry: false });
 export const createItem = (w: string, p: string, body: components['schemas']['CreateWorkItem']) => createAt(workBase(w, p), body);
 export const moveItem = (w: string, p: string, id: string, body: components['schemas']['MoveWorkItem']) => command('POST', `${itemPath(w, p, id)}/move`, body);
-/** Changes a work item's fields (absent ones kept); a stale expectedVersion is 409. */
-export const updateItem = (w: string, p: string, id: string, body: components['schemas']['UpdateWorkItem']) => command('PATCH', itemPath(w, p, id), body);
+/**
+ * Changes a work item's fields (absent ones kept); a stale expectedVersion is 409. A repeating one's later occurrences
+ * change too with scope following (D-092).
+ */
+export const updateItem = (w: string, p: string, id: string, body: components['schemas']['UpdateWorkItem'], scope: 'single' | 'following' = 'single') =>
+  command('PATCH', scope === 'following' ? `${itemPath(w, p, id)}?scope=following` : itemPath(w, p, id), body);
+/** Repeats a work item from its day (D-092); on an occurrence the rule is replaced from there on. */
+export const repeatItem = (w: string, p: string, id: string, body: components['schemas']['RepeatWorkItem']) => command('PUT', `${itemPath(w, p, id)}/recurrence`, body);
+/** Deletes the occurrences after this one and ends its rule on its day. */
+export const stopRepeating = (w: string, p: string, id: string, expectedVersion: number) => command('DELETE', `${itemPath(w, p, id)}/recurrence?expectedVersion=${expectedVersion}`);
 /** Moves a work item out of the lists (archived) or back. */
 export const archiveItem = (w: string, p: string, id: string, expectedVersion: number, isArchived = true) => command('POST', `${itemPath(w, p, id)}/${isArchived ? 'archive' : 'unarchive'}`, { expectedVersion });
 /** Deletes a work item (soft: an administrator can restore it). */

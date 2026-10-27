@@ -5,6 +5,8 @@ import io.github.goraebap.bit.module.label.LabelFacade;
 import io.github.goraebap.bit.module.project.ColumnCategory;
 import io.github.goraebap.bit.module.project.ProjectFacade;
 import io.github.goraebap.bit.module.workitem.WorkItemFacade;
+import io.github.goraebap.bit.module.workitem.domain.Recurrence;
+import io.github.goraebap.bit.module.workitem.domain.RecurrenceRepository;
 import io.github.goraebap.bit.module.workitem.domain.WorkItem;
 import io.github.goraebap.bit.module.workitem.domain.WorkItemRepository;
 import io.github.goraebap.bit.module.workspace.WorkspaceFacade;
@@ -31,6 +33,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class WorkItemQueryService {
     private static final String NO_CATEGORY = "none";
     private final WorkItemRepository workItemRepository;
+    private final RecurrenceRepository recurrenceRepository;
     private final WorkItemFacade workItemFacade;
     private final ProjectFacade projectFacade;
     private final WorkspaceFacade workspaceFacade;
@@ -67,10 +70,12 @@ public class WorkItemQueryService {
                 w.position(),
                 w.closedAt(),
                 w.archivedAt(),
+                w.recurrenceId(),
+                w.occurrenceOn(),
                 w.version(),
                 w.audit(),
                 people);
-        return view(workspaceId, row, labels(actor, workspaceId, List.of(row)));
+        return view(workspaceId, row, labels(actor, workspaceId, List.of(row)), rules(List.of(row)));
     }
 
     @Transactional(readOnly = true)
@@ -155,8 +160,9 @@ public class WorkItemQueryService {
         var page = rows.stream().limit(request.getSize()).toList();
         String next = rows.size() > request.getSize() ? encode(scope, page.getLast(), sort) : null;
         var labels = labels(actor, workspaceId, page);
+        var rules = rules(page);
         return new WorkItemViews.WorkItems(
-                page.stream().map(row -> view(workspaceId, row, labels)).toList(), next);
+                page.stream().map(row -> view(workspaceId, row, labels, rules)).toList(), next);
     }
 
     private WorkItemRepository.Query query(
@@ -249,8 +255,21 @@ public class WorkItemQueryService {
         return ids.isEmpty() ? Map.of() : labelFacade.findAllById(actor, workspaceId, ids);
     }
 
+    /** One lookup for the rules of every repeating row shown together. */
+    private Map<String, WorkItemViews.Repeat> rules(Collection<WorkItemRepository.Row> rows) {
+        var ids = rows.stream()
+                .map(WorkItemRepository.Row::recurrenceId)
+                .filter(java.util.Objects::nonNull)
+                .collect(Collectors.toSet());
+        return recurrenceRepository.findAllById(ids).stream()
+                .collect(Collectors.toMap(Recurrence::id, WorkItemViews.Repeat::of));
+    }
+
     private WorkItemViews.Item view(
-            String workspaceId, WorkItemRepository.Row row, Map<String, LabelFacade.LabelRef> labels) {
+            String workspaceId,
+            WorkItemRepository.Row row,
+            Map<String, LabelFacade.LabelRef> labels,
+            Map<String, WorkItemViews.Repeat> rules) {
         var d = row.details();
         var a = row.audit();
         return new WorkItemViews.Item(
@@ -281,6 +300,8 @@ public class WorkItemQueryService {
                 d.startsAt(),
                 d.endsAt(),
                 d.allDay(),
+                row.recurrenceId() == null ? null : rules.get(row.recurrenceId()),
+                row.recurrenceId() == null ? null : row.occurrenceOn(),
                 row.closedAt(),
                 row.archivedAt(),
                 a.deletedAt(),

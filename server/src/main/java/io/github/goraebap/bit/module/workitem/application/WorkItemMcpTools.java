@@ -9,6 +9,7 @@ import io.github.goraebap.bit.module.mcp.McpTool;
 import io.github.goraebap.bit.module.mcp.McpToolProvider;
 import io.github.goraebap.bit.module.project.ProjectFacade;
 import io.github.goraebap.bit.module.workitem.WorkItemFacade;
+import io.github.goraebap.bit.module.workitem.domain.Recurrence;
 import io.github.goraebap.bit.module.workitem.domain.WorkItem;
 import io.github.goraebap.bit.module.workspace.WorkspaceFacade;
 import io.github.goraebap.bit.shared.error.BusinessException;
@@ -37,6 +38,10 @@ class WorkItemMcpTools implements McpToolProvider {
     private static final String WORKSPACE = "워크스페이스 이름이나 슬러그. 속한 워크스페이스가 하나면 생략합니다.";
     private static final String STATUS =
             "칸 이름(예: 진행 중), 분류(todo·doing·done), 또는 backlog(상태 없음). 프로젝트마다 칸이 다르니 list_projects로 확인합니다.";
+    private static final String REPEAT_EVERY = "반복 간격: 2면 격주·격월 (기본 1)";
+    private static final String REPEAT_ON = "매주 반복할 요일들: mon, tue, wed, thu, fri, sat, sun (생략하면 그 업무의 요일)";
+    private static final String REPEAT_UNTIL = "마지막 회차가 올 수 있는 날 YYYY-MM-DD (생략하면 끝없이)";
+    private static final String TIME_ZONE = "반복 시각의 시간대(예: Asia/Seoul). 생략하면 starts_at의 시간대, 그것도 없으면 Asia/Seoul";
     private static final Map<String, WorkItem.Priority> PRIORITIES = Map.of(
             "low", WorkItem.Priority.low,
             "낮음", WorkItem.Priority.low,
@@ -48,6 +53,7 @@ class WorkItemMcpTools implements McpToolProvider {
             "긴급", WorkItem.Priority.urgent);
 
     private final WorkItemService workItemService;
+    private final RecurrenceService recurrenceService;
     private final WorkItemQueryService workItemQueryService;
     private final WorkItemFacade workItemFacade;
     private final ProjectFacade projectFacade;
@@ -114,6 +120,15 @@ class WorkItemMcpTools implements McpToolProvider {
                                 .string("starts_at", "일정 시작 시각. 예: 2026-10-28T10:00+09:00", false)
                                 .string("ends_at", "일정 끝 시각. 예: 2026-10-28T11:00+09:00", false)
                                 .bool("all_day", "true면 종일 일정(start_date·due_date를 씀)")
+                                .choice(
+                                        "repeat",
+                                        "반복: 회차마다 따로 업무가 생깁니다. 일정은 8주 앞까지, 작업은 이전 회차의 날이 오면 다음 하나",
+                                        List.of("daily", "weekly", "monthly"),
+                                        false)
+                                .integer("repeat_every", REPEAT_EVERY, 1, 52)
+                                .strings("repeat_on", REPEAT_ON, false)
+                                .string("repeat_until", REPEAT_UNTIL, false)
+                                .string("time_zone", TIME_ZONE, false)
                                 .string("workspace", WORKSPACE, false)
                                 .build(),
                         false,
@@ -121,7 +136,7 @@ class WorkItemMcpTools implements McpToolProvider {
                 new McpTool(
                         "update_work_item",
                         "업무 고치기",
-                        "업무의 준 값만 바꿉니다. 맡은 업무의 담당자가 비어 있으면 assignee에 me를 주세요. 값을 지우려면 assignee·priority·start_date·due_date에 none을 주세요. labels는 준 목록으로 통째로 바꿉니다. 상태는 move_work_item으로 옮깁니다.",
+                        "업무의 준 값만 바꿉니다. 맡은 업무의 담당자가 비어 있으면 assignee에 me를 주세요. 값을 지우려면 assignee·priority·start_date·due_date에 none을 주세요. labels는 준 목록으로 통째로 바꿉니다. 상태는 move_work_item으로 옮깁니다. 반복 업무의 회차는 scope: following이면 이 회차와 이후 회차(와 규칙)를 함께 고칩니다. 설명은 이후 회차에 옮기지 않습니다.",
                         McpTool.input()
                                 .string("ref", "업무 참조. 예: ORM-14", true)
                                 .string("title", "새 제목", false)
@@ -136,6 +151,20 @@ class WorkItemMcpTools implements McpToolProvider {
                                 .string("starts_at", "일정 시작 시각(예: 2026-10-28T10:00+09:00) 또는 none", false)
                                 .string("ends_at", "일정 끝 시각 또는 none", false)
                                 .bool("all_day", "true면 종일 일정, false면 시각 일정")
+                                .choice(
+                                        "scope",
+                                        "반복 업무를 고칠 범위: single(이 회차만, 기본) 또는 following(이 회차부터 이후 모두)",
+                                        List.of("single", "following"),
+                                        false)
+                                .choice(
+                                        "repeat",
+                                        "반복을 정함(이 회차부터 새 규칙) 또는 none(이후 회차를 지우고 반복을 끝냄)",
+                                        List.of("daily", "weekly", "monthly", "none"),
+                                        false)
+                                .integer("repeat_every", REPEAT_EVERY, 1, 52)
+                                .strings("repeat_on", REPEAT_ON, false)
+                                .string("repeat_until", REPEAT_UNTIL, false)
+                                .string("time_zone", TIME_ZONE, false)
                                 .string("workspace", WORKSPACE, false)
                                 .build(),
                         false,
@@ -251,6 +280,7 @@ class WorkItemMcpTools implements McpToolProvider {
                 .map(names -> labelIds(actor, workspace, names))
                 .orElse(Set.of());
         String id = workItemService.create(actor, workspace, project.id(), kind, details, column, labels);
+        if (args.has("repeat")) repeat(actor, workspace, project.id(), id, args);
         var item = workItemQueryService.get(actor, workspace, project.id(), id);
         return summary(item, columns);
     }
@@ -281,9 +311,62 @@ class WorkItemMcpTools implements McpToolProvider {
                     isNone(args.optionalString("due_date").orElse("none"))
                             ? null
                             : args.date("due_date").orElseThrow());
-        workItemService.revise(actor, at.workspaceId(), at.projectId(), at.id(), request);
+        if ("following".equals(args.optionalString("scope").orElse("single")))
+            recurrenceService.reviseFollowing(actor, at.workspaceId(), at.projectId(), at.id(), request);
+        else workItemService.revise(actor, at.workspaceId(), at.projectId(), at.id(), request);
+        if (args.has("repeat")) {
+            if (isNone(args.string("repeat"))) {
+                var now = workItemQueryService.get(actor, at.workspaceId(), at.projectId(), at.id());
+                recurrenceService.stop(actor, at.workspaceId(), at.projectId(), at.id(), now.version());
+            } else repeat(actor, at.workspaceId(), at.projectId(), at.id(), args);
+        }
         var item = workItemQueryService.get(actor, at.workspaceId(), at.projectId(), at.id());
         return summary(item, columns(actor, at));
+    }
+
+    /** Sets the rule an agent described on a work item, from its day (D-092). */
+    private void repeat(CurrentUser actor, String workspace, String projectId, String id, McpArguments args) {
+        var frequency =
+                switch (args.string("repeat").strip().toLowerCase(Locale.ROOT)) {
+                    case "daily" -> Recurrence.Frequency.daily;
+                    case "weekly" -> Recurrence.Frequency.weekly;
+                    case "monthly" -> Recurrence.Frequency.monthly;
+                    default -> throw new IllegalArgumentException("repeat는 daily, weekly, monthly, none 중 하나입니다");
+                };
+        var weekdays = args.strings("repeat_on").orElse(List.of()).stream()
+                .map(WorkItemMcpTools::weekday)
+                .toList();
+        String zone = args.optionalString("time_zone")
+                .or(() -> instant(args, "starts_at").map(at -> java.time.OffsetDateTime.parse(args.string("starts_at"))
+                        .getOffset()
+                        .getId()))
+                .orElse("Asia/Seoul");
+        var item = workItemQueryService.get(actor, workspace, projectId, id);
+        recurrenceService.repeat(
+                actor,
+                workspace,
+                projectId,
+                id,
+                new WorkItemRequests.Repeat(
+                        item.version(),
+                        frequency,
+                        args.has("repeat_every") ? args.integer("repeat_every", 1) : null,
+                        weekdays.isEmpty() ? null : weekdays,
+                        args.date("repeat_until").orElse(null),
+                        zone));
+    }
+
+    private static java.time.DayOfWeek weekday(String value) {
+        return switch (value.strip().toLowerCase(Locale.ROOT)) {
+            case "mon", "monday", "월" -> java.time.DayOfWeek.MONDAY;
+            case "tue", "tuesday", "화" -> java.time.DayOfWeek.TUESDAY;
+            case "wed", "wednesday", "수" -> java.time.DayOfWeek.WEDNESDAY;
+            case "thu", "thursday", "목" -> java.time.DayOfWeek.THURSDAY;
+            case "fri", "friday", "금" -> java.time.DayOfWeek.FRIDAY;
+            case "sat", "saturday", "토" -> java.time.DayOfWeek.SATURDAY;
+            case "sun", "sunday", "일" -> java.time.DayOfWeek.SUNDAY;
+            default -> throw new IllegalArgumentException("repeat_on은 mon, tue, wed, thu, fri, sat, sun입니다");
+        };
     }
 
     private Object move(CurrentUser actor, McpArguments args) {
@@ -430,6 +513,22 @@ class WorkItemMcpTools implements McpToolProvider {
             view.put("startsAt", item.startsAt());
             view.put("endsAt", item.endsAt());
             view.put("allDay", item.allDay());
+        }
+        if (item.recurrence() != null) {
+            var rule = item.recurrence();
+            var repeat = new LinkedHashMap<String, Object>();
+            repeat.put("frequency", rule.frequency());
+            repeat.put("every", rule.interval());
+            if (!rule.weekdays().isEmpty())
+                repeat.put(
+                        "on",
+                        rule.weekdays().stream()
+                                .map(day -> day.name().substring(0, 3).toLowerCase(Locale.ROOT))
+                                .toList());
+            repeat.put("until", rule.untilOn());
+            repeat.put("timeZone", rule.timeZone());
+            view.put("repeat", repeat);
+            view.put("occurrenceOn", item.occurrenceOn());
         }
         view.put("closed", item.closedAt() != null);
         view.put("archived", item.archivedAt() != null);

@@ -1,8 +1,10 @@
 package io.github.goraebap.bit.module.workitem.application;
 
 import io.github.goraebap.bit.module.project.ColumnCategory;
+import io.github.goraebap.bit.module.workitem.domain.Recurrence;
 import io.github.goraebap.bit.module.workitem.domain.WorkItem;
 import io.swagger.v3.oas.annotations.media.Schema;
+import java.time.DayOfWeek;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
@@ -24,6 +26,38 @@ public final class WorkItemViews {
             name = "WorkItemPerson",
             requiredProperties = {"id", "name"})
     public record Person(String id, String name) {}
+
+    /** The rule a repeating work item belongs to (D-092). */
+    @Schema(
+            name = "WorkItemRecurrence",
+            requiredProperties = {"id", "frequency", "interval", "weekdays", "startsOn", "untilOn", "timeZone"})
+    public record Repeat(
+            String id,
+            Recurrence.Frequency frequency,
+            int interval,
+
+            @Schema(description = "A weekly rule's weekdays, Monday first; empty otherwise")
+            List<DayOfWeek> weekdays,
+
+            LocalDate startsOn,
+            @Schema(nullable = true) LocalDate untilOn,
+            String timeZone) {
+        public Repeat {
+            weekdays = List.copyOf(weekdays);
+        }
+
+        static Repeat of(Recurrence rule) {
+            var p = rule.pattern();
+            return new Repeat(
+                    rule.id(),
+                    p.frequency(),
+                    p.interval(),
+                    p.weekdays().stream().sorted().toList(),
+                    p.startsOn(),
+                    p.untilOn(),
+                    rule.zone().getId());
+        }
+    }
 
     @Schema(
             name = "WorkItem",
@@ -48,6 +82,8 @@ public final class WorkItemViews {
                 "startsAt",
                 "endsAt",
                 "allDay",
+                "recurrence",
+                "occurrenceOn",
                 "closedAt",
                 "archivedAt",
                 "deletedAt",
@@ -88,6 +124,13 @@ public final class WorkItemViews {
             @Schema(nullable = true) Instant startsAt,
             @Schema(nullable = true) Instant endsAt,
             boolean allDay,
+
+            @Schema(nullable = true, description = "The rule it repeats by; null when it does not repeat")
+            Repeat recurrence,
+
+            @Schema(nullable = true, description = "The day it falls on in its rule's series")
+            LocalDate occurrenceOn,
+
             @Schema(nullable = true) Instant closedAt,
             @Schema(nullable = true) Instant archivedAt,
             @Schema(nullable = true) Instant deletedAt,

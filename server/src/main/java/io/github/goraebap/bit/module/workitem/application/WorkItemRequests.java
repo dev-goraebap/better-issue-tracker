@@ -1,6 +1,7 @@
 package io.github.goraebap.bit.module.workitem.application;
 
 import com.fasterxml.jackson.annotation.JsonAnySetter;
+import io.github.goraebap.bit.module.workitem.domain.Recurrence;
 import io.github.goraebap.bit.module.workitem.domain.WorkItem;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Max;
@@ -8,6 +9,7 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import java.time.DayOfWeek;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -80,6 +82,42 @@ public final class WorkItemRequests {
 
     @Schema(name = "WorkItemVersion")
     public record Version(@NotNull @Min(0) Long expectedVersion) {}
+
+    /** Which occurrences of a repeating work item an edit is for (D-092): this one, or this one and every later one. */
+    public enum Scope {
+        single,
+        following
+    }
+
+    /** A rule a work item repeats by from its own day (D-092); on an occurrence it replaces the rule from there on. */
+    @Schema(name = "RepeatWorkItem")
+    public record Repeat(
+            @NotNull @Min(0) Long expectedVersion,
+            @NotNull Recurrence.Frequency frequency,
+
+            @Min(1) @Max(52) @Schema(nullable = true, description = "Every this many days, weeks or months; 1 when omitted")
+            Integer interval,
+
+            @Size(max = 7) @Schema(nullable = true, description = "A weekly rule's weekdays; the item's own when omitted")
+            List<@NotNull DayOfWeek> weekdays,
+
+            @Schema(nullable = true, description = "The last day an occurrence may fall on; none repeats on")
+            LocalDate untilOn,
+
+            @NotBlank @Size(max = 64) @Schema(description = "The time zone its times repeat in, such as Asia/Seoul")
+            String timeZone) {
+        public Repeat {
+            weekdays = weekdays == null ? null : List.copyOf(weekdays);
+        }
+
+        int intervalOrOne() {
+            return interval == null ? 1 : interval;
+        }
+
+        Set<DayOfWeek> days() {
+            return weekdays == null ? Set.of() : Set.copyOf(weekdays);
+        }
+    }
 
     @Schema(name = "UpdateWorkItem")
     public static final class Update {

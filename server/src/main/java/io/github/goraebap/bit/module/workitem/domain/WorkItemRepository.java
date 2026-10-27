@@ -18,6 +18,12 @@ public interface WorkItemRepository {
 
     List<WorkItem> findColumnItems(String projectId, String columnId, boolean includeDeleted);
 
+    /** A recurrence's live occurrences after a day, in day order. */
+    List<WorkItem> findOccurrencesAfter(String recurrenceId, LocalDate day);
+
+    /** The day of a recurrence's latest occurrence, deleted ones included, since a cancelled day is not made again. */
+    Optional<LocalDate> findLatestOccurrence(String recurrenceId);
+
     List<Row> findAll(Query query, Point point, int limit);
 
     List<ColumnCount> countByColumn(Query query);
@@ -83,6 +89,8 @@ public interface WorkItemRepository {
             double position,
             Instant closedAt,
             Instant archivedAt,
+            String recurrenceId,
+            LocalDate occurrenceOn,
             long version,
             Audit audit,
             List<Person> people) {

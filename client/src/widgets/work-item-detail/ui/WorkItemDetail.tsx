@@ -5,12 +5,12 @@ import { useNavigate } from '@tanstack/react-router';
 import { authError, isNotFound } from '@/shared/api';
 import { dateText } from '@/shared/lib/date-text';
 import {
-  BackLink, ConfirmDialog, MarkdownView, NavIcon, PageState, QueryMessage, SectionHeader, SettingsAction, Surface, usePanelSurface,
+  BackLink, ConfirmDialog, MarkdownView, NavIcon, PageState, QueryMessage, repeatText, SectionHeader, SettingsAction, Surface, usePanelSurface,
 } from '@/shared/ui';
 import { columnsQuery } from '@/entities/project';
 import { canManage, canWrite as canWriteIn, workspaceQuery } from '@/entities/workspace';
 import {
-  archiveItem, deleteItem, eventWhen, itemQuery, LabelTokens, PersonCell, PriorityMark, refreshItems, StatusBadge, type WorkItemSearch,
+  archiveItem, deleteItem, eventWhen, itemQuery, LabelTokens, PersonCell, PriorityMark, refreshItems, repeatOf, StatusBadge, stopRepeating, type WorkItemSearch,
 } from '@/entities/work-item';
 import { branchName, codeLinksQuery, CodeLinkList, integrationsQuery } from '@/entities/repository';
 import { refreshTimeline } from '../api/timeline';
@@ -30,8 +30,8 @@ import styles from './detail.module.css';
  *   우선순위, 담당자, 시작일, 기한), then the labels.
  * - The title row ends with 편집 (on the page a round icon chip as the list header's 필터 and 표시, SettingsAction; in
  *   the modal a ghost icon button like the head's others, so the head's icons are one set), and the more
- *   menu: 링크 복사, 브랜치 이름 복사, 보관, then 삭제 behind ConfirmDialog. A change someone else saved first (409)
- *   says so and shows the latest.
+ *   menu: 링크 복사, 브랜치 이름 복사, 보관, 이후 회차 취소 for a repeating one (D-092), then 삭제, each that loses
+ *   something behind ConfirmDialog. A change someone else saved first (409) says so and shows the latest.
  * - Under the description its 활동 (WorkItemActivity, D-078): what happened to it and its comments on one timeline, the
  *   box to comment at its foot. 연결 comes with the links (T-005).
  */
@@ -42,6 +42,7 @@ export function WorkItemDetail({ workspaceId, projectId, id, search }: { workspa
   const toast = useToast();
   const list = { to: '/workspaces/$workspaceId/projects/$projectId', params: { workspaceId, projectId }, search } as const;
   const [isDeleting, setDeleting] = useState(false);
+  const [isStopping, setStopping] = useState(false);
   const result = useQuery(itemQuery(workspaceId, projectId, id));
   const columns = useQuery(columnsQuery(workspaceId, projectId)).data ?? [];
   const hasRepository = (useQuery(integrationsQuery(workspaceId, projectId)).data ?? []).length > 0;
@@ -66,6 +67,7 @@ export function WorkItemDetail({ workspaceId, projectId, id, search }: { workspa
   };
   const column = columns.find(each => each.id === item.columnId);
   const when = eventWhen(item);
+  const repeat = repeatText(repeatOf(item));
   // Each property set, as a mark; the edit page changes them.
   const properties: [string, ReactNode][] = [
     ...(item.columnCategory ? [['상태', <StatusBadge category={item.columnCategory} name={column?.name} />] as [string, ReactNode]] : []),
@@ -75,6 +77,7 @@ export function WorkItemDetail({ workspaceId, projectId, id, search }: { workspa
     [item.kind === 'event' ? '참석자' : '담당자', <span className={styles.person}><PersonCell people={item.people} empty={item.kind === 'event' ? '없음' : '미배정'} /></span>],
     ...(item.kind === 'task' && item.startDate ? [['시작일', <span className={styles.dated}><NavIcon name="calendar" />{dateText(item.startDate)}</span>] as [string, ReactNode]] : []),
     ...(item.kind === 'task' && item.dueDate ? [['기한', <span className={styles.dated}><NavIcon name="calendar" />{dateText(item.dueDate)}</span>] as [string, ReactNode]] : []),
+    ...(repeat ? [['반복', <span className={styles.dated}><NavIcon name="repeat" />{repeat}</span>] as [string, ReactNode]] : []),
   ];
   const leave = () => { if (panel) panel.onClose(); else void navigate(list); };
   const edit = () => void navigate({ to: '/workspaces/$workspaceId/projects/$projectId/work-items/$workItemId/edit', params: { workspaceId, projectId, workItemId: id } });
@@ -91,6 +94,7 @@ export function WorkItemDetail({ workspaceId, projectId, id, search }: { workspa
       { label: '브랜치 이름 복사', icon: <NavIcon name="branch" />, onClick: copyBranch },
       ...(canWrite ? [
         { label: item.archivedAt ? '보관 해제' : '보관', icon: <NavIcon name="documents" />, onClick: () => { void save(version => archiveItem(workspaceId, projectId, id, version, !item.archivedAt)).then(isSaved => { if (isSaved && !item.archivedAt) leave(); }); } },
+        ...(item.recurrence ? [{ label: '이후 회차 취소', icon: <NavIcon name="repeat" />, onClick: () => setStopping(true) }] : []),
         { label: '삭제', icon: <NavIcon name="delete" />, onClick: () => setDeleting(true) },
       ] : []),
     ]} />
@@ -118,6 +122,9 @@ export function WorkItemDetail({ workspaceId, projectId, id, search }: { workspa
         <p className={styles.made}>{item.key} · {dateText(item.createdAt)} 만듦{item.updatedAt !== item.createdAt ? ` · ${dateText(item.updatedAt)} 고침` : ''}</p>
       </aside>
     </div>
+    {isStopping && <ConfirmDialog title="이후 회차를 취소할까요?" description={`${item.key} 뒤에 만들어진 회차를 지우고 반복을 끝냅니다. 이 회차는 남습니다.`}
+      confirmLabel="이후 회차 취소" variant="destructive" onClose={() => setStopping(false)}
+      onConfirm={() => { setStopping(false); void save(version => stopRepeating(workspaceId, projectId, id, version)); }} />}
     {isDeleting && <ConfirmDialog title="업무를 삭제할까요?" description={`${item.key} ${item.title}을(를) 삭제합니다. 관리자는 되살릴 수 있습니다.`}
       confirmLabel="삭제" variant="destructive" onClose={() => setDeleting(false)}
       onConfirm={() => { setDeleting(false); void save(version => deleteItem(workspaceId, projectId, id, version)).then(isSaved => { if (isSaved) leave(); }); }} />}

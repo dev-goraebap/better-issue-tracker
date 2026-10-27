@@ -36,6 +36,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/work-items/{id}/recurrence": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["repeat"];
+        post?: never;
+        delete: operations["stopRepeating"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/workspaces/{workspaceId}/project-order": {
         parameters: {
             query?: never;
@@ -1298,6 +1314,26 @@ export interface components {
             /** @description View ids, and all for 전체 업무 */
             viewKeys: string[];
         };
+        RepeatWorkItem: {
+            /** Format: int64 */
+            expectedVersion: number;
+            /** @enum {string} */
+            frequency: "daily" | "weekly" | "monthly";
+            /**
+             * Format: int32
+             * @description Every this many days, weeks or months; 1 when omitted
+             */
+            interval?: number | null;
+            /** @description A weekly rule's weekdays; the item's own when omitted */
+            weekdays?: ("MONDAY" | "TUESDAY" | "WEDNESDAY" | "THURSDAY" | "FRIDAY" | "SATURDAY" | "SUNDAY")[] | null;
+            /**
+             * Format: date
+             * @description The last day an occurrence may fall on; none repeats on
+             */
+            untilOn?: string | null;
+            /** @description The time zone its times repeat in, such as Asia/Seoul */
+            timeZone: string;
+        };
         ProjectOrder: {
             order: string[];
         };
@@ -1773,6 +1809,13 @@ export interface components {
             /** Format: date-time */
             endsAt: string | null;
             allDay: boolean;
+            /** @description The rule it repeats by; null when it does not repeat */
+            recurrence: components["schemas"]["WorkItemRecurrence"];
+            /**
+             * Format: date
+             * @description The day it falls on in its rule's series
+             */
+            occurrenceOn: string | null;
             /** Format: date-time */
             closedAt: string | null;
             /** Format: date-time */
@@ -1799,6 +1842,20 @@ export interface components {
         WorkItemPerson: {
             id: string;
             name: string;
+        };
+        WorkItemRecurrence: {
+            id: string;
+            /** @enum {string} */
+            frequency: "daily" | "weekly" | "monthly";
+            /** Format: int32 */
+            interval: number;
+            /** @description A weekly rule's weekdays, Monday first; empty otherwise */
+            weekdays: ("MONDAY" | "TUESDAY" | "WEDNESDAY" | "THURSDAY" | "FRIDAY" | "SATURDAY" | "SUNDAY")[];
+            /** Format: date */
+            startsOn: string;
+            /** Format: date */
+            untilOn: string | null;
+            timeZone: string;
         };
         WorkItems: {
             items: components["schemas"]["WorkItem"][];
@@ -2234,6 +2291,56 @@ export interface operations {
                 "application/json": components["schemas"]["PutWorkItemViewOrder"];
             };
         };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    repeat: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+                projectId: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RepeatWorkItem"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    stopRepeating: {
+        parameters: {
+            query: {
+                expectedVersion: number;
+            };
+            header?: never;
+            path: {
+                workspaceId: string;
+                projectId: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             /** @description OK */
             200: {
@@ -3741,7 +3848,9 @@ export interface operations {
     };
     revise_2: {
         parameters: {
-            query?: never;
+            query?: {
+                scope?: "single" | "following";
+            };
             header?: never;
             path: {
                 workspaceId: string;

@@ -105,6 +105,89 @@
         }
       }
     },
+    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/work-items/{id}/recurrence" : {
+      "put" : {
+        "tags" : [ "work-item-controller" ],
+        "operationId" : "repeat",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "projectId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/RepeatWorkItem"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        }
+      },
+      "delete" : {
+        "tags" : [ "work-item-controller" ],
+        "operationId" : "stopRepeating",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "projectId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "expectedVersion",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64",
+            "minimum" : 0
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        }
+      }
+    },
     "/api/v1/workspaces/{workspaceId}/project-order" : {
       "put" : {
         "tags" : [ "project-member-controller" ],
@@ -2322,6 +2405,15 @@
           "schema" : {
             "type" : "string"
           }
+        }, {
+          "name" : "scope",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : "single",
+            "enum" : [ "single", "following" ]
+          }
         } ],
         "requestBody" : {
           "content" : {
@@ -4530,6 +4622,49 @@
         },
         "required" : [ "viewKeys" ]
       },
+      "RepeatWorkItem" : {
+        "type" : "object",
+        "properties" : {
+          "expectedVersion" : {
+            "type" : "integer",
+            "format" : "int64",
+            "minimum" : 0
+          },
+          "frequency" : {
+            "type" : "string",
+            "enum" : [ "daily", "weekly", "monthly" ]
+          },
+          "interval" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int32",
+            "description" : "Every this many days, weeks or months; 1 when omitted",
+            "maximum" : 52,
+            "minimum" : 1
+          },
+          "weekdays" : {
+            "type" : [ "array", "null" ],
+            "description" : "A weekly rule's weekdays; the item's own when omitted",
+            "items" : {
+              "type" : "string",
+              "enum" : [ "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY" ]
+            },
+            "maxItems" : 7,
+            "minItems" : 0
+          },
+          "untilOn" : {
+            "type" : [ "string", "null" ],
+            "format" : "date",
+            "description" : "The last day an occurrence may fall on; none repeats on"
+          },
+          "timeZone" : {
+            "type" : "string",
+            "description" : "The time zone its times repeat in, such as Asia/Seoul",
+            "maxLength" : 64,
+            "minLength" : 0
+          }
+        },
+        "required" : [ "expectedVersion", "frequency", "timeZone" ]
+      },
       "ProjectOrder" : {
         "type" : "object",
         "properties" : {
@@ -5828,6 +5963,16 @@
           "allDay" : {
             "type" : "boolean"
           },
+          "recurrence" : {
+            "type" : "null",
+            "$ref" : "#/components/schemas/WorkItemRecurrence",
+            "description" : "The rule it repeats by; null when it does not repeat"
+          },
+          "occurrenceOn" : {
+            "type" : [ "string", "null" ],
+            "format" : "date",
+            "description" : "The day it falls on in its rule's series"
+          },
           "closedAt" : {
             "type" : [ "string", "null" ],
             "format" : "date-time"
@@ -5865,7 +6010,7 @@
             "type" : [ "string", "null" ]
           }
         },
-        "required" : [ "allDay", "archivedAt", "closedAt", "columnCategory", "columnId", "createdAt", "createdBy", "createdByAgent", "deletedAt", "description", "dueDate", "endsAt", "id", "key", "kind", "labels", "number", "people", "position", "priority", "projectId", "startDate", "startsAt", "title", "triggerType", "updatedAt", "updatedBy", "updatedByAgent", "version", "workspaceId" ]
+        "required" : [ "allDay", "archivedAt", "closedAt", "columnCategory", "columnId", "createdAt", "createdBy", "createdByAgent", "deletedAt", "description", "dueDate", "endsAt", "id", "key", "kind", "labels", "number", "occurrenceOn", "people", "position", "priority", "projectId", "recurrence", "startDate", "startsAt", "title", "triggerType", "updatedAt", "updatedBy", "updatedByAgent", "version", "workspaceId" ]
       },
       "WorkItemLabel" : {
         "type" : "object",
@@ -5896,6 +6041,42 @@
           }
         },
         "required" : [ "id", "name" ]
+      },
+      "WorkItemRecurrence" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string"
+          },
+          "frequency" : {
+            "type" : "string",
+            "enum" : [ "daily", "weekly", "monthly" ]
+          },
+          "interval" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "weekdays" : {
+            "type" : "array",
+            "description" : "A weekly rule's weekdays, Monday first; empty otherwise",
+            "items" : {
+              "type" : "string",
+              "enum" : [ "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY" ]
+            }
+          },
+          "startsOn" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "untilOn" : {
+            "type" : [ "string", "null" ],
+            "format" : "date"
+          },
+          "timeZone" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "frequency", "id", "interval", "startsOn", "timeZone", "untilOn", "weekdays" ]
       },
       "WorkItems" : {
         "type" : "object",

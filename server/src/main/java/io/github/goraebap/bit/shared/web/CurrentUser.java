@@ -12,8 +12,9 @@ public record CurrentUser(
         SESSION,
         API_KEY,
         /**
-         * A repository host acting through a project's integration (D-087): made only by the server for a signed
-         * webhook, never from a request; it acts as the member who connected the repository.
+         * A repository host acting through a project's integration (D-087), or a recurrence making its occurrences
+         * (D-092): made only by the server, for a signed webhook or the hourly job, never from a request; it acts as
+         * the member who connected the repository or last set the rule.
          */
         INTEGRATION
     }

@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -27,6 +28,7 @@ import org.springframework.web.bind.annotation.RestController;
 class WorkItemController {
     private final WorkItemService workItemService;
     private final WorkItemQueryService workItemQueryService;
+    private final RecurrenceService recurrenceService;
 
     @GetMapping("/projects/{projectId}/work-items")
     WorkItemViews.WorkItems list(
@@ -104,8 +106,33 @@ class WorkItemController {
             @PathVariable String workspaceId,
             @PathVariable String projectId,
             @PathVariable String id,
+            @RequestParam(defaultValue = "single") WorkItemRequests.Scope scope,
             @Valid @RequestBody WorkItemRequests.Update request) {
-        workItemService.revise(actor, workspaceId, projectId, id, request);
+        if (scope == WorkItemRequests.Scope.following)
+            recurrenceService.reviseFollowing(actor, workspaceId, projectId, id, request);
+        else workItemService.revise(actor, workspaceId, projectId, id, request);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/projects/{projectId}/work-items/{id}/recurrence")
+    ResponseEntity<Void> repeat(
+            @AuthenticationPrincipal CurrentUser actor,
+            @PathVariable String workspaceId,
+            @PathVariable String projectId,
+            @PathVariable String id,
+            @Valid @RequestBody WorkItemRequests.Repeat request) {
+        recurrenceService.repeat(actor, workspaceId, projectId, id, request);
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/projects/{projectId}/work-items/{id}/recurrence")
+    ResponseEntity<Void> stopRepeating(
+            @AuthenticationPrincipal CurrentUser actor,
+            @PathVariable String workspaceId,
+            @PathVariable String projectId,
+            @PathVariable String id,
+            @RequestParam @Min(0) long expectedVersion) {
+        recurrenceService.stop(actor, workspaceId, projectId, id, expectedVersion);
         return ResponseEntity.noContent().build();
     }
 
