@@ -5,7 +5,7 @@ import still from './rocket-still.svg?raw';
 import styles from './page-loading.module.css';
 
 /** How long the rocket keeps moving after its loader starts to fade (700ms), so it never freezes in sight. */
-const FADE_OUT_MS = 750;
+const FADE_OUT_MS = 450;
 /** The frame shown when the rocket does not move: upright, among its stars. */
 const STILL_FRAME = 0;
 /** Where each showing starts. */
@@ -36,7 +36,7 @@ export function LoadingMark({ isSmall = false, isPlaying = true }: { isSmall?: b
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) { animation.goToAndStop(STILL_FRAME, true); return; }
     // Each showing starts from the top of the loop, where the rocket already sways and the stars already drift, so even
     // the shortest showing (300ms) moves.
-    if (isPlaying) { animation.goToAndPlay(START_FRAME, true); return; }
+    if (isPlaying) { animation.setSpeed(1.2); animation.goToAndPlay(START_FRAME, true); return; }
     // It stops only once faded out: a rocket jumping to a still pose while it fades reads as a stutter.
     const timer = window.setTimeout(() => animation.pause(), FADE_OUT_MS);
     return () => window.clearTimeout(timer);

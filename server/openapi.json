@@ -4023,6 +4023,39 @@
         }
       }
     },
+    "/api/v1/workspaces/{workspaceId}/notifications/{id}" : {
+      "get" : {
+        "tags" : [ "notification-controller" ],
+        "operationId" : "get_6",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Notification"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/workspaces/{workspaceId}/notifications/unread-count" : {
       "get" : {
         "tags" : [ "notification-controller" ],
@@ -6759,6 +6792,9 @@
           "actorAgent" : {
             "type" : [ "string", "null" ]
           },
+          "actor" : {
+            "$ref" : "#/components/schemas/NotificationActor"
+          },
           "readAt" : {
             "type" : [ "string", "null" ],
             "format" : "date-time"
@@ -6768,7 +6804,26 @@
             "format" : "date-time"
           }
         },
-        "required" : [ "actorAgent", "body", "createdAt", "id", "projectId", "readAt", "targetId", "targetType", "title", "type" ]
+        "required" : [ "actor", "actorAgent", "body", "createdAt", "id", "projectId", "readAt", "targetId", "targetType", "title", "type" ]
+      },
+      "NotificationActor" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : [ "string", "null" ]
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "system" : {
+            "type" : "boolean"
+          },
+          "avatar" : {
+            "type" : "null",
+            "$ref" : "#/components/schemas/Picture"
+          }
+        },
+        "required" : [ "avatar", "id", "name", "system" ]
       },
       "Notifications" : {
         "type" : "object",
@@ -6784,6 +6839,18 @@
           }
         },
         "required" : [ "items", "nextCursor" ]
+      },
+      "Picture" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string"
+          },
+          "color" : {
+            "type" : [ "string", "null" ]
+          }
+        },
+        "required" : [ "id" ]
       },
       "NotificationCount" : {
         "type" : "object",
@@ -7084,18 +7151,6 @@
           }
         },
         "required" : [ "order", "version" ]
-      },
-      "Picture" : {
-        "type" : "object",
-        "properties" : {
-          "id" : {
-            "type" : "string"
-          },
-          "color" : {
-            "type" : [ "string", "null" ]
-          }
-        },
-        "required" : [ "id" ]
       },
       "Space" : {
         "type" : "object",

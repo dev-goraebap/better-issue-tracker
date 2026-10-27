@@ -30,6 +30,6 @@ export function NewDocumentPage() {
     void navigate({ href: documentHref(workspaceId, { id, title: draft.title }), replace: true });
     return undefined;
   };
-  return <DocumentForm workspaceId={workspaceId} title="새 문서" back={back} place={place} initial={{ title: '', body: '', labelIds: [] }} saveLabel="문서 만들기"
+  return <DocumentForm isCreate workspaceId={workspaceId} title="새 문서" back={back} place={place} initial={{ title: '', body: '', labelIds: [] }} saveLabel="문서 만들기"
     onSave={save} onCancel={() => void navigate({ href: folderHref(workspaceId, project ?? null, folder) })} />;
 }

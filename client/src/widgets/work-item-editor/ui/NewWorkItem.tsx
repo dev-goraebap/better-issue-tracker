@@ -138,7 +138,7 @@ ${next.body}`) : isUntouched ? '' : previous.body;
     <RepeatPicker value={draft.repeat} onChange={repeat => set({ repeat })} />
   </div>;
   const more = <Switch label="계속 만들기" size="sm" value={isMore} onChange={setMore} />;
-  const submit = <Button label={`${name.noun} 만들기`} variant="primary" size={panel ? 'sm' : undefined} isDisabled={!canCreate} isLoading={isBusy} onClick={() => { void create(); }}
+  const submit = <Button className="bit-create-action" label={`${name.noun} 만들기`} variant="primary" size={panel ? 'sm' : undefined} isDisabled={!canCreate} isLoading={isBusy} onClick={() => { void create(); }}
     tooltip={isMobile ? undefined : 'Ctrl + Enter'} />;
   if (panel) return <div className={styles.dialog} onKeyDown={keys}>
     <header className={styles.head}>

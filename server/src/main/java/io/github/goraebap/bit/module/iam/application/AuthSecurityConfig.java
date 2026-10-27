@@ -140,7 +140,8 @@ class AuthSecurityConfig {
                         .requestMatchers(
                                 HttpMethod.GET,
                                 "/api/v1/workspaces/*/notifications",
-                                "/api/v1/workspaces/*/notifications/unread-count")
+                                "/api/v1/workspaces/*/notifications/unread-count",
+                                "/api/v1/workspaces/*/notifications/*")
                         .authenticated()
                         .requestMatchers(
                                 HttpMethod.POST,

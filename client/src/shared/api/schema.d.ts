@@ -1099,6 +1099,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workspaces/{workspaceId}/notifications/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_6"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/workspaces/{workspaceId}/notifications/unread-count": {
         parameters: {
             query?: never;
@@ -2145,14 +2161,25 @@ export interface components {
             targetType: string;
             targetId: string;
             actorAgent: string | null;
+            actor: components["schemas"]["NotificationActor"];
             /** Format: date-time */
             readAt: string | null;
             /** Format: date-time */
             createdAt: string;
         };
+        NotificationActor: {
+            id: string | null;
+            name: string;
+            system: boolean;
+            avatar: components["schemas"]["Picture"];
+        };
         Notifications: {
             items: components["schemas"]["Notification"][];
             nextCursor: string | null;
+        };
+        Picture: {
+            id: string;
+            color?: string | null;
         };
         NotificationCount: {
             /** Format: int64 */
@@ -2261,10 +2288,6 @@ export interface components {
             /** Format: int64 */
             version: number;
             order: string[];
-        };
-        Picture: {
-            id: string;
-            color?: string | null;
         };
         Space: {
             id: string;
@@ -4964,6 +4987,29 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Notifications"];
+                };
+            };
+        };
+    };
+    get_6: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Notification"];
                 };
             };
         };

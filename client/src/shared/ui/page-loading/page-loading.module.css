@@ -1,9 +1,9 @@
-/* It appears at once, the moment the wait passes 100ms, and only fades on the way out, slowly (700ms). Only the cover
+/* It appears at once, the moment the wait passes 100ms, and only fades on the way out, slowly (400ms). Only the cover
    fades: the next screen is already whole under it, so the two cross without a moment where both are half there and the
    page thins out. While shown it takes the clicks, so the screen under it cannot be pressed while the next one is on its
    way. */
 .overlay { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--spacing-3);
-  opacity: 0; visibility: hidden; pointer-events: none; transition: opacity 700ms var(--ease-standard, ease), visibility 0s linear 700ms; }
+  opacity: 0; visibility: hidden; pointer-events: none; transition: opacity 400ms var(--ease-standard, ease), visibility 0s linear 400ms; }
 .visible { opacity: 1; visibility: visible; pointer-events: auto; transition: none; }
 /* The first visit: nothing to show yet, so the rocket stands alone on the page floor. */
 .window { position: fixed; inset: 0; z-index: 10; background: var(--color-background-body); }

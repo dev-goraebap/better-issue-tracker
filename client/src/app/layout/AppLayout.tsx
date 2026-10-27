@@ -122,7 +122,7 @@ export function AppLayout() {
   } else steps.push({ label: PRODUCT_NAME });
 
   const entry = (label: string, icon: string, href: string, isSelected: boolean) =>
-    <SideNavItem key={href} label={label} href={href} icon={<NavIcon name={icon} />} isSelected={isSelected} onClick={go(href)} />;
+    <SideNavItem key={href} label={label} href={href} icon={<NavIcon name={icon} size="navigation" />} isSelected={isSelected} onClick={go(href)} />;
   const openSettings = () => void navigate({ href: ACCOUNT_MENU[0]!.path });
   const resizable = { defaultWidth: 250, minWidth: 236, maxWidth: 350, autoSaveId: 'bit-sidebar', isCollapsed: folded, onCollapseChange: setFolded };
   const version = !folded && <Text type="supporting" color="secondary" className={styles.version}>v{APP_VERSION}</Text>;
@@ -139,7 +139,7 @@ export function AppLayout() {
     </div>;
   const sidebar = isAccount
     // The member's own settings: 돌아가기 (or Esc) at the head, then 계정 and its pages, 로그아웃 at the foot.
-    ? <SideNav aria-label="설정 메뉴" className={styles.sidebar} collapsible={{ hasButton: false }} resizable={resizable} header={backHead}
+    ? <SideNav aria-label="설정 메뉴" className={`${styles.sidebar} ${folded ? styles.folded : ''}`} collapsible={{ hasButton: false }} resizable={resizable} header={backHead}
       footer={<div className={styles.foot}>{!folded && <Button label="로그아웃" variant="ghost" size="sm" icon={<NavIcon name="logout" />} onClick={() => { void signOut(); }} />}{version}</div>}>
       <SideNavSection title="계정">
         {ACCOUNT_MENU.map(each => entry(each.label, each.icon, each.path, place.account === each.path))}
@@ -148,7 +148,7 @@ export function AppLayout() {
     : isSpaceSettings
     // The workspace's settings: 돌아가기 (or Esc), then the workspace's pages under its name, each project folding open
     // to its own pages (the one in view open).
-    ? <SideNav aria-label="워크스페이스 설정 메뉴" className={styles.sidebar} collapsible={{ hasButton: false }} resizable={resizable} header={backHead} footer={version}>
+    ? <SideNav aria-label="워크스페이스 설정 메뉴" className={`${styles.sidebar} ${folded ? styles.folded : ''}`} collapsible={{ hasButton: false }} resizable={resizable} header={backHead} footer={version}>
       <SideNavSection title={workspace?.name ?? '워크스페이스'}>
         {WORKSPACE_SETTINGS_MENU.map(each => entry(each.label, each.icon, workspaceSettingsPath(workspaceId, each.path), !place.settingsProjectId && place.settings === each.path))}
       </SideNavSection>
@@ -164,15 +164,17 @@ export function AppLayout() {
         })}
       </SideNavSection>}
     </SideNav>
-    : <SideNav aria-label="워크스페이스 메뉴" className={styles.sidebar} collapsible={{ hasButton: false }} resizable={resizable}
+    : <SideNav aria-label="워크스페이스 메뉴" className={`${styles.sidebar} ${folded ? styles.folded : ''}`} collapsible={{ hasButton: false }} resizable={resizable}
       header={<header className={styles.heading} data-folded={folded || undefined}>
         <WorkspaceSwitcher current={workspace} isFolded={folded} />{bell}
       </header>}
       footer={<div className={styles.foot}>{workspace && entry('워크스페이스 설정', 'settings', workspaceSettingsPath(workspaceId), false)}{account}{version}</div>}>
+      {folded && <div className={styles.foldedDivider} role="separator" />}
       <SideNavSection title="워크스페이스">
         {workspace && WORKSPACE_MENU.map(each => entry(each.label, each.icon, workspacePath(workspaceId, each.path), !place.projectId && place.workspaceSection === each.path))}
       </SideNavSection>
       {/* 프로젝트 with its + in a round box, as the toolbar's 필터; with none yet, a dashed card that makes the first. */}
+      {workspace && folded && <div className={styles.foldedDivider} role="separator" />}
       {workspace && <SideNavSection title="프로젝트" endContent={folded || !canMakeProjects ? undefined : <button type="button" className={styles.sectionAdd} aria-label="프로젝트 만들기"
         title="프로젝트 만들기" onClick={() => setCreatingProject(true)}><NavIcon name="plus" /></button>}>
         <SidebarProjects workspaceId={workspaceId} projects={projects} currentId={place.projectId} currentSection={place.projectSection ?? 'work-items'}

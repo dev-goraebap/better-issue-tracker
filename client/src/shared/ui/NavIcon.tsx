@@ -3,13 +3,14 @@ import {
   ChevronDown, ChevronLeft, ChevronRight, ChevronsUpDown, CircleCheck, CircleDot, Clock, Copy, Ellipsis, File, FileText, Filter, Flag, Folder, GitBranch, GripVertical, Hash, House,
   Inbox, KanbanSquare, LayoutGrid, LayoutList, Link, ListFilter, ListTodo, Lock, LogOut, Mail, Maximize2, MessageSquare, Milestone, PanelLeft, Paperclip,
   SquarePen, Plus, RefreshCw, Repeat, Rows3, Scale, Search, Settings, Shield, SlidersHorizontal, Sparkles, Table2, Tag, Trash2, User, Users, Workflow, X,
-  ArrowUp, Bold, Bug, LayoutTemplate, Download, ExternalLink, GitCommitHorizontal, GitMerge, GitPullRequest, GitPullRequestClosed, GitPullRequestDraft, Unplug, Webhook, Code, Heading1, Heading2, Heading3, Italic, List, ListChecks, ListOrdered, Minus, Redo2, SquareCode, Strikethrough, TextQuote, Type, Undo2, Unlink,
+  ArrowUp, Bold, Bot, Bug, LayoutTemplate, Download, ExternalLink, GitCommitHorizontal, GitMerge, GitPullRequest, GitPullRequestClosed, GitPullRequestDraft, Unplug, Webhook, Code, Heading1, Heading2, Heading3, Italic, List, ListChecks, ListOrdered, Minus, Redo2, SquareCode, Strikethrough, TextQuote, Type, Undo2, Unlink,
   type LucideIcon,
 } from 'lucide-react';
 
 // The icon set is lucide's (D-044); names follow SandboxHr's so its shared parts keep their calls.
 const icons: Record<string, LucideIcon> = {
   home: House,
+  system: Bot,
   calendar: CalendarDays,
   inbox: Inbox,
   tasks: ListTodo,
@@ -110,7 +111,7 @@ const icons: Record<string, LucideIcon> = {
 };
 
 /** A menu or action icon by name; an unknown name draws a plain file rather than nothing. */
-export function NavIcon({ name }: { name: string }) {
+export function NavIcon({ name, size = 'text' }: { name: string; size?: 'text' | 'navigation' | 'standalone' }) {
   const Icon = icons[name] ?? File;
-  return <Icon className="bit-nav-icon" size={20} strokeWidth={1.75} aria-hidden="true" focusable="false" />;
+  return <Icon className="bit-nav-icon" data-icon-size={size} size={16} strokeWidth={1.75} aria-hidden="true" focusable="false" />;
 }

@@ -1,3 +1,4 @@
+import { StateRegion } from './state-region/StateRegion';
 import { useState } from 'react';
 import { Button } from '@astryxdesign/core';
 import { isNotFound } from '@/shared/api';
@@ -24,5 +25,5 @@ export function QueryMessage({ pending, error, retry }: { pending?: boolean; err
       actions={<Button label="다시 시도" variant="secondary" onClick={retry} />} />
   </div>;
   if (loading) return <InlineLoader label="화면 정보를 불러오는 중" />;
-  return pending ? <div className={styles.waiting} aria-busy="true" aria-label="화면 정보를 불러오는 중" /> : null;
+  return pending ? <StateRegion placement="center" busy label="화면 정보를 불러오는 중" /> : null;
 }

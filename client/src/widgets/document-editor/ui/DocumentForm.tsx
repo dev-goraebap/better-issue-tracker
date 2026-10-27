@@ -13,8 +13,8 @@ export type DocumentDraft = { title: string; body: string; labelIds: string[] };
  * the body in the Markdown editor (D-076, / for blocks), then where it goes and its labels as pills. 저장 (or Ctrl +
  * Enter) answers the draft to onSave, whose refusal (a change someone saved first, 409) is said under the form.
  */
-export function DocumentForm({ workspaceId, title, back, place, initial, saveLabel, onSave, onCancel }: {
-  workspaceId: string; title: string; back: ReactNode; place: string; initial: DocumentDraft; saveLabel: string;
+export function DocumentForm({ workspaceId, title, back, place, initial, saveLabel, isCreate = false, onSave, onCancel }: {
+  workspaceId: string; title: string; back: ReactNode; place: string; initial: DocumentDraft; saveLabel: string; isCreate?: boolean;
   onSave: (draft: DocumentDraft) => Promise<string | undefined>; onCancel: () => void;
 }) {
   const formId = useId();
@@ -47,7 +47,7 @@ export function DocumentForm({ workspaceId, title, back, place, initial, saveLab
       <FormMessage message={error} />
     </form>
     <PageFoot start={<Button label="취소" variant="ghost" onClick={onCancel} isDisabled={isBusy} />}>
-      <Button type="submit" form={formId} label={saveLabel} variant="primary" isLoading={isBusy} />
+      <Button className={isCreate ? "bit-create-action" : undefined} type="submit" form={formId} label={saveLabel} variant="primary" isLoading={isBusy} />
     </PageFoot>
   </PageFrame>;
 }

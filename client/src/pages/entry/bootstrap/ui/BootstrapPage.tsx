@@ -22,7 +22,7 @@ export function BootstrapPage() {
       <EmailField value={email} onChange={setEmail} disabled={busy} />
       <TextInput label="비밀번호" type="password" placeholder="15자 이상의 비밀번호" description="15~64자, UTF-8 72바이트 이하입니다. 공백과 한글을 사용할 수 있습니다." value={password} onChange={setPassword} isRequired isDisabled={busy} />
       <TextInput label="비밀번호 확인" type="password" placeholder="같은 비밀번호를 다시 입력하세요" value={confirm} onChange={setConfirm} isRequired isDisabled={busy} />
-      <FormMessage message={error} /><section data-action-row><Button type="submit" label="관리자 계정 만들기" variant="primary" isLoading={busy} /></section>
+      <FormMessage message={error} /><section data-action-row><Button className="bit-create-action" type="submit" label="관리자 계정 만들기" variant="primary" isLoading={busy} /></section>
     </VStack></form><Text type="supporting">이메일 소유 여부는 확인하지 않습니다. 이메일 주소를 정확히 입력해 주세요.</Text>
   </AuthFrame>;
 }

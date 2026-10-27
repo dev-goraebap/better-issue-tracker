@@ -1,5 +1,6 @@
 package io.github.goraebap.bit.module.notification.application;
 
+import io.github.goraebap.bit.module.file.Picture;
 import io.github.goraebap.bit.module.notification.domain.Notification;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.Instant;
@@ -19,6 +20,7 @@ public final class NotificationViews {
                 "targetType",
                 "targetId",
                 "actorAgent",
+                "actor",
                 "readAt",
                 "createdAt"
             })
@@ -34,9 +36,10 @@ public final class NotificationViews {
             String targetType,
             String targetId,
             @Schema(nullable = true) String actorAgent,
+            Actor actor,
             @Schema(nullable = true) Instant readAt,
             Instant createdAt) {
-        static Notice of(Notification n) {
+        static Notice of(Notification n, Actor actor) {
             return new Notice(
                     n.id(),
                     n.type(),
@@ -46,10 +49,20 @@ public final class NotificationViews {
                     n.targetType(),
                     n.targetId(),
                     n.actorAgent(),
+                    actor,
                     n.readAt(),
                     n.createdAt());
         }
     }
+
+    @Schema(
+            name = "NotificationActor",
+            requiredProperties = {"id", "name", "system", "avatar"})
+    public record Actor(
+            @Schema(nullable = true) String id,
+            String name,
+            boolean system,
+            @Schema(nullable = true) Picture avatar) {}
 
     @Schema(
             name = "Notifications",
