@@ -72,6 +72,7 @@ public class WorkItemQueryService {
                 w.archivedAt(),
                 w.recurrenceId(),
                 w.occurrenceOn(),
+                w.reminderMinutes(),
                 w.version(),
                 w.audit(),
                 people);
@@ -302,6 +303,7 @@ public class WorkItemQueryService {
                 d.allDay(),
                 row.recurrenceId() == null ? null : rules.get(row.recurrenceId()),
                 row.recurrenceId() == null ? null : row.occurrenceOn(),
+                row.reminderMinutes(),
                 row.closedAt(),
                 row.archivedAt(),
                 a.deletedAt(),

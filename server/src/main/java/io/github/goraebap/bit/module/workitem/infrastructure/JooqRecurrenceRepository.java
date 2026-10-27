@@ -85,6 +85,7 @@ class JooqRecurrenceRepository implements RecurrenceRepository {
         r.setStartTime(t.startTime() == null ? null : t.startTime().toString());
         r.setDurationMinutes(t.durationMinutes());
         r.setAllDay(t.allDay());
+        r.setReminderMinutes(t.reminderMinutes());
         r.setVersion(recurrence.version());
         AuditRecords.write(r, recurrence.audit());
         dslContext
@@ -120,7 +121,8 @@ class JooqRecurrenceRepository implements RecurrenceRepository {
                 r.getSpanDays(),
                 r.getStartTime() == null ? null : LocalTime.parse(r.getStartTime()),
                 r.getDurationMinutes(),
-                Boolean.TRUE.equals(r.getAllDay()));
+                Boolean.TRUE.equals(r.getAllDay()),
+                r.getReminderMinutes());
         return Recurrence.fromPersistence(
                 r.getRecurrenceId(),
                 r.getWorkspaceId(),

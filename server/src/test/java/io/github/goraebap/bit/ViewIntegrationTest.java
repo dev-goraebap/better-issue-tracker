@@ -85,6 +85,7 @@ class ViewIntegrationTest {
     @BeforeEach
     void prepare() {
         for (String table : List.of(
+                "notification",
                 "work_item_view_order",
                 "work_item_view_tweak",
                 "work_item_view",

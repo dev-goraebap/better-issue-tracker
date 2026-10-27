@@ -11,6 +11,8 @@ import lombok.Getter;
 @Getter
 public final class WorkItem {
     public static final int MAX_PEOPLE = 20;
+    /** The furthest ahead an event's reminder may come: a week. */
+    public static final int MAX_REMINDER_MINUTES = 10080;
 
     /** A task has a column, people who do it and dates; an event has no column, people who attend and times (D-092). */
     public enum Kind {
@@ -143,6 +145,7 @@ public final class WorkItem {
     private Instant archivedAt;
     private String recurrenceId;
     private LocalDate occurrenceOn;
+    private Integer reminderMinutes;
     private long version;
     private Audit audit;
 
@@ -159,6 +162,7 @@ public final class WorkItem {
             Instant archivedAt,
             String recurrenceId,
             LocalDate occurrenceOn,
+            Integer reminderMinutes,
             long version,
             Audit audit) {
         this.id = id;
@@ -173,6 +177,7 @@ public final class WorkItem {
         this.archivedAt = archivedAt;
         this.recurrenceId = recurrenceId;
         this.occurrenceOn = occurrenceOn;
+        this.reminderMinutes = reminderMinutes;
         this.version = version;
         this.audit = audit;
     }
@@ -207,6 +212,7 @@ public final class WorkItem {
                 null,
                 null,
                 null,
+                null,
                 0,
                 Audit.create(actor, agent, now));
     }
@@ -224,6 +230,7 @@ public final class WorkItem {
             Instant archivedAt,
             String recurrenceId,
             LocalDate occurrenceOn,
+            Integer reminderMinutes,
             long version,
             Audit audit) {
         return new WorkItem(
@@ -239,8 +246,23 @@ public final class WorkItem {
                 archivedAt,
                 recurrenceId,
                 occurrenceOn,
+                reminderMinutes,
                 version,
                 audit);
+    }
+
+    /**
+     * Sets a new event's reminder, minutes before it starts (D-092, BIT-39); a task has none. Made with the item, so it
+     * is not an edit of it.
+     */
+    public void remind(Integer minutes) {
+        this.reminderMinutes = reminder(kind, minutes);
+    }
+
+    private static Integer reminder(Kind kind, Integer minutes) {
+        if (minutes != null && (minutes < 0 || minutes > MAX_REMINDER_MINUTES))
+            throw new IllegalArgumentException("Invalid reminder");
+        return kind == Kind.event ? minutes : null;
     }
 
     /**
@@ -253,23 +275,35 @@ public final class WorkItem {
     }
 
     public void revise(Details next, String actor, String agent, Instant now) {
-        revise(kind, next, labelIds, actor, agent, now);
+        revise(kind, next, labelIds, reminderMinutes, actor, agent, now);
     }
 
     /** One revision for the fields and the label set together, so a combined edit is one version. */
     public void revise(Details next, Set<String> nextLabelIds, String actor, String agent, Instant now) {
-        revise(kind, next, nextLabelIds, actor, agent, now);
+        revise(kind, next, nextLabelIds, reminderMinutes, actor, agent, now);
     }
 
     /**
      * One revision that may also change the kind. An event leaves the board, so its column and close are cleared and
      * the caller reorders the column it left.
      */
-    public void revise(Kind nextKind, Details next, Set<String> nextLabelIds, String actor, String agent, Instant now) {
+    public void revise(
+            Kind nextKind,
+            Details next,
+            Set<String> nextLabelIds,
+            Integer nextReminder,
+            String actor,
+            String agent,
+            Instant now) {
         Objects.requireNonNull(nextKind, "kind");
         Details valid = Details.of(nextKind, Objects.requireNonNull(next, "details"));
         Set<String> labels = Set.copyOf(Objects.requireNonNull(nextLabelIds, "labelIds"));
-        if (nextKind == kind && valid.equals(details) && labels.equals(labelIds)) return;
+        Integer reminder = reminder(nextKind, nextReminder);
+        if (nextKind == kind
+                && valid.equals(details)
+                && labels.equals(labelIds)
+                && Objects.equals(reminder, reminderMinutes)) return;
+        this.reminderMinutes = reminder;
         if (nextKind == Kind.event) {
             columnId = null;
             closedAt = null;

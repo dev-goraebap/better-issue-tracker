@@ -3,6 +3,9 @@ package io.github.goraebap.bit;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import io.github.goraebap.bit.module.notification.application.NotificationService;
+import io.github.goraebap.bit.module.notification.application.NotificationViews;
+import io.github.goraebap.bit.module.notification.domain.Notification;
 import io.github.goraebap.bit.module.project.application.ProjectService;
 import io.github.goraebap.bit.module.workitem.application.RecurrenceService;
 import io.github.goraebap.bit.module.workitem.application.WorkItemQueryService;
@@ -67,6 +70,9 @@ class WorkItemIntegrationTest {
     private RecurrenceService recurrenceService;
 
     @Autowired
+    private NotificationService notificationService;
+
+    @Autowired
     private WorkItemRepository workItemRepository;
 
     @Autowired
@@ -99,6 +105,7 @@ class WorkItemIntegrationTest {
         for (String trigger : List.of("reject_task", "reject_move", "reject_close"))
             jdbcTemplate.execute("DROP TRIGGER IF EXISTS " + trigger);
         for (String table : List.of(
+                "notification",
                 "comment",
                 "activity",
                 "work_item_person",
@@ -1119,6 +1126,113 @@ class WorkItemIntegrationTest {
         String single = create(owner, "Single", todo, null);
         assertThatThrownBy(() -> recurrenceService.stop(owner, workspace, project, single, 0))
                 .hasMessageContaining("반복");
+    }
+
+    @Test
+    void peopleHearWhenPutOnAWorkItemCommentedOnOrMovedButNeverOfTheirOwnChange() {
+        CurrentUser member = identity("member", false);
+        membership(member, "member");
+        String task = workItemService.create(owner, workspace, project, details("Spec", member.userId()), todo);
+        assertThat(notices(member))
+                .extracting(NotificationViews.Notice::type)
+                .containsExactly(Notification.Type.assigned);
+        assertThat(notices(member).getFirst().body()).contains("owner").contains("담당자로 지정");
+        assertThat(notices(member).getFirst().title()).isEqualTo("BIT-1 Spec");
+        assertThat(notices(owner)).isEmpty();
+
+        // A comment reaches the people on it and whoever made it, never the one who wrote it.
+        commentService.create(
+                member, workspace, io.github.goraebap.bit.module.link.TargetType.work_item, task, "Done?");
+        assertThat(notices(owner))
+                .extracting(NotificationViews.Notice::type)
+                .containsExactly(Notification.Type.commented);
+        assertThat(notices(member)).hasSize(1);
+
+        var startsAt = Instant.now().plusSeconds(86_400).truncatedTo(java.time.temporal.ChronoUnit.MINUTES);
+        var meeting = new WorkItem.Details(
+                "Sync", null, null, null, java.util.Set.of(member.userId()), null, null, startsAt, null, false);
+        String event = workItemService.create(
+                owner, workspace, project, WorkItem.Kind.event, meeting, null, java.util.Set.of(), 10);
+        assertThat(workItemQueryService.get(owner, workspace, project, event).reminderMinutes())
+                .isEqualTo(10);
+        var moved = new WorkItemRequests.Update();
+        moved.setExpectedVersion(0L);
+        moved.setStartsAt(startsAt.plusSeconds(3600));
+        workItemService.revise(owner, workspace, project, event, moved);
+        assertThat(notices(member))
+                .extracting(NotificationViews.Notice::type)
+                .containsExactly(Notification.Type.rescheduled, Notification.Type.invited, Notification.Type.assigned);
+        // A task has no reminder, whatever is asked.
+        var toTask = new WorkItemRequests.Update();
+        toTask.setExpectedVersion(1L);
+        toTask.setKind(WorkItem.Kind.task);
+        workItemService.revise(owner, workspace, project, event, toTask);
+        assertThat(workItemQueryService.get(owner, workspace, project, event).reminderMinutes())
+                .isNull();
+
+        assertThat(notificationService.unread(member, workspace)).isEqualTo(3);
+        notificationService.read(member, workspace, notices(member).getLast().id());
+        assertThat(notificationService.unread(member, workspace)).isEqualTo(2);
+        assertThatThrownBy(() -> notificationService.read(
+                        owner, workspace, notices(member).getFirst().id()))
+                .hasMessageContaining("알림");
+        notificationService.readAll(member, workspace);
+        assertThat(notificationService.unread(member, workspace)).isZero();
+        // Without mail set up nothing is sent, and the inbox keeps them all.
+        notificationService.mailPending();
+        assertThat(notices(member)).hasSize(3);
+    }
+
+    @Test
+    void remindersAndDueDaysAreToldOnceEachHoweverOftenTheJobsRun() {
+        CurrentUser member = identity("member", false);
+        membership(member, "member");
+        var soon = Instant.now().plusSeconds(300);
+        var later = Instant.now().plusSeconds(7200);
+        for (var at : List.of(soon, later))
+            workItemService.create(
+                    owner,
+                    workspace,
+                    project,
+                    WorkItem.Kind.event,
+                    new WorkItem.Details(
+                            "Standup " + at,
+                            null,
+                            null,
+                            null,
+                            java.util.Set.of(member.userId()),
+                            null,
+                            null,
+                            at,
+                            null,
+                            false),
+                    null,
+                    java.util.Set.of(),
+                    10);
+        var today = java.time.LocalDate.now(java.time.ZoneId.of("Asia/Seoul"));
+        workItemService.create(
+                owner,
+                workspace,
+                project,
+                new WorkItem.Details("Report", null, null, null, member.userId(), null, today),
+                todo);
+        notificationService.readAll(member, workspace);
+        notificationService.remind();
+        notificationService.remind();
+        notificationService.dueToday();
+        notificationService.dueToday();
+        var told = notificationService.list(member, workspace, true, null, 30).items();
+        assertThat(told)
+                .extracting(NotificationViews.Notice::type)
+                .containsExactlyInAnyOrder(Notification.Type.event_reminder, Notification.Type.due_today);
+        assertThat(told)
+                .filteredOn(n -> n.type() == Notification.Type.event_reminder)
+                .singleElement()
+                .satisfies(n -> assertThat(n.body()).contains("에 시작합니다"));
+    }
+
+    private List<NotificationViews.Notice> notices(CurrentUser actor) {
+        return notificationService.list(actor, workspace, false, null, 30).items();
     }
 
     /** The project's live occurrences, in day order. */

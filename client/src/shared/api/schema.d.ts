@@ -406,6 +406,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workspaces/{workspaceId}/notifications/{id}/read": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["read"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{workspaceId}/notifications/read-all": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["readAll"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/workspaces/{workspaceId}/labels": {
         parameters: {
             query?: never;
@@ -1034,6 +1066,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workspaces/{workspaceId}/notifications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_7"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{workspaceId}/notifications/unread-count": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["unreadCount"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/workspaces/{workspaceId}/my-tasks": {
         parameters: {
             query?: never;
@@ -1138,7 +1202,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_7"];
+        get: operations["list_8"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1419,6 +1483,11 @@ export interface components {
             allDay?: boolean | null;
             /** @description A task's column; an event has none */
             columnId?: string | null;
+            /**
+             * Format: int32
+             * @description An event's reminder, minutes before it starts
+             */
+            reminderMinutes?: number | null;
             /** @description Workspace labels to attach; omitted or null attaches none */
             labelIds?: string[] | null;
         };
@@ -1690,6 +1759,8 @@ export interface components {
             /** Format: date-time */
             endsAt?: string | null;
             allDay?: boolean;
+            /** Format: int32 */
+            reminderMinutes?: number | null;
             /** @description Omitted: labels are kept. Present: the whole set is replaced; [] or null clears it */
             labelIds?: string[] | null;
             /** @description Omitted: people are kept. Present: the whole set is replaced */
@@ -1816,6 +1887,11 @@ export interface components {
              * @description The day it falls on in its rule's series
              */
             occurrenceOn: string | null;
+            /**
+             * Format: int32
+             * @description An event's reminder, minutes before it starts; null for none
+             */
+            reminderMinutes: number | null;
             /** Format: date-time */
             closedAt: string | null;
             /** Format: date-time */
@@ -2011,6 +2087,31 @@ export interface components {
         };
         ProjectMemberships: {
             items: components["schemas"]["ProjectMembership"][];
+        };
+        Notification: {
+            id: string;
+            /** @enum {string} */
+            type: "assigned" | "invited" | "commented" | "rescheduled" | "due_today" | "event_reminder";
+            /** @description The work item it is about: its key and title */
+            title: string;
+            /** @description What happened, in words */
+            body: string;
+            projectId: string | null;
+            targetType: string;
+            targetId: string;
+            actorAgent: string | null;
+            /** Format: date-time */
+            readAt: string | null;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        Notifications: {
+            items: components["schemas"]["Notification"][];
+            nextCursor: string | null;
+        };
+        NotificationCount: {
+            /** Format: int64 */
+            unread: number;
         };
         Label: {
             id: string;
@@ -3064,6 +3165,47 @@ export interface operations {
                 "application/json": components["schemas"]["ProjectVersion"];
             };
         };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    read: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    readAll: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             /** @description OK */
             200: {
@@ -4707,6 +4849,54 @@ export interface operations {
             };
         };
     };
+    list_7: {
+        parameters: {
+            query?: {
+                unread?: boolean;
+                cursor?: string;
+                size?: number;
+            };
+            header?: never;
+            path: {
+                workspaceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Notifications"];
+                };
+            };
+        };
+    };
+    unreadCount: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotificationCount"];
+                };
+            };
+        };
+    };
     mine: {
         parameters: {
             query?: {
@@ -4898,7 +5088,7 @@ export interface operations {
             };
         };
     };
-    list_7: {
+    list_8: {
         parameters: {
             query?: {
                 cursor?: string;

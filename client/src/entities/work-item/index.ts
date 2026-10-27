@@ -4,7 +4,7 @@ export {
 export type { WorkItem, ItemLabel, ColumnCategory, TaskFilters } from './api/work-item';
 export { PRIORITIES } from './model/labels';
 export {
-  CATEGORIES, CATEGORY_LABELS, categoryOf, eventFields, eventTimeOf, eventWhen, localDay, localTime, repeatBody, repeatOf, workItemHref, PRIORITY_RANK, spanOf, SYSTEM_LABEL, type Priority, type StatusCategory,
+  CATEGORIES, CATEGORY_LABELS, categoryOf, eventFields, eventTimeOf, eventWhen, localDay, localTime, reminderText, repeatBody, repeatOf, workItemHref, PRIORITY_RANK, spanOf, SYSTEM_LABEL, type Priority, type StatusCategory,
 } from './model/work-item';
 export { WORK_ITEM_TEMPLATES, templateLabel, type WorkItemTemplate } from './model/templates';
 export { parseWorkItemSearch, parseNewWorkItemSearch, type WorkItemSearch, type NewWorkItemSearch } from './model/search';
@@ -24,4 +24,4 @@ export { PeopleAvatars } from './ui/PeopleAvatars';
 export { WorkItemTable } from './ui/WorkItemTable';
 export { WorkItemRows } from './ui/WorkItemRows';
 export { WorkItemLink } from './ui/WorkItemLink';
-export { labelOptions, NO_STATUS, peopleOptions, priorityOptions, statusOptions } from './ui/property-options';
+export { labelOptions, NO_REMINDER, NO_STATUS, peopleOptions, priorityOptions, reminderOptions, statusOptions } from './ui/property-options';

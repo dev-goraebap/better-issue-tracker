@@ -11,14 +11,14 @@ import { labelsQuery } from '@/entities/label';
 import { columnsQuery } from '@/entities/project';
 import { useMembers } from '@/entities/workspace';
 import {
-  eventFields, eventTimeOf, itemQuery, labelOptions, moveItem, NO_STATUS, peopleOptions, priorityOptions, refreshItems, repeatBody, repeatItem, repeatOf,
+  eventFields, eventTimeOf, itemQuery, labelOptions, moveItem, NO_REMINDER, NO_STATUS, reminderOptions, peopleOptions, priorityOptions, refreshItems, repeatBody, repeatItem, repeatOf,
   statusOptions, stopRepeating, updateItem, type WorkItem, type Priority,
 } from '@/entities/work-item';
 import styles from './edit-form.module.css';
 
 type Draft = {
   title: string; body: string; kind: Kind; status: string; priority?: Priority; people: string[]; startDate?: string; dueDate?: string; labelIds: string[];
-  time: EventTime; repeat?: Repeat;
+  time: EventTime; repeat?: Repeat; reminder?: number;
 };
 type Kind = WorkItem['kind'];
 type Scope = 'single' | 'following';
@@ -54,6 +54,7 @@ export function EditForm({ item, back }: { item: WorkItem; back: ReactNode }) {
     title: item.title, body: item.description ?? '', kind: item.kind, status: item.columnId ?? NO_STATUS, priority: item.priority ?? undefined,
     people: item.people.map(person => person.id), startDate: item.startDate ?? undefined, dueDate: item.dueDate ?? undefined,
     labelIds: item.labels.map(label => label.id), time: eventTimeOf(item), repeat: repeatOf(item),
+    reminder: item.reminderMinutes ?? undefined,
   }));
   const [draft, setDraft] = useState(opened);
   const isEvent = draft.kind === 'event';
@@ -76,6 +77,7 @@ export function EditForm({ item, back }: { item: WorkItem; back: ReactNode }) {
       ...(!sameSet(draft.people, opened.people) ? { peopleIds: draft.people } : {}),
       // An event sends its time whole, as the kind takes it (D-092); a task its days.
       ...(isEvent && (draft.kind !== opened.kind || !sameTime(draft.time, opened.time)) ? eventFields(draft.time) : {}),
+      ...(isEvent && draft.reminder !== opened.reminder ? { reminderMinutes: draft.reminder ?? null } : {}),
       ...(!isEvent && draft.startDate !== opened.startDate ? { startDate: draft.startDate ?? null } : {}),
       ...(!isEvent && draft.dueDate !== opened.dueDate ? { dueDate: draft.dueDate ?? null } : {}),
       ...(!sameSet(draft.labelIds, opened.labelIds) ? { labelIds: draft.labelIds } : {}),
@@ -120,6 +122,8 @@ export function EditForm({ item, back }: { item: WorkItem; back: ReactNode }) {
         <PropertyPicker label={isEvent ? '참석자' : '담당자'} icon="person" options={peopleOptions(members)} value={draft.people} isMultiple
           onChange={value => set({ people: (value as string[] | undefined) ?? [] })} />
         {isEvent && <EventTimePicker value={draft.time} onChange={time => set({ time })} />}
+        {isEvent && !draft.time.allDay && <PropertyPicker label="알림" icon="bell" options={reminderOptions} value={draft.reminder === undefined ? undefined : String(draft.reminder)}
+          onChange={value => set({ reminder: value === undefined || value === NO_REMINDER ? undefined : Number(value) })} />}
         {!isEvent && <DuePicker label="시작일" asDate value={draft.startDate} onChange={startDate => set({ startDate })} />}
         {!isEvent && <DuePicker value={draft.dueDate} onChange={dueDate => set({ dueDate })} />}
         <PropertyPicker label="라벨" icon="label" options={labelOptions(labels)} value={draft.labelIds} isMultiple onChange={value => set({ labelIds: (value as string[] | undefined) ?? [] })} />

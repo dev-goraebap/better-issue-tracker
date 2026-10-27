@@ -75,6 +75,7 @@ class WorkspaceIntegrationTest {
     @BeforeEach
     void clean() {
         for (String table : List.of(
+                "notification",
                 "workspace_invitation",
                 "workspace_member",
                 "work_item_view_tweak",

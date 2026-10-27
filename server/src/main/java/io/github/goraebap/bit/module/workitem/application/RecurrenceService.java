@@ -111,7 +111,8 @@ public class RecurrenceService {
                 shape ? now.spanDays() : was.spanDays(),
                 shape ? now.startTime() : was.startTime(),
                 shape ? now.durationMinutes() : was.durationMinutes(),
-                shape ? now.allDay() : was.allDay());
+                shape ? now.allDay() : was.allDay(),
+                request.hasReminderMinutes() ? now.reminderMinutes() : was.reminderMinutes());
         rule.revise(next, actor.userId(), actor.agent(), clock.instant());
         recurrenceRepository.save(rule);
         for (var later : workItemRepository.findOccurrencesAfter(rule.id(), w.occurrenceOn())) {
@@ -122,6 +123,7 @@ public class RecurrenceService {
             if (request.hasTriggerType()) u.setTriggerType(request.getTriggerType());
             if (request.hasPeopleIds()) u.setPeopleIds(request.getPeopleIds());
             if (request.hasLabelIds()) u.setLabelIds(request.getLabelIds());
+            if (request.hasReminderMinutes()) u.setReminderMinutes(request.getReminderMinutes());
             if (shape) {
                 var on = next.on(later.occurrenceOn(), rule.zone());
                 u.setKind(next.kind());

@@ -84,6 +84,7 @@ public final class WorkItemViews {
                 "allDay",
                 "recurrence",
                 "occurrenceOn",
+                "reminderMinutes",
                 "closedAt",
                 "archivedAt",
                 "deletedAt",
@@ -130,6 +131,9 @@ public final class WorkItemViews {
 
             @Schema(nullable = true, description = "The day it falls on in its rule's series")
             LocalDate occurrenceOn,
+
+            @Schema(nullable = true, description = "An event's reminder, minutes before it starts; null for none")
+            Integer reminderMinutes,
 
             @Schema(nullable = true) Instant closedAt,
             @Schema(nullable = true) Instant archivedAt,

@@ -10,7 +10,7 @@ import {
 import { columnsQuery } from '@/entities/project';
 import { canManage, canWrite as canWriteIn, workspaceQuery } from '@/entities/workspace';
 import {
-  archiveItem, deleteItem, eventWhen, itemQuery, LabelTokens, PersonCell, PriorityMark, refreshItems, repeatOf, StatusBadge, stopRepeating, type WorkItemSearch,
+  archiveItem, deleteItem, eventWhen, itemQuery, LabelTokens, PersonCell, PriorityMark, refreshItems, reminderText, repeatOf, StatusBadge, stopRepeating, type WorkItemSearch,
 } from '@/entities/work-item';
 import { branchName, codeLinksQuery, CodeLinkList, integrationsQuery } from '@/entities/repository';
 import { refreshTimeline } from '../api/timeline';
@@ -77,6 +77,8 @@ export function WorkItemDetail({ workspaceId, projectId, id, search }: { workspa
     [item.kind === 'event' ? '참석자' : '담당자', <span className={styles.person}><PersonCell people={item.people} empty={item.kind === 'event' ? '없음' : '미배정'} /></span>],
     ...(item.kind === 'task' && item.startDate ? [['시작일', <span className={styles.dated}><NavIcon name="calendar" />{dateText(item.startDate)}</span>] as [string, ReactNode]] : []),
     ...(item.kind === 'task' && item.dueDate ? [['기한', <span className={styles.dated}><NavIcon name="calendar" />{dateText(item.dueDate)}</span>] as [string, ReactNode]] : []),
+    ...(item.kind === 'event' && item.startsAt && item.reminderMinutes != null
+      ? [['알림', <span className={styles.dated}><NavIcon name="bell" />{reminderText(item.reminderMinutes)}</span>] as [string, ReactNode]] : []),
     ...(repeat ? [['반복', <span className={styles.dated}><NavIcon name="repeat" />{repeat}</span>] as [string, ReactNode]] : []),
   ];
   const leave = () => { if (panel) panel.onClose(); else void navigate(list); };

@@ -93,6 +93,58 @@ class JooqWorkItemRepository implements WorkItemRepository {
     }
 
     @Override
+    public Optional<Located> findLocated(String id) {
+        return located(WORK_ITEM.WORK_ITEM_ID.eq(id)).stream().findFirst();
+    }
+
+    @Override
+    public List<Located> findRemindable(java.time.Instant after, java.time.Instant through) {
+        return located(WORK_ITEM
+                .KIND
+                .eq(WorkItem.Kind.event.name())
+                .and(WORK_ITEM.REMINDER_MINUTES.isNotNull())
+                .and(WORK_ITEM.STARTS_AT.gt(after))
+                .and(WORK_ITEM.STARTS_AT.le(through))
+                .and(WORK_ITEM.ARCHIVED_AT.isNull()));
+    }
+
+    @Override
+    public List<Located> findDueOn(LocalDate day) {
+        return located(WORK_ITEM
+                .KIND
+                .eq(WorkItem.Kind.task.name())
+                .and(WORK_ITEM.DUE_DATE.eq(day))
+                .and(WORK_ITEM.CLOSED_AT.isNull())
+                .and(WORK_ITEM.ARCHIVED_AT.isNull())
+                .and(DSL.exists(DSL.selectOne()
+                        .from(WORK_ITEM_PERSON)
+                        .where(WORK_ITEM_PERSON.WORK_ITEM_ID.eq(WORK_ITEM.WORK_ITEM_ID)))));
+    }
+
+    /** Live work items of live projects matching a condition, each with its workspace and current key. */
+    private List<Located> located(Condition condition) {
+        var records = dslContext
+                .select(WORK_ITEM.fields())
+                .select(PROJECT_KEY.KEY, PROJECT.WORKSPACE_ID)
+                .from(WORK_ITEM)
+                .join(PROJECT)
+                .on(PROJECT.PROJECT_ID.eq(WORK_ITEM.PROJECT_ID))
+                .join(PROJECT_KEY)
+                .on(PROJECT_KEY.PROJECT_ID.eq(PROJECT.PROJECT_ID).and(PROJECT_KEY.IS_CURRENT.isTrue()))
+                .where(condition)
+                .and(WORK_ITEM.DELETED_AT.isNull())
+                .and(PROJECT.DELETED_AT.isNull())
+                .orderBy(WORK_ITEM.WORK_ITEM_ID)
+                .fetch();
+        var ids = records.stream().map(r -> r.get(WORK_ITEM.WORK_ITEM_ID)).collect(Collectors.toSet());
+        var labels = labels(ids);
+        var people = people(ids);
+        return records.stream()
+                .map(r -> new Located(r.get(PROJECT.WORKSPACE_ID), row(r, null, labels, people)))
+                .toList();
+    }
+
+    @Override
     public List<WorkItem> findOccurrencesAfter(String recurrenceId, LocalDate day) {
         return items(dslContext
                 .selectFrom(WORK_ITEM)
@@ -147,29 +199,32 @@ class JooqWorkItemRepository implements WorkItemRepository {
         var labels = labels(ids);
         var people = people(ids);
         return records.stream()
-                .map(r -> new Row(
-                        r.get(WORK_ITEM.WORK_ITEM_ID),
-                        r.get(WORK_ITEM.PROJECT_ID),
-                        r.get(PROJECT_KEY.KEY),
-                        r.get(WORK_ITEM.NUMBER),
-                        WorkItem.Kind.valueOf(r.get(WORK_ITEM.KIND)),
-                        details(
-                                r,
-                                people.getOrDefault(r.get(WORK_ITEM.WORK_ITEM_ID), List.of()).stream()
-                                        .map(Person::id)
-                                        .collect(Collectors.toSet())),
-                        labels.getOrDefault(r.get(WORK_ITEM.WORK_ITEM_ID), Set.of()),
-                        r.get(WORK_ITEM.BOARD_COLUMN_ID),
-                        r.get(BOARD_COLUMN.CATEGORY),
-                        r.get(WORK_ITEM.POSITION).doubleValue(),
-                        r.get(WORK_ITEM.CLOSED_AT),
-                        r.get(WORK_ITEM.ARCHIVED_AT),
-                        r.get(WORK_ITEM.RECURRENCE_ID),
-                        r.get(WORK_ITEM.OCCURRENCE_ON),
-                        r.get(WORK_ITEM.VERSION),
-                        AuditRecords.read(r),
-                        people.getOrDefault(r.get(WORK_ITEM.WORK_ITEM_ID), List.of())))
+                .map(r -> row(r, r.get(BOARD_COLUMN.CATEGORY), labels, people))
                 .toList();
+    }
+
+    private Row row(Record r, String category, Map<String, Set<String>> labels, Map<String, List<Person>> people) {
+        String id = r.get(WORK_ITEM.WORK_ITEM_ID);
+        var mine = people.getOrDefault(id, List.of());
+        return new Row(
+                id,
+                r.get(WORK_ITEM.PROJECT_ID),
+                r.get(PROJECT_KEY.KEY),
+                r.get(WORK_ITEM.NUMBER),
+                WorkItem.Kind.valueOf(r.get(WORK_ITEM.KIND)),
+                details(r, mine.stream().map(Person::id).collect(Collectors.toSet())),
+                labels.getOrDefault(id, Set.of()),
+                r.get(WORK_ITEM.BOARD_COLUMN_ID),
+                category,
+                r.get(WORK_ITEM.POSITION).doubleValue(),
+                r.get(WORK_ITEM.CLOSED_AT),
+                r.get(WORK_ITEM.ARCHIVED_AT),
+                r.get(WORK_ITEM.RECURRENCE_ID),
+                r.get(WORK_ITEM.OCCURRENCE_ON),
+                r.get(WORK_ITEM.REMINDER_MINUTES),
+                r.get(WORK_ITEM.VERSION),
+                AuditRecords.read(r),
+                mine);
     }
 
     @Override
@@ -195,6 +250,7 @@ class JooqWorkItemRepository implements WorkItemRepository {
         r.setArchivedAt(w.archivedAt());
         r.setRecurrenceId(w.recurrenceId());
         r.setOccurrenceOn(w.occurrenceOn());
+        r.setReminderMinutes(w.reminderMinutes());
         r.setVersion(w.version());
         AuditRecords.write(r, w.audit());
         dslContext
@@ -409,6 +465,7 @@ class JooqWorkItemRepository implements WorkItemRepository {
                 r.get(WORK_ITEM.ARCHIVED_AT),
                 r.get(WORK_ITEM.RECURRENCE_ID),
                 r.get(WORK_ITEM.OCCURRENCE_ON),
+                r.get(WORK_ITEM.REMINDER_MINUTES),
                 r.get(WORK_ITEM.VERSION),
                 AuditRecords.read(r));
     }

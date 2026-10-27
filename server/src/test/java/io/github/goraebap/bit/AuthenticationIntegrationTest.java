@@ -70,7 +70,8 @@ class AuthenticationIntegrationTest {
 
     @BeforeEach
     void clean() {
-        for (String table : List.of("iam_api_key", "iam_session", "iam_password", "iam_email_otp", "iam_user"))
+        for (String table :
+                List.of("notification", "iam_api_key", "iam_session", "iam_password", "iam_email_otp", "iam_user"))
             jdbcTemplate.update("DELETE FROM " + table);
         mutableClock.advance(Duration.ofDays(40));
     }

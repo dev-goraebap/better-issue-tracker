@@ -93,6 +93,7 @@ class LabelIntegrationTest {
     @BeforeEach
     void prepare() {
         for (String table : List.of(
+                "notification",
                 "activity",
                 "work_item_person",
                 "work_item_label",

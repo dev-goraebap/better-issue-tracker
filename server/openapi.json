@@ -1317,6 +1317,51 @@
         }
       }
     },
+    "/api/v1/workspaces/{workspaceId}/notifications/{id}/read" : {
+      "post" : {
+        "tags" : [ "notification-controller" ],
+        "operationId" : "read",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/notifications/read-all" : {
+      "post" : {
+        "tags" : [ "notification-controller" ],
+        "operationId" : "readAll",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        }
+      }
+    },
     "/api/v1/workspaces/{workspaceId}/labels" : {
       "get" : {
         "tags" : [ "label-controller" ],
@@ -3896,6 +3941,84 @@
         }
       }
     },
+    "/api/v1/workspaces/{workspaceId}/notifications" : {
+      "get" : {
+        "tags" : [ "notification-controller" ],
+        "operationId" : "list_7",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "unread",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "boolean",
+            "default" : false
+          }
+        }, {
+          "name" : "cursor",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "size",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 30,
+            "maximum" : 100,
+            "minimum" : 1
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Notifications"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/notifications/unread-count" : {
+      "get" : {
+        "tags" : [ "notification-controller" ],
+        "operationId" : "unreadCount",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/NotificationCount"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/workspaces/{workspaceId}/my-tasks" : {
       "get" : {
         "tags" : [ "work-item-controller" ],
@@ -4316,7 +4439,7 @@
     "/api/v1/me/workspaces" : {
       "get" : {
         "tags" : [ "workspace-controller" ],
-        "operationId" : "list_7",
+        "operationId" : "list_8",
         "parameters" : [ {
           "name" : "cursor",
           "in" : "query",
@@ -4908,6 +5031,13 @@
           "columnId" : {
             "type" : [ "string", "null" ],
             "description" : "A task's column; an event has none"
+          },
+          "reminderMinutes" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int32",
+            "description" : "An event's reminder, minutes before it starts",
+            "maximum" : 10080,
+            "minimum" : 0
           },
           "labelIds" : {
             "type" : [ "array", "null" ],
@@ -5643,6 +5773,12 @@
           "allDay" : {
             "type" : "boolean"
           },
+          "reminderMinutes" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int32",
+            "maximum" : 10080,
+            "minimum" : 0
+          },
           "labelIds" : {
             "type" : [ "array", "null" ],
             "description" : "Omitted: labels are kept. Present: the whole set is replaced; [] or null clears it",
@@ -5973,6 +6109,11 @@
             "format" : "date",
             "description" : "The day it falls on in its rule's series"
           },
+          "reminderMinutes" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int32",
+            "description" : "An event's reminder, minutes before it starts; null for none"
+          },
           "closedAt" : {
             "type" : [ "string", "null" ],
             "format" : "date-time"
@@ -6010,7 +6151,7 @@
             "type" : [ "string", "null" ]
           }
         },
-        "required" : [ "allDay", "archivedAt", "closedAt", "columnCategory", "columnId", "createdAt", "createdBy", "createdByAgent", "deletedAt", "description", "dueDate", "endsAt", "id", "key", "kind", "labels", "number", "occurrenceOn", "people", "position", "priority", "projectId", "recurrence", "startDate", "startsAt", "title", "triggerType", "updatedAt", "updatedBy", "updatedByAgent", "version", "workspaceId" ]
+        "required" : [ "allDay", "archivedAt", "closedAt", "columnCategory", "columnId", "createdAt", "createdBy", "createdByAgent", "deletedAt", "description", "dueDate", "endsAt", "id", "key", "kind", "labels", "number", "occurrenceOn", "people", "position", "priority", "projectId", "recurrence", "reminderMinutes", "startDate", "startsAt", "title", "triggerType", "updatedAt", "updatedBy", "updatedByAgent", "version", "workspaceId" ]
       },
       "WorkItemLabel" : {
         "type" : "object",
@@ -6477,6 +6618,72 @@
           }
         },
         "required" : [ "items" ]
+      },
+      "Notification" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string"
+          },
+          "type" : {
+            "type" : "string",
+            "enum" : [ "assigned", "invited", "commented", "rescheduled", "due_today", "event_reminder" ]
+          },
+          "title" : {
+            "type" : "string",
+            "description" : "The work item it is about: its key and title"
+          },
+          "body" : {
+            "type" : "string",
+            "description" : "What happened, in words"
+          },
+          "projectId" : {
+            "type" : [ "string", "null" ]
+          },
+          "targetType" : {
+            "type" : "string"
+          },
+          "targetId" : {
+            "type" : "string"
+          },
+          "actorAgent" : {
+            "type" : [ "string", "null" ]
+          },
+          "readAt" : {
+            "type" : [ "string", "null" ],
+            "format" : "date-time"
+          },
+          "createdAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        },
+        "required" : [ "actorAgent", "body", "createdAt", "id", "projectId", "readAt", "targetId", "targetType", "title", "type" ]
+      },
+      "Notifications" : {
+        "type" : "object",
+        "properties" : {
+          "items" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Notification"
+            }
+          },
+          "nextCursor" : {
+            "type" : [ "string", "null" ]
+          }
+        },
+        "required" : [ "items", "nextCursor" ]
+      },
+      "NotificationCount" : {
+        "type" : "object",
+        "properties" : {
+          "unread" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        },
+        "required" : [ "unread" ]
       },
       "Label" : {
         "type" : "object",

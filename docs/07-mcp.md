@@ -29,8 +29,8 @@
 | `list_labels` | label | 라벨 이름 (결정기록은 system) |
 | `get_work_item_context` | workitem | 업무 전체: 속성, 마크다운 설명, 댓글과 활동 타임라인을 한 번에 |
 | `list_work_items` | workitem | 프로젝트·제목·분류·담당자·라벨로 찾기, 커서 페이징. 완료는 `include_closed`일 때만 |
-| `create_work_item` | workitem | 새 업무. `kind`(task·event), 칸·사람(`assignee` 하나 또는 `people` 여럿)·라벨은 이름으로, 일정은 `starts_at`·`ends_at`(시간대 포함) 또는 `all_day`와 날짜. `repeat`(daily·weekly·monthly)·`repeat_every`·`repeat_on`·`repeat_until`·`time_zone`으로 반복 |
-| `update_work_item` | workitem | 준 값만 바꿈. `none`으로 지움. `kind`를 바꾸면 그 종류에 맞는 값만 남김. 반복 업무는 `scope: following`이면 이후 회차도 바꿈. `repeat`로 이 회차부터 새 규칙, `repeat: none`이면 이후 회차를 지우고 반복을 끝냄. 버전은 도구가 최신으로 맞춤 |
+| `create_work_item` | workitem | 새 업무. `kind`(task·event), 칸·사람(`assignee` 하나 또는 `people` 여럿)·라벨은 이름으로, 일정은 `starts_at`·`ends_at`(시간대 포함) 또는 `all_day`와 날짜. `repeat`(daily·weekly·monthly)·`repeat_every`·`repeat_on`·`repeat_until`·`time_zone`으로 반복. 일정 알림은 `remind_before`(분, 시각 일정 기본 10) |
+| `update_work_item` | workitem | 준 값만 바꿈. `none`으로 지움. `kind`를 바꾸면 그 종류에 맞는 값만 남김. 반복 업무는 `scope: following`이면 이후 회차도 바꿈. `repeat`로 이 회차부터 새 규칙, `repeat: none`이면 이후 회차를 지우고 반복을 끝냄. `remind_before`로 일정 알림(분 또는 none). 버전은 도구가 최신으로 맞춤 |
 | `move_work_item` | workitem | 칸 이름·분류(todo/doing/done)·backlog로 옮기기, 보관·해제 |
 | `add_comment` | workitem | 업무에 마크다운 댓글 |
 | `list_documents` | document | 폴더 경로로 열거나 제목·라벨·프로젝트로 찾기, 최근 고친 순, 커서 페이징 |

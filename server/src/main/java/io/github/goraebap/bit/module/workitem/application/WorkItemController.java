@@ -86,7 +86,8 @@ class WorkItemController {
                 request.kindOrTask(),
                 request.details(),
                 request.columnId(),
-                request.labels());
+                request.labels(),
+                request.reminderMinutes());
         return ResponseEntity.created(URI.create(base(workspaceId, projectId, id)))
                 .build();
     }

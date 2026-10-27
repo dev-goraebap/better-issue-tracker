@@ -1,3 +1,4 @@
+import { beforeText } from '@/shared/lib/date-text';
 import type { EventTime, Repeat, Weekday } from '@/shared/ui';
 import type { ColumnCategory, WorkItem } from '../api/work-item';
 
@@ -64,6 +65,9 @@ export function eventTimeOf(item: Pick<WorkItem, 'startDate' | 'dueDate' | 'star
  * An event's time for the API, from what the member picked: a day without a start time is that whole day, so the day
  * is never lost; times are the member's own and leave as moments.
  */
+/** An event's reminder in words (BIT-39): 시작할 때, 10분 전, 1시간 전, 1일 전. */
+export const reminderText = (minutes: number) => (minutes === 0 ? '시작할 때' : beforeText(minutes));
+
 /** The rule a work item repeats by, as the repeat pill takes it (D-092); none when it does not repeat. */
 export function repeatOf(item: Pick<WorkItem, 'recurrence'>): Repeat | undefined {
   const rule = item.recurrence;

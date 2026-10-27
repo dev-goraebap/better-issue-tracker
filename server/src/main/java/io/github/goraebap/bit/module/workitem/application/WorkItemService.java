@@ -96,7 +96,22 @@ public class WorkItemService implements WorkItemFacade, ColumnWorkItemSpi {
             WorkItem.Details details,
             String requestedColumnId,
             Set<String> labelIds) {
-        return create(actor, workspaceId, projectId, kind, details, requestedColumnId, labelIds, null, null);
+        return create(actor, workspaceId, projectId, kind, details, requestedColumnId, labelIds, null);
+    }
+
+    /** As above, an event with its reminder, minutes before it starts (BIT-39). */
+    @Transactional
+    public String create(
+            CurrentUser actor,
+            String workspaceId,
+            String projectId,
+            WorkItem.Kind kind,
+            WorkItem.Details details,
+            String requestedColumnId,
+            Set<String> labelIds,
+            Integer reminderMinutes) {
+        return create(
+                actor, workspaceId, projectId, kind, details, requestedColumnId, labelIds, reminderMinutes, null, null);
     }
 
     /**
@@ -132,7 +147,17 @@ public class WorkItemService implements WorkItemFacade, ColumnWorkItemSpi {
                         .filter(column -> !column.finalColumn())
                         .map(ProjectFacade.ColumnRef::id)
                         .orElse(null);
-        return create(actor, workspaceId, rule.projectId(), t.kind(), details, columnId, labelIds, rule.id(), day);
+        return create(
+                actor,
+                workspaceId,
+                rule.projectId(),
+                t.kind(),
+                details,
+                columnId,
+                labelIds,
+                t.reminderMinutes(),
+                rule.id(),
+                day);
     }
 
     private String create(
@@ -143,6 +168,7 @@ public class WorkItemService implements WorkItemFacade, ColumnWorkItemSpi {
             WorkItem.Details details,
             String requestedColumnId,
             Set<String> labelIds,
+            Integer reminderMinutes,
             String recurrenceId,
             LocalDate occurrenceOn) {
         projectFacade.requireAccess(actor, workspaceId, projectId, true);
@@ -170,6 +196,11 @@ public class WorkItemService implements WorkItemFacade, ColumnWorkItemSpi {
                 actor.userId(),
                 agent(actor),
                 clock.instant());
+        try {
+            w.remind(reminderMinutes);
+        } catch (IllegalArgumentException invalid) {
+            throw WorkItemErrorCode.WORK_ITEM_KIND_SHAPE_INVALID.raise();
+        }
         if (recurrenceId != null) w.occur(recurrenceId, occurrenceOn);
         workItemRepository.save(w);
         changed(actor, workspaceId, w, "created", List.of());
@@ -205,7 +236,10 @@ public class WorkItemService implements WorkItemFacade, ColumnWorkItemSpi {
         var previousKind = w.kind();
         var previousLabels = w.labelIds();
         String previousColumn = w.columnId();
-        w.revise(kind, next, labelIds, actor.userId(), agent(actor), clock.instant());
+        Integer previousReminder = w.reminderMinutes();
+        // A new event reminds as asked, else as before; a task has no reminder.
+        Integer reminder = request.hasReminderMinutes() ? request.getReminderMinutes() : w.reminderMinutes();
+        w.revise(kind, next, labelIds, reminder, actor.userId(), agent(actor), clock.instant());
         if (w.version() == before) return;
         workItemRepository.save(w);
         if (previousColumn != null && w.columnId() == null) {
@@ -230,6 +264,7 @@ public class WorkItemService implements WorkItemFacade, ColumnWorkItemSpi {
         field(changes, "startsAt", text(d.startsAt()), text(next.startsAt()));
         field(changes, "endsAt", text(d.endsAt()), text(next.endsAt()));
         field(changes, "allDay", text(d.allDay()), text(next.allDay()));
+        field(changes, "reminder", text(previousReminder), text(w.reminderMinutes()));
         field(changes, "column", text(previousColumn), text(w.columnId()));
         field(changes, "labels", ids(previousLabels), ids(labelIds));
         if (!changes.isEmpty()) changed(actor, workspaceId, w, "changed", changes);
@@ -384,6 +419,44 @@ public class WorkItemService implements WorkItemFacade, ColumnWorkItemSpi {
         var w = access(actor, workspaceId, projectId, workItemId, true, false);
         if (Objects.equals(w.columnId(), columnId)) return;
         move(actor, workspaceId, projectId, workItemId, w.version(), columnId, null, null);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public java.util.Optional<Notice> notice(String workItemId) {
+        return workItemRepository.findLocated(workItemId).map(WorkItemService::notice);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Notice> remindable(java.time.Instant after, java.time.Instant through) {
+        return workItemRepository.findRemindable(after, through).stream()
+                .map(WorkItemService::notice)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Notice> dueOn(LocalDate day) {
+        return workItemRepository.findDueOn(day).stream()
+                .map(WorkItemService::notice)
+                .toList();
+    }
+
+    private static Notice notice(WorkItemRepository.Located located) {
+        var row = located.row();
+        return new Notice(
+                row.id(),
+                located.workspaceId(),
+                row.projectId(),
+                row.projectKey() + "-" + row.number(),
+                row.details().title(),
+                row.kind().name(),
+                row.details().peopleIds(),
+                row.audit().createdBy(),
+                row.details().startsAt(),
+                row.reminderMinutes(),
+                row.recurrenceId());
     }
 
     private static WorkItem.Priority priority(String value) {

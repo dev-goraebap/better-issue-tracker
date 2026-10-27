@@ -136,6 +136,17 @@ class AuthSecurityConfig {
                         .authenticated()
                         .requestMatchers(HttpMethod.PATCH, "/api/v1/workspaces/*/projects/**")
                         .authenticated()
+                        // A member's notices (BIT-39).
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/v1/workspaces/*/notifications",
+                                "/api/v1/workspaces/*/notifications/unread-count")
+                        .authenticated()
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/api/v1/workspaces/*/notifications/*/read",
+                                "/api/v1/workspaces/*/notifications/read-all")
+                        .authenticated()
                         // A work item's recurrence (D-092).
                         .requestMatchers(HttpMethod.PUT, "/api/v1/workspaces/*/projects/*/work-items/*/recurrence")
                         .authenticated()

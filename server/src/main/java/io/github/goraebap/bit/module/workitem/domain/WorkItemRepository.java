@@ -18,6 +18,17 @@ public interface WorkItemRepository {
 
     List<WorkItem> findColumnItems(String projectId, String columnId, boolean includeDeleted);
 
+    /** A live work item in a live project with its workspace, for the server's own notices. */
+    Optional<Located> findLocated(String id);
+
+    /** Live timed events with a reminder starting after one moment and up to another. */
+    List<Located> findRemindable(Instant after, Instant through);
+
+    /** Live, open, unarchived tasks due on a day with someone on them. */
+    List<Located> findDueOn(LocalDate day);
+
+    record Located(String workspaceId, Row row) {}
+
     /** A recurrence's live occurrences after a day, in day order. */
     List<WorkItem> findOccurrencesAfter(String recurrenceId, LocalDate day);
 
@@ -91,6 +102,7 @@ public interface WorkItemRepository {
             Instant archivedAt,
             String recurrenceId,
             LocalDate occurrenceOn,
+            Integer reminderMinutes,
             long version,
             Audit audit,
             List<Person> people) {

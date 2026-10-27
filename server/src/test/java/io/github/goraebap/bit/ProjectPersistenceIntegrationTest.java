@@ -85,6 +85,7 @@ class ProjectPersistenceIntegrationTest {
     void prepare() {
         jdbcTemplate.execute("DROP TRIGGER IF EXISTS reject_final_column");
         for (String table : List.of(
+                "notification",
                 "activity",
                 "work_item_person",
                 "work_item_label",

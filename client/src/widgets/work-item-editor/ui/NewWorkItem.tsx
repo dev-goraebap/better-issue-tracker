@@ -13,7 +13,7 @@ import { labelsQuery } from '@/entities/label';
 import { columnsQuery, ProjectMark, projectsQuery, type BoardColumn, type Project } from '@/entities/project';
 import { useMembers } from '@/entities/workspace';
 import {
-  createItem, eventFields, WORK_ITEM_TEMPLATES, workItemHref, labelOptions, NO_STATUS, peopleOptions, priorityOptions, refreshItems, repeatBody, repeatItem,
+  createItem, eventFields, WORK_ITEM_TEMPLATES, workItemHref, labelOptions, NO_REMINDER, NO_STATUS, reminderOptions, peopleOptions, priorityOptions, refreshItems, repeatBody, repeatItem,
   statusOptions, templateLabel,
   type Priority,
 } from '@/entities/work-item';
@@ -23,7 +23,7 @@ const mark = (project: Project) => <ProjectMark project={project} size="xs" />;
 
 type Draft = {
   projectId?: string; title: string; body: string; templateId?: string; status?: string; priority: Priority; people: string[]; labelIds: string[]; dueDate?: string;
-  time: EventTime; repeat?: Repeat;
+  time: EventTime; repeat?: Repeat; reminder?: number;
 };
 
 /** What 새 작업 and 새 일정 are called (D-092). */
@@ -66,7 +66,7 @@ export function NewWorkItem({ workspaceId, projectId, status, kind = 'task' }: {
   const labels = useQuery(labelsQuery(workspaceId)).data ?? [];
   const members = useMembers(workspaceId).items;
   const titleBox = useRef<HTMLInputElement>(null);
-  const [draft, setDraft] = useState<Draft>({ projectId, title: '', body: '', priority: 'medium', people: [], labelIds: [], time: { allDay: false } });
+  const [draft, setDraft] = useState<Draft>({ projectId, title: '', body: '', priority: 'medium', people: [], labelIds: [], time: { allDay: false }, reminder: 10 });
   const [isMore, setMore] = useState(false);
   const [isBusy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -83,7 +83,7 @@ export function NewWorkItem({ workspaceId, projectId, status, kind = 'task' }: {
     try {
       const common = { title: draft.title.trim(), description: draft.body.trim() || null, peopleIds: draft.people, labelIds: draft.labelIds };
       const id = await createItem(workspaceId, target.id, isEvent
-        ? { ...common, kind: 'event', ...eventFields(draft.time), columnId: null }
+        ? { ...common, kind: 'event', ...eventFields(draft.time), columnId: null, reminderMinutes: draft.time.allDay ? null : draft.reminder ?? null }
         : { ...common, kind: 'task', priority: draft.priority, dueDate: draft.dueDate ?? null, columnId: shownStatus === NO_STATUS ? null : shownStatus });
       // A repeating one is made first and then repeats from its own day (D-092), its later occurrences made by the server.
       if (draft.repeat) await repeatItem(workspaceId, target.id, id, repeatBody(draft.repeat, 0));
@@ -126,7 +126,9 @@ ${next.body}`) : isUntouched ? '' : previous.body;
     <PropertyPicker label="템플릿" icon="template" value={draft.templateId} onChange={value => applyTemplate((value as string | undefined) || undefined)}
       options={[{ value: '', label: '템플릿 없음', icon: <NavIcon name="document" /> }, ...WORK_ITEM_TEMPLATES.map(each => ({ value: each.id, label: each.name, icon: <NavIcon name={each.icon} /> }))]} />
     {isEvent
-      ? <EventTimePicker value={draft.time} onChange={time => set({ time })} />
+      ? <><EventTimePicker value={draft.time} onChange={time => set({ time })} />
+        {!draft.time.allDay && <PropertyPicker label="알림" icon="bell" options={reminderOptions} value={draft.reminder === undefined ? undefined : String(draft.reminder)}
+          onChange={value => set({ reminder: value === undefined || value === NO_REMINDER ? undefined : Number(value) })} />}</>
       : <PropertyPicker label="상태" icon="status" options={statusOptions(columns)} value={shownStatus} onChange={value => set({ status: (value as string | undefined) ?? NO_STATUS })} />}
     {!isEvent && <PropertyPicker label="우선순위" icon="priority" options={priorityOptions} value={draft.priority} onChange={value => set({ priority: (value as Priority | undefined) ?? 'medium' })} />}
     <PropertyPicker label={isEvent ? '참석자' : '담당자'} icon="person" options={peopleOptions(members)} value={draft.people} isMultiple
