@@ -48,7 +48,7 @@ public class LabelService implements LabelFacade {
     @Transactional(readOnly = true)
     public void requireAccess(CurrentUser actor, String workspaceId, String labelId, boolean writing) {
         workspaceFacade.requireAccess(
-                actor, workspaceId, writing ? WorkspaceFacade.Action.WRITE_WORK : WorkspaceFacade.Action.READ);
+                actor, workspaceId, writing ? WorkspaceFacade.Action.MANAGE_LABELS : WorkspaceFacade.Action.READ);
         if (labelId != null) label(workspaceId, labelId);
     }
 
@@ -67,8 +67,31 @@ public class LabelService implements LabelFacade {
     }
 
     @Transactional
+    public void reorder(CurrentUser actor, String workspaceId, LabelRequests.Order request) {
+        workspaceFacade.requireAccess(actor, workspaceId, WorkspaceFacade.Action.MANAGE_LABELS);
+        var labels = labelRepository.findAllByWorkspaceId(workspaceId);
+        var entries = request.labels();
+        if (entries.size() != labels.size()
+                || entries.stream().map(LabelRequests.OrderItem::id).distinct().count() != entries.size())
+            throw CommonErrorCode.COMMON_INVALID_REQUEST.raise();
+        for (var label : labels) {
+            var entry = entries.stream()
+                    .filter(e -> e.id().equals(label.id()))
+                    .findFirst()
+                    .orElseThrow(CommonErrorCode.COMMON_INVALID_REQUEST::raise);
+            version(label, entry.expectedVersion());
+        }
+        labelRepository.reorder(
+                workspaceId,
+                entries.stream().map(LabelRequests.OrderItem::id).toList(),
+                actor.userId(),
+                actor.agent(),
+                clock.instant());
+    }
+
+    @Transactional
     public String create(CurrentUser actor, String workspaceId, String name, String color) {
-        workspaceFacade.requireAccess(actor, workspaceId, WorkspaceFacade.Action.WRITE_WORK);
+        workspaceFacade.requireAccess(actor, workspaceId, WorkspaceFacade.Action.MANAGE_LABELS);
         var label = Label.create(workspaceId, name, color, actor.userId(), agent(actor), clock.instant());
         if (labelRepository.existsByNameAndIdNot(workspaceId, label.name(), null))
             throw LabelErrorCode.LABEL_NAME_CONFLICT.raise();
@@ -79,7 +102,7 @@ public class LabelService implements LabelFacade {
     @Override
     @Transactional
     public String ensure(CurrentUser actor, String workspaceId, String name, String color) {
-        workspaceFacade.requireAccess(actor, workspaceId, WorkspaceFacade.Action.WRITE_WORK);
+        workspaceFacade.requireAccess(actor, workspaceId, WorkspaceFacade.Action.MANAGE_LABELS);
         String wanted = name.strip();
         return labelRepository.findAllByWorkspaceId(workspaceId).stream()
                 .filter(label -> label.name().equalsIgnoreCase(wanted))
@@ -90,7 +113,7 @@ public class LabelService implements LabelFacade {
 
     @Transactional
     public void revise(CurrentUser actor, String workspaceId, String labelId, LabelRequests.Update request) {
-        workspaceFacade.requireAccess(actor, workspaceId, WorkspaceFacade.Action.WRITE_WORK);
+        workspaceFacade.requireAccess(actor, workspaceId, WorkspaceFacade.Action.MANAGE_LABELS);
         var label = label(workspaceId, labelId);
         version(label, request.getExpectedVersion());
         if (request.hasName() && request.getName() == null || request.hasColor() && request.getColor() == null)
@@ -107,7 +130,7 @@ public class LabelService implements LabelFacade {
 
     @Transactional
     public void delete(CurrentUser actor, String workspaceId, String labelId, long expectedVersion) {
-        workspaceFacade.requireAccess(actor, workspaceId, WorkspaceFacade.Action.WRITE_WORK);
+        workspaceFacade.requireAccess(actor, workspaceId, WorkspaceFacade.Action.MANAGE_LABELS);
         var label = label(workspaceId, labelId);
         version(label, expectedVersion);
         if (label.system()) throw LabelErrorCode.LABEL_SYSTEM_LOCKED.raise();
@@ -132,7 +155,7 @@ public class LabelService implements LabelFacade {
     }
 
     private static LabelRef ref(Label label) {
-        return new LabelRef(label.id(), label.name(), label.color(), label.system());
+        return new LabelRef(label.id(), label.name(), label.color(), label.system(), label.position());
     }
 
     private static LabelViews.Item view(Label label) {

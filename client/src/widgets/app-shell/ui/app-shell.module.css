@@ -20,12 +20,11 @@
 /* The card's header row: the fold, the trail, then the page's tools and actions at its end. */
 .topbar { position: sticky; inset-block-start: 0; z-index: 3; flex-shrink: 0; align-items: center; box-sizing: border-box; block-size: var(--workspace-topbar-height);
   padding-inline: var(--spacing-6); border-block-end: var(--border-width) solid var(--color-border); background: var(--color-background-surface); }
-.menuToggle { display: inline-flex; align-items: center; flex-shrink: 0; margin-inline: calc(-1 * var(--spacing-2)) var(--spacing-2); }
-.crumbGroup { display: inline-flex; align-items: center; min-inline-size: 0; flex-shrink: 0; }
+.crumbGroup { display: inline-flex; align-items: center; min-inline-size: 0; flex-shrink: 1; }
 .crumbGroup[data-current] { flex-shrink: 1; }
 .crumbStep { flex-shrink: 0; white-space: nowrap; font-size: 0.8125rem; font-weight: 500; color: var(--color-text-secondary); }
 .crumbCurrent { min-inline-size: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.8125rem; font-weight: 500; color: var(--color-text-primary); }
-.crumbLink { flex-shrink: 0; max-inline-size: 18rem; overflow: hidden; text-overflow: ellipsis; padding: 0.125rem 0.25rem; margin-inline: -0.25rem; border-radius: 4px;
+.crumbLink { min-inline-size: 0; flex-shrink: 1; max-inline-size: 18rem; overflow: hidden; text-overflow: ellipsis; padding: 0.125rem 0.25rem; margin-inline: -0.25rem; border-radius: 4px;
   font-size: 0.8125rem; font-weight: 500; color: var(--color-text-secondary); text-decoration: none; white-space: nowrap; }
 .crumbLink:hover { color: var(--color-text-primary); background: var(--color-overlay-hover); }
 .crumbLink:focus-visible { outline: var(--focus-outline-width) var(--focus-outline-style) var(--focus-outline-color); }
@@ -82,7 +81,27 @@
   .crumbLink { max-inline-size: 10rem; }
   .frame:not([data-tabless]) { --workspace-tab-bar-height: 4rem; }
   .frame[data-tabless] { padding-block-end: env(safe-area-inset-bottom); background: var(--color-background-surface); }
-  .frame[data-bare] .card { --workspace-topbar-height: 0px; }
+  .frame[data-bare] .card { --workspace-topbar-height: 3.5rem; }
   /* While a floating + is on screen, the content ends with room for it, so it never covers the last row. */
   .card:has([data-floating-action]) > .content { padding-block-end: calc(3.5rem + var(--spacing-4)); }
 }
+
+.chromeBack { display: inline-flex; align-items: center; flex-shrink: 0; margin-inline-end: var(--spacing-1); }
+.chromeBack:empty { display: none; }
+@media (width < 64rem) {
+  .frame[data-bare] .topbar { padding-inline: var(--spacing-3); }
+  .topbar:has(.chromeBack:not(:empty)):has(.crumbGroup + .crumbGroup) .crumbGroup { display: none; }
+  .topbar:has(.chromeBack:not(:empty)):has(.crumbGroup + .crumbGroup) .crumbGroup:has(+ .crumbGroup[data-current]) { display: inline-flex; }
+  .topbar:has(.chromeBack:not(:empty)) .crumbSeparator { display: none; }
+}
+
+.trail { display: flex; align-items: center; min-inline-size: 0; overflow: hidden; }
+.detailTitle { flex: 1; min-inline-size: 0; overflow: hidden; }
+.detailTitle:empty { display: none; }
+.topbar:has(.detailTitle:not(:empty)) .trail { display: none; }
+
+.sidebarRail { position: relative; display: flex; flex-shrink: 0; min-block-size: 0; }
+.expandHandle { position: absolute; z-index: 5; inset-block: 0; inset-inline-end: -4px; inline-size: 8px; padding: 0; border: 0; background: transparent; cursor: col-resize; touch-action: none; }
+.expandHandle::after { content: ''; position: absolute; inset-block: 0; inset-inline-start: 3px; inline-size: 2px; background: transparent; transition: background 120ms ease; }
+.expandHandle:hover::after, .expandHandle:focus-visible::after { background: var(--color-border-emphasized, var(--color-text-secondary)); }
+.expandHandle:focus-visible { outline: 2px solid var(--color-focus, var(--color-text-secondary)); outline-offset: -2px; }

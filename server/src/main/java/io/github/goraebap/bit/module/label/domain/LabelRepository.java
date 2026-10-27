@@ -17,4 +17,6 @@ public interface LabelRepository {
     boolean existsByNameAndIdNot(String workspaceId, String name, String id);
 
     void save(Label label);
+
+    void reorder(String workspaceId, List<String> ids, String actor, String agent, java.time.Instant now);
 }

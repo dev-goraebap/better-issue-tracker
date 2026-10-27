@@ -1,6 +1,7 @@
 package io.github.goraebap.bit.module.workspace.application;
 
 import com.fasterxml.jackson.annotation.JsonAnySetter;
+import io.github.goraebap.bit.module.workspace.WorkspaceFacade.Action;
 import io.github.goraebap.bit.module.workspace.domain.WorkspaceRole;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -37,7 +38,17 @@ public final class WorkspaceRequests {
         }
     }
 
-    public record ChangeRole(@NotNull WorkspaceRole role) {}
+    public record CustomRole(
+            @jakarta.validation.constraints.NotBlank @jakarta.validation.constraints.Size(max = 64) String name,
+
+            @NotNull java.util.Set<@NotNull Action> permissions,
+            Long expectedVersion) {
+        public CustomRole {
+            permissions = permissions == null ? null : java.util.Set.copyOf(permissions);
+        }
+    }
+
+    public record ChangeRole(@NotNull String role) {}
 
     public record Invite(
             @NotBlank @Email @Size(max = 256) String email,

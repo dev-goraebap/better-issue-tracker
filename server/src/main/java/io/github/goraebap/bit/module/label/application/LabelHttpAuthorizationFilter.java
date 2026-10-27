@@ -36,7 +36,14 @@ final class LabelHttpAuthorizationFilter extends OncePerRequestFilter {
             var actor = (CurrentUser) request.getAttribute(CurrentUser.class.getName());
             boolean writing = !Set.of("GET", "HEAD", "OPTIONS").contains(request.getMethod());
             labelFacade.requireAccess(
-                    actor, id(match.group(1)), match.group(2) == null ? null : id(match.group(2)), writing);
+                    actor,
+                    id(match.group(1)),
+                    match.group(2) == null
+                                    || match.group(2).equals("order")
+                                            && request.getMethod().equals("PUT")
+                            ? null
+                            : id(match.group(2)),
+                    writing);
             chain.doFilter(request, response);
         } catch (BusinessException failure) {
             ProblemResponse.write(response, failure.errorCode());

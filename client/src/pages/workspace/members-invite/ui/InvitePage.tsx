@@ -33,10 +33,10 @@ export function InvitePage() {
     return () => window.removeEventListener('pagehide', clear);
   }, []);
   const back = <BackLink to="/workspaces/$workspaceId/members" params={{ workspaceId }} search={{ view: 'invitations' }} label="구성원" />;
-  if (workspace && !canManage(workspace.myRole)) return <PageFrame title="구성원 초대" back={back} width="narrow">
+  if (workspace && !canManage(workspace, 'MANAGE_MEMBERS')) return <PageFrame title="구성원 초대" back={back} width="narrow">
     <PageState kind="not-found" title="초대할 수 없습니다" description="워크스페이스의 소유자와 관리자만 구성원을 초대합니다." />
   </PageFrame>;
-  const roles: InviteRole[] = workspace?.myRole === 'owner' ? ['admin', 'member', 'viewer'] : ['member', 'viewer'];
+  const roles: InviteRole[] = workspace?.myRole === 'owner' ? ['admin', 'member', 'viewer'] : workspace?.permissions?.includes('WRITE_WORK') && workspace.permissions.includes('WRITE_DOCUMENTS') && workspace.permissions.includes('MANAGE_LABELS') ? ['member', 'viewer'] : ['viewer'];
   const filled = rows.filter(row => row.email.trim());
   const update = (next: InviteRow[]) => { setRows(next); if (errors) setErrors(validateRows(next)); };
   const invite = async () => {

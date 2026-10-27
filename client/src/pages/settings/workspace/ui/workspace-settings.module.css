@@ -44,3 +44,7 @@
 .system { margin-inline-start: var(--spacing-2); font-size: 0.6875rem; font-weight: 500; color: var(--color-text-secondary); }
 /* The name saved on its own: the field and its 저장 side by side. */
 .nameForm { display: flex; align-items: flex-start; gap: var(--spacing-2); }
+
+.labelRow + .labelRow { border-block-start: 1px solid var(--color-border-subtle); }
+.labelLead { display: inline-flex; align-items: center; gap: var(--spacing-2); }
+.spoken { position: absolute; inline-size: 1px; block-size: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }

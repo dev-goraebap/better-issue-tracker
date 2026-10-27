@@ -15,13 +15,13 @@ import { usePanelSurface } from './surface-context';
  * on a page of its own, the page's title and actions, the body, and the footer as the page's foot row (PageFoot).
  * wrapsTitle lets a title that is the content itself (an event's) run on to more lines instead of being cut.
  */
-export function Surface({ title, subtitle, actions, footer, back, width = 'narrow', wrapsTitle = false, children }: {
-  title: string; subtitle?: string; actions?: ReactNode; footer?: ReactNode; back?: ReactNode; width?: 'narrow' | 'default' | 'wide'; wrapsTitle?: boolean;
+export function Surface({ title, subtitle, actions, footer, back, width = 'narrow', wrapsTitle = false, isDetail = false, children }: {
+  title: string; subtitle?: string; actions?: ReactNode; footer?: ReactNode; back?: ReactNode; width?: 'narrow' | 'default' | 'wide'; wrapsTitle?: boolean; isDetail?: boolean;
   children: ReactNode;
 }) {
   const panel = usePanelSurface();
   const router = useRouter();
-  if (!panel) return <PageFrame title={title} back={back} actions={actions} width={width} wrapsTitle={wrapsTitle}>
+  if (!panel) return <PageFrame isDetail={isDetail} title={title} back={back} actions={actions} width={width} wrapsTitle={wrapsTitle}>
     {subtitle && <Text color="secondary">{subtitle}</Text>}
     {children}
     {footer && <PageFoot>{footer}</PageFoot>}

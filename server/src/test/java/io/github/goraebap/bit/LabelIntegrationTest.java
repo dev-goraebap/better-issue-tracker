@@ -118,6 +118,33 @@ class LabelIntegrationTest {
     }
 
     @Test
+    void labelOrderIsSharedCompleteAndRejectsStaleVersions() {
+        String first = labelService.create(owner, workspace, "Zeta", "#cc0000");
+        String second = labelService.create(owner, workspace, "Alpha", "#00cc00");
+        var before = labelService.list(owner, workspace);
+        var ordered = java.util.stream.Stream.concat(
+                        java.util.stream.Stream.of(second, first),
+                        before.stream().map(LabelViews.Item::id).filter(id -> !id.equals(first) && !id.equals(second)))
+                .toList();
+        var entries = ordered.stream()
+                .map(id -> new LabelRequests.OrderItem(
+                        id,
+                        before.stream()
+                                .filter(l -> l.id().equals(id))
+                                .findFirst()
+                                .orElseThrow()
+                                .version()))
+                .toList();
+        labelService.reorder(owner, workspace, new LabelRequests.Order(entries));
+        assertThat(labelService.list(owner, workspace).stream().map(LabelViews.Item::id))
+                .containsExactlyElementsOf(ordered);
+        assertThat(code(() -> labelService.reorder(owner, workspace, new LabelRequests.Order(entries))))
+                .isEqualTo("LABEL_VERSION_CONFLICT");
+        assertThat(code(() -> labelService.reorder(owner, workspace, new LabelRequests.Order(entries.subList(0, 1)))))
+                .isEqualTo("COMMON_INVALID_REQUEST");
+    }
+
+    @Test
     void newWorkspacesGetTheDecisionLabelFirstAndItKeepsItsNameAndExistence() {
         var labels = labelService.list(owner, workspace);
         assertThat(labels).hasSize(1);
@@ -128,7 +155,7 @@ class LabelIntegrationTest {
         String zebra = labelService.create(owner, workspace, "zebra", "#112233");
         String alpha = labelService.create(owner, workspace, " Alpha ", "#AABBCC");
         assertThat(labelService.list(owner, workspace).stream().map(LabelViews.Item::id))
-                .containsExactly(decision, alpha, zebra);
+                .containsExactly(decision, zebra, alpha);
         var read = labelService.get(owner, workspace, alpha);
         assertThat(read.name()).isEqualTo("Alpha");
         assertThat(read.color()).isEqualTo("#aabbcc");
@@ -210,7 +237,7 @@ class LabelIntegrationTest {
         String id = workItemService.create(
                 owner, workspace, project, details("Labelled"), null, Set.of(bug, decision, api));
         assertThat(labels(workItemQueryService.get(owner, workspace, project, id)))
-                .containsExactly(decision, api, bug);
+                .containsExactly(decision, bug, api);
         assertThat(workItemQueryService
                         .get(owner, workspace, project, id)
                         .labels()
@@ -228,7 +255,7 @@ class LabelIntegrationTest {
         keep.setTitle("Renamed");
         workItemService.revise(owner, workspace, project, id, keep);
         var kept = workItemQueryService.get(owner, workspace, project, id);
-        assertThat(labels(kept)).containsExactly(decision, api, bug);
+        assertThat(labels(kept)).containsExactly(decision, bug, api);
         var replace = new WorkItemRequests.Update();
         replace.setExpectedVersion(kept.version());
         replace.setLabelIds(List.of(bug));

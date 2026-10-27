@@ -30,10 +30,10 @@ export function DocumentPage() {
   const result = useQuery(documentQuery(workspaceId, id));
   const labels = useQuery(labelsQuery(workspaceId)).data ?? [];
   const members = useMembers(workspaceId).items;
-  const role = useQuery(workspaceQuery(workspaceId)).data?.myRole;
-  const canWrite = canWriteIn(role);
+  const role = useQuery(workspaceQuery(workspaceId)).data;
+  const canWrite = canWriteIn(role, 'WRITE_DOCUMENTS');
   const document = result.data;
-  if (!document) return <PageFrame title="문서" width="default" back={<BackLink to="/workspaces/$workspaceId/documents" params={{ workspaceId }} label="문서함" />}>
+  if (!document) return <PageFrame isDetail title="문서" width="default" back={<BackLink to="/workspaces/$workspaceId/documents" params={{ workspaceId }} label="문서함" />}>
     {result.error && isNotFound(result.error)
       ? <PageState kind="not-found" title="문서를 찾을 수 없습니다" description="지워졌거나 주소가 바뀌었습니다. 문서함에서 다시 찾아보세요." />
       : <QueryMessage pending={result.isPending} error={result.error} retry={() => { void result.refetch(); }} />}
@@ -52,7 +52,7 @@ export function DocumentPage() {
     await refreshDocuments(client, workspaceId);
     afterOverlayClose(() => void navigate({ href: folderHref(workspaceId, document.projectId, folder?.id), replace: true }));
   };
-  return <PageFrame title={document.title} wrapsTitle width="default" back={back} actions={<>
+  return <PageFrame isDetail title={document.title} wrapsTitle width="default" back={back} actions={<>
     {canWrite && <SettingsAction label="편집" tooltip="편집" icon="edit" onClick={edit} />}
     <MoreMenu label="문서 메뉴" variant="ghost" placement="end" items={[
       { label: '링크 복사', icon: <NavIcon name="link" />, onClick: () => void navigator.clipboard?.writeText(window.location.href) },

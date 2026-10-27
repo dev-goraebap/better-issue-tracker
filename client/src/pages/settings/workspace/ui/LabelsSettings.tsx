@@ -1,10 +1,12 @@
 import { useState } from 'react';
-import { Button, TextInput, VStack } from '@astryxdesign/core';
+import { Button, TextInput, VStack, useToast } from '@astryxdesign/core';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { DEFAULT_MARK_COLOR, PALETTE } from '@/shared/config';
 import { ApiError, authError } from '@/shared/api';
 import { CompactDialog, ConfirmDialog, FormMessage, NavIcon, QueryMessage, SettingsAction, SettingsCard, SettingsHead, SettingsRow } from '@/shared/ui';
-import { createLabel, deleteLabel, labelsQuery, refreshLabels, updateLabel, type Label } from '@/entities/label';
+import { reorderLabels, createLabel, deleteLabel, labelsQuery, refreshLabels, updateLabel, type Label } from '@/entities/label';
+import { useRowReorder } from '@/shared/lib/row-reorder';
+import moving from '@/shared/lib/row-reorder/row-reorder.module.css';
 import styles from './workspace-settings.module.css';
 
 type Draft = { from?: Label; name: string; color: string };
@@ -49,19 +51,27 @@ export function LabelsSettings({ workspaceId, canWrite }: { workspaceId: string;
     finally { setBusy(false); }
   };
   const list = labels.data ?? [];
+  const toast = useToast();
+  const reorder = useRowReorder(list.map(label => ({ id: label.id, name: label.name })), { word: '라벨', object: '라벨을', topic: '라벨은' }, moving.ghost,
+    async order => { await reorderLabels(workspaceId, order.map(id => list.find(label => label.id === id)!)); await refreshLabels(client, workspaceId); },
+    failure => { toast({ body: authError(failure) }); void refreshLabels(client, workspaceId); });
+  const shown = reorder.order.flatMap(id => list.filter(label => label.id === id));
   return <VStack gap={8}>
     <SettingsHead title="라벨" description="이 워크스페이스의 모든 프로젝트가 같은 라벨을 씁니다." />
     {!labels.data ? <QueryMessage pending={labels.isPending} error={labels.error} retry={() => { void labels.refetch(); }} />
       : <SettingsCard title={`라벨 ${list.length}개`} id="labels-list"
         actions={canWrite ? <Button label="새 라벨" variant="secondary" size="sm" icon={<NavIcon name="plus" />} onClick={() => setDraft({ name: '', color: DEFAULT_MARK_COLOR })} /> : undefined}>
-        {list.map(label => <SettingsRow key={label.id} lead={<span className={styles.swatch} style={{ background: label.color }} aria-hidden="true" />}
+        <div ref={reorder.list} className={moving.list} role="list" aria-label="라벨 순서">{shown.map(label => <div key={label.id} role="listitem" className={`${moving.row} ${styles.labelRow}`} {...reorder.rowProps(label.id)}><SettingsRow lead={<span className={styles.labelLead}>
+          {canWrite && <button type="button" className={moving.grip} {...reorder.gripProps({ id: label.id, name: label.name })}><NavIcon name="grip" /></button>}
+          <span className={styles.swatch} style={{ background: label.color }} aria-hidden="true" /></span>}
           label={<>{label.name}{label.system && <span className={styles.system}>시스템</span>}</>}
           description={label.system ? '결정의 상태와 기각한 대안을 갖는 라벨입니다. 이름을 바꾸거나 지울 수 없습니다.' : undefined}>
           {canWrite && <span className={styles.rowActions}>
             <SettingsAction label={`${label.name} 고치기`} tooltip="고치기" icon="edit" onClick={() => setDraft({ from: label, name: label.name, color: label.color })} />
             {!label.system && <SettingsAction label={`${label.name} 삭제`} tooltip="삭제" icon="delete" tone="danger" onClick={() => setDeleting(label)} />}
           </span>}
-        </SettingsRow>)}
+        </SettingsRow></div>)}</div>
+        <span className={styles.spoken} id={reorder.hint}>끌거나 Alt와 위아래 화살표로 순서를 바꿉니다.</span><span className={styles.spoken} role="status" aria-live="polite">{reorder.said}</span>
       </SettingsCard>}
     <CompactDialog isOpen={!!draft} title={draft?.from ? '라벨 고치기' : '새 라벨'} width={520} isBusy={isBusy} onClose={close} onSubmit={() => { void save(); }}
       footer={<><Button label="취소" variant="ghost" onClick={close} isDisabled={isBusy} /><Button className={draft?.from ? undefined : "bit-create-action"} type="submit" label={draft?.from ? '저장' : '라벨 만들기'} variant="primary" isLoading={isBusy} /></>}>

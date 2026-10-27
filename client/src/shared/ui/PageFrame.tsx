@@ -8,7 +8,7 @@ import { backLinkOf, PageBack } from './BackLink';
 import { NavIcon } from './NavIcon';
 import { PageBackShownContext, PageChromeContext } from './page-chrome';
 import { HeaderChromePage } from './page-chrome/HeaderChromePage';
-import { PageFoot, PageWidthContext, type PageWidth } from './page-foot';
+import { PageWidthContext, type PageWidth } from './page-foot';
 import styles from './page.module.css';
 
 /**
@@ -31,11 +31,10 @@ import styles from './page.module.css';
  * and its actions alone stand at the end of the title row; a detail page (with a back link) keeps its title, which is
  * its content.
  *
- * The back link is not shown above the title (the trail says where the page belongs); it is handed down to the content,
- * so a not-found state in it offers the same way back as its action, and on a phone, where the page has the whole screen,
- * it is '이전으로' in a foot row unless the page has a foot of its own (PageFoot). The page's width reaches its foot row.
+ * A detail replaces the shell breadcrumb with its back action, title and actions on desktop and phone.
+ * Its content has no duplicate heading. Forms keep their own heading and the breadcrumb.
  */
-export function PageFrame({ title, icon, back, actions, tabs, hasRule = !!tabs, width: givenWidth, wrapsTitle = false, chrome, tools, conditions, children }: {
+export function PageFrame({ title, icon, back, actions, tabs, hasRule = !!tabs, width: givenWidth, wrapsTitle = false, isDetail = false, chrome, tools, conditions, children }: {
   title: string; icon?: string; back?: ReactNode; actions?: ReactNode; tabs?: ReactNode; hasRule?: boolean;
   /**
    * The content's width (default 64rem). Under chrome="header" the content takes the card's whole width unless a width
@@ -44,6 +43,8 @@ export function PageFrame({ title, icon, back, actions, tabs, hasRule = !!tabs, 
    */
   width?: PageWidth;
   wrapsTitle?: boolean;
+  /** Replaces the shell breadcrumb with the detail title and actions, without a duplicate content heading. */
+  isDetail?: boolean;
   /**
    * header lays a list page out as Plane does: its actions and its toolbar's tools at the card's header row, its tabs in
    * a row under it, the conditions in force under them, the content across the whole width (HeaderChromePage). A phone
@@ -77,13 +78,16 @@ export function PageFrame({ title, icon, back, actions, tabs, hasRule = !!tabs, 
   }
   const width = givenWidth ?? 'default';
   // A page of its own (no back link) is named by the trail in the card's header row (the top bar on a phone).
+  const detailHeader = isDetail && !!targets.title;
+  const detailActionTarget = isMobile ? targets.mobileActions : targets.actions;
   const quiet = back ? '' : `${styles.quiet} ${styles.mobileQuiet}`;
   const wayBack = backLinkOf(back);
   const mark = icon && <span className={`${styles.titleIcon} ${quiet}`} aria-hidden="true"><NavIcon name={icon} /></span>;
   // With tabs the page's actions end the tab row, above whatever the tabs hold; without, they end the title row.
-  const rowActions = tabs ? undefined : actions;
+  const mobileBackToolbar = isMobile && !!wayBack && !!targets.mobileActions;
+  const rowActions = tabs || mobileBackToolbar || detailHeader ? undefined : actions;
   const actionsClass = quiet ? styles.mobileGone : '';
-  const heading = rowActions || icon
+  const heading = rowActions || icon || wayBack
     ? <HStack gap={3} vAlign={wrapsTitle ? 'start' : 'center'} className={styles.titleRow}>
       {mark}
       <div className={`${styles.title} ${quiet}`} data-wraps={wrapsTitle || undefined}><Heading level={1} maxLines={wrapsTitle ? undefined : 1}>{title}</Heading></div>
@@ -97,16 +101,21 @@ export function PageFrame({ title, icon, back, actions, tabs, hasRule = !!tabs, 
   return <VStack gap={6} className={`${styles.page} ${width === 'default' ? '' : styles[width]}`}>
     {legacy}
     {!targets.tools && tools}
+    {wayBack && (targets.back
+      ? createPortal(<BackButton link={wayBack} label="이전으로 돌아가기" isIconOnly />, targets.back)
+      : <BackButton link={wayBack} label="이전으로 돌아가기" isIconOnly />)}
+    {detailHeader && targets.title && createPortal(<h1 className={styles.headerTitle} title={title}>{title}</h1>, targets.title)}
+    {detailHeader && actions && detailActionTarget && createPortal(actions, detailActionTarget)}
+    {!detailHeader && mobileBackToolbar && actions && targets.mobileActions && createPortal(actions, targets.mobileActions)}
     {tabs || hasRule
       // Without tabs a header with nothing in sight (no actions, or a phone's) leaves the page to the content with its rule.
-      ? <VStack gap={4} className={tabs || back ? undefined : actions ? styles.mobileQuiet : styles.quiet}>{heading}
+      ? <VStack gap={4} className={tabs || back ? undefined : actions ? styles.mobileQuiet : styles.quiet}>{!detailHeader && heading}
         <div className={`${styles.rule} ${tabs && actions ? styles.tabRow : ''}`}>{tabs}
-          {tabs && actions && <HStack gap={2} vAlign="center" className={`${styles.tabActions} ${actionsClass}`} data-page-action>{actions}</HStack>}
+          {tabs && actions && !mobileBackToolbar && !detailHeader && <HStack gap={2} vAlign="center" className={`${styles.tabActions} ${actionsClass}`} data-page-action>{actions}</HStack>}
         </div></VStack>
-      : heading}
+      : !detailHeader && heading}
     <PageWidthContext.Provider value={width}>
       <PageBack.Provider value={back}>{children}</PageBack.Provider>
-      {isMobile && wayBack && <PageFoot isFallback start={<BackButton link={wayBack} label="이전으로" variant="secondary" />} />}
     </PageWidthContext.Provider>
   </VStack>;
 }

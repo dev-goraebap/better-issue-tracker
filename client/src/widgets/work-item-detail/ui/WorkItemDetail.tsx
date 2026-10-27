@@ -48,14 +48,14 @@ export function WorkItemDetail({ workspaceId, projectId, id, search }: { workspa
   const columns = useQuery(columnsQuery(workspaceId, projectId)).data ?? [];
   const hasRepository = (useQuery(integrationsQuery(workspaceId, projectId)).data ?? []).length > 0;
   const links = useQuery({ ...codeLinksQuery(workspaceId, projectId, id), enabled: hasRepository }).data ?? [];
-  const role = useQuery(workspaceQuery(workspaceId)).data?.myRole;
+  const role = useQuery(workspaceQuery(workspaceId)).data;
   const canWrite = canWriteIn(role);
   const back = <BackLink {...list} label="업무" />;
-  if (result.isPending || (result.error && !result.data && !isNotFound(result.error))) return <Surface title="업무" back={back} width="default">
+  if (result.isPending || (result.error && !result.data && !isNotFound(result.error))) return <Surface isDetail title="업무" back={back} width="default">
     <QueryMessage pending={result.isPending} error={result.error} retry={() => { void result.refetch(); }} />
   </Surface>;
   const item = result.data;
-  if (!item) return <Surface title="업무를 찾을 수 없습니다" back={back} width="default">
+  if (!item) return <Surface isDetail title="업무를 찾을 수 없습니다" back={back} width="default">
     <PageState kind="not-found" title="업무를 찾을 수 없습니다" description="지워졌거나 주소가 바뀌었습니다. 목록에서 다시 찾아보세요." />
   </Surface>;
   // A change shows in the lists and, as a line of activity, in the work item's timeline.
@@ -88,7 +88,7 @@ export function WorkItemDetail({ workspaceId, projectId, id, search }: { workspa
     const branch = branchName(item.key, item.title);
     void navigator.clipboard?.writeText(branch).then(() => toast({ body: `브랜치 이름을 복사했습니다: ${branch}` }), () => toast({ body: '복사하지 못했습니다' }));
   };
-  return <Surface title={item.title} wrapsTitle back={back} width="default" actions={<>
+  return <Surface isDetail title={item.title} wrapsTitle back={back} width="default" actions={<>
     {canWrite && (panel
       ? <IconButton label="편집" tooltip="편집" variant="ghost" size="sm" icon={<NavIcon name="edit" />} onClick={edit} />
       : <SettingsAction label="편집" tooltip="편집" icon="edit" onClick={edit} />)}

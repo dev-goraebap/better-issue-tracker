@@ -49,5 +49,25 @@ public interface WorkspaceRepository {
 
     void revokePending(String workspaceId, String workItemr, WorkspaceRole retainedRole, String actor, Instant now);
 
+    record CustomRole(String id, String workspaceId, String name, Set<String> permissions, long version) {
+        public CustomRole {
+            permissions = Set.copyOf(permissions);
+        }
+    }
+
+    List<CustomRole> customRoles(String workspaceId);
+
+    Optional<CustomRole> customRole(String workspaceId, String roleId);
+
+    Optional<CustomRole> memberCustomRole(String memberId);
+
+    void saveCustomRole(CustomRole role);
+
+    void assignCustomRole(String memberId, String roleId);
+
+    int customRoleHolders(String roleId);
+
+    void deleteCustomRole(String roleId);
+
     record WorkspaceRow(String id, String name, String slug, WorkspaceRole myRole, Instant createdAt) {}
 }

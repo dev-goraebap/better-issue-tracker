@@ -1,5 +1,7 @@
 import { Suspense, useEffect, useRef, useState, type ReactNode } from 'react';
 import { Button } from '@astryxdesign/core';
+import { DRAWN_AVATARS, drawnAvatarSource } from '@/shared/lib/drawn-avatars';
+import { presetPicture } from '../model/preset-picture';
 import { ApiError, authError } from '@/shared/api';
 import { CompactDialog, FormMessage } from '@/shared/ui';
 import { uploadPicture } from '../api/upload-picture';
@@ -17,6 +19,7 @@ export function PictureDialog({ title, shape, filename, preview, hasPicture, onS
   onSave: (uploadId: string) => Promise<void>; onRemove: () => Promise<void>; onClose: () => void;
 }) {
   const input = useRef<HTMLInputElement>(null);
+  const [preset, setPreset] = useState<number | null>(null);
   const [photo, setPhoto] = useState<string>();
   const [cut, setCut] = useState<(() => Promise<Blob>) | null>(null);
   const [isBusy, setBusy] = useState(false);
@@ -28,7 +31,7 @@ export function PictureDialog({ title, shape, filename, preview, hasPicture, onS
     if (!file) return;
     const opened = await openPhoto(file);
     if ('problem' in opened) { setError(opened.problem); return; }
-    setError(''); setCut(null); setPhoto(opened.url);
+    setError(''); setPreset(null); setCut(null); setPhoto(opened.url);
   };
   const run = async (work: () => Promise<void>) => {
     setBusy(true); setError('');
@@ -37,19 +40,25 @@ export function PictureDialog({ title, shape, filename, preview, hasPicture, onS
     catch (failure) { setError(!(failure instanceof ApiError) && failure instanceof Error && failure.message.startsWith('사진') ? failure.message : authError(failure)); }
     finally { setBusy(false); }
   };
-  const save = () => { if (cut) void run(async () => onSave(await uploadPicture(await cut(), filename))); };
+  const save = () => { if (preset !== null || cut) void run(async () => onSave(await uploadPicture(preset !== null ? await presetPicture(preset) : await cut!(), filename))); };
   return <CompactDialog isOpen title={title} width={480} isBusy={isBusy} onClose={() => { if (!isBusy) onClose(); }}
     footerStart={photo ? <Button label="다른 사진 고르기" variant="ghost" onClick={choose} isDisabled={isBusy} />
       : hasPicture ? <Button label="사진 빼기" variant="ghost" onClick={() => { void run(onRemove); }} isDisabled={isBusy} /> : undefined}
     footer={<><Button label="취소" variant="ghost" onClick={onClose} isDisabled={isBusy} />
-      {photo ? <Button label="저장" variant="primary" onClick={save} isLoading={isBusy} isDisabled={!cut} />
-        : <Button label="사진 고르기" variant="primary" onClick={choose} isDisabled={isBusy} />}</>}>
+      {photo || preset !== null ? <Button label="저장" variant="primary" onClick={save} isLoading={isBusy} isDisabled={preset === null && !cut} />
+        : <Button label="직접 올리기" variant="primary" onClick={choose} isDisabled={isBusy} />}</>}>
     <input ref={input} type="file" accept="image/*" hidden onChange={event => { void pick(event.target.files?.[0]); event.target.value = ''; }} />
     {photo
       ? <Suspense fallback={<div className={styles.cropArea} />}>
         <LazyPictureCropper source={photo} shape={shape} isBusy={isBusy} onArea={next => setCut(() => next)} />
       </Suspense>
-      : <div className={styles.current}>{preview}<p className={styles.hint}>사진을 고르면 {shape === 'round' ? '원' : '네모'} 안에 맞춰 자릅니다.</p></div>}
+      : <div className={styles.current}>{preset !== null ? <img src={drawnAvatarSource(preset)} alt="선택한 기본 이미지" width={64} height={64} className={styles.presetPreview} /> : preview}<p className={styles.hint}>사진을 고르면 {shape === 'round' ? '원' : '네모'} 안에 맞춰 자릅니다.</p></div>}
+    {!photo && <fieldset className={styles.presets}><legend>기본 이미지 선택</legend>
+      <div className={styles.presetGrid}>{Array.from({ length: DRAWN_AVATARS }, (_, number) => <button key={number} type="button" aria-label={`기본 이미지 ${number + 1}`} aria-pressed={preset === number} disabled={isBusy} onClick={() => setPreset(number)}>
+        <img src={drawnAvatarSource(number)} alt="" width={48} height={48} />
+      </button>)}</div>
+      {preset !== null && <Button label="직접 올리기" variant="secondary" size="sm" onClick={choose} isDisabled={isBusy} />}
+    </fieldset>}
     <FormMessage message={error} />
   </CompactDialog>;
 }

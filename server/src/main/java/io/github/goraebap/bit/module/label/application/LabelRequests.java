@@ -10,6 +10,18 @@ import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 public final class LabelRequests {
+    public record OrderItem(
+            @jakarta.validation.constraints.Pattern(regexp = "[A-Za-z][A-Za-z0-9]{9}") @jakarta.validation.constraints.NotNull String id,
+
+            @jakarta.validation.constraints.NotNull @jakarta.validation.constraints.Min(0) Long expectedVersion) {}
+
+    public record Order(
+            @jakarta.validation.constraints.NotNull @jakarta.validation.constraints.Size(max = 10000) java.util.List<@jakarta.validation.constraints.NotNull @jakarta.validation.Valid OrderItem> labels) {
+        public Order {
+            labels = labels == null ? null : java.util.List.copyOf(labels);
+        }
+    }
+
     private LabelRequests() {}
 
     @Schema(name = "CreateLabel")

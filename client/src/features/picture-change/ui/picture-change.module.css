@@ -7,3 +7,15 @@
 .cropper { display: flex; flex-direction: column; gap: var(--spacing-3); }
 .cropArea { position: relative; inline-size: 100%; block-size: min(20rem, 40dvh); border-radius: var(--radius-container); overflow: hidden;
   background: var(--color-background-muted); }
+
+.pictureButton { display: inline-flex; padding: 0; border: 0; border-radius: var(--radius-element); background: transparent; cursor: pointer; }
+.pictureButton:hover { box-shadow: 0 0 0 3px var(--color-overlay-hover); }
+.pictureButton:focus-visible { outline: var(--focus-outline-width) var(--focus-outline-style) var(--focus-outline-color); outline-offset: 3px; }
+.pictureButton:disabled { cursor: default; }
+.presets { border: 0; margin: var(--spacing-5) 0 0; padding: 0; }
+.presets legend { margin-block-end: var(--spacing-3); font-size: 0.8125rem; color: var(--color-text-secondary); }
+.presetGrid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: var(--spacing-2); margin-block-end: var(--spacing-4); }
+.presetGrid button { display: grid; place-items: center; padding: 3px; border: 1px solid transparent; border-radius: var(--radius-element); background: transparent; cursor: pointer; }
+.presetGrid img, .presetPreview { border-radius: var(--radius-element); max-inline-size: 100%; height: auto; }
+.presetGrid button[aria-pressed="true"] { border-color: var(--color-accent); background: var(--color-overlay-hover); }
+.presetGrid button:focus-visible { outline: var(--focus-outline-width) var(--focus-outline-style) var(--focus-outline-color); }

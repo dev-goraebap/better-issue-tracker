@@ -85,6 +85,11 @@ class AuthSecurityConfig {
                                 HttpMethod.POST, "/api/v1/invitation-previews", "/api/v1/invitation-registrations")
                         .permitAll()
                         .requestMatchers(
+                                "/api/v1/workspaces/*/labels/order",
+                                "/api/v1/workspaces/*/roles",
+                                "/api/v1/workspaces/*/roles/*")
+                        .authenticated()
+                        .requestMatchers(
                                 HttpMethod.GET,
                                 "/api/v1/me/workspaces",
                                 "/api/v1/workspaces/*",

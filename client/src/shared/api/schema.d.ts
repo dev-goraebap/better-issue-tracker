@@ -68,6 +68,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workspaces/{workspaceId}/labels/order": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["order"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/workspaces/{workspaceId}/documents/order": {
         parameters: {
             query?: never;
@@ -80,6 +96,22 @@ export interface paths {
         put: operations["reorderDocuments"];
         post?: never;
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{id}/roles/{roleId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["updateRole"];
+        post?: never;
+        delete: operations["deleteRole"];
         options?: never;
         head?: never;
         patch?: never;
@@ -579,6 +611,22 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["create_7"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{id}/roles": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["roles"];
+        put?: never;
+        post: operations["createRole"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1451,12 +1499,35 @@ export interface components {
         ProjectOrder: {
             order: string[];
         };
+        Order: {
+            labels: components["schemas"]["OrderItem"][];
+        };
+        OrderItem: {
+            id: string;
+            /** Format: int64 */
+            expectedVersion: number;
+        };
         ReorderDocuments: {
             projectId?: string;
             folderId?: string;
             /** Format: int64 */
             expectedVersion: number;
             order: string[];
+        };
+        CustomRole: {
+            name: string;
+            permissions: ("READ" | "WRITE_WORK" | "WRITE_DOCUMENTS" | "MANAGE_LABELS" | "EDIT_SETTINGS" | "MANAGE_MEMBERS" | "OWNER")[];
+            /** Format: int64 */
+            expectedVersion?: number;
+        };
+        CustomWorkspaceRole: {
+            id: string;
+            name: string;
+            permissions: string[];
+            /** Format: int64 */
+            version: number;
+            /** Format: int32 */
+            memberCount: number;
         };
         Transfer: {
             userId: string;
@@ -1902,8 +1973,7 @@ export interface components {
             name?: string;
         };
         ChangeRole: {
-            /** @enum {string} */
-            role: "owner" | "admin" | "member" | "viewer";
+            role: string;
         };
         WorkItem: {
             id: string;
@@ -2299,6 +2369,9 @@ export interface components {
             createdAt: string;
             /** @description 워크스페이스 로고(BIT-30). 없으면 이름 첫 글자 */
             logo?: components["schemas"]["Picture"];
+            permissions?: string[];
+            customRoleId?: string;
+            roleName?: string;
         };
         Member: {
             memberId: string;
@@ -2311,6 +2384,8 @@ export interface components {
             joinedAt: string;
             /** @description 구성원의 사진(BIT-30). 없으면 그림 아바타 */
             avatar?: components["schemas"]["Picture"];
+            customRoleId?: string;
+            roleName?: string;
         };
         Members: {
             items: components["schemas"]["Member"][];
@@ -2568,6 +2643,30 @@ export interface operations {
             };
         };
     };
+    order: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Order"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     reorderDocuments: {
         parameters: {
             query?: never;
@@ -2582,6 +2681,56 @@ export interface operations {
                 "application/json": components["schemas"]["ReorderDocuments"];
             };
         };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    updateRole: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                roleId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CustomRole"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CustomWorkspaceRole"];
+                };
+            };
+        };
+    };
+    deleteRole: {
+        parameters: {
+            query: {
+                expectedVersion: number;
+            };
+            header?: never;
+            path: {
+                id: string;
+                roleId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             /** @description OK */
             200: {
@@ -3601,6 +3750,54 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    roles: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CustomWorkspaceRole"][];
+                };
+            };
+        };
+    };
+    createRole: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CustomRole"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CustomWorkspaceRole"];
+                };
             };
         };
     };

@@ -48,7 +48,7 @@ export function WorkItemsPage() {
   const navigate = useNavigate();
   const panelId = useId();
   const me = useQuery(sessionQueryOptions).data?.user.id ?? '';
-  const role = useQuery(workspaceQuery(workspaceId)).data?.myRole;
+  const role = useQuery(workspaceQuery(workspaceId)).data;
   const projects = useInfiniteQuery(projectsQuery(workspaceId)).data?.pages.flatMap(page => page.items) ?? [];
   const project = useQuery({ ...projectQuery(workspaceId, projectId ?? ''), enabled: !!projectId });
   const columns = useQuery({ ...columnsQuery(workspaceId, projectId ?? ''), enabled: !!projectId }).data ?? [];
@@ -63,7 +63,7 @@ export function WorkItemsPage() {
   const tweak = useViewTweak(workspaceId, view.id);
   const effective = useMemo(() => effectiveView(view, tweak, search), [view, tweak, search]);
   const canWrite = canWriteIn(role);
-  const scope: Scope = { workspaceId, project: project.data, projects, firstProject: project.data ?? projects[0], columns, me, role, canWrite };
+  const scope: Scope = { workspaceId, project: project.data, projects, firstProject: project.data ?? projects[0], columns, me, role: role?.myRole, canWrite };
   const [editing, setEditing] = useState<Editing | null>(null);
   const [isRemoving, setRemoving] = useState(false);
   const [isOrdering, setOrdering] = useState(false);

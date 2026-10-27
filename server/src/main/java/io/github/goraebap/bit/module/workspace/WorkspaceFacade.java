@@ -9,6 +9,8 @@ public interface WorkspaceFacade {
     enum Action {
         READ,
         WRITE_WORK,
+        WRITE_DOCUMENTS,
+        MANAGE_LABELS,
         EDIT_SETTINGS,
         MANAGE_MEMBERS,
         OWNER

@@ -18,7 +18,15 @@ public final class WorkspaceViews {
             Instant createdAt,
 
             @Schema(description = "워크스페이스 로고(BIT-30). 없으면 이름 첫 글자")
-            Picture logo) {}
+            Picture logo,
+
+            java.util.Set<String> permissions,
+            String customRoleId,
+            String roleName) {
+        public Space {
+            permissions = java.util.Set.copyOf(permissions);
+        }
+    }
 
     @Schema(requiredProperties = {"memberId", "userId", "name", "email", "role", "joinedAt"})
     public record Member(
@@ -30,7 +38,10 @@ public final class WorkspaceViews {
             Instant joinedAt,
 
             @Schema(description = "구성원의 사진(BIT-30). 없으면 그림 아바타")
-            Picture avatar) {}
+            Picture avatar,
+
+            String customRoleId,
+            String roleName) {}
 
     @Schema(
             name = "WorkspaceInvitation",
@@ -69,6 +80,15 @@ public final class WorkspaceViews {
     @Schema(requiredProperties = {"workspaceId", "workspaceName", "email", "role", "expiresAt"})
     public record Preview(
             String workspaceId, String workspaceName, String email, WorkspaceRole role, Instant expiresAt) {}
+
+    @Schema(
+            name = "CustomWorkspaceRole",
+            requiredProperties = {"id", "name", "permissions", "version", "memberCount"})
+    public record CustomRole(String id, String name, java.util.Set<String> permissions, long version, int memberCount) {
+        public CustomRole {
+            permissions = java.util.Set.copyOf(permissions);
+        }
+    }
 
     @Schema(requiredProperties = {"items"})
     public record Spaces(

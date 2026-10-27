@@ -10,8 +10,9 @@ export type TrailStep = { label: string; href?: string; onClick?: (event: MouseE
 
 /** The trail, as Plane's: every step 13px/500, those before the page muted and linked, a small chevron between them. */
 export function Trail({ steps }: { steps: TrailStep[] }) {
-  return <>{steps.map((step, index) => {
-    const isLast = index === steps.length - 1;
+  const visible = steps.slice(-3);
+  return <>{visible.map((step, index) => {
+    const isLast = index === visible.length - 1;
     return <span key={`${index}-${step.label}`} className={styles.crumbGroup} data-current={isLast || undefined}>
       {step.content ?? (isLast || !step.href
         ? <span className={isLast ? styles.crumbCurrent : styles.crumbStep} aria-current={isLast ? 'page' : undefined}>{step.label}</span>

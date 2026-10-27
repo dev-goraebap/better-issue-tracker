@@ -20,6 +20,7 @@ public final class Label {
     private String color;
     private final String systemKey;
     private long version;
+    private int position;
     private Audit audit;
 
     private Label(
@@ -53,6 +54,11 @@ public final class Label {
     public static Label fromPersistence(
             String id, String workspaceId, String name, String color, String systemKey, long version, Audit audit) {
         return new Label(id, workspaceId, name, color, systemKey, version, audit);
+    }
+
+    public Label atPosition(int value) {
+        position = value;
+        return this;
     }
 
     public boolean system() {

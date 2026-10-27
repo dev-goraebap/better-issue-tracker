@@ -11,7 +11,7 @@ import {
   type ListFilter, type ListSort, type PageTab, type SheetColumn, type SortKey,
 } from '@/shared/ui';
 import {
-  canManage, changeRole, forgetWorkspace, invitationsQuery, leaveWorkspace, refreshWorkspace, removeMember, revokeInvitation, ROLE_LABELS, ROLES, useMembers, workspaceQuery,
+  customRolesQuery, canManage, changeRole, forgetWorkspace, invitationsQuery, leaveWorkspace, refreshWorkspace, removeMember, revokeInvitation, ROLE_LABELS, ROLES, useMembers, workspaceQuery,
   type Invitation, type Member, type Role,
 } from '@/entities/workspace';
 import { ProjectMark, projectMembershipsQuery, projectsQuery } from '@/entities/project';
@@ -23,7 +23,7 @@ type Tab = 'members' | 'invitations';
 const STATUS_TOKENS: Record<string, { label: string; color: 'blue' | 'green' | 'gray' | 'red' }> = {
   pending: { label: '대기', color: 'blue' }, accepted: { label: '수락', color: 'green' }, expired: { label: '만료', color: 'gray' }, revoked: { label: '폐기', color: 'red' },
 };
-type Pending = { kind: 'role'; member: Member; role: Role } | { kind: 'remove'; member: Member } | { kind: 'leave'; member: Member } | { kind: 'revoke'; invite: Invitation };
+type Pending = { kind: 'role'; member: Member; role: string } | { kind: 'remove'; member: Member } | { kind: 'leave'; member: Member } | { kind: 'revoke'; invite: Invitation };
 /** The orders 구성원 offers; the usual one is by when they joined, the earliest first. */
 const SORT_KEYS: readonly SortKey[] = [
   { value: 'joined', label: '참여한 날', kind: 'date' }, { value: 'name', label: '이름', kind: 'text' }, { value: 'role', label: '역할', kind: 'rank' },
@@ -54,8 +54,11 @@ export function MembersPage() {
   const client = useQueryClient();
   const panelId = useId();
   const me = useQuery(sessionQueryOptions).data?.user.id;
-  const myRole = useQuery(workspaceQuery(workspaceId)).data?.myRole ?? 'viewer';
-  const isManager = canManage(myRole);
+  const workspace = useQuery(workspaceQuery(workspaceId)).data;
+  const myRole = workspace?.myRole ?? 'viewer';
+  const isManager = canManage(workspace, 'MANAGE_MEMBERS');
+  const customRoles = useQuery(customRolesQuery(workspaceId)).data ?? [];
+  const roleLabel = (role: string) => customRoles.find(item => item.id === role)?.name ?? ROLE_LABELS[role as Role] ?? role;
   const tab: Tab = isManager && search.view === 'invitations' ? 'invitations' : 'members';
   const people = useMembers(workspaceId);
   const invitations = useQuery({ ...invitationsQuery(workspaceId), enabled: tab === 'invitations' });
@@ -78,25 +81,26 @@ export function MembersPage() {
   const compare = (a: Member, b: Member) => (sortKey === 'name' ? a.name.localeCompare(b.name, 'ko') : sortKey === 'role' ? roleRank(a.role) - roleRank(b.role)
     : a.joinedAt.localeCompare(b.joinedAt)) * (direction === 'asc' ? 1 : -1);
   const members = people.items
-    .filter(member => (!search.q || member.name.includes(search.q) || member.email.includes(search.q)) && (!search.role || member.role === search.role))
+    .filter(member => (!search.q || member.name.includes(search.q) || member.email.includes(search.q)) && (!search.role || (member.customRoleId ?? member.role) === search.role))
     .sort(compare);
   const filters: ListFilter[] = tab === 'members'
-    ? [{ key: 'role', label: '역할', icon: 'shield', value: search.role, options: [...ROLES].reverse().map(role => ({ value: role, label: ROLE_LABELS[role] })) }]
+    ? [{ key: 'role', label: '역할', icon: 'shield', value: search.role, options: [...[...ROLES].reverse().map(role => ({ value: role, label: ROLE_LABELS[role] })), ...customRoles.map(role => ({ value: role.id, label: role.name }))] }]
     : [];
   const order: ListSort | undefined = tab === 'members' ? {
     keys: SORT_KEYS, key: sortKey, direction, usual: USUAL_ORDER,
     onChange: (key, next) => go(key === USUAL_ORDER.key && next === USUAL_ORDER.direction ? { sort: undefined, dir: undefined } : { sort: key as MembersSearch['sort'], dir: next }, true),
   } : undefined;
-  const canChange = (member: Member) => member.role !== 'owner' && member.userId !== me && (myRole === 'owner' || (myRole === 'admin' && member.role !== 'admin'));
-  const roleOptions = (myRole === 'owner' ? ['admin', 'member', 'viewer'] as const : ['member', 'viewer'] as const).map(role => ({ value: role, label: ROLE_LABELS[role] }));
+  const required = (member: Member) => member.customRoleId ? customRoles.find(role => role.id === member.customRoleId)?.permissions ?? ['OWNER'] : member.role === 'member' ? ['READ', 'WRITE_WORK', 'WRITE_DOCUMENTS', 'MANAGE_LABELS'] : ['READ'];
+  const canChange = (member: Member) => member.role !== 'owner' && member.userId !== me && isManager && (myRole === 'owner' || member.role !== 'admin' && required(member).every(permission => workspace?.permissions?.includes(permission)));
+  const roleOptions = [...(myRole === 'owner' ? ['admin', 'member', 'viewer'] as const : ['member', 'viewer'] as const).filter(role => role !== 'member' || ['WRITE_WORK', 'WRITE_DOCUMENTS', 'MANAGE_LABELS'].every(permission => workspace?.permissions?.includes(permission))).map(role => ({ value: role, label: ROLE_LABELS[role] })), ...customRoles.filter(role => role.permissions.every(permission => workspace?.permissions?.includes(permission))).map(role => ({ value: role.id, label: role.name }))];
   const person = (member: Member) => <span className={styles.person}><DefaultAvatar seed={member.userId} name={member.name} size={24} />
     <span className={styles.personText}><span className={styles.personName}>{member.name}{member.userId === me ? ' (나)' : ''}</span><span className={styles.personEmail}>{member.email}</span></span></span>;
   const memberColumns: SheetColumn<Member>[] = [
     { key: 'name', header: '이름', render: person },
     { key: 'role', header: '역할', width: '9rem', render: row => (canChange(row)
-      ? <Select label={`${row.name} 역할`} isLabelHidden size="sm" width="6.5rem" options={roleOptions} value={row.role}
-        onChange={value => { if (value && value !== row.role) setPending({ kind: 'role', member: row, role: value as Role }); }} />
-      : ROLE_LABELS[row.role]) },
+      ? <Select label={`${row.name} 역할`} isLabelHidden size="sm" width="6.5rem" options={roleOptions} value={row.customRoleId ?? row.role}
+        onChange={value => { if (value && value !== (row.customRoleId ?? row.role)) setPending({ kind: 'role', member: row, role: value }); }} />
+      : row.roleName ?? ROLE_LABELS[row.role]) },
     { key: 'projects', header: '참여 프로젝트', width: '13rem', render: row => {
       const mine = joinedProjects(row.userId);
       const label = mine.length === 0 ? (isManager ? '프로젝트에 넣기' : '없음') : mine.length === 1 ? mine[0]!.name : `${mine[0]!.name} 외 ${mine.length - 1}`;
@@ -155,7 +159,7 @@ export function MembersPage() {
         : isMobile
           ? <><ItemList label="구성원">{members.map(member => <ItemRow key={member.memberId} lead={<DefaultAvatar seed={member.userId} name={member.name} size={32} />}
             title={<span className={styles.personText}><span className={styles.personName}>{member.name}{member.userId === me ? ' (나)' : ''}</span><span className={styles.personEmail}>{member.email}</span></span>}
-            meta={<><ItemMeta>{ROLE_LABELS[member.role]}</ItemMeta><ItemMeta>프로젝트 {joinedBy(member.userId).size}개</ItemMeta></>} />)}</ItemList>{memberSummary}</>
+            meta={<><ItemMeta>{member.roleName ?? ROLE_LABELS[member.role]}</ItemMeta><ItemMeta>프로젝트 {joinedBy(member.userId).size}개</ItemMeta></>} />)}</ItemList>{memberSummary}</>
           : <SheetTable label="구성원" columns={memberColumns} rows={members} rowKey={row => row.memberId} minWidth="52rem" order={order} foot={memberSummary} />)}
       {tab === 'invitations' && invitations.data && (invites.length === 0
         ? <PageState title="보낸 초대가 없습니다" description="구성원 초대로 초대 링크를 만들어 전달하세요." />
@@ -170,7 +174,7 @@ export function MembersPage() {
       variant={pending.kind === 'role' ? 'primary' : 'destructive'}
       title={pending.kind === 'role' ? `${pending.member.name}의 역할을 바꿀까요?` : pending.kind === 'remove' ? `${pending.member.name}을(를) 구성원에서 뺄까요?`
         : pending.kind === 'leave' ? '이 워크스페이스에서 나갈까요?' : '초대를 폐기할까요?'}
-      description={pending.kind === 'role' ? `${ROLE_LABELS[pending.member.role]} → ${ROLE_LABELS[pending.role]}. API 키 권한도 바로 바뀝니다.`
+      description={pending.kind === 'role' ? `${pending.member.roleName ?? ROLE_LABELS[pending.member.role]} → ${roleLabel(pending.role)}. API 키 권한도 바로 바뀝니다.`
         : pending.kind === 'remove' ? '이 워크스페이스에 들어올 수 없게 됩니다. 다시 참여하려면 새 초대가 필요합니다.'
         : pending.kind === 'leave' ? '이 워크스페이스의 업무와 문서를 더 볼 수 없게 됩니다. 다시 들어오려면 새 초대가 필요합니다.' : `${pending.invite.email}에 보낸 링크로 더 이상 참여할 수 없습니다.`}
       confirmLabel={pending.kind === 'role' ? '바꾸기' : pending.kind === 'remove' ? '빼기' : pending.kind === 'leave' ? '나가기' : '폐기'} />}

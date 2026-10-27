@@ -2,8 +2,10 @@ package io.github.goraebap.bit.module.workspace.infrastructure;
 
 import static io.github.goraebap.bit.jooq.tables.IamUser.IAM_USER;
 import static io.github.goraebap.bit.jooq.tables.Workspace.WORKSPACE;
+import static io.github.goraebap.bit.jooq.tables.WorkspaceCustomRole.WORKSPACE_CUSTOM_ROLE;
 import static io.github.goraebap.bit.jooq.tables.WorkspaceInvitation.WORKSPACE_INVITATION;
 import static io.github.goraebap.bit.jooq.tables.WorkspaceMember.WORKSPACE_MEMBER;
+import static io.github.goraebap.bit.jooq.tables.WorkspaceMemberCustomRole.WORKSPACE_MEMBER_CUSTOM_ROLE;
 
 import io.github.goraebap.bit.module.workspace.domain.Invitation;
 import io.github.goraebap.bit.module.workspace.domain.Membership;
@@ -26,6 +28,91 @@ import org.springframework.stereotype.Repository;
 @RequiredArgsConstructor
 class JooqWorkspaceRepository implements WorkspaceRepository {
     private final DSLContext dslContext;
+
+    @Override
+    public List<CustomRole> customRoles(String workspaceId) {
+        return dslContext
+                .selectFrom(WORKSPACE_CUSTOM_ROLE)
+                .where(WORKSPACE_CUSTOM_ROLE.WORKSPACE_ID.eq(workspaceId))
+                .orderBy(WORKSPACE_CUSTOM_ROLE.NAME)
+                .fetch(r -> new CustomRole(
+                        r.getWorkspaceCustomRoleId(),
+                        r.getWorkspaceId(),
+                        r.getName(),
+                        Set.copyOf(java.util.Arrays.asList(r.getPermissions().split(","))),
+                        r.getVersion()));
+    }
+
+    @Override
+    public Optional<CustomRole> customRole(String workspaceId, String roleId) {
+        return customRoles(workspaceId).stream()
+                .filter(r -> r.id().equals(roleId))
+                .findFirst();
+    }
+
+    @Override
+    public Optional<CustomRole> memberCustomRole(String memberId) {
+        var id = dslContext
+                .select(WORKSPACE_MEMBER_CUSTOM_ROLE.WORKSPACE_CUSTOM_ROLE_ID)
+                .from(WORKSPACE_MEMBER_CUSTOM_ROLE)
+                .where(WORKSPACE_MEMBER_CUSTOM_ROLE.WORKSPACE_MEMBER_ID.eq(memberId))
+                .fetchOne(WORKSPACE_MEMBER_CUSTOM_ROLE.WORKSPACE_CUSTOM_ROLE_ID);
+        if (id == null) return Optional.empty();
+        return dslContext
+                .selectFrom(WORKSPACE_CUSTOM_ROLE)
+                .where(WORKSPACE_CUSTOM_ROLE.WORKSPACE_CUSTOM_ROLE_ID.eq(id))
+                .fetchOptional(r -> new CustomRole(
+                        r.getWorkspaceCustomRoleId(),
+                        r.getWorkspaceId(),
+                        r.getName(),
+                        Set.copyOf(java.util.Arrays.asList(r.getPermissions().split(","))),
+                        r.getVersion()));
+    }
+
+    @Override
+    public void saveCustomRole(CustomRole role) {
+        dslContext
+                .insertInto(WORKSPACE_CUSTOM_ROLE)
+                .set(WORKSPACE_CUSTOM_ROLE.WORKSPACE_CUSTOM_ROLE_ID, role.id())
+                .set(WORKSPACE_CUSTOM_ROLE.WORKSPACE_ID, role.workspaceId())
+                .set(WORKSPACE_CUSTOM_ROLE.NAME, role.name())
+                .set(WORKSPACE_CUSTOM_ROLE.PERMISSIONS, String.join(",", new java.util.TreeSet<>(role.permissions())))
+                .set(WORKSPACE_CUSTOM_ROLE.VERSION, role.version())
+                .onConflict(WORKSPACE_CUSTOM_ROLE.WORKSPACE_CUSTOM_ROLE_ID)
+                .doUpdate()
+                .set(WORKSPACE_CUSTOM_ROLE.NAME, role.name())
+                .set(WORKSPACE_CUSTOM_ROLE.PERMISSIONS, String.join(",", new java.util.TreeSet<>(role.permissions())))
+                .set(WORKSPACE_CUSTOM_ROLE.VERSION, role.version())
+                .execute();
+    }
+
+    @Override
+    public void assignCustomRole(String memberId, String roleId) {
+        dslContext
+                .deleteFrom(WORKSPACE_MEMBER_CUSTOM_ROLE)
+                .where(WORKSPACE_MEMBER_CUSTOM_ROLE.WORKSPACE_MEMBER_ID.eq(memberId))
+                .execute();
+        if (roleId != null)
+            dslContext
+                    .insertInto(WORKSPACE_MEMBER_CUSTOM_ROLE)
+                    .set(WORKSPACE_MEMBER_CUSTOM_ROLE.WORKSPACE_MEMBER_ID, memberId)
+                    .set(WORKSPACE_MEMBER_CUSTOM_ROLE.WORKSPACE_CUSTOM_ROLE_ID, roleId)
+                    .execute();
+    }
+
+    @Override
+    public int customRoleHolders(String roleId) {
+        return dslContext.fetchCount(
+                WORKSPACE_MEMBER_CUSTOM_ROLE, WORKSPACE_MEMBER_CUSTOM_ROLE.WORKSPACE_CUSTOM_ROLE_ID.eq(roleId));
+    }
+
+    @Override
+    public void deleteCustomRole(String roleId) {
+        dslContext
+                .deleteFrom(WORKSPACE_CUSTOM_ROLE)
+                .where(WORKSPACE_CUSTOM_ROLE.WORKSPACE_CUSTOM_ROLE_ID.eq(roleId))
+                .execute();
+    }
 
     @Override
     public Set<String> findMemberUserIds(String workspaceId, Set<String> userIds) {

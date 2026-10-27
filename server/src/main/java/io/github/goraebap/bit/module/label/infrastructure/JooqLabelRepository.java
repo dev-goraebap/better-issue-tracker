@@ -26,7 +26,7 @@ class JooqLabelRepository implements LabelRepository {
                 .selectFrom(LABEL)
                 .where(LABEL.WORKSPACE_ID.eq(workspaceId))
                 .and(LABEL.DELETED_AT.isNull())
-                .orderBy(LABEL.IS_SYSTEM.desc(), DSL.lower(LABEL.NAME), LABEL.LABEL_ID)
+                .orderBy(LABEL.POSITION.asc(), DSL.lower(LABEL.NAME), LABEL.LABEL_ID)
                 .fetch(this::label);
     }
 
@@ -72,6 +72,12 @@ class JooqLabelRepository implements LabelRepository {
         r.setIsSystem(l.system());
         r.setSystemKey(l.systemKey());
         r.setVersion(l.version());
+        if (l.version() == 0)
+            r.setPosition(dslContext
+                    .select(DSL.coalesce(DSL.max(LABEL.POSITION), 0).add(1))
+                    .from(LABEL)
+                    .where(LABEL.WORKSPACE_ID.eq(l.workspaceId()))
+                    .fetchOne(0, Integer.class));
         AuditRecords.write(r, l.audit());
         dslContext
                 .insertInto(LABEL)
@@ -82,14 +88,30 @@ class JooqLabelRepository implements LabelRepository {
                 .execute();
     }
 
+    @Override
+    public void reorder(String workspaceId, List<String> ids, String actor, String agent, java.time.Instant now) {
+        for (int position = 0; position < ids.size(); position++)
+            dslContext
+                    .update(LABEL)
+                    .set(LABEL.POSITION, position)
+                    .set(LABEL.VERSION, LABEL.VERSION.add(1))
+                    .set(LABEL.UPDATED_AT, now)
+                    .set(LABEL.UPDATED_BY, actor)
+                    .set(LABEL.UPDATED_BY_AGENT, agent)
+                    .where(LABEL.WORKSPACE_ID.eq(workspaceId))
+                    .and(LABEL.LABEL_ID.eq(ids.get(position)))
+                    .execute();
+    }
+
     private Label label(Record r) {
         return Label.fromPersistence(
-                r.get(LABEL.LABEL_ID),
-                r.get(LABEL.WORKSPACE_ID),
-                r.get(LABEL.NAME),
-                r.get(LABEL.COLOR),
-                r.get(LABEL.SYSTEM_KEY),
-                r.get(LABEL.VERSION),
-                AuditRecords.read(r));
+                        r.get(LABEL.LABEL_ID),
+                        r.get(LABEL.WORKSPACE_ID),
+                        r.get(LABEL.NAME),
+                        r.get(LABEL.COLOR),
+                        r.get(LABEL.SYSTEM_KEY),
+                        r.get(LABEL.VERSION),
+                        AuditRecords.read(r))
+                .atPosition(r.get(LABEL.POSITION));
     }
 }

@@ -10,12 +10,12 @@ import { ColumnDialog } from './ColumnDialog';
 import styles from './project-settings.module.css';
 
 const BACKLOG = 'backlog';
-const COLUMN = { word: '칸', object: '칸을', topic: '칸은' };
+const COLUMN = { word: '상태', object: '상태를', topic: '상태는' };
 
 /**
- * 보드 칸: the project's board columns in order, each its category's mark, name and category, the one that finishes work
+ * 워크플로: the project's board columns in order, each its category's mark, name and category, the one that finishes work
  * marked (D-049: at least one, and never the last column removed). A column is put in its place by its grip
- * (useRowReorder: carried by mouse or finger, or Alt + ↑ / ↓). 새 칸 and 고치기 open the same short dialog; 삭제 asks
+ * (useRowReorder: carried by mouse or finger, or Alt + ↑ / ↓). 상태 추가 and 고치기 open the same short dialog; 삭제 asks
  * where the column's work items go (another column, or 상태 없음).
  */
 export function BoardSettings({ project, canManage }: { project: Project; canManage: boolean }) {
@@ -46,17 +46,17 @@ export function BoardSettings({ project, canManage }: { project: Project; canMan
     finally { setBusy(false); await refreshProjects(client, project.workspaceId); }
   };
   return <VStack gap={8}>
-    <SettingsHead title="보드 칸" description="업무가 흘러가는 칸입니다. 완료 칸에 들어간 업무는 끝난 것으로 셉니다." />
+    <SettingsHead title="워크플로" description="업무가 진행되는 상태와 순서를 정합니다. 완료 상태에 들어간 업무는 끝난 것으로 셉니다." />
     {!columns.data ? <QueryMessage pending={columns.isPending} error={columns.error} retry={() => { void columns.refetch(); }} />
-      : <SettingsCard title={`칸 ${list.length}개`} id="board-columns"
-        actions={editable ? <Button label="새 칸" variant="secondary" size="sm" icon={<NavIcon name="plus" />} onClick={() => setEditing('new')} /> : undefined}>
-        <div ref={reorder.list} className={rows.list} role="list" aria-label="보드 칸 순서">
+      : <SettingsCard title={`상태 ${list.length}개`} id="board-columns"
+        actions={editable ? <Button label="상태 추가" variant="secondary" size="sm" icon={<NavIcon name="plus" />} onClick={() => setEditing('new')} /> : undefined}>
+        <div ref={reorder.list} className={rows.list} role="list" aria-label="워크플로 상태 순서">
           {shown.map(column => <div key={column.id} className={rows.row} role="listitem" {...reorder.rowProps(column.id)}>
             <SettingsRow lead={<span className={styles.lead}>
               {editable && <button type="button" className={rows.grip} {...reorder.gripProps(column)}><NavIcon name="grip" /></button>}
               <StatusBadge category={column.category} isLabelHidden />
             </span>}
-            label={<>{column.name}{column.isFinal && <> <StatusToken label="완료 칸" color="green" /></>}</>} description={CATEGORY_LABELS[column.category]}>
+            label={<>{column.name}{column.isFinal && <> <StatusToken label="완료 상태" color="green" /></>}</>} description={CATEGORY_LABELS[column.category]}>
               {editable && <span className={styles.rowActions}>
                 <SettingsAction label={`${column.name} 고치기`} tooltip="고치기" icon="edit" onClick={() => setEditing(column)} />
                 <SettingsAction label={`${column.name} 삭제`} tooltip="삭제" icon="delete" tone="danger" isDisabled={list.length < 2}
@@ -72,9 +72,9 @@ export function BoardSettings({ project, canManage }: { project: Project; canMan
     </>}
     <FormMessage message={error} />
     {editing && <ColumnDialog project={project} column={editing === 'new' ? undefined : editing} onClose={() => setEditing(null)} />}
-    <CompactDialog isOpen={!!removing} title={`'${removing?.name ?? ''}' 칸을 지울까요?`} width={520} isBusy={isBusy} onClose={() => { if (!isBusy) setRemoving(null); }}
+    <CompactDialog isOpen={!!removing} title={`'${removing?.name ?? ''}' 상태를 지울까요?`} width={520} isBusy={isBusy} onClose={() => { if (!isBusy) setRemoving(null); }}
       footer={<><Button label="취소" variant="ghost" onClick={() => setRemoving(null)} isDisabled={isBusy} /><Button label="옮기고 지우기" variant="destructive" isLoading={isBusy} onClick={() => { void remove(); }} /></>}>
-      <Select label="이 칸의 업무를 옮길 곳" value={moveTo} onChange={value => setMoveTo(value ?? BACKLOG)}
+      <Select label="이 상태의 업무를 옮길 곳" value={moveTo} onChange={value => setMoveTo(value ?? BACKLOG)}
         options={[{ value: BACKLOG, label: '상태 없음' }, ...list.filter(column => column.id !== removing?.id).map(column => ({ value: column.id, label: column.name }))]} />
     </CompactDialog>
   </VStack>;

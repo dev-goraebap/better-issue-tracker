@@ -16,6 +16,7 @@ import { WorkspaceSwitcher } from '@/features/workspace-switcher';
 import { CreateProjectDialog } from '@/features/project-create';
 import { canManage, forgetWorkspace, workspaceQuery } from '@/entities/workspace';
 import { ProjectMark, projectsQuery, type Project } from '@/entities/project';
+import { contentsQuery, documentQuery, documentIdOf, documentHref, folderHref } from '@/entities/document';
 import { itemQuery } from '@/entities/work-item';
 import { unreadCountQuery } from '@/entities/notification';
 import { SidebarProjects } from './SidebarProjects';
@@ -48,13 +49,19 @@ export function AppLayout() {
   const isSpaceSettings = !!place.settings;
   const isSettings = isAccount || isSpaceSettings;
   const workspaceId = place.workspaceId ?? (isAccount ? lastSpace : '');
+  const documentId = place.documentRef && place.documentRef !== 'new' ? documentIdOf(place.documentRef) : '';
+  const document = useQuery({ ...documentQuery(workspaceId ?? '', documentId), enabled: !!workspaceId && !!documentId }).data;
+  const documentSearch = new URLSearchParams(searchStr);
+  const folderId = documentSearch.get('folder') ?? undefined;
+  const documentProject = document?.projectId ?? place.projectId ?? documentSearch.get('project') ?? undefined;
+  const documentFolder = useQuery({ ...contentsQuery(workspaceId ?? '', documentProject, folderId), enabled: !!workspaceId && !!folderId && (place.workspaceSection === '/documents' || place.projectSection === 'documents') }).data;
   const me = useQuery(sessionQueryOptions).data?.user;
   // The member's own picture shows on their card and beside their name before any member list is read (BIT-30).
   useEffect(() => { if (me) rememberPictures([[me.id, me.avatar]]); }, [me]);
   const space = useQuery({ ...workspaceQuery(workspaceId), enabled: !!workspaceId });
   const workspace = workspaceId ? space.data : undefined;
   // Only the workspace's owner and admins make projects: the others see no + and no first-project card.
-  const canMakeProjects = !!workspace && canManage(workspace.myRole);
+  const canMakeProjects = !!workspace && canManage(workspace);
   const projectPages = useInfiniteQuery({ ...projectsQuery(workspaceId), enabled: !!workspace });
   const projects = projectPages.data?.pages.flatMap(page => page.items) ?? [];
   const item = useQuery({ ...itemQuery(workspaceId, place.projectId ?? '', place.itemId ?? ''), enabled: !!workspace && !!place.projectId && !!place.itemId && place.itemId !== 'new' });
@@ -103,9 +110,9 @@ export function AppLayout() {
   if (isAccount) steps.push({ label: '계정' }, { label: ACCOUNT_MENU.find(entry => entry.path === place.account)?.label ?? '설정' });
   else if (isSpaceSettings && workspace) {
     const home = workspacePath(workspaceId);
-    steps.push({ label: workspace.name, href: home, onClick: go(home) }, { label: '설정' });
+    steps.push({ label: workspace.name, href: home, onClick: go(home) }, scopeStep('설정', workspaceSettingsPath(workspaceId)));
     const entries = place.settingsProjectId ? PROJECT_SETTINGS_MENU : WORKSPACE_SETTINGS_MENU;
-    if (place.settingsProjectId) steps.push({ label: projectName(place.settingsProjectId) ?? '프로젝트' });
+    if (place.settingsProjectId) steps.push(scopeStep(projectName(place.settingsProjectId) ?? '프로젝트', projectSettingsPath(workspaceId, place.settingsProjectId)));
     steps.push({ label: entries.find(entry => entry.path === place.settings)?.label ?? '페이지 찾기' });
   }
   else if (place.isWorkspaces) steps.push({ label: PRODUCT_NAME }, { label: '워크스페이스' });
@@ -116,10 +123,26 @@ export function AppLayout() {
       steps.push(scopeStep(projectName(place.projectId) ?? '프로젝트', projectPath(workspaceId, place.projectId)));
       if (place.projectSection === 'documents') steps.push({ label: '문서' });
       const key = item.data?.key;
-      if (place.itemId) steps.push({ label: place.itemId === 'new' ? '새 업무' : key && place.isEditing ? `${key} 편집` : key ?? '업무' });
-    } else if (place.workspaceSection === '') steps.push(scopeStep('홈', home));
+      if (place.itemId) {
+        if (place.itemId === 'new') steps.push({ label: '새 업무' });
+        else { steps.push(scopeStep(key ?? '업무', `${projectPath(workspaceId, place.projectId)}/work-items/${place.itemId}`)); if (place.isEditing) steps.push({ label: '편집' }); }
+      }
+    } else if (place.workspaceSection === '/members/invite') steps.push(scopeStep('구성원', workspacePath(workspaceId, '/members')), { label: '구성원 초대' });
+    else if (place.workspaceSection === '') steps.push(scopeStep('홈', home));
     else steps.push({ label: WORKSPACE_MENU.find(entry => entry.path === place.workspaceSection)?.label ?? SECTION_NAMES[place.workspaceSection ?? ''] ?? '페이지 찾기' });
   } else steps.push({ label: PRODUCT_NAME });
+  if (workspace && (place.workspaceSection === '/documents' || place.projectSection === 'documents')) {
+    // A document route is workspace-scoped, but its trail retains its project and full folder path.
+    steps.splice(1);
+    if (documentProject) steps.push(scopeStep(projectName(documentProject) ?? '프로젝트', projectPath(workspaceId, documentProject)));
+    steps.push(scopeStep(documentProject ? '문서' : '문서함', folderHref(workspaceId, documentProject ?? null)));
+    for (const folder of document?.path ?? documentFolder?.path ?? []) steps.push(scopeStep(folder.name, folderHref(workspaceId, documentProject ?? null, folder.id)));
+    if (place.documentRef) {
+      if (document) steps.push(scopeStep(document.title, documentHref(workspaceId, document)));
+      else steps.push({ label: place.documentRef === 'new' ? '새 문서' : '문서 상세' });
+      if (place.isEditing) steps.push({ label: '편집' });
+    }
+  }
 
   const entry = (label: string, icon: string, href: string, isSelected: boolean) =>
     <SideNavItem key={href} label={label} href={href} icon={<NavIcon name={icon} size="navigation" />} isSelected={isSelected} onClick={go(href)} />;
@@ -218,7 +241,7 @@ export function AppLayout() {
     </div>
     <Button label="로그아웃" variant="secondary" icon={<NavIcon name="logout" />} onClick={() => { void signOut(); }} />
   </div>;
-  return <ShellFrame pathname={pathname} folded={folded} onFold={setFolded} trail={<Trail steps={steps} />} sidebar={sidebar} mobileEnd={bell}
+  return <ShellFrame folded={folded} onExpandSidebar={() => setFolded(false)} pathname={pathname} trail={<Trail steps={steps} />} sidebar={sidebar} mobileEnd={bell}
     mobileNav={isSettings ? <ShellTabBar label="설정 메뉴" moreTitle={isAccount ? '계정' : `${workspace?.name ?? ''} 설정`} tabs={scopeTabs.slice(0, count)} more={more} account={mobileAccount} />
       : workspace ? <ShellTabBar label="워크스페이스 메뉴" moreTitle={workspace.name} tabs={scopeTabs.slice(0, count)} more={more} account={mobileAccount} /> : undefined}>
     <Outlet />
