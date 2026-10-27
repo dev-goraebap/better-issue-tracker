@@ -26,7 +26,7 @@ export function WorkItemTable({ workspaceId, rows, search, columns, columnNames,
     const cells: Record<ViewColumn, Omit<SheetColumn<WorkItem>, 'key'>> = {
       status: { header: '상태', width: '8rem', render: row => (row.columnCategory ? <StatusBadge category={row.columnCategory} name={row.columnId ? columnNames?.get(row.columnId) : undefined} /> : null) },
       priority: { header: '우선순위', width: '7rem', sortKey: 'priority', render: row => (row.priority ? <PriorityMark priority={row.priority} /> : null) },
-      assignee: { header: '담당자', width: '9rem', render: row => <PersonCell id={row.assigneeId} name={row.assigneeName} /> },
+      assignee: { header: '사람', width: '9rem', render: row => <PersonCell people={row.people} /> },
       labels: { header: '라벨', width: '11rem', render: row => <LabelTokens labels={row.labels} /> },
       due: { header: '기한', width: '7rem', render: row => (row.dueDate ? dateText(row.dueDate) : null) },
       updated: { header: '수정일', width: '7rem', sortKey: 'updated', render: row => dateText(row.updatedAt) },

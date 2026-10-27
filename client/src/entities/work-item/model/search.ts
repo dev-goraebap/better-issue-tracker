@@ -9,7 +9,7 @@ import { parsePanelPlace, type PanelPlace } from '@/shared/lib/routed-panel';
  */
 export type WorkItemSearch = PanelPlace & { v?: string; q?: string; status?: string; priority?: string; assignee?: string; label?: string; date?: string; finding?: 1 };
 /** 새 업무's address: where it starts (a board column's + passes its column in a project, its category in 전체, or none). */
-export type NewWorkItemSearch = { status?: string };
+export type NewWorkItemSearch = { status?: string; kind?: 'event' };
 
 const text = (value: unknown) => (typeof value === 'string' && value.trim() ? value : undefined);
 const DAY = /^\d{4}-\d{2}-\d{2}$/;
@@ -18,4 +18,5 @@ export const parseWorkItemSearch = (raw: Record<string, unknown>): WorkItemSearc
   label: text(raw.label), date: typeof raw.date === 'string' && DAY.test(raw.date) ? raw.date : undefined, finding: findingOf(raw),
   ...parsePanelPlace(raw),
 });
-export const parseNewWorkItemSearch = (raw: Record<string, unknown>): NewWorkItemSearch => ({ status: text(raw.status) });
+export const parseNewWorkItemSearch = (raw: Record<string, unknown>): NewWorkItemSearch =>
+  ({ status: text(raw.status), kind: raw.kind === 'event' ? 'event' : undefined });

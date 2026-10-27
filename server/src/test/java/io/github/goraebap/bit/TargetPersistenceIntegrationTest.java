@@ -108,6 +108,7 @@ class TargetPersistenceIntegrationTest {
                 "session_participant",
                 "session_record",
                 "decision",
+                "work_item_person",
                 "work_item_label",
                 "work_item",
                 "board_column",

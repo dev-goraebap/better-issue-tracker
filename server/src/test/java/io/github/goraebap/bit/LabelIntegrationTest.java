@@ -94,6 +94,7 @@ class LabelIntegrationTest {
     void prepare() {
         for (String table : List.of(
                 "activity",
+                "work_item_person",
                 "work_item_label",
                 "work_item",
                 "board_column",

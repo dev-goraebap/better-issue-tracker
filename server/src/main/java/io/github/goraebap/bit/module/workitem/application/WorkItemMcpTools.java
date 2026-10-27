@@ -77,7 +77,8 @@ class WorkItemMcpTools implements McpToolProvider {
                                 .string("project", "프로젝트 키. 예: ORM", false)
                                 .string("query", "제목에서 찾을 말", false)
                                 .choice("category", "상태 분류로 거르기", List.of("todo", "doing", "done", "none"), false)
-                                .string("assignee", "담당자: me, 이메일, 또는 이름", false)
+                                .string("assignee", "담당자나 참석자: me, 이메일, 또는 이름", false)
+                                .choice("kind", "종류로 거르기: task(작업), event(일정)", List.of("task", "event"), false)
                                 .string("label", "라벨 이름. 예: 결정기록", false)
                                 .bool("include_closed", "완료한 업무도 넣을지. 결정기록은 대부분 완료 상태라 찾을 때 true를 주세요.")
                                 .integer("limit", "가져올 개수 (기본 30)", 1, 100)
@@ -93,17 +94,26 @@ class WorkItemMcpTools implements McpToolProvider {
                         McpTool.input()
                                 .string("project", "프로젝트 키. 예: ORM", true)
                                 .string("title", "제목", true)
+                                .choice(
+                                        "kind",
+                                        "task(작업, 기본): 칸·담당자·날짜. event(일정): 참석자와 시각(starts_at·ends_at) 또는 종일(all_day와 start_date·due_date), 칸 없음",
+                                        List.of("task", "event"),
+                                        false)
                                 .string("description", "마크다운 설명", false)
-                                .string("status", STATUS + " 생략하면 첫 '할 일' 칸입니다.", false)
+                                .string("status", STATUS + " 생략하면 첫 '할 일' 칸입니다. 일정에는 쓰지 않습니다.", false)
                                 .choice(
                                         "priority",
                                         "우선순위 (기본 medium)",
                                         List.of("low", "medium", "high", "urgent"),
                                         false)
-                                .string("assignee", "담당자: me, 이메일, 또는 이름", false)
+                                .string("assignee", "담당자(일정이면 참석자) 한 명: me, 이메일, 또는 이름", false)
+                                .strings("people", "담당자나 참석자 여럿: me, 이메일, 또는 이름", false)
                                 .strings("labels", "라벨 이름들. 예: [\"버그\"]", false)
-                                .string("start_date", "시작일 YYYY-MM-DD", false)
-                                .string("due_date", "기한 YYYY-MM-DD", false)
+                                .string("start_date", "시작일 YYYY-MM-DD (작업, 종일 일정)", false)
+                                .string("due_date", "기한(종일 일정이면 끝나는 날) YYYY-MM-DD", false)
+                                .string("starts_at", "일정 시작 시각. 예: 2026-10-28T10:00+09:00", false)
+                                .string("ends_at", "일정 끝 시각. 예: 2026-10-28T11:00+09:00", false)
+                                .bool("all_day", "true면 종일 일정(start_date·due_date를 씀)")
                                 .string("workspace", WORKSPACE, false)
                                 .build(),
                         false,
@@ -117,10 +127,15 @@ class WorkItemMcpTools implements McpToolProvider {
                                 .string("title", "새 제목", false)
                                 .string("description", "새 마크다운 설명 (통째로 바뀝니다)", false)
                                 .choice("priority", "우선순위", List.of("low", "medium", "high", "urgent", "none"), false)
-                                .string("assignee", "담당자: me, 이메일, 이름, 또는 none", false)
+                                .string("assignee", "담당자(참석자) 한 명으로 바꿈: me, 이메일, 이름, 또는 none", false)
+                                .strings("people", "담당자나 참석자 여럿 (이 목록으로 바뀝니다, []는 비움)", false)
+                                .choice("kind", "종류를 바꿈: task 또는 event", List.of("task", "event"), false)
                                 .strings("labels", "라벨 이름들 (이 목록으로 바뀝니다)", false)
                                 .string("start_date", "시작일 YYYY-MM-DD 또는 none", false)
                                 .string("due_date", "기한 YYYY-MM-DD 또는 none", false)
+                                .string("starts_at", "일정 시작 시각(예: 2026-10-28T10:00+09:00) 또는 none", false)
+                                .string("ends_at", "일정 끝 시각 또는 none", false)
+                                .bool("all_day", "true면 종일 일정, false면 시각 일정")
                                 .string("workspace", WORKSPACE, false)
                                 .build(),
                         false,
@@ -178,7 +193,8 @@ class WorkItemMcpTools implements McpToolProvider {
                 project.isPresent() ? new WorkItemRequests.ListRequest() : new WorkItemRequests.WorkspaceListRequest();
         args.optionalString("query").ifPresent(filters::setQ);
         args.optionalString("category").ifPresent(category -> filters.setCategory(List.of(category)));
-        args.optionalString("assignee").ifPresent(name -> filters.setAssigneeId(person(actor, workspace, name)));
+        args.optionalString("assignee").ifPresent(name -> filters.setPersonId(person(actor, workspace, name)));
+        args.optionalString("kind").ifPresent(kind -> filters.setKind(List.of(kind)));
         args.optionalString("label")
                 .ifPresent(name -> filters.setLabelId(List.copyOf(labelIds(actor, workspace, List.of(name)))));
         if (!args.bool("include_closed").orElse(false)) filters.setClosed(false);
@@ -208,29 +224,33 @@ class WorkItemMcpTools implements McpToolProvider {
                 workspaceFacade.resolve(actor, args.optionalString("workspace").orElse(null));
         var project = projectFacade.findByKey(actor, workspace, args.string("project"));
         var columns = projectFacade.boardColumns(actor, workspace, project.id());
-        String column = args.optionalString("status")
-                .map(status -> column(columns, status))
-                .orElseGet(() -> columns.stream()
-                        .filter(c -> c.category() != null
-                                && "todo".equals(c.category().name()))
-                        .findFirst()
-                        .or(() -> columns.stream().findFirst())
-                        .map(ProjectFacade.ColumnInfo::id)
-                        .orElse(null));
+        var kind = args.optionalString("kind").map(this::kind).orElse(WorkItem.Kind.task);
+        String column = kind == WorkItem.Kind.event
+                ? null
+                : args.optionalString("status")
+                        .map(status -> column(columns, status))
+                        .orElseGet(() -> columns.stream()
+                                .filter(c -> c.category() != null
+                                        && "todo".equals(c.category().name()))
+                                .findFirst()
+                                .or(() -> columns.stream().findFirst())
+                                .map(ProjectFacade.ColumnInfo::id)
+                                .orElse(null));
         var details = new WorkItem.Details(
                 args.string("title"),
                 args.optionalString("description").orElse(null),
                 args.optionalString("priority").map(this::priority).orElse(WorkItem.Priority.medium),
                 null,
-                args.optionalString("assignee")
-                        .map(name -> person(actor, workspace, name))
-                        .orElse(null),
+                people(actor, workspace, args).orElse(Set.of()),
                 args.date("start_date").orElse(null),
-                args.date("due_date").orElse(null));
+                args.date("due_date").orElse(null),
+                instant(args, "starts_at").orElse(null),
+                instant(args, "ends_at").orElse(null),
+                args.bool("all_day").orElse(false));
         Set<String> labels = args.strings("labels")
                 .map(names -> labelIds(actor, workspace, names))
                 .orElse(Set.of());
-        String id = workItemService.create(actor, workspace, project.id(), details, column, labels);
+        String id = workItemService.create(actor, workspace, project.id(), kind, details, column, labels);
         var item = workItemQueryService.get(actor, workspace, project.id(), id);
         return summary(item, columns);
     }
@@ -243,9 +263,12 @@ class WorkItemMcpTools implements McpToolProvider {
         args.optionalString("title").ifPresent(request::setTitle);
         args.optionalString("description").ifPresent(request::setDescription);
         args.optionalString("priority").ifPresent(value -> request.setPriority(isNone(value) ? null : priority(value)));
-        args.optionalString("assignee")
-                .ifPresent(
-                        value -> request.setAssigneeId(isNone(value) ? null : person(actor, at.workspaceId(), value)));
+        args.optionalString("kind").map(this::kind).ifPresent(request::setKind);
+        people(actor, at.workspaceId(), args).ifPresent(ids -> request.setPeopleIds(List.copyOf(ids)));
+        if (args.has("starts_at"))
+            request.setStartsAt(instant(args, "starts_at").orElse(null));
+        if (args.has("ends_at")) request.setEndsAt(instant(args, "ends_at").orElse(null));
+        args.bool("all_day").ifPresent(request::setAllDay);
         args.strings("labels")
                 .ifPresent(names -> request.setLabelIds(List.copyOf(labelIds(actor, at.workspaceId(), names))));
         if (args.has("start_date"))
@@ -396,10 +419,18 @@ class WorkItemMcpTools implements McpToolProvider {
                 "category",
                 item.columnCategory() == null ? "none" : item.columnCategory().name());
         view.put("priority", item.priority());
-        view.put("assignee", item.assigneeName());
+        view.put("kind", item.kind());
+        view.put(
+                item.kind() == WorkItem.Kind.event ? "attendees" : "assignees",
+                item.people().stream().map(WorkItemViews.Person::name).toList());
         view.put("labels", item.labels().stream().map(WorkItemViews.Label::name).toList());
         view.put("startDate", item.startDate());
         view.put("dueDate", item.dueDate());
+        if (item.kind() == WorkItem.Kind.event) {
+            view.put("startsAt", item.startsAt());
+            view.put("endsAt", item.endsAt());
+            view.put("allDay", item.allDay());
+        }
         view.put("closed", item.closedAt() != null);
         view.put("archived", item.archivedAt() != null);
         return view;
@@ -433,6 +464,11 @@ class WorkItemMcpTools implements McpToolProvider {
                         .map(id -> labels.getOrDefault(id, "지워진 라벨"))
                         .collect(Collectors.joining(", "));
         Function<String, String> person = id -> id == null ? "없음" : people.getOrDefault(id, "지워진 구성원");
+        Function<String, String> everyone = ids -> ids == null
+                ? "없음"
+                : java.util.Arrays.stream(ids.split(","))
+                        .map(id -> people.getOrDefault(id, "지워진 구성원"))
+                        .collect(Collectors.joining(", "));
         String text =
                 switch (Objects.requireNonNullElse(line.action(), "")) {
                     case "created" -> "업무를 만듦";
@@ -444,6 +480,12 @@ class WorkItemMcpTools implements McpToolProvider {
                             case "title" -> "제목: '" + line.before() + "' → '" + line.after() + "'";
                             case "description" -> "설명을 고침";
                             case "assignee" -> "담당자: " + person.apply(line.after());
+                            case "people" ->
+                                "사람: " + everyone.apply(line.before()) + " → " + everyone.apply(line.after());
+                            case "kind" -> "종류: " + ("event".equals(line.after()) ? "일정" : "작업");
+                            case "startsAt" -> "시작 시각: " + Objects.requireNonNullElse(line.after(), "없음");
+                            case "endsAt" -> "끝 시각: " + Objects.requireNonNullElse(line.after(), "없음");
+                            case "allDay" -> "true".equals(line.after()) ? "종일 일정으로" : "시각 일정으로";
                             case "labels" -> "라벨: " + names.apply(line.before()) + " → " + names.apply(line.after());
                             case "priority" -> "우선순위: " + Objects.requireNonNullElse(line.after(), "없음");
                             case "startDate" -> "시작일: " + Objects.requireNonNullElse(line.after(), "없음");
@@ -454,6 +496,36 @@ class WorkItemMcpTools implements McpToolProvider {
                 };
         view.put("activity", text);
         return view;
+    }
+
+    private WorkItem.Kind kind(String value) {
+        try {
+            return WorkItem.Kind.valueOf(value.strip().toLowerCase(java.util.Locale.ROOT));
+        } catch (IllegalArgumentException unknown) {
+            throw new IllegalArgumentException("kind는 task 또는 event입니다");
+        }
+    }
+
+    /** The people an agent named: people (a list, [] for none) or assignee (one, or none); empty when neither. */
+    private java.util.Optional<Set<String>> people(CurrentUser actor, String workspace, McpArguments args) {
+        var many = args.strings("people");
+        if (many.isPresent())
+            return java.util.Optional.of(many.get().stream()
+                    .map(name -> person(actor, workspace, name))
+                    .collect(Collectors.toCollection(java.util.LinkedHashSet::new)));
+        return args.optionalString("assignee")
+                .map(value -> isNone(value) ? Set.<String>of() : Set.of(person(actor, workspace, value)));
+    }
+
+    /** An ISO date-time with its offset (2026-10-28T10:00+09:00); none for nothing. */
+    private static java.util.Optional<java.time.Instant> instant(McpArguments args, String name) {
+        return args.optionalString(name).filter(value -> !isNone(value)).map(value -> {
+            try {
+                return java.time.OffsetDateTime.parse(value).toInstant();
+            } catch (java.time.format.DateTimeParseException invalid) {
+                throw new IllegalArgumentException(name + "는 2026-10-28T10:00+09:00처럼 시간대를 붙여 주세요");
+            }
+        });
     }
 
     private record Located(String workspaceId, String projectId, String id, String reference) {}

@@ -1,7 +1,6 @@
 import type { CSSProperties, ReactNode } from 'react';
-import { DefaultAvatar } from '@/shared/ui';
 import { dateText } from '@/shared/lib/date-text';
-import { WorkItemLink, type WorkItemSearch, type WorkItem } from '@/entities/work-item';
+import { PeopleAvatars, WorkItemLink, type WorkItemSearch, type WorkItem } from '@/entities/work-item';
 import styles from './cards.module.css';
 
 /**
@@ -19,7 +18,7 @@ export function CardsView({ workspaceId, items, search, empty }: { workspaceId: 
         <h3 className={styles.title}><span className={styles.key}>{workItem.key}</span>{workItem.title}</h3>
         {workItem.description && <p className={styles.summary}>{workItem.description}</p>}
         <span className={styles.foot}>
-          {workItem.assigneeId && <DefaultAvatar seed={workItem.assigneeId} name={workItem.assigneeName ?? ''} size={20} />}
+          <PeopleAvatars people={workItem.people} />
           <span className={styles.date}>{dateText(workItem.startDate ?? workItem.createdAt)}</span>
         </span>
       </WorkItemLink>

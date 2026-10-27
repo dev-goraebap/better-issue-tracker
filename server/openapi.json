@@ -487,11 +487,26 @@
             "description" : "A column id of the project, or backlog"
           }
         }, {
-          "name" : "assigneeId",
+          "name" : "personId",
           "in" : "query",
+          "description" : "Items this member does or attends",
           "required" : false,
           "schema" : {
-            "type" : [ "string", "null" ]
+            "type" : [ "string", "null" ],
+            "description" : "Items this member does or attends"
+          }
+        }, {
+          "name" : "kind",
+          "in" : "query",
+          "description" : "Any of task, event (repeatable)",
+          "required" : false,
+          "schema" : {
+            "type" : "array",
+            "description" : "Any of task, event (repeatable)",
+            "items" : {
+              "type" : "string",
+              "description" : "Any of task, event (repeatable)"
+            }
           }
         }, {
           "name" : "labelId",
@@ -3151,11 +3166,26 @@
             }
           }
         }, {
-          "name" : "assigneeId",
+          "name" : "personId",
           "in" : "query",
+          "description" : "Items this member does or attends",
           "required" : false,
           "schema" : {
-            "type" : [ "string", "null" ]
+            "type" : [ "string", "null" ],
+            "description" : "Items this member does or attends"
+          }
+        }, {
+          "name" : "kind",
+          "in" : "query",
+          "description" : "Any of task, event (repeatable)",
+          "required" : false,
+          "schema" : {
+            "type" : "array",
+            "description" : "Any of task, event (repeatable)",
+            "items" : {
+              "type" : "string",
+              "description" : "Any of task, event (repeatable)"
+            }
           }
         }, {
           "name" : "labelId",
@@ -3573,11 +3603,26 @@
             "description" : "A column id of the project, or backlog"
           }
         }, {
-          "name" : "assigneeId",
+          "name" : "personId",
           "in" : "query",
+          "description" : "Items this member does or attends",
           "required" : false,
           "schema" : {
-            "type" : [ "string", "null" ]
+            "type" : [ "string", "null" ],
+            "description" : "Items this member does or attends"
+          }
+        }, {
+          "name" : "kind",
+          "in" : "query",
+          "description" : "Any of task, event (repeatable)",
+          "required" : false,
+          "schema" : {
+            "type" : "array",
+            "description" : "Any of task, event (repeatable)",
+            "items" : {
+              "type" : "string",
+              "description" : "Any of task, event (repeatable)"
+            }
           }
         }, {
           "name" : "labelId",
@@ -3780,11 +3825,26 @@
             "description" : "A column id of the project, or backlog"
           }
         }, {
-          "name" : "assigneeId",
+          "name" : "personId",
           "in" : "query",
+          "description" : "Items this member does or attends",
           "required" : false,
           "schema" : {
-            "type" : [ "string", "null" ]
+            "type" : [ "string", "null" ],
+            "description" : "Items this member does or attends"
+          }
+        }, {
+          "name" : "kind",
+          "in" : "query",
+          "description" : "Any of task, event (repeatable)",
+          "required" : false,
+          "schema" : {
+            "type" : "array",
+            "description" : "Any of task, event (repeatable)",
+            "items" : {
+              "type" : "string",
+              "description" : "Any of task, event (repeatable)"
+            }
           }
         }, {
           "name" : "labelId",
@@ -4674,8 +4734,14 @@
             "type" : [ "string", "null" ],
             "enum" : [ "request", "finding", "external", "improvement", "planned", null ]
           },
-          "assigneeId" : {
-            "type" : [ "string", "null" ]
+          "peopleIds" : {
+            "type" : [ "array", "null" ],
+            "description" : "Who does a task or attends an event",
+            "items" : {
+              "type" : "string"
+            },
+            "maxItems" : 20,
+            "minItems" : 0
           },
           "startDate" : {
             "type" : [ "string", "null" ],
@@ -4685,8 +4751,28 @@
             "type" : [ "string", "null" ],
             "format" : "date"
           },
+          "kind" : {
+            "type" : [ "string", "null" ],
+            "description" : "task (the default) or event (D-092)",
+            "enum" : [ "task", "event", null ]
+          },
+          "startsAt" : {
+            "type" : [ "string", "null" ],
+            "format" : "date-time",
+            "description" : "A timed event's start"
+          },
+          "endsAt" : {
+            "type" : [ "string", "null" ],
+            "format" : "date-time",
+            "description" : "A timed event's end"
+          },
+          "allDay" : {
+            "type" : [ "boolean", "null" ],
+            "description" : "An event that lasts whole days, from startDate to dueDate"
+          },
           "columnId" : {
-            "type" : [ "string", "null" ]
+            "type" : [ "string", "null" ],
+            "description" : "A task's column; an event has none"
           },
           "labelIds" : {
             "type" : [ "array", "null" ],
@@ -5398,9 +5484,6 @@
             "type" : [ "string", "null" ],
             "enum" : [ "request", "finding", "external", "improvement", "planned", null ]
           },
-          "assigneeId" : {
-            "type" : [ "string", "null" ]
-          },
           "startDate" : {
             "type" : [ "string", "null" ],
             "format" : "date"
@@ -5409,6 +5492,22 @@
             "type" : [ "string", "null" ],
             "format" : "date"
           },
+          "kind" : {
+            "type" : "string",
+            "description" : "Changing the kind keeps what fits it (D-092): an event leaves its column",
+            "enum" : [ "task", "event" ]
+          },
+          "startsAt" : {
+            "type" : [ "string", "null" ],
+            "format" : "date-time"
+          },
+          "endsAt" : {
+            "type" : [ "string", "null" ],
+            "format" : "date-time"
+          },
+          "allDay" : {
+            "type" : "boolean"
+          },
           "labelIds" : {
             "type" : [ "array", "null" ],
             "description" : "Omitted: labels are kept. Present: the whole set is replaced; [] or null clears it",
@@ -5416,6 +5515,15 @@
               "type" : "string"
             },
             "maxItems" : 50,
+            "minItems" : 0
+          },
+          "peopleIds" : {
+            "type" : [ "array", "null" ],
+            "description" : "Omitted: people are kept. Present: the whole set is replaced",
+            "items" : {
+              "type" : "string"
+            },
+            "maxItems" : 20,
             "minItems" : 0
           }
         },
@@ -5657,6 +5765,10 @@
           "key" : {
             "type" : "string"
           },
+          "kind" : {
+            "type" : "string",
+            "enum" : [ "task", "event" ]
+          },
           "title" : {
             "type" : "string"
           },
@@ -5690,11 +5802,12 @@
             "type" : [ "string", "null" ],
             "enum" : [ "request", "finding", "external", "improvement", "planned", null ]
           },
-          "assigneeId" : {
-            "type" : [ "string", "null" ]
-          },
-          "assigneeName" : {
-            "type" : [ "string", "null" ]
+          "people" : {
+            "type" : "array",
+            "description" : "Who does a task or attends an event, by name",
+            "items" : {
+              "$ref" : "#/components/schemas/WorkItemPerson"
+            }
           },
           "startDate" : {
             "type" : [ "string", "null" ],
@@ -5703,6 +5816,17 @@
           "dueDate" : {
             "type" : [ "string", "null" ],
             "format" : "date"
+          },
+          "startsAt" : {
+            "type" : [ "string", "null" ],
+            "format" : "date-time"
+          },
+          "endsAt" : {
+            "type" : [ "string", "null" ],
+            "format" : "date-time"
+          },
+          "allDay" : {
+            "type" : "boolean"
           },
           "closedAt" : {
             "type" : [ "string", "null" ],
@@ -5741,7 +5865,7 @@
             "type" : [ "string", "null" ]
           }
         },
-        "required" : [ "archivedAt", "assigneeId", "assigneeName", "closedAt", "columnCategory", "columnId", "createdAt", "createdBy", "createdByAgent", "deletedAt", "description", "dueDate", "id", "key", "labels", "number", "position", "priority", "projectId", "startDate", "title", "triggerType", "updatedAt", "updatedBy", "updatedByAgent", "version", "workspaceId" ]
+        "required" : [ "allDay", "archivedAt", "closedAt", "columnCategory", "columnId", "createdAt", "createdBy", "createdByAgent", "deletedAt", "description", "dueDate", "endsAt", "id", "key", "kind", "labels", "number", "people", "position", "priority", "projectId", "startDate", "startsAt", "title", "triggerType", "updatedAt", "updatedBy", "updatedByAgent", "version", "workspaceId" ]
       },
       "WorkItemLabel" : {
         "type" : "object",
@@ -5760,6 +5884,18 @@
           }
         },
         "required" : [ "color", "id", "name", "system" ]
+      },
+      "WorkItemPerson" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "id", "name" ]
       },
       "WorkItems" : {
         "type" : "object",

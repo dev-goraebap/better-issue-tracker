@@ -32,7 +32,7 @@ export function HistoryView({ workspaceId, items, search, empty }: { workspaceId
             {workItem.columnCategory && <StatusBadge category={workItem.columnCategory} />}
           </span>
           <span className={styles.meta}>
-            {workItem.assigneeId && <span className={styles.person}><PersonCell id={workItem.assigneeId} name={workItem.assigneeName} /></span>}
+            {workItem.people.length > 0 && <span className={styles.person}><PersonCell people={workItem.people} /></span>}
             <LabelTokens labels={workItem.labels} />
           </span>
         </WorkItemLink>

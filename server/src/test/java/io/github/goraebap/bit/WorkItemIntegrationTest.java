@@ -7,6 +7,7 @@ import io.github.goraebap.bit.module.project.application.ProjectService;
 import io.github.goraebap.bit.module.workitem.application.WorkItemQueryService;
 import io.github.goraebap.bit.module.workitem.application.WorkItemRequests;
 import io.github.goraebap.bit.module.workitem.application.WorkItemService;
+import io.github.goraebap.bit.module.workitem.application.WorkItemViews;
 import io.github.goraebap.bit.module.workitem.domain.WorkItem;
 import io.github.goraebap.bit.module.workitem.domain.WorkItemRepository;
 import io.github.goraebap.bit.shared.domain.Ids;
@@ -96,6 +97,7 @@ class WorkItemIntegrationTest {
         for (String table : List.of(
                 "comment",
                 "activity",
+                "work_item_person",
                 "work_item_label",
                 "work_item",
                 "board_column",
@@ -490,16 +492,18 @@ class WorkItemIntegrationTest {
                 "DELETE FROM workspace_member WHERE workspace_id=? AND iam_user_id=?", workspace, member.userId());
         assertThatThrownBy(() -> create(owner, "New assignment", todo, member.userId()))
                 .hasMessageContaining("멤버");
-        assertThat(workItemQueryService.get(owner, workspace, project, id).assigneeId())
-                .isEqualTo(member.userId());
+        assertThat(workItemQueryService.get(owner, workspace, project, id).people())
+                .extracting(WorkItemViews.Person::id)
+                .containsExactly(member.userId());
         assertThatThrownBy(() -> workItemQueryService.get(member, workspace, project, id))
                 .hasMessageContaining("찾을 수");
         var update = new WorkItemRequests.Update();
         update.setExpectedVersion(0L);
         update.setTitle("Kept assignment");
         workItemService.revise(owner, workspace, project, id, update);
-        assertThat(workItemQueryService.get(owner, workspace, project, id).assigneeId())
-                .isEqualTo(member.userId());
+        assertThat(workItemQueryService.get(owner, workspace, project, id).people())
+                .extracting(WorkItemViews.Person::id)
+                .containsExactly(member.userId());
     }
 
     @Test
@@ -746,7 +750,7 @@ class WorkItemIntegrationTest {
         var filter = new WorkItemRequests.ListRequest();
         filter.setPriority(List.of("high,low,"));
         filter.setTriggerType(List.of("finding"));
-        filter.setAssigneeId(owner.userId());
+        filter.setPersonId(owner.userId());
         filter.setColumn(todo);
         filter.setFrom(start.plusDays(1));
         filter.setTo(due);
@@ -763,11 +767,11 @@ class WorkItemIntegrationTest {
         var update = new WorkItemRequests.Update();
         update.setExpectedVersion(0L);
         update.setDescription(null);
-        update.setAssigneeId(null);
+        update.setPeopleIds(List.of());
         workItemService.revise(owner, workspace, project, id, update);
         var read = workItemQueryService.get(owner, workspace, project, id);
         assertThat(read.description()).isNull();
-        assertThat(read.assigneeId()).isNull();
+        assertThat(read.people()).isEmpty();
         assertThat(read.priority()).isEqualTo(WorkItem.Priority.high);
         update = new WorkItemRequests.Update();
         update.setExpectedVersion(1L);
@@ -885,6 +889,89 @@ class WorkItemIntegrationTest {
                 actor.userId(),
                 role,
                 InstantTextBinding.text(Instant.now()));
+    }
+
+    @Test
+    void eventsHaveTimesAndAttendeesAndStayOffTheBoardWhileTasksTakePeople() {
+        CurrentUser member = identity("member", false);
+        membership(member, "member");
+        var startsAt = java.time.Instant.parse("2026-10-28T01:00:00Z");
+        var meeting = new WorkItem.Details(
+                "Weekly",
+                null,
+                null,
+                null,
+                java.util.Set.of(owner.userId(), member.userId()),
+                null,
+                null,
+                startsAt,
+                startsAt.plusSeconds(3600),
+                false);
+        // An event never takes a column, even when one is asked for.
+        String event = workItemService.create(
+                owner, workspace, project, WorkItem.Kind.event, meeting, todo, java.util.Set.of());
+        var read = workItemQueryService.get(owner, workspace, project, event);
+        assertThat(read.kind()).isEqualTo(WorkItem.Kind.event);
+        assertThat(read.columnId()).isNull();
+        assertThat(read.startsAt()).isEqualTo(startsAt);
+        assertThat(read.people()).hasSize(2);
+        // Times on a task, or dates on a timed event, are refused.
+        var timedTask =
+                new WorkItem.Details("Bad", null, null, null, java.util.Set.of(), null, null, startsAt, null, false);
+        assertThatThrownBy(() -> workItemService.create(
+                        owner, workspace, project, WorkItem.Kind.task, timedTask, todo, java.util.Set.of()))
+                .hasMessageContaining("일정은");
+
+        String task = workItemService.create(owner, workspace, project, details("Spec", member.userId()), todo);
+        var mine = new WorkItemRequests.WorkspaceListRequest();
+        assertThat(workItemQueryService
+                        .listWorkspace(member, workspace, withPerson(mine, member.userId()))
+                        .items())
+                .extracting(WorkItemViews.Item::id)
+                .containsExactlyInAnyOrder(event, task);
+        var backlog = new WorkItemRequests.ListRequest();
+        backlog.setCategory(List.of("none"));
+        assertThat(workItemQueryService
+                        .list(owner, workspace, project, false, backlog)
+                        .items())
+                .extracting(WorkItemViews.Item::id)
+                .doesNotContain(event);
+        var events = new WorkItemRequests.ListRequest();
+        events.setKind(List.of("event"));
+        events.setFrom(java.time.LocalDate.of(2026, 10, 28));
+        events.setTo(java.time.LocalDate.of(2026, 10, 28));
+        assertThat(workItemQueryService
+                        .list(owner, workspace, project, false, events)
+                        .items())
+                .extracting(WorkItemViews.Item::id)
+                .containsExactly(event);
+
+        // A task that becomes an event leaves its column, keeping its days as an all-day event.
+        var dated = new WorkItemRequests.Update();
+        dated.setExpectedVersion(0L);
+        dated.setStartDate(java.time.LocalDate.of(2026, 11, 2));
+        workItemService.revise(owner, workspace, project, task, dated);
+        var toEvent = new WorkItemRequests.Update();
+        toEvent.setExpectedVersion(1L);
+        toEvent.setKind(WorkItem.Kind.event);
+        workItemService.revise(owner, workspace, project, task, toEvent);
+        var changed = workItemQueryService.get(owner, workspace, project, task);
+        assertThat(changed.kind()).isEqualTo(WorkItem.Kind.event);
+        assertThat(changed.columnId()).isNull();
+        assertThat(changed.allDay()).isTrue();
+        assertThat(changed.startDate()).isEqualTo(java.time.LocalDate.of(2026, 11, 2));
+        assertThat(changed.people()).extracting(WorkItemViews.Person::id).containsExactly(member.userId());
+        assertThat(jdbcTemplate.queryForList(
+                        "SELECT payload FROM activity WHERE target_type='work_item' AND target_id=?",
+                        String.class,
+                        task))
+                .anySatisfy(payload -> assertThat(payload).contains("\"field\":\"kind\""));
+    }
+
+    private static WorkItemRequests.WorkspaceListRequest withPerson(
+            WorkItemRequests.WorkspaceListRequest request, String personId) {
+        request.setPersonId(personId);
+        return request;
     }
 
     private String create(CurrentUser actor, String title, String column, String assignee) {

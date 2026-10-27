@@ -43,7 +43,7 @@ const same = <T,>(a: T, b: T) => JSON.stringify(a) === JSON.stringify(b);
 export function WorkItemsView({ scope, view, tweak, effective, workItems, labels, members, search, go, onCreate, onSaveAsView }: {
   scope: Scope; view: WorkItemView; tweak?: ViewTweak; effective: ReturnType<typeof effectiveView>; workItems: readonly WorkItem[];
   labels: readonly Label[]; members: readonly Member[]; search: WorkItemSearch; go: (patch: Partial<WorkItemSearch>, replace?: boolean) => void;
-  onCreate?: (status?: string) => void; onSaveAsView: () => void;
+  onCreate?: (status?: string, kind?: 'event') => void; onSaveAsView: () => void;
 }) {
   const isMobile = useMediaQuery(MOBILE_QUERY);
   const client = useQueryClient();
@@ -83,7 +83,7 @@ export function WorkItemsView({ scope, view, tweak, effective, workItems, labels
   const filters: ListFilter[] = [
     { key: 'status', label: '상태', icon: 'status', value: effective.filters.status, isMultiple: true, options: Object.entries(CATEGORY_LABELS).map(([value, label]) => ({ value, label })) },
     { key: 'priority', label: '우선순위', icon: 'priority', value: effective.filters.priority, options: Object.entries(PRIORITIES).map(([value, label]) => ({ value, label })) },
-    { key: 'assignee', label: '담당자', icon: 'person', value: effective.filters.assignee, isMultiple: true, isSearchable: true,
+    { key: 'assignee', label: '사람', icon: 'person', value: effective.filters.assignee, isMultiple: true, isSearchable: true,
       options: members.map(member => ({ value: member.userId, label: member.name, icon: <DefaultAvatar seed={member.userId} name={member.name} size={20} /> })) },
     { key: 'label', label: '라벨', icon: 'label', value: effective.filters.label, isMultiple: true, isSearchable: true,
       options: labels.map(label => ({ value: label.system ? SYSTEM_LABEL : label.id, label: label.name, icon: <span className={styles.labelDot} style={{ background: label.color }} /> })) },
@@ -124,11 +124,13 @@ export function WorkItemsView({ scope, view, tweak, effective, workItems, labels
     <Button label={canEdit ? '저장' : '뷰로 저장'} variant="secondary" size="sm" onClick={saveFilters} />
   </> : undefined;
   const create = onCreate && (() => onCreate());
-  // A bar carried across the calendar moves the work item's start and due day together.
+  // A bar carried across the calendar moves the work item's start and due day together; a timed event its times.
   const moveDays = async (item: WorkItem, by: number) => {
+    const later = (moment: string) => new Date(Date.parse(moment) + by * 86_400_000).toISOString();
     try {
       await updateItem(workspaceId, item.projectId, item.id, { expectedVersion: item.version,
-        ...(item.startDate ? { startDate: shiftDay(item.startDate, by) } : {}), ...(item.dueDate ? { dueDate: shiftDay(item.dueDate, by) } : {}) });
+        ...(item.startDate ? { startDate: shiftDay(item.startDate, by) } : {}), ...(item.dueDate ? { dueDate: shiftDay(item.dueDate, by) } : {}),
+        ...(item.startsAt ? { startsAt: later(item.startsAt) } : {}), ...(item.endsAt ? { endsAt: later(item.endsAt) } : {}) });
     } catch (failure) { toast({ body: authError(failure) }); }
     await refreshItems(client, workspaceId, item.projectId);
   };
@@ -142,7 +144,10 @@ export function WorkItemsView({ scope, view, tweak, effective, workItems, labels
   return <>
     <ListToolbar search={{ label: '업무 검색', placeholder: '제목이나 키로 찾기', value: search.q, onChange: q => { setShown(SLICE); go({ q }, true); } }}
       filters={filters} onFiltersChange={changeFilters} order={order} views={views} display={display} applied={applied}
-      action={create && { label: '새 업무', icon: 'plus', onClick: create, isCreate: true }} />
+      action={create && { label: '만들기', icon: 'plus', onClick: create, isCreate: true, choices: onCreate && [
+        { label: '작업', icon: 'board', onClick: () => onCreate() },
+        { label: '일정', icon: 'calendar', onClick: () => onCreate(undefined, 'event') },
+      ] }} />
     {effective.layout === 'list' && (rows.length === 0 ? empty('업무', '첫 업무를 만들면 여기에 보입니다.') : isMobile
       ? <><WorkItemRows workspaceId={workspaceId} rows={visible} search={search} columns={effective.columns} columnNames={columnNames} badges={badges} />{summary}</>
       : <WorkItemTable workspaceId={workspaceId} rows={visible} search={search} columns={effective.columns} columnNames={columnNames} order={order} foot={summary} badges={badges} />)}

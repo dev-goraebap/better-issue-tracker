@@ -10,7 +10,7 @@ import {
 import { columnsQuery } from '@/entities/project';
 import { canManage, canWrite as canWriteIn, workspaceQuery } from '@/entities/workspace';
 import {
-  archiveItem, deleteItem, itemQuery, LabelTokens, PersonCell, PriorityMark, refreshItems, StatusBadge, type WorkItemSearch,
+  archiveItem, deleteItem, eventWhen, itemQuery, LabelTokens, PersonCell, PriorityMark, refreshItems, StatusBadge, type WorkItemSearch,
 } from '@/entities/work-item';
 import { branchName, codeLinksQuery, CodeLinkList, integrationsQuery } from '@/entities/repository';
 import { refreshTimeline } from '../api/timeline';
@@ -65,13 +65,16 @@ export function WorkItemDetail({ workspaceId, projectId, id, search }: { workspa
     finally { await refresh(); }
   };
   const column = columns.find(each => each.id === item.columnId);
+  const when = eventWhen(item);
   // Each property set, as a mark; the edit page changes them.
   const properties: [string, ReactNode][] = [
     ...(item.columnCategory ? [['상태', <StatusBadge category={item.columnCategory} name={column?.name} />] as [string, ReactNode]] : []),
     ...(item.priority ? [['우선순위', <PriorityMark priority={item.priority} />] as [string, ReactNode]] : []),
-    ['담당자', <span className={styles.person}><PersonCell id={item.assigneeId} name={item.assigneeName} /></span>],
-    ...(item.startDate ? [['시작일', <span className={styles.dated}><NavIcon name="calendar" />{dateText(item.startDate)}</span>] as [string, ReactNode]] : []),
-    ...(item.dueDate ? [['기한', <span className={styles.dated}><NavIcon name="calendar" />{dateText(item.dueDate)}</span>] as [string, ReactNode]] : []),
+    // An event says when it happens and who attends; a task who does it and its days (D-092).
+    ...(when ? [['일시', <span className={styles.dated}><NavIcon name="calendar" />{when}</span>] as [string, ReactNode]] : []),
+    [item.kind === 'event' ? '참석자' : '담당자', <span className={styles.person}><PersonCell people={item.people} empty={item.kind === 'event' ? '없음' : '미배정'} /></span>],
+    ...(item.kind === 'task' && item.startDate ? [['시작일', <span className={styles.dated}><NavIcon name="calendar" />{dateText(item.startDate)}</span>] as [string, ReactNode]] : []),
+    ...(item.kind === 'task' && item.dueDate ? [['기한', <span className={styles.dated}><NavIcon name="calendar" />{dateText(item.dueDate)}</span>] as [string, ReactNode]] : []),
   ];
   const leave = () => { if (panel) panel.onClose(); else void navigate(list); };
   const edit = () => void navigate({ to: '/workspaces/$workspaceId/projects/$projectId/work-items/$workItemId/edit', params: { workspaceId, projectId, workItemId: id } });

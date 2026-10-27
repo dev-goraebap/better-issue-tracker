@@ -3,7 +3,9 @@ export {
 } from './api/work-item';
 export type { WorkItem, ItemLabel, ColumnCategory, TaskFilters } from './api/work-item';
 export { PRIORITIES } from './model/labels';
-export { CATEGORIES, CATEGORY_LABELS, categoryOf, workItemHref, PRIORITY_RANK, spanOf, SYSTEM_LABEL, type Priority, type StatusCategory } from './model/work-item';
+export {
+  CATEGORIES, CATEGORY_LABELS, categoryOf, eventFields, eventTimeOf, eventWhen, localDay, localTime, workItemHref, PRIORITY_RANK, spanOf, SYSTEM_LABEL, type Priority, type StatusCategory,
+} from './model/work-item';
 export { WORK_ITEM_TEMPLATES, templateLabel, type WorkItemTemplate } from './model/templates';
 export { parseWorkItemSearch, parseNewWorkItemSearch, type WorkItemSearch, type NewWorkItemSearch } from './model/search';
 export {
@@ -17,7 +19,8 @@ export { tweaksQuery, viewOrdersQuery, viewsQuery } from './api/view';
 export { StatusBadge } from './ui/StatusBadge';
 export { PriorityMark } from './ui/PriorityMark';
 export { LabelTokens } from './ui/LabelTokens';
-export { PersonCell } from './ui/PersonCell';
+export { PersonCell, type WorkItemPerson } from './ui/PersonCell';
+export { PeopleAvatars } from './ui/PeopleAvatars';
 export { WorkItemTable } from './ui/WorkItemTable';
 export { WorkItemRows } from './ui/WorkItemRows';
 export { WorkItemLink } from './ui/WorkItemLink';

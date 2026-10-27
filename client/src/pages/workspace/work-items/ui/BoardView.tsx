@@ -2,8 +2,8 @@ import type { ReactNode } from 'react';
 import { IconButton, useToast } from '@astryxdesign/core';
 import { useQueryClient } from '@tanstack/react-query';
 import { authError } from '@/shared/api';
-import { DefaultAvatar, NavIcon, useFillRoom } from '@/shared/ui';
-import { CATEGORIES, CATEGORY_LABELS, WorkItemLink, moveItem, PriorityMark, refreshItems, StatusBadge, type ColumnCategory, type WorkItemSearch, type WorkItem } from '@/entities/work-item';
+import { NavIcon, useFillRoom } from '@/shared/ui';
+import { CATEGORIES, CATEGORY_LABELS, WorkItemLink, moveItem, PeopleAvatars, PriorityMark, refreshItems, StatusBadge, type ColumnCategory, type WorkItemSearch, type WorkItem } from '@/entities/work-item';
 import type { Scope } from '../model/scope';
 import { useBoardMove } from './useBoardMove';
 import styles from './board.module.css';
@@ -49,7 +49,7 @@ export function BoardView({ scope, items, search, onCreate, badges }: {
           <WorkItemLink workspaceId={scope.workspaceId} item={item} search={search} className={styles.card} {...move.cardProps(item)}>
             <span className={styles.cardKey}>{item.key}</span>
             <span className={styles.cardTitle}>{item.title}</span>
-            <span className={styles.cardMeta}><span className={styles.cardMarks}>{item.priority && <PriorityMark priority={item.priority} />}{badges?.get(item.id)}</span>{item.assigneeId && <DefaultAvatar seed={item.assigneeId} name={item.assigneeName ?? ''} size={20} />}</span>
+            <span className={styles.cardMeta}><span className={styles.cardMarks}>{item.priority && <PriorityMark priority={item.priority} />}{badges?.get(item.id)}</span><PeopleAvatars people={item.people} /></span>
           </WorkItemLink>
         </li>)}</ul>
       </section>)}

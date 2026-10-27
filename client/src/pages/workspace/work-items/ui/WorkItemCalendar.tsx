@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Popover } from '@astryxdesign/core';
-import { workItemHref, type WorkItem } from '@/entities/work-item';
+import { localTime, workItemHref, type WorkItem } from '@/entities/work-item';
 import { currentDay, dayTitle, monthDays, weekdayOf, WEEKDAYS } from '../model/dates';
 import { barsOf, layoutMonth } from '../model/month';
 import { useDayDrag } from './useDayDrag';
@@ -8,7 +8,9 @@ import styles from './calendar.module.css';
 
 /** Lanes a day shows under its date, as the narrow cell of a six-week month holds them; one goes to the foot when needed. */
 const LINES = 4;
-const kindOf = (item: WorkItem) => (item.labels.some(label => label.system) ? 'decision' : 'work');
+const kindOf = (item: WorkItem) => (item.labels.some(label => label.system) ? 'decision' : item.kind === 'event' ? 'event' : 'work');
+/** A bar's words: a timed event leads with its start (10:00 주간 회의, D-092), anything else with its key. */
+const barText = (item: WorkItem) => (item.startsAt ? `${localTime(item.startsAt)} ${item.title}` : `${item.key} ${item.title}`);
 
 /**
  * The month as weeks ruled by thin lines, Sunday first, as SandboxHr's team calendar draws it, with the view's work items
@@ -55,7 +57,7 @@ export function WorkItemCalendar({ workspaceId, items, anchor, onOpen, onMove }:
               data-from-before={placed.fromBefore || undefined} data-to-after={placed.toAfter || undefined} data-kind={kindOf(item)}
               data-draggable={onMove ? true : undefined} data-moving={carried?.item.id === item.id || undefined} title={`${item.key} ${item.title}`}
               onPointerDown={onMove ? pointer => dayDrag.press(pointer, item) : undefined} onClick={() => open(item)}>
-              <span className={styles.barName}>{item.key} {item.title}</span>
+              <span className={styles.barName}>{barText(item)}</span>
             </button>;
           })}
           {hasFoot && week.days.map((day, column) => {
@@ -68,7 +70,7 @@ export function WorkItemCalendar({ workspaceId, items, anchor, onOpen, onMove }:
                   <span className={styles.dayListTitle}>{dayTitle(day)}</span>
                   {onDay.map(bar => <button key={bar.item.id} type="button" className={styles.dayListItem} data-kind={kindOf(bar.item)}
                     onClick={() => { setMoreDay(null); onOpen(workItemHref(workspaceId, bar.item)); }}>
-                    <span className={styles.dayListDot} aria-hidden="true" />{bar.item.key} {bar.item.title}
+                    <span className={styles.dayListDot} aria-hidden="true" />{barText(bar.item)}
                   </button>)}
                 </div>}>
                 <button type="button" className={styles.more}>+{more}개 더</button>

@@ -58,6 +58,8 @@
 :is(.bar, .item, .ghost)[data-kind="session"] { --event: var(--kind-session); }
 :is(.bar, .item, .ghost)[data-kind="work"] { --event: var(--kind-work); }
 :is(.bar, .item, .ghost)[data-kind="decision"] { --event: var(--kind-decision); }
+/* An event (D-092) in the accent, apart from the tasks' orange. */
+:is(.bar, .item, .ghost)[data-kind="event"] { --event: var(--color-accent, #5e6ad2); }
 :is(.bar, .item)[data-kind]:hover { background: color-mix(in srgb, var(--event) 24%, var(--color-background-surface)); }
 .bar[data-from-before] { margin-inline-start: 0; border-start-start-radius: 0; border-end-start-radius: 0; }
 .bar[data-to-after] { margin-inline-end: 0; border-start-end-radius: 0; border-end-end-radius: 0; }
@@ -106,3 +108,4 @@
 .dayListItem:hover { background: var(--color-overlay-hover); }
 .dayListDot { inline-size: 0.5rem; block-size: 0.5rem; border-radius: 50%; flex-shrink: 0; background: var(--color-icon-orange, #bc4c00); }
 .dayListItem[data-kind="decision"] .dayListDot { background: var(--color-icon-green, #1a7f37); }
+.dayListItem[data-kind="event"] .dayListDot { background: var(--color-accent, #5e6ad2); }

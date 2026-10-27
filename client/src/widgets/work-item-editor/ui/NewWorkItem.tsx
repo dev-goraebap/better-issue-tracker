@@ -5,20 +5,25 @@ import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-quer
 import { useRouter } from '@tanstack/react-router';
 import { MOBILE_QUERY } from '@/shared/config';
 import { authError } from '@/shared/api';
-import { BackLink, DuePicker, FormMessage, MarkdownEditor, NavIcon, PageFoot, PageFrame, PropertyPicker, usePanelSurface } from '@/shared/ui';
+import { BackLink, DuePicker, EventTimePicker, FormMessage, MarkdownEditor, NavIcon, PageFoot, PageFrame, PropertyPicker, usePanelSurface, type EventTime } from '@/shared/ui';
 import { labelsQuery } from '@/entities/label';
 import { columnsQuery, ProjectMark, projectsQuery, type BoardColumn, type Project } from '@/entities/project';
 import { useMembers } from '@/entities/workspace';
 import {
-  createItem, WORK_ITEM_TEMPLATES, workItemHref, labelOptions, NO_STATUS, peopleOptions, priorityOptions, refreshItems, statusOptions, templateLabel, type Priority,
+  createItem, eventFields, WORK_ITEM_TEMPLATES, workItemHref, labelOptions, NO_STATUS, peopleOptions, priorityOptions, refreshItems, statusOptions, templateLabel,
+  type Priority,
 } from '@/entities/work-item';
 import styles from './create-work-item.module.css';
 
 const mark = (project: Project) => <ProjectMark project={project} size="xs" />;
 
 type Draft = {
-  projectId?: string; title: string; body: string; templateId?: string; status?: string; priority: Priority; assigneeId?: string; labelIds: string[]; dueDate?: string;
+  projectId?: string; title: string; body: string; templateId?: string; status?: string; priority: Priority; people: string[]; labelIds: string[]; dueDate?: string;
+  time: EventTime;
 };
+
+/** What 새 작업 and 새 일정 are called (D-092). */
+const NAMES = { task: { noun: '작업', title: '새 작업' }, event: { noun: '일정', title: '새 일정' } } as const;
 
 /**
  * Where a new work item starts in a project: the column a board lane's + named, the first column of the category 전체's lane
@@ -43,7 +48,11 @@ function startColumn(columns: readonly BoardColumn[], status?: string): string {
  * Ctrl/⌘+Enter makes it; with 계속 만들기 on it stays and starts a fresh title keeping the properties, else it closes (the
  * modal) or opens the work item made (the page). A toast names what was made, with 보기 to its page.
  */
-export function NewWorkItem({ workspaceId, projectId, status }: { workspaceId: string; projectId?: string; status?: string }) {
+export function NewWorkItem({ workspaceId, projectId, status, kind = 'task' }: {
+  workspaceId: string; projectId?: string; status?: string; kind?: 'task' | 'event';
+}) {
+  const name = NAMES[kind];
+  const isEvent = kind === 'event';
   const panel = usePanelSurface();
   const router = useRouter();
   const client = useQueryClient();
@@ -53,7 +62,7 @@ export function NewWorkItem({ workspaceId, projectId, status }: { workspaceId: s
   const labels = useQuery(labelsQuery(workspaceId)).data ?? [];
   const members = useMembers(workspaceId).items;
   const titleBox = useRef<HTMLInputElement>(null);
-  const [draft, setDraft] = useState<Draft>({ projectId, title: '', body: '', priority: 'medium', labelIds: [] });
+  const [draft, setDraft] = useState<Draft>({ projectId, title: '', body: '', priority: 'medium', people: [], labelIds: [], time: { allDay: false } });
   const [isMore, setMore] = useState(false);
   const [isBusy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -68,8 +77,10 @@ export function NewWorkItem({ workspaceId, projectId, status }: { workspaceId: s
     if (!canCreate || !target) return;
     setBusy(true); setError('');
     try {
-      const id = await createItem(workspaceId, target.id, { title: draft.title.trim(), description: draft.body.trim() || null, priority: draft.priority,
-        assigneeId: draft.assigneeId ?? null, dueDate: draft.dueDate ?? null, columnId: shownStatus === NO_STATUS ? null : shownStatus, labelIds: draft.labelIds });
+      const common = { title: draft.title.trim(), description: draft.body.trim() || null, peopleIds: draft.people, labelIds: draft.labelIds };
+      const id = await createItem(workspaceId, target.id, isEvent
+        ? { ...common, kind: 'event', ...eventFields(draft.time), columnId: null }
+        : { ...common, kind: 'task', priority: draft.priority, dueDate: draft.dueDate ?? null, columnId: shownStatus === NO_STATUS ? null : shownStatus });
       await refreshItems(client, workspaceId, target.id);
       const href = workItemHref(workspaceId, { id, projectId: target.id });
       // The toast lives in a layer above the router, so its way to the work item navigates rather than linking.
@@ -85,7 +96,7 @@ export function NewWorkItem({ workspaceId, projectId, status }: { workspaceId: s
     ? <span className={styles.projectChip}>{mark(project)}{project.key}</span>
     : <PropertyPicker label="프로젝트" icon="board" value={target?.id} onChange={value => set({ projectId: value as string, status: undefined })}
       options={projects.map(each => ({ value: each.id, label: each.name, icon: mark(each) }))} />;
-  const titleField = <input ref={titleBox} className={styles.title} value={draft.title} placeholder="업무 제목" aria-label="업무 제목" autoFocus data-autofocus
+  const titleField = <input ref={titleBox} className={styles.title} value={draft.title} placeholder={`${name.noun} 제목`} aria-label={`${name.noun} 제목`} autoFocus data-autofocus
     onChange={event => set({ title: event.target.value })} />;
   const descriptionField = <div className={styles.description}>
     <MarkdownEditor value={draft.body} label="설명" placeholder="설명을 덧붙이세요… ( / 로 블록)" minHeight={panel ? '3.5rem' : '12rem'} onChange={body => set({ body })} />
@@ -108,20 +119,23 @@ ${next.body}`) : isUntouched ? '' : previous.body;
     {lead}
     <PropertyPicker label="템플릿" icon="template" value={draft.templateId} onChange={value => applyTemplate((value as string | undefined) || undefined)}
       options={[{ value: '', label: '템플릿 없음', icon: <NavIcon name="document" /> }, ...WORK_ITEM_TEMPLATES.map(each => ({ value: each.id, label: each.name, icon: <NavIcon name={each.icon} /> }))]} />
-    <PropertyPicker label="상태" icon="status" options={statusOptions(columns)} value={shownStatus} onChange={value => set({ status: (value as string | undefined) ?? NO_STATUS })} />
-    <PropertyPicker label="우선순위" icon="priority" options={priorityOptions} value={draft.priority} onChange={value => set({ priority: (value as Priority | undefined) ?? 'medium' })} />
-    <PropertyPicker label="담당자" icon="person" options={peopleOptions(members)} value={draft.assigneeId} onChange={value => set({ assigneeId: value as string | undefined })} />
+    {isEvent
+      ? <EventTimePicker value={draft.time} onChange={time => set({ time })} />
+      : <PropertyPicker label="상태" icon="status" options={statusOptions(columns)} value={shownStatus} onChange={value => set({ status: (value as string | undefined) ?? NO_STATUS })} />}
+    {!isEvent && <PropertyPicker label="우선순위" icon="priority" options={priorityOptions} value={draft.priority} onChange={value => set({ priority: (value as Priority | undefined) ?? 'medium' })} />}
+    <PropertyPicker label={isEvent ? '참석자' : '담당자'} icon="person" options={peopleOptions(members)} value={draft.people} isMultiple
+      onChange={value => set({ people: (value as string[] | undefined) ?? [] })} />
     <PropertyPicker label="라벨" icon="label" options={labelOptions(labels)} value={draft.labelIds} isMultiple onChange={value => set({ labelIds: (value as string[] | undefined) ?? [] })} />
-    <DuePicker value={draft.dueDate} onChange={dueDate => set({ dueDate })} />
+    {!isEvent && <DuePicker value={draft.dueDate} onChange={dueDate => set({ dueDate })} />}
   </div>;
   const more = <Switch label="계속 만들기" size="sm" value={isMore} onChange={setMore} />;
-  const submit = <Button label="업무 만들기" variant="primary" size={panel ? 'sm' : undefined} isDisabled={!canCreate} isLoading={isBusy} onClick={() => { void create(); }}
+  const submit = <Button label={`${name.noun} 만들기`} variant="primary" size={panel ? 'sm' : undefined} isDisabled={!canCreate} isLoading={isBusy} onClick={() => { void create(); }}
     tooltip={isMobile ? undefined : 'Ctrl + Enter'} />;
   if (panel) return <div className={styles.dialog} onKeyDown={keys}>
     <header className={styles.head}>
       {projectPill}
       <NavIcon name="forward" />
-      <h2 className={styles.headTitle}>새 업무</h2>
+      <h2 className={styles.headTitle}>{name.title}</h2>
       <span className={styles.headEnd}>
         <IconButton label="크게 보기" tooltip="크게 보기" variant="ghost" size="sm" icon={<NavIcon name="expand-page" />} onClick={() => void router.navigate({ href: panel.pageHref })} />
         <IconButton label="닫기" tooltip="닫기 (Esc)" variant="ghost" size="sm" icon={<NavIcon name="close" />} onClick={panel.onClose} />
@@ -137,7 +151,7 @@ ${next.body}`) : isUntouched ? '' : previous.body;
     ? <BackLink to="/workspaces/$workspaceId/projects/$projectId" params={{ workspaceId, projectId }} label="업무" />
     : <BackLink to="/workspaces/$workspaceId" params={{ workspaceId }} label="업무" />;
   const leave = () => void router.navigate({ href: projectId ? `/workspaces/${workspaceId}/projects/${projectId}` : `/workspaces/${workspaceId}` });
-  return <PageFrame title="새 업무" width="narrow" back={back}>
+  return <PageFrame title={name.title} width="narrow" back={back}>
     <div className={styles.page} onKeyDown={keys}>
       {titleField}
       {descriptionField}

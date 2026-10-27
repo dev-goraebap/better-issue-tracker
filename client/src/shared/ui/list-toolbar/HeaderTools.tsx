@@ -4,6 +4,7 @@ import { useSearchScreen } from '@/shared/lib/route-search';
 import { createPortal } from 'react-dom';
 import { NavIcon } from '../NavIcon';
 import type { PageTools } from '../page-chrome';
+import { ActionButton } from './ActionButton';
 import { FilterBar, type Opened } from './FilterBar';
 import { FilterMenu } from './FilterMenu';
 import type { ListSort } from '../sort-menu';
@@ -49,7 +50,7 @@ export function HeaderTools({ target, search, filters, onFiltersChange, onFilter
       {(sort || views || display) && <DisplayButton views={views} sort={sort} display={display} />}
       {end}
     </>, target.tools)}
-    {action && target.actions && createPortal(<Button label={action.label} variant={action.isCreate ? 'primary' : 'secondary'} size="sm" icon={<NavIcon name={action.icon ?? 'plus'} />} onClick={action.onClick} />, target.actions)}
+    {action && target.actions && createPortal(<ActionButton action={action} size="sm" />, target.actions)}
     {filters.length > 0 && isRowShown && createPortal(<FilterBar filters={filters} shown={shown} onShownChange={setShown}
       opened={opened} onOpenedChange={setOpened} onChange={change} trailing={applied} />, target.applied)}
   </>;

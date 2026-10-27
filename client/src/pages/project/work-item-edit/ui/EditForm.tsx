@@ -3,18 +3,27 @@ import { Button } from '@astryxdesign/core';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useReturnTo } from '@/shared/lib/history-trail';
 import { authError, type components } from '@/shared/api';
-import { DuePicker, FormMessage, MarkdownEditor, PageFoot, PageFrame, PropertyPicker } from '@/shared/ui';
+import { DuePicker, EventTimePicker, FormMessage, MarkdownEditor, NavIcon, PageFoot, PageFrame, PropertyPicker, type EventTime } from '@/shared/ui';
 import { labelsQuery } from '@/entities/label';
 import { columnsQuery } from '@/entities/project';
 import { useMembers } from '@/entities/workspace';
 import {
-  itemQuery, labelOptions, moveItem, NO_STATUS, peopleOptions, priorityOptions, refreshItems, statusOptions, updateItem, type WorkItem, type Priority,
+  eventFields, eventTimeOf, itemQuery, labelOptions, moveItem, NO_STATUS, peopleOptions, priorityOptions, refreshItems, statusOptions, updateItem,
+  type WorkItem, type Priority,
 } from '@/entities/work-item';
 import styles from './edit-form.module.css';
 
 type Draft = {
-  title: string; body: string; status: string; priority?: Priority; assigneeId?: string; startDate?: string; dueDate?: string; labelIds: string[];
+  title: string; body: string; kind: Kind; status: string; priority?: Priority; people: string[]; startDate?: string; dueDate?: string; labelIds: string[];
+  time: EventTime;
 };
+type Kind = WorkItem['kind'];
+
+const KIND_OPTIONS = [
+  { value: 'task', label: '작업', icon: <NavIcon name="board" /> },
+  { value: 'event', label: '일정', icon: <NavIcon name="calendar" /> },
+];
+const sameTime = (a: EventTime, b: EventTime) => a.day === b.day && a.start === b.start && a.end === b.end && a.allDay === b.allDay;
 
 const sameSet = (a: readonly string[], b: readonly string[]) => a.length === b.length && a.every(each => b.includes(each));
 
@@ -34,10 +43,12 @@ export function EditForm({ item, back }: { item: WorkItem; back: ReactNode }) {
   const labels = useQuery(labelsQuery(workspaceId)).data ?? [];
   const members = useMembers(workspaceId).items;
   const [opened] = useState<Draft>(() => ({
-    title: item.title, body: item.description ?? '', status: item.columnId ?? NO_STATUS, priority: item.priority ?? undefined,
-    assigneeId: item.assigneeId ?? undefined, startDate: item.startDate ?? undefined, dueDate: item.dueDate ?? undefined, labelIds: item.labels.map(label => label.id),
+    title: item.title, body: item.description ?? '', kind: item.kind, status: item.columnId ?? NO_STATUS, priority: item.priority ?? undefined,
+    people: item.people.map(person => person.id), startDate: item.startDate ?? undefined, dueDate: item.dueDate ?? undefined,
+    labelIds: item.labels.map(label => label.id), time: eventTimeOf(item),
   }));
   const [draft, setDraft] = useState(opened);
+  const isEvent = draft.kind === 'event';
   const [isChecked, setChecked] = useState(false);
   const [isBusy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -53,18 +64,21 @@ export function EditForm({ item, back }: { item: WorkItem; back: ReactNode }) {
       ...(draft.title.trim() !== opened.title ? { title: draft.title.trim() } : {}),
       ...(draft.body !== opened.body ? { description: draft.body.trim() || null } : {}),
       ...(draft.priority !== opened.priority ? { priority: draft.priority ?? null } : {}),
-      ...(draft.assigneeId !== opened.assigneeId ? { assigneeId: draft.assigneeId ?? null } : {}),
-      ...(draft.startDate !== opened.startDate ? { startDate: draft.startDate ?? null } : {}),
-      ...(draft.dueDate !== opened.dueDate ? { dueDate: draft.dueDate ?? null } : {}),
+      ...(draft.kind !== opened.kind ? { kind: draft.kind } : {}),
+      ...(!sameSet(draft.people, opened.people) ? { peopleIds: draft.people } : {}),
+      // An event sends its time whole, as the kind takes it (D-092); a task its days.
+      ...(isEvent && (draft.kind !== opened.kind || !sameTime(draft.time, opened.time)) ? eventFields(draft.time) : {}),
+      ...(!isEvent && draft.startDate !== opened.startDate ? { startDate: draft.startDate ?? null } : {}),
+      ...(!isEvent && draft.dueDate !== opened.dueDate ? { dueDate: draft.dueDate ?? null } : {}),
       ...(!sameSet(draft.labelIds, opened.labelIds) ? { labelIds: draft.labelIds } : {}),
     };
     try {
       let version = item.version;
       if (Object.keys(changes).length > 0) {
         await updateItem(workspaceId, projectId, id, { expectedVersion: version, ...changes });
-        if (draft.status !== opened.status) version = (await client.fetchQuery({ ...itemQuery(workspaceId, projectId, id), staleTime: 0 })).version;
+        if (!isEvent && draft.status !== opened.status) version = (await client.fetchQuery({ ...itemQuery(workspaceId, projectId, id), staleTime: 0 })).version;
       }
-      if (draft.status !== opened.status) {
+      if (!isEvent && draft.status !== opened.status) {
         await moveItem(workspaceId, projectId, id, { expectedVersion: version, targetColumnId: draft.status === NO_STATUS ? null : draft.status });
       }
       await refreshItems(client, workspaceId, projectId);
@@ -80,11 +94,14 @@ export function EditForm({ item, back }: { item: WorkItem; back: ReactNode }) {
       <MarkdownEditor value={draft.body} onChange={body => set({ body })} label="설명" minHeight="14rem" isDisabled={isBusy} onSubmit={() => { void save(); }}
         placeholder="설명을 덧붙이세요… ( / 로 블록)" />
       <div className={styles.pills} role="group" aria-label="속성">
-        <PropertyPicker label="상태" icon="status" options={statusOptions(columns)} value={draft.status} onChange={value => set({ status: (value as string | undefined) ?? NO_STATUS })} />
-        <PropertyPicker label="우선순위" icon="priority" options={priorityOptions} value={draft.priority} onChange={value => set({ priority: value as Priority | undefined })} />
-        <PropertyPicker label="담당자" icon="person" options={peopleOptions(members)} value={draft.assigneeId} onChange={value => set({ assigneeId: value as string | undefined })} />
-        <DuePicker label="시작일" asDate value={draft.startDate} onChange={startDate => set({ startDate })} />
-        <DuePicker value={draft.dueDate} onChange={dueDate => set({ dueDate })} />
+        <PropertyPicker label="종류" icon="board" options={KIND_OPTIONS} value={draft.kind} onChange={value => set({ kind: (value as Kind | undefined) ?? draft.kind })} />
+        {!isEvent && <PropertyPicker label="상태" icon="status" options={statusOptions(columns)} value={draft.status} onChange={value => set({ status: (value as string | undefined) ?? NO_STATUS })} />}
+        {!isEvent && <PropertyPicker label="우선순위" icon="priority" options={priorityOptions} value={draft.priority} onChange={value => set({ priority: value as Priority | undefined })} />}
+        <PropertyPicker label={isEvent ? '참석자' : '담당자'} icon="person" options={peopleOptions(members)} value={draft.people} isMultiple
+          onChange={value => set({ people: (value as string[] | undefined) ?? [] })} />
+        {isEvent && <EventTimePicker value={draft.time} onChange={time => set({ time })} />}
+        {!isEvent && <DuePicker label="시작일" asDate value={draft.startDate} onChange={startDate => set({ startDate })} />}
+        {!isEvent && <DuePicker value={draft.dueDate} onChange={dueDate => set({ dueDate })} />}
         <PropertyPicker label="라벨" icon="label" options={labelOptions(labels)} value={draft.labelIds} isMultiple onChange={value => set({ labelIds: (value as string[] | undefined) ?? [] })} />
       </div>
       <FormMessage message={error} />

@@ -10,5 +10,5 @@ import { NewWorkItem } from '@/widgets/work-item-editor';
 export function NewWorkItemPage() {
   const { workspaceId, projectId } = useParams({ strict: false }) as { workspaceId: string; projectId?: string };
   const search = useSearch({ strict: false }) as NewWorkItemSearch;
-  return <NewWorkItem workspaceId={workspaceId} projectId={projectId} status={search.status} />;
+  return <NewWorkItem workspaceId={workspaceId} projectId={projectId} status={search.status} kind={search.kind ?? 'task'} />;
 }

@@ -13,6 +13,11 @@ const FOLD_MS = 30 * 60 * 1000;
 export const actorText = (entry: TimelineEntry) => `${entry.actorName ?? '알 수 없음'}${entry.actorAgent ? ` · ${entry.actorAgent}` : ''}`;
 
 const ids = (value: string | null) => (value ? value.split(',') : []);
+/** A moment as the member's own day and time: 10월 28일 10:00. */
+const timeText = (moment: string) => {
+  const at = new Date(moment);
+  return `${at.getMonth() + 1}월 ${at.getDate()}일 ${String(at.getHours()).padStart(2, '0')}:${String(at.getMinutes()).padStart(2, '0')}`;
+};
 const listOf = (values: string[]) => values.map(value => `'${value}'`).join(', ');
 /** The last syllable's final consonant (0 for none), or null when the word does not end in Hangul. */
 const final = (word: string) => {
@@ -46,6 +51,19 @@ export function activityText(entry: TimelineEntry, names: ActivityNames): string
     case 'assignee':
       if (!after) return '담당자를 비웠습니다';
       return after === entry.actorId ? '스스로 맡았습니다' : `${names.people.get(after) ?? '지워진 구성원'}에게 맡겼습니다`;
+    case 'people': {
+      const was = ids(before);
+      const now = ids(after);
+      const person = (id: string) => names.people.get(id) ?? '지워진 구성원';
+      const added = now.filter(id => !was.includes(id)).map(person);
+      const removed = was.filter(id => !now.includes(id)).map(person);
+      if (added.length && removed.length) return `${listOf(added)}을(를) 넣고 ${listOf(removed)}을(를) 뺐습니다`;
+      return added.length ? `${listOf(added)}을(를) 넣었습니다` : `${listOf(removed)}을(를) 뺐습니다`;
+    }
+    case 'kind': return after === 'event' ? '일정으로 바꿨습니다' : '작업으로 바꿨습니다';
+    case 'startsAt': return after ? `시작 시각을 ${toward(timeText(after))} 정했습니다` : '시작 시각을 지웠습니다';
+    case 'endsAt': return after ? `끝 시각을 ${toward(timeText(after))} 정했습니다` : '끝 시각을 지웠습니다';
+    case 'allDay': return after === 'true' ? '종일 일정으로 바꿨습니다' : '시각 일정으로 바꿨습니다';
     case 'startDate': return after ? `시작일을 ${toward(dateText(after))} 정했습니다` : '시작일을 지웠습니다';
     case 'dueDate': return after ? `기한을 ${toward(dateText(after))} 정했습니다` : '기한을 지웠습니다';
     case 'column': {

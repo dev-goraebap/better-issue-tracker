@@ -44,12 +44,12 @@ public class WorkItemQueryService {
         var w = workItemRepository
                 .findById(projectId, id, false)
                 .orElseThrow(WorkItemErrorCode.WORK_ITEM_NOT_FOUND::raise);
-        String name = w.details().assigneeId() == null
-                ? null
-                : iamFacade
-                        .user(w.details().assigneeId())
-                        .map(IamFacade.User::name)
-                        .orElse("탈퇴한 사용자");
+        var people = w.details().peopleIds().stream()
+                .map(person -> new WorkItemRepository.Person(
+                        person, iamFacade.user(person).map(IamFacade.User::name).orElse("탈퇴한 사용자")))
+                .sorted(java.util.Comparator.comparing(WorkItemRepository.Person::name)
+                        .thenComparing(WorkItemRepository.Person::id))
+                .toList();
         var category = projectFacade
                 .findColumn(actor, workspaceId, projectId, w.columnId())
                 .map(ProjectFacade.ColumnRef::category)
@@ -59,6 +59,7 @@ public class WorkItemQueryService {
                 projectId,
                 p.key(),
                 w.number(),
+                w.kind(),
                 w.details(),
                 w.labelIds(),
                 w.columnId(),
@@ -68,7 +69,7 @@ public class WorkItemQueryService {
                 w.archivedAt(),
                 w.version(),
                 w.audit(),
-                name);
+                people);
         return view(workspaceId, row, labels(actor, workspaceId, List.of(row)));
     }
 
@@ -129,7 +130,8 @@ public class WorkItemQueryService {
                 workspaceId,
                 String.valueOf(q.projectId()),
                 ids(q.projectIds()),
-                String.valueOf(q.assigneeId()),
+                String.valueOf(q.personId()),
+                names(q.kinds()),
                 String.valueOf(q.columnId()),
                 Boolean.toString(q.backlog()),
                 ids(q.columnIds()),
@@ -213,12 +215,14 @@ public class WorkItemQueryService {
         if (projectIds.size() > 100
                 || columnIds.size() > 100
                 || request.getLabelId().size() > 100) throw CommonErrorCode.COMMON_INVALID_REQUEST.raise();
-        String assignee = mine ? actor.userId() : request.getAssigneeId();
+        String person = mine ? actor.userId() : request.getPersonId();
+        var kinds = values(request.getKind(), WorkItem.Kind.class);
         return new WorkItemRepository.Query(
                 workspaceId,
                 projectId,
                 projectIds,
-                assignee,
+                person,
+                kinds,
                 column,
                 backlog,
                 columnIds,
@@ -255,6 +259,7 @@ public class WorkItemQueryService {
                 row.projectId(),
                 row.number(),
                 row.projectKey() + "-" + row.number(),
+                row.kind(),
                 d.title(),
                 d.description(),
                 row.columnId(),
@@ -268,10 +273,14 @@ public class WorkItemQueryService {
                 row.position(),
                 d.priority(),
                 d.triggerType(),
-                d.assigneeId(),
-                row.assigneeName(),
+                row.people().stream()
+                        .map(person -> new WorkItemViews.Person(person.id(), person.name()))
+                        .toList(),
                 d.startDate(),
                 d.dueDate(),
+                d.startsAt(),
+                d.endsAt(),
+                d.allDay(),
                 row.closedAt(),
                 row.archivedAt(),
                 a.deletedAt(),

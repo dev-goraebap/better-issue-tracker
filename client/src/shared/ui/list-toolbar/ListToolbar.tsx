@@ -6,6 +6,7 @@ import { MOBILE_QUERY } from '@/shared/config';
 import { FloatingAction } from '../floating-action';
 import { NavIcon } from '../NavIcon';
 import { SearchTrigger } from '../search-palette';
+import { ActionButton } from './ActionButton';
 import { FilterPanel } from './FilterPanel';
 import { usePageTools } from '../page-chrome';
 import { FilterSheetButton } from './FilterSheetButton';
@@ -74,8 +75,12 @@ export function filterValueText(filter: ListFilter): string {
 export type ListFilterValues = Record<string, string | undefined>;
 /** A list's search by words: its name, the box's hint, the words applied, and where new words go. */
 export type ListSearch = { label: string; placeholder: string; value?: string; onChange: (value: string | undefined) => void };
-/** A list's main action; isCreate marks one that makes something new. */
-export type ListAction = { label: string; icon?: string; onClick: () => void; isCreate?: boolean };
+/**
+ * A list's main action; isCreate marks one that makes something new. With choices it is a menu of what to make
+ * (만들기 ▾: 작업, 일정, D-092) on a desktop, and onClick the first of them where a menu does not fit (a phone's +, a key).
+ */
+export type ListAction = { label: string; icon?: string; onClick: () => void; isCreate?: boolean; choices?: ListActionChoice[] };
+export type ListActionChoice = { label: string; icon?: string; onClick: () => void };
 /** A list's orders as one choice each (최신순, 오래된순), for a page without the header chrome. */
 export type ListOrder = { value: string; options: ListOption[]; onChange: (value: string) => void };
 /** The ways a list can be seen (리스트, 캘린더, 칸반), each its name and NavIcon, the one in view, and where a pick goes. */
@@ -173,7 +178,7 @@ export function ListToolbar({ search, opener, label, filters = [], onFiltersChan
       {!isMobile && sort && <SortMenuButton sort={sort} />}
       {!isMobile && (end || action) && <HStack gap={2} vAlign="center" className={styles.barAction} data-page-action>
         {end}
-        {action && <Button label={action.label} variant={action.isCreate ? 'primary' : 'secondary'} icon={<NavIcon name={action.icon ?? 'plus'} />} onClick={action.onClick} />}
+        {action && <ActionButton action={action} />}
       </HStack>}
     </HStack>
     {isMobile && active.length > 0 && <HStack gap={2} vAlign="center" wrap="wrap" className={styles.applied}>
