@@ -5,6 +5,8 @@ description: BIT 배포(릴리스) 절차. 버전을 정하고 검사한 뒤 버
 
 배포본은 태그 하나와 그 커밋으로 식별한다. 태그를 푸시하면 GitHub Actions(`.github/workflows/release.yml`)가 루트 `Dockerfile`로 이미지를 만들어 `ghcr.io/dev-goraebap/better-issue-tracker`에 올린다(D-082). 이 스킬은 태그를 달기까지와 올라간 이미지를 확인하는 일을 한다. 서버에 띄우는 일(이미지 바꾸기·되돌리기)은 `bit-architecture`의 [배포](../bit-architecture/references/deploy.md)를 따른다.
 
+운영 서버 배포까지 요청받았으면 정식 이미지 검증 뒤 [운영 서버 배포](../../../docs/deployment.md)를 이어 수행한다. **서버의 `~/apps/bit/compose.yml`이 운영 실행 설정의 기준**이다. 같은 디렉터리의 `app.env`·`backups/`를 사용하고, 기존 외부 볼륨·프록시 네트워크를 보존한다. 다른 경로의 compose나 옛 `.local/home-deploy/deploy.sh`로 교체하지 않는다.
+
 ## 정할 것
 
 | 항목 | 규칙 | 근거 |
@@ -34,6 +36,7 @@ description: BIT 배포(릴리스) 절차. 버전을 정하고 검사한 뒤 버
 7. **정식 태그를 단다.** 사용자가 후보 결과를 보고 정식을 원하면, 후보와 같은 커밋에 `git tag -a v<버전> -m "BIT <버전>" <후보 태그>^{}` 후 푸시하고 5를 다시 기다린다. 정식 이미지는 `<버전>`, `<주.부>`, `latest`로 올라간다.
 8. **GitHub Release를 만든다.** `gh release create v<버전> --verify-tag --generate-notes --title "BIT <버전>"`. 후보는 Release를 만들지 않는다.
 9. **보고한다.** 태그, 커밋 SHA, 이미지 주소와 태그들, Release 주소, 포함된 커밋 목록(또는 개수), 확인한 것과 못 한 것.
+10. **운영 배포가 포함됐으면 이어 수행한다.** `~/apps/bit/compose.yml`을 읽고 이미지 준비 → 중지·전체 볼륨 백업 → compose에 새 이미지 버전 저장·교체 → health·공개 주소·데이터 보존 검증 순서로 진행한다. 구체적인 명령과 복구 순서는 [운영 서버 배포](../../../docs/deployment.md)를 따른다. 이미지 게시만으로 운영 배포 완료라고 보고하지 않는다.
 
 ## 하지 않는 것
 
@@ -48,5 +51,6 @@ description: BIT 배포(릴리스) 절차. 버전을 정하고 검사한 뒤 버
 - 그 태그의 `release.yml` 실행이 성공했다(`gh run view <id>`의 결론이 success).
 - 그 태그의 이미지를 받아 띄운 컨테이너의 `/api/v1/health`가 200이었다.
 - 정식이면 `gh release view v<버전>`이 나온다.
+- 운영 배포를 요청받았으면 `~/apps/bit/compose.yml`에 다음 실행에도 유지될 이미지 버전이 저장됐고, 해당 compose의 `app`이 healthy이며 공개 주소와 기존 데이터 보존을 확인했다.
 
 결과가 틀리면 `skill-repair`로 이 스킬을 고친다.
