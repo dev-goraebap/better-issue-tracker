@@ -4,6 +4,7 @@ import { useMediaQuery } from '@astryxdesign/core/hooks';
 import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { MOBILE_QUERY } from '@/shared/config';
 import { authError, capabilitiesQueryOptions } from '@/shared/api';
+import { subject } from '@/shared/lib/korean-particle';
 import { useGo } from '@/shared/lib/routed-panel';
 import { DefaultAvatar, ListSummary, ListToolbar, PageState, useFillRoom, type ListDisplay, type ListFilter, type ListSort, type ListViews } from '@/shared/ui';
 import type { Label } from '@/entities/label';
@@ -137,7 +138,7 @@ export function WorkItemsView({ scope, view, tweak, effective, workItems, labels
   const isNarrowed = !!search.q || effective.isFiltered || Object.values(view.filters).some(Boolean);
   const visible = rows.slice(0, shown);
   const summary = <ListSummary shown={visible.length} total={rows.length} step={SLICE} hasMore={shown < rows.length} onMore={() => setShown(shown + SLICE)} />;
-  const empty = (what: string, hint: string) => <PageState kind={isNarrowed ? 'search' : 'empty'} title={isNarrowed ? `조건에 맞는 ${what}이 없습니다` : `아직 ${what}이 없습니다`}
+  const empty = (what: string, hint: string) => <PageState kind={isNarrowed ? 'search' : 'empty'} title={isNarrowed ? `조건에 맞는 ${subject(what)} 없습니다` : `아직 ${subject(what)} 없습니다`}
     description={isNarrowed ? '검색어나 필터를 바꿔 보세요.' : hint}
     actions={isNarrowed && (search.q || effective.isFiltered) ? <Button label="조건 지우기" variant="secondary" onClick={() => go({ q: undefined, ...Object.fromEntries(FILTER_KEYS.map(key => [key, undefined])) })} /> : undefined} />;
   const withStatus = rows.filter(row => row.columnCategory);

@@ -2,6 +2,7 @@ import { BottomSheet, Popover } from '@astryxdesign/core';
 import { useMediaQuery } from '@astryxdesign/core/hooks';
 import { useId, useState, type KeyboardEvent } from 'react';
 import { MOBILE_QUERY } from '@/shared/config';
+import { object } from '@/shared/lib/korean-particle';
 import { FrameBody, FrameHead } from '../frame';
 import { NavIcon } from '../NavIcon';
 import styles from './due-picker.module.css';
@@ -74,7 +75,7 @@ export function DuePicker({ value, onChange, label = '기한', asDate = false }:
     </button>
   </span>;
   const menu = <div className={styles.dueMenu} data-size={isMobile ? 'lg' : undefined}>
-    <input className={styles.dueSearch} value={words} autoFocus={!isMobile} placeholder="예: 내일, 3일, 10월 30일" aria-label={`${label}을 말로 적기`}
+    <input className={styles.dueSearch} value={words} autoFocus={!isMobile} placeholder="예: 내일, 3일, 10월 30일" aria-label={`${object(label)} 말로 적기`}
       onChange={event => setWords(event.target.value)} onKeyDown={keys} />
     <div className={styles.dueList} role="listbox" aria-label={label}>
       {words && (parsed
