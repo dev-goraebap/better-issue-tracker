@@ -215,6 +215,8 @@ class AuthSecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/v1/hooks/*")
                         .permitAll()
                         // Documents and their folders (D-093).
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/workspaces/*/documents/order")
+                        .authenticated()
                         .requestMatchers(
                                 HttpMethod.GET,
                                 "/api/v1/workspaces/*/documents",

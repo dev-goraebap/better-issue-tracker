@@ -39,6 +39,7 @@ public class DocumentService {
     private final DocumentRepository documentRepository;
     private final FolderRepository folderRepository;
     private final DocumentQuery documentQuery;
+    private final DocumentOrderService documentOrderService;
     private final Parts parts;
     private final LabelFacade labelFacade;
     private final LinkFacade linkFacade;
@@ -60,7 +61,8 @@ public class DocumentService {
                 folderId,
                 Parts.path(part, folderId),
                 children,
-                linked(actor, workspaceId, documentQuery.documentsIn(workspaceId, projectId, folderId)));
+                linked(actor, workspaceId, documentQuery.documentsIn(workspaceId, projectId, folderId)),
+                documentOrderService.get(actor, workspaceId, projectId, folderId));
     }
 
     /** Each project's part in numbers, for the projects' folders at the top of 문서함; one not shared is refused. */

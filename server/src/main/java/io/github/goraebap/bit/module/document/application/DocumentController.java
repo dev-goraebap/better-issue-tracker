@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -28,6 +29,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 class DocumentController {
     private final DocumentService documentService;
+    private final DocumentOrderService documentOrderService;
 
     @GetMapping
     @Operation(summary = "Documents matching a search, the most recently changed first (D-093)")
@@ -66,6 +68,16 @@ class DocumentController {
             @RequestParam(required = false) String projectId,
             @RequestParam(required = false) String folderId) {
         return documentService.contents(actor, workspaceId, projectId, folderId);
+    }
+
+    @PutMapping("/order")
+    @Operation(summary = "Save the folder's shared mixed row order; stale versions are rejected (BIT-57)")
+    ResponseEntity<Void> reorderDocuments(
+            @AuthenticationPrincipal CurrentUser actor,
+            @PathVariable String workspaceId,
+            @Valid @RequestBody DocumentRequests.Order request) {
+        documentOrderService.reorder(actor, workspaceId, request);
+        return ResponseEntity.noContent().build();
     }
 
     @PostMapping

@@ -68,6 +68,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workspaces/{workspaceId}/documents/order": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Save the folder's shared mixed row order; stale versions are rejected (BIT-57) */
+        put: operations["reorderDocuments"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/workspaces/{id}/owner": {
         parameters: {
             query?: never;
@@ -1418,6 +1435,13 @@ export interface components {
         ProjectOrder: {
             order: string[];
         };
+        ReorderDocuments: {
+            projectId?: string;
+            folderId?: string;
+            /** Format: int64 */
+            expectedVersion: number;
+            order: string[];
+        };
         Transfer: {
             userId: string;
             currentPassword: string;
@@ -2231,6 +2255,12 @@ export interface components {
             path: components["schemas"]["Folder"][];
             folders: components["schemas"]["Folder"][];
             documents: components["schemas"]["DocumentSummary"][];
+            ordering: components["schemas"]["DocumentOrder"];
+        };
+        DocumentOrder: {
+            /** Format: int64 */
+            version: number;
+            order: string[];
         };
         Picture: {
             id: string;
@@ -2508,6 +2538,30 @@ export interface operations {
         responses: {
             /** @description Projects reordered */
             204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    reorderDocuments: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReorderDocuments"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };

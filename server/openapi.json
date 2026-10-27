@@ -217,6 +217,36 @@
         }
       }
     },
+    "/api/v1/workspaces/{workspaceId}/documents/order" : {
+      "put" : {
+        "tags" : [ "document-controller" ],
+        "summary" : "Save the folder's shared mixed row order; stale versions are rejected (BIT-57)",
+        "operationId" : "reorderDocuments",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ReorderDocuments"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        }
+      }
+    },
     "/api/v1/workspaces/{id}/owner" : {
       "put" : {
         "tags" : [ "workspace-controller" ],
@@ -4842,6 +4872,34 @@
         },
         "required" : [ "order" ]
       },
+      "ReorderDocuments" : {
+        "type" : "object",
+        "properties" : {
+          "projectId" : {
+            "type" : "string",
+            "pattern" : "[A-Za-z][A-Za-z0-9]{9}"
+          },
+          "folderId" : {
+            "type" : "string",
+            "pattern" : "[A-Za-z][A-Za-z0-9]{9}"
+          },
+          "expectedVersion" : {
+            "type" : "integer",
+            "format" : "int64",
+            "minimum" : 0
+          },
+          "order" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "pattern" : "(project|folder|document):[A-Za-z][A-Za-z0-9]{9}"
+            },
+            "maxItems" : 10000,
+            "minItems" : 0
+          }
+        },
+        "required" : [ "expectedVersion", "order" ]
+      },
       "Transfer" : {
         "type" : "object",
         "properties" : {
@@ -7004,9 +7062,28 @@
             "items" : {
               "$ref" : "#/components/schemas/DocumentSummary"
             }
+          },
+          "ordering" : {
+            "$ref" : "#/components/schemas/DocumentOrder"
           }
         },
-        "required" : [ "documents", "folderId", "folders", "path", "projectId" ]
+        "required" : [ "documents", "folderId", "folders", "ordering", "path", "projectId" ]
+      },
+      "DocumentOrder" : {
+        "type" : "object",
+        "properties" : {
+          "version" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "order" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          }
+        },
+        "required" : [ "order", "version" ]
       },
       "Picture" : {
         "type" : "object",

@@ -37,3 +37,6 @@ export const createFolder = (w: string, body: components['schemas']['CreateFolde
 export const renameFolder = (w: string, id: string, body: components['schemas']['RenameFolder']) => command('PATCH', `${base(w)}/folders/${encodeURIComponent(id)}`, body);
 export const deleteFolder = (w: string, id: string, expectedVersion: number) => command('DELETE', `${base(w)}/folders/${encodeURIComponent(id)}?expectedVersion=${expectedVersion}`);
 export const refreshDocuments = (client: QueryClient, w: string) => client.invalidateQueries({ queryKey: root(w) });
+
+/** Shared order, with a version so another member's move cannot be overwritten. */
+export const reorderDocuments = (w: string, body: components['schemas']['ReorderDocuments']) => command('PUT', `${base(w)}/documents/order`, body);
