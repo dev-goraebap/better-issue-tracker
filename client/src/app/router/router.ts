@@ -25,7 +25,7 @@ import { DocumentEditPage } from '@/pages/workspace/document-edit';
 import { NewDocumentPage } from '@/pages/workspace/document-new';
 import { ProjectDocumentsPage } from '@/pages/project/documents';
 import { parseFolderSearch, parseNewDocumentSearch } from '@/entities/document';
-import { InboxPage } from '@/pages/workspace/inbox';
+import { InboxPage, parseInboxSearch } from '@/pages/workspace/inbox';
 import { NewWorkItemPage } from '@/pages/workspace/work-item-new';
 import { WorkItemsPage, loadWorkItems } from '@/pages/workspace/work-items';
 import { loadMembers, MembersPage, parseMembersSearch } from '@/pages/workspace/members';
@@ -111,7 +111,7 @@ const home = createRoute({ getParentRoute: () => scoped, path: '/', component: W
   loader: ({ params }) => loadWorkItems(queryClient, params.workspaceId) });
 // 새 업무 at its own address, which the work item pages open in a modal (D-070).
 const workItemsNew = createRoute({ getParentRoute: () => scoped, path: '/work-items/new', component: NewWorkItemPage, validateSearch: ownSearch(parseNewWorkItemSearch) });
-const inbox = createRoute({ getParentRoute: () => scoped, path: '/inbox', component: InboxPage });
+const inbox = createRoute({ getParentRoute: () => scoped, path: '/inbox', component: InboxPage, validateSearch: ownSearch(parseInboxSearch) });
 // 내 작업 is a view now (담당자 filter, D-066); its old address leads home.
 const myTasks = createRoute({ getParentRoute: () => scoped, path: '/my-tasks', beforeLoad: ({ params }) => leadTo(`/workspaces/${params.workspaceId}`) });
 const members = createRoute({ getParentRoute: () => scoped, path: '/members', component: MembersPage, validateSearch: ownSearch(parseMembersSearch),

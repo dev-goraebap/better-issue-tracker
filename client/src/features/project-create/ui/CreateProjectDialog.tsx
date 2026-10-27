@@ -79,7 +79,7 @@ export function CreateProjectDialog({ workspaceId, isOpen, onClose, onCreated }:
       </div>
       <footer className={styles.foot}>
         <Button label="취소" variant="ghost" size="sm" onClick={close} isDisabled={isBusy} />
-        <Button type="submit" label="프로젝트 만들기" variant="primary" size="sm" isLoading={isBusy} tooltip="Ctrl + Enter" />
+        <Button className="bit-create-action" type="submit" label="프로젝트 만들기" variant="primary" size="sm" isLoading={isBusy} tooltip="Ctrl + Enter" />
       </footer>
     </form>
   </PanelDialog>;

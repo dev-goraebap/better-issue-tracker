@@ -99,6 +99,7 @@ class DocumentIntegrationTest {
     @BeforeEach
     void prepare() {
         for (String table : List.of(
+                "document_order",
                 "notification",
                 "comment",
                 "activity",
@@ -354,6 +355,73 @@ class DocumentIntegrationTest {
         var other = identity("other");
         var otherClient = login(other);
         expect(http(otherClient, "GET", "/api/v1/workspaces/" + workspace + "/documents/" + id, null), 404);
+    }
+
+    @Test
+    void sharedOrderKeepsMixedRowsAndRejectsStaleOrForeignLists() throws Exception {
+        String folder = folderService.create(owner, workspace, project, null, "설계");
+        String document = documentService.create(owner, workspace, project, null, "안내", "", Set.of());
+        String nested = documentService.create(owner, workspace, project, folder, "내부", "", Set.of());
+        var client = login(owner);
+        String url = "/api/v1/workspaces/" + workspace + "/documents/order";
+        var order = List.of("document:" + document, "folder:" + folder);
+        expect(http(client, "PUT", url, JSON.writeValueAsString(Map.of("projectId", project, "order", order))), 400);
+        String request = JSON.writeValueAsString(Map.of("projectId", project, "expectedVersion", 0, "order", order));
+        expect(http(client, "PUT", url, request), 204);
+        var saved = documentService.contents(owner, workspace, project, null).ordering();
+        assertThat(saved.order()).containsExactlyElementsOf(order);
+        assertThat(saved.version()).isEqualTo(1);
+        expect(http(client, "PUT", url, request), 409);
+        expect(
+                http(
+                        client,
+                        "PUT",
+                        url,
+                        JSON.writeValueAsString(Map.of(
+                                "projectId", project, "expectedVersion", 1, "order", List.of("document:" + document)))),
+                400);
+        expect(
+                http(
+                        client,
+                        "PUT",
+                        url,
+                        JSON.writeValueAsString(Map.of(
+                                "projectId",
+                                project,
+                                "expectedVersion",
+                                1,
+                                "order",
+                                List.of("document:" + document, "folder:" + folder, "document:" + nested)))),
+                400);
+        expect(
+                http(
+                        client,
+                        "PUT",
+                        url,
+                        JSON.writeValueAsString(Map.of(
+                                "projectId",
+                                project,
+                                "expectedVersion",
+                                1,
+                                "order",
+                                List.of("document:" + document, "folder:" + folder, "folder:" + folder)))),
+                400);
+        CurrentUser viewer = identity("reader-order");
+        membership(viewer, "viewer");
+        assertThat(documentService.contents(viewer, workspace, project, null).ordering())
+                .isEqualTo(saved);
+        expect(
+                http(
+                        login(viewer),
+                        "PUT",
+                        url,
+                        JSON.writeValueAsString(Map.of("projectId", project, "expectedVersion", 1, "order", order))),
+                403);
+        assertThat(documentService
+                        .contents(owner, workspace, project, folder)
+                        .ordering()
+                        .version())
+                .isZero();
     }
 
     @Test

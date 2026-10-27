@@ -1,5 +1,8 @@
 package io.github.goraebap.bit.module.notification.application;
 
+import io.github.goraebap.bit.module.file.FileFacade;
+import io.github.goraebap.bit.module.file.FileOwner;
+import io.github.goraebap.bit.module.file.Picture;
 import io.github.goraebap.bit.module.iam.IamFacade;
 import io.github.goraebap.bit.module.link.CommentChangedEvent;
 import io.github.goraebap.bit.module.link.TargetChangedEvent;
@@ -57,6 +60,7 @@ public class NotificationService {
     private final WorkItemFacade workItemFacade;
     private final WorkspaceFacade workspaceFacade;
     private final IamFacade iamFacade;
+    private final FileFacade fileFacade;
     private final Mail mail;
     private final Clock clock;
     private final String publicUrl;
@@ -66,6 +70,7 @@ public class NotificationService {
             WorkItemFacade workItemFacade,
             WorkspaceFacade workspaceFacade,
             IamFacade iamFacade,
+            FileFacade fileFacade,
             Mail mail,
             Clock clock,
             @Value("${app.auth.allowed-origins}") String origins) {
@@ -73,6 +78,7 @@ public class NotificationService {
         this.workItemFacade = workItemFacade;
         this.workspaceFacade = workspaceFacade;
         this.iamFacade = iamFacade;
+        this.fileFacade = fileFacade;
         this.mail = mail;
         this.clock = clock;
         this.publicUrl = Arrays.stream(origins.split(","))
@@ -90,9 +96,54 @@ public class NotificationService {
         int limit = Math.clamp(size, 1, 100);
         var rows = notificationRepository.findPage(actor.userId(), workspaceId, unreadOnly, decode(cursor), limit + 1);
         var page = rows.stream().limit(limit).toList();
+        var people =
+                iamFacade
+                        .users(page.stream()
+                                .map(Notification::actorId)
+                                .filter(Objects::nonNull)
+                                .distinct()
+                                .toList())
+                        .stream()
+                        .collect(Collectors.toMap(IamFacade.User::id, IamFacade.User::name));
+        var avatars = Picture.byOwner(fileFacade.attachmentsOf(
+                FileOwner.USER,
+                page.stream()
+                        .map(Notification::actorId)
+                        .filter(Objects::nonNull)
+                        .distinct()
+                        .toList()));
         String next = rows.size() > limit ? encode(page.getLast()) : null;
         return new NotificationViews.Notices(
-                page.stream().map(NotificationViews.Notice::of).toList(), next);
+                page.stream()
+                        .map(notice -> NotificationViews.Notice.of(
+                                notice, sender(notice, people.get(notice.actorId()), avatars.get(notice.actorId()))))
+                        .toList(),
+                next);
+    }
+
+    @Transactional(readOnly = true)
+    public NotificationViews.Notice get(CurrentUser actor, String workspaceId, String id) {
+        workspaceFacade.requireAccess(actor, workspaceId, WorkspaceFacade.Action.READ);
+        var notice = notificationRepository
+                .findById(actor.userId(), id)
+                .filter(value -> value.workspaceId().equals(workspaceId))
+                .orElseThrow(NotificationErrorCode.NOTIFICATION_NOT_FOUND::raise);
+        String name = notice.actorId() == null
+                ? null
+                : iamFacade.user(notice.actorId()).map(IamFacade.User::name).orElse(null);
+        var avatars = notice.actorId() == null
+                ? java.util.Map.<String, Picture>of()
+                : Picture.byOwner(fileFacade.attachmentsOf(FileOwner.USER, java.util.List.of(notice.actorId())));
+        return NotificationViews.Notice.of(
+                notice, sender(notice, name, notice.actorId() == null ? null : avatars.get(notice.actorId())));
+    }
+
+    private static NotificationViews.Actor sender(Notification notice, String name, Picture avatar) {
+        return new NotificationViews.Actor(
+                notice.actorId(),
+                notice.actorId() == null ? "시스템" : name == null ? "알 수 없는 사용자" : name,
+                notice.actorId() == null,
+                avatar);
     }
 
     @Transactional(readOnly = true)

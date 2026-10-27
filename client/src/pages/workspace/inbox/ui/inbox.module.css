@@ -1,3 +1,57 @@
-/* The inbox's rows reach the card's edges; a notice's words are a button that opens its work item (ITEM_ROW_LINK). */
-.flush ul > li { padding-inline: 0; }
-.open { padding: 0; border: 0; background: none; font: inherit; color: inherit; text-align: start; cursor: pointer; }
+/* Independently scrolling panes keep selection, list position and detail reading in one place. */
+.inbox { display: grid; position: relative; grid-template-columns: var(--inbox-list-width, 22rem) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); block-size: 0; min-block-size: min(26rem, 70dvh); overflow: hidden; }
+.listPane, .detail { min-inline-size: 0; min-block-size: 0; overflow-y: auto; overflow-x: hidden; }
+.listPane { border-inline-end: 1px solid var(--color-border); }
+.detail { container-type: inline-size; }
+.list { list-style: none; margin: 0; padding: 0; }
+.list > li + li { border-block-start: 1px solid var(--color-border-subtle); }
+.notice { display: flex; align-items: flex-start; gap: var(--spacing-3); inline-size: 100%; padding: var(--spacing-4); border: 0; background: none; text-align: start; font: inherit; color: var(--color-text-primary); cursor: pointer; }
+.notice[data-unread] { background: color-mix(in srgb, var(--color-accent) 5%, transparent); }
+.notice:hover { background: var(--color-overlay-hover); }
+.notice[data-unread]:hover { background: color-mix(in srgb, var(--color-accent) 8%, transparent); }
+.notice[aria-pressed="true"] { background: color-mix(in srgb, var(--color-accent) 9%, transparent); box-shadow: inset 2px 0 var(--color-accent); }
+.notice:focus-visible { outline: var(--focus-outline-width) var(--focus-outline-style) var(--focus-outline-color); outline-offset: -3px; }
+.mark { position: relative; display: inline-flex; flex: 0 0 auto; padding-block-start: 2px; color: var(--color-icon-secondary); font-size: 0.875rem; }
+.copy { display: flex; flex-direction: column; gap: var(--spacing-1); min-inline-size: 0; }
+.copy strong { font-size: 0.8125rem; line-height: 1.5; font-weight: 500; overflow-wrap: anywhere; }
+.notice[data-unread] strong { font-weight: 600; }
+.copy > span { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; color: var(--color-text-secondary); font-size: 0.75rem; line-height: 1.5; }
+.copy time { color: var(--color-text-secondary); font-size: 0.6875rem; line-height: 1.5; }
+.quiet { margin: 0; padding: var(--spacing-6); font-size: 0.8125rem; color: var(--color-text-secondary); text-align: center; }
+.mobileEmpty { display: none; }
+@media (width < 64rem) {
+  .inbox { grid-template-columns: minmax(0, 1fr); }
+  .listPane { border-inline-end: 0; }
+  .detail { display: none; }
+  .splitter { display: none; }
+  .inbox[data-selected] .listPane { display: none; }
+  .inbox[data-selected] .detail { display: block; }
+  .mobileEmpty { display: block; }
+  .quiet { display: none; }
+}
+
+.splitter { position: absolute; inset-block: 0; inset-inline-start: var(--inbox-list-width, 22rem); inline-size: 8px; margin-inline-start: -4px; z-index: 2; cursor: col-resize; touch-action: none; outline: none; }
+.splitter::after { content: ''; position: absolute; inset-block: 0; inset-inline-start: 3px; inline-size: 2px; background: transparent; transition: background 120ms; }
+.splitter:hover::after, .splitter:focus-visible::after, .inbox[data-resizing] .splitter::after { background: var(--color-accent); }
+.message { min-block-size: 100%; }
+.messageHead { display: flex; align-items: center; min-block-size: 3rem; padding: var(--spacing-2) var(--spacing-4); border-block-end: 1px solid var(--color-border-subtle); }
+.messageBody { max-inline-size: 44rem; padding: var(--spacing-8); }
+.messageKind { margin: 0 0 var(--spacing-2); color: var(--color-text-secondary); font-size: 0.75rem; }
+.messageBody h2 { margin: 0 0 var(--spacing-2); font-size: 1.125rem; font-weight: 600; line-height: 1.5; overflow-wrap: anywhere; }
+.messageBody time, .messageAgent { color: var(--color-text-secondary); font-size: 0.75rem; }
+.messageText { margin-block: var(--spacing-6); font-size: 0.875rem; line-height: 1.7; word-break: keep-all; overflow-wrap: anywhere; }
+.contentLink { display: inline-flex; align-items: center; gap: var(--spacing-2); padding: var(--spacing-2) var(--spacing-3); border: 1px solid var(--color-border-control); border-radius: 4px; color: var(--color-text-primary); text-decoration: none; font-size: 0.8125rem; }
+.contentLink:hover { background: var(--color-overlay-hover); }
+.contentLink:focus-visible { outline: var(--focus-outline-width) var(--focus-outline-style) var(--focus-outline-color); }
+@media (width < 64rem) { .messageBody { padding: var(--spacing-5); } }
+
+@media (width < 64rem) { .splitter { display: none; } }
+
+.mark { padding-block-start: 0; }
+.eventMark { position: absolute; inset-inline-end: -4px; inset-block-end: -3px; display: grid; place-items: center; inline-size: 1rem; block-size: 1rem; border-radius: 50%; background: var(--color-background-surface); color: var(--color-text-secondary); border: 1px solid var(--color-border-subtle); font-size: 0.625rem; }
+.senderLine { font-size: 0.6875rem !important; }
+.sender { display: flex; align-items: center; gap: var(--spacing-3); margin-block-end: var(--spacing-6); }
+.senderText { display: flex; flex-direction: column; gap: 2px; }
+.sender strong { display: inline-flex; align-items: center; flex-wrap: wrap; gap: var(--spacing-2); font-size: 0.8125rem; font-weight: 500; }
+.senderText > span { color: var(--color-text-secondary); font-size: 0.75rem; }
+.agentTag { display: inline-flex; align-items: center; gap: var(--spacing-1); padding: 1px 5px; border: 1px solid var(--color-border-subtle); border-radius: 4px; color: var(--color-text-secondary); font-size: 0.6875rem; }

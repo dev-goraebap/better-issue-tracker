@@ -53,6 +53,7 @@ BIT/
 - **로컬 실행**: `sh dev.sh [all|server|client]`. Docker·`.env` 없이 bootRun(dev 프로필) + vite(`/api` 프록시). 비밀값은 첫 실행 때 자동 생성.
 - **백업**: SandboxHr는 prod에서 Litestream 사이드카로 객체 스토리지에 복제한다. BIT도 같은 방식을 쓸 수 있다(선택).
 - **CI**: GitHub Actions (D-026). SandboxHr의 verify 단계(서버 `./gradlew check`, 화면 `npm run check`)를 Actions로 옮긴다. 배포 자동화는 나중.
+- **운영 배포**: 서버의 `~/apps/bit/compose.yml`을 기준으로 한다. 설정·백업·교체·검증·복구 절차는 [운영 서버 배포](deployment.md)를 따른다.
 
 ## 3. 백엔드 규칙
 상세: SandboxHr `hohr-backend` 스킬 (`references/01-development.md` ~ `04-cross-module-read.md`)

@@ -1138,6 +1138,18 @@ class WorkItemIntegrationTest {
                 .containsExactly(Notification.Type.assigned);
         assertThat(notices(member).getFirst().body()).contains("owner").contains("담당자로 지정");
         assertThat(notices(member).getFirst().title()).isEqualTo("BIT-1 Spec");
+        assertThat(notices(member).getFirst().actor().id()).isEqualTo(owner.userId());
+        assertThat(notices(member).getFirst().actor().name()).isEqualTo("owner");
+        assertThat(notices(member).getFirst().actor().system()).isFalse();
+        String ownNotice = notices(member).getFirst().id();
+        assertThat(notificationService.get(member, workspace, ownNotice))
+                .isEqualTo(notices(member).getFirst());
+        assertThatThrownBy(() -> notificationService.get(owner, workspace, ownNotice))
+                .hasMessageContaining("알림");
+        assertThatThrownBy(() -> notificationService.get(member, workspace, Ids.newId()))
+                .hasMessageContaining("알림");
+        assertThatThrownBy(() -> notificationService.get(member, Ids.newId(), ownNotice))
+                .isInstanceOf(io.github.goraebap.bit.shared.error.BusinessException.class);
         assertThat(notices(owner)).isEmpty();
 
         // A comment reaches the people on it and whoever made it, never the one who wrote it.
@@ -1222,6 +1234,16 @@ class WorkItemIntegrationTest {
         notificationService.dueToday();
         notificationService.dueToday();
         var told = notificationService.list(member, workspace, true, null, 30).items();
+        assertThat(told).allSatisfy(n -> {
+            assertThat(n.actor().system()).isTrue();
+            assertThat(n.actor().name()).isEqualTo("시스템");
+            assertThat(n.actor().id()).isNull();
+            assertThat(notificationService
+                            .get(member, workspace, n.id())
+                            .actor()
+                            .system())
+                    .isTrue();
+        });
         assertThat(told)
                 .extracting(NotificationViews.Notice::type)
                 .containsExactlyInAnyOrder(Notification.Type.event_reminder, Notification.Type.due_today);

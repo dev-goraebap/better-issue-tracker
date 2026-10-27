@@ -1,5 +1,7 @@
 # T-007. 문서 화면 마무리: 기존 목록·상세와 같은 완성도로 (인계 문서)
 
+> 후속 변경: 데스크톱 테이블·프로젝트 행 맨 위 고정은 사용자 요청에 따라 D-097로 대체했다. 현재 리스트와 공유 지정 순서는 [T-008](T-008-document-list.md)을 따른다. 아래는 이전 작업 기록이다.
+
 > 작성: 2026-10-27, Claude → Codex 인계. BIT 업무: **BIT-41**(진행 중). 결정: D-093(특히 '화면 (BIT-41)' 항목).
 > 브랜치 `bit-41-document-screens`, PR [#42](https://github.com/dev-goraebap/better-issue-tracker/pull/42)(아직 병합 전).
 > bit-frontend / bit-backend / bit-api-contract 스킬과 `docs/08-design-language.md`를 적용한다.

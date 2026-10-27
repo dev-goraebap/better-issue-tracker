@@ -103,7 +103,7 @@ public final class DocumentViews {
     /** One folder of a part opened: the folders from its top down to it, then what it holds. */
     @Schema(
             name = "DocumentFolderContents",
-            requiredProperties = {"projectId", "folderId", "path", "folders", "documents"})
+            requiredProperties = {"projectId", "folderId", "path", "folders", "documents", "ordering"})
     public record Contents(
             @Schema(nullable = true) String projectId,
             @Schema(nullable = true) String folderId,
@@ -112,11 +112,21 @@ public final class DocumentViews {
             List<Folder> path,
 
             List<Folder> folders,
-            List<Summary> documents) {
+            List<Summary> documents,
+            Order ordering) {
         public Contents {
             path = List.copyOf(path);
             folders = List.copyOf(folders);
             documents = List.copyOf(documents);
+        }
+    }
+
+    @Schema(
+            name = "DocumentOrder",
+            requiredProperties = {"version", "order"})
+    public record Order(long version, List<String> order) {
+        public Order {
+            order = List.copyOf(order);
         }
     }
 

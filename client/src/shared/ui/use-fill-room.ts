@@ -9,19 +9,22 @@ function scrolls(box: HTMLElement) {
   return /(auto|scroll)/.test(style.overflowY) && !/(auto|scroll)/.test(style.overflowX);
 }
 
-/** The boxes from a box up to the one the page scrolls in (the workspace card), that one last; none if there is none. */
+/** Ancestors through the page's scrolling box, or through the document for standalone pages. */
 function chainOf(element: HTMLElement): HTMLElement[] {
   const chain: HTMLElement[] = [];
   for (let box = element.parentElement; box; box = box.parentElement) {
     chain.push(box);
     if (scrolls(box)) return chain;
   }
-  return [];
+  return chain;
 }
 
 /** A box's laid-out children (not positioned out of the flow, not hidden), in order. */
 const laidOut = (box: HTMLElement) => [...box.children].filter((child): child is HTMLElement => child instanceof HTMLElement
-  && !['absolute', 'fixed'].includes(getComputedStyle(child).position) && child.getClientRects().length > 0);
+  && !['SCRIPT', 'STYLE', 'HEAD'].includes(child.tagName)
+  && getComputedStyle(child).display !== 'none'
+  && !['absolute', 'fixed'].includes(getComputedStyle(child).position)
+  && (child.getClientRects().length > 0 || getComputedStyle(child).display === 'contents'));
 
 /**
  * The height a box leaves empty under its last laid-out child when that child is `inner` (the branch the stretched box
@@ -54,11 +57,19 @@ export function useFillRoom<T extends HTMLElement>(isOn: boolean): RefObject<T |
       // Going up from the box, each box's room under it, until a box has something after it.
       let spare = 0;
       let inner: HTMLElement = element;
+      let hasFollowingContent = false;
       for (const box of chain) {
         const room = spareIn(box, inner);
-        if (room === undefined) break;
+        if (room === undefined) { hasFollowingContent = true; break; }
         spare += room;
         inner = box;
+      }
+      if (!hasFollowingContent && !chain.some(scrolls)) {
+        const bottomInset = chain.reduce((total, box) => {
+          const style = getComputedStyle(box);
+          return total + parseFloat(style.paddingBlockEnd) + parseFloat(style.borderBottomWidth) + parseFloat(style.marginBlockEnd);
+        }, parseFloat(getComputedStyle(element).marginBlockEnd));
+        spare = Math.max(0, window.innerHeight - element.getBoundingClientRect().bottom - bottomInset);
       }
       // Rounded down from the box's exact height: a rounded-up pixel (offsetHeight rounds) would make the page scroll by one.
       if (spare >= 1) element.style.minBlockSize = `${Math.floor(element.getBoundingClientRect().height + spare)}px`;
@@ -66,7 +77,8 @@ export function useFillRoom<T extends HTMLElement>(isOn: boolean): RefObject<T |
     fit();
     const observer = new ResizeObserver(fit);
     for (const box of chain) observer.observe(box);
-    return () => { observer.disconnect(); element.style.minBlockSize = ''; };
+    window.addEventListener('resize', fit);
+    return () => { observer.disconnect(); window.removeEventListener('resize', fit); element.style.minBlockSize = ''; };
   }, [isOn]);
   return ref;
 }

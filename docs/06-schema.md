@@ -254,3 +254,10 @@ erDiagram
 | activity·comment 대상 일반화 | D-020 | |
 | 에이전트 표시 | D-021 | |
 | 1차 제외 Kaneo 기능 | 위 표 | "가벼움 유지" |
+
+
+## 문서의 공유 지정 순서 (D-097, V20)
+
+`document_order`는 워크스페이스와 위치(`scope_key`: `<projectId 또는 빈값>/<folderId 또는 빈값>`)별로 한 행이다. 기본 키는 `document_order_id`, 고유 인덱스는 `(workspace_id, scope_key)`다. `entries`는 `project:<id>`, `folder:<id>`, `document:<id>` 토큰을 줄바꿈으로 이어 저장한다. `version`과 `updated_at`·`updated_by`·`updated_by_agent`로 동시 변경과 수정 주체를 기록한다.
+
+조회는 현재 위치의 존재하는 항목과 읽을 수 있는 프로젝트만 노출한다. 저장은 쓰기 권한·버전·중복·현재 위치의 전체 항목을 검사하고, 다른 멤버만 볼 수 있는 프로젝트 항목은 보존한다. 폴더나 문서를 옮기거나 삭제한 뒤 남은 토큰은 화면에 나타나지 않으며, 새 항목은 지정 순서 뒤에 붙는다.

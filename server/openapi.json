@@ -217,6 +217,36 @@
         }
       }
     },
+    "/api/v1/workspaces/{workspaceId}/documents/order" : {
+      "put" : {
+        "tags" : [ "document-controller" ],
+        "summary" : "Save the folder's shared mixed row order; stale versions are rejected (BIT-57)",
+        "operationId" : "reorderDocuments",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ReorderDocuments"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        }
+      }
+    },
     "/api/v1/workspaces/{id}/owner" : {
       "put" : {
         "tags" : [ "workspace-controller" ],
@@ -3993,6 +4023,39 @@
         }
       }
     },
+    "/api/v1/workspaces/{workspaceId}/notifications/{id}" : {
+      "get" : {
+        "tags" : [ "notification-controller" ],
+        "operationId" : "get_6",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Notification"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/workspaces/{workspaceId}/notifications/unread-count" : {
       "get" : {
         "tags" : [ "notification-controller" ],
@@ -4841,6 +4904,34 @@
           }
         },
         "required" : [ "order" ]
+      },
+      "ReorderDocuments" : {
+        "type" : "object",
+        "properties" : {
+          "projectId" : {
+            "type" : "string",
+            "pattern" : "[A-Za-z][A-Za-z0-9]{9}"
+          },
+          "folderId" : {
+            "type" : "string",
+            "pattern" : "[A-Za-z][A-Za-z0-9]{9}"
+          },
+          "expectedVersion" : {
+            "type" : "integer",
+            "format" : "int64",
+            "minimum" : 0
+          },
+          "order" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "pattern" : "(project|folder|document):[A-Za-z][A-Za-z0-9]{9}"
+            },
+            "maxItems" : 10000,
+            "minItems" : 0
+          }
+        },
+        "required" : [ "expectedVersion", "order" ]
       },
       "Transfer" : {
         "type" : "object",
@@ -6701,6 +6792,9 @@
           "actorAgent" : {
             "type" : [ "string", "null" ]
           },
+          "actor" : {
+            "$ref" : "#/components/schemas/NotificationActor"
+          },
           "readAt" : {
             "type" : [ "string", "null" ],
             "format" : "date-time"
@@ -6710,7 +6804,26 @@
             "format" : "date-time"
           }
         },
-        "required" : [ "actorAgent", "body", "createdAt", "id", "projectId", "readAt", "targetId", "targetType", "title", "type" ]
+        "required" : [ "actor", "actorAgent", "body", "createdAt", "id", "projectId", "readAt", "targetId", "targetType", "title", "type" ]
+      },
+      "NotificationActor" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : [ "string", "null" ]
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "system" : {
+            "type" : "boolean"
+          },
+          "avatar" : {
+            "type" : "null",
+            "$ref" : "#/components/schemas/Picture"
+          }
+        },
+        "required" : [ "avatar", "id", "name", "system" ]
       },
       "Notifications" : {
         "type" : "object",
@@ -6726,6 +6839,18 @@
           }
         },
         "required" : [ "items", "nextCursor" ]
+      },
+      "Picture" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string"
+          },
+          "color" : {
+            "type" : [ "string", "null" ]
+          }
+        },
+        "required" : [ "id" ]
       },
       "NotificationCount" : {
         "type" : "object",
@@ -7004,21 +7129,28 @@
             "items" : {
               "$ref" : "#/components/schemas/DocumentSummary"
             }
+          },
+          "ordering" : {
+            "$ref" : "#/components/schemas/DocumentOrder"
           }
         },
-        "required" : [ "documents", "folderId", "folders", "path", "projectId" ]
+        "required" : [ "documents", "folderId", "folders", "ordering", "path", "projectId" ]
       },
-      "Picture" : {
+      "DocumentOrder" : {
         "type" : "object",
         "properties" : {
-          "id" : {
-            "type" : "string"
+          "version" : {
+            "type" : "integer",
+            "format" : "int64"
           },
-          "color" : {
-            "type" : [ "string", "null" ]
+          "order" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
           }
         },
-        "required" : [ "id" ]
+        "required" : [ "order", "version" ]
       },
       "Space" : {
         "type" : "object",

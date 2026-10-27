@@ -25,3 +25,5 @@
 @media (prefers-reduced-motion: reduce) {
   .bell[data-unread] svg:not(.defs) { animation: none; filter: drop-shadow(0 0 3px color-mix(in srgb, var(--bell-glow-warm) 70%, transparent)); }
 }
+
+.bell > :global(.bit-nav-icon) { inline-size: 1rem; block-size: 1rem; }

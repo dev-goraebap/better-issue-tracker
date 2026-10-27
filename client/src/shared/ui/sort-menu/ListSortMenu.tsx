@@ -15,7 +15,7 @@ export function ListSortMenu({ sort, column, onDone, size = 'sm' }: {
   const shownKey = column ?? sort.key;
   const kind = sort.keys.find(each => each.value === shownKey)?.kind ?? 'date';
   const isActive = !column || column === sort.key;
-  const directions: SortDirection[] = kind === 'date' ? ['desc', 'asc'] : ['asc', 'desc'];
+  const directions: SortDirection[] = kind === 'manual' ? [] : kind === 'date' ? ['desc', 'asc'] : ['asc', 'desc'];
   return <div role="menu" className={styles.body} data-size={size}>
     {!column && <>
       <p className={styles.heading}>정렬 기준</p>
@@ -23,8 +23,8 @@ export function ListSortMenu({ sort, column, onDone, size = 'sm' }: {
         onClick={() => { if (key.value !== sort.key) sort.onChange(key.value, naturalDirection(key)); }}>
         <span>{key.label}</span>{key.value === sort.key && <NavIcon name="check" />}
       </button>)}
-      <hr className={styles.rule} />
-      <p className={styles.heading}>방향</p>
+      {kind !== 'manual' && <hr className={styles.rule} />}
+      {kind !== 'manual' && <p className={styles.heading}>방향</p>}
     </>}
     {directions.map(direction => {
       const isOn = isActive && sort.direction === direction;

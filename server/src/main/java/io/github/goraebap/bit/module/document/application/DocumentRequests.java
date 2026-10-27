@@ -15,6 +15,18 @@ import java.util.Set;
 public final class DocumentRequests {
     private DocumentRequests() {}
 
+    @Schema(name = "ReorderDocuments")
+    public record Order(
+            @Pattern(regexp = "[A-Za-z][A-Za-z0-9]{9}") String projectId,
+            @Pattern(regexp = "[A-Za-z][A-Za-z0-9]{9}") String folderId,
+            @NotNull @Min(0) Long expectedVersion,
+
+            @NotNull @Size(max = 10000) List<@NotNull @Pattern(regexp = "(project|folder|document):[A-Za-z][A-Za-z0-9]{9}") String> order) {
+        public Order {
+            order = order == null ? null : List.copyOf(order);
+        }
+    }
+
     @Schema(name = "CreateDocument")
     public record Create(
             @Schema(

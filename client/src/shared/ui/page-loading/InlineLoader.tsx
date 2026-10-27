@@ -1,9 +1,7 @@
 import { LoadingMark } from './LoadingMark';
-import styles from './page-loading.module.css';
+import { StateRegion } from '../state-region/StateRegion';
 
-/** The same rocket in place, for a read the screen starts itself: another tab, another page of a list, a dialog. */
+/** A content read's small rocket, centred in the same room its result will occupy. */
 export function InlineLoader({ label = '불러오는 중' }: { label?: string }) {
-  return <div className={styles.inline} role="status" aria-label={label}>
-    <LoadingMark isSmall />
-  </div>;
+  return <StateRegion placement="center" label={label} busy><LoadingMark isSmall /></StateRegion>;
 }

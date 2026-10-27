@@ -45,7 +45,7 @@ export function JoinPage() {
             <TextInput label="이름" placeholder="예: 홍길동" value={name} onChange={setName} isRequired isDisabled={busy} />
             <TextInput label="새 비밀번호" type="password" placeholder="15~64자, UTF-8 72바이트 이하" value={password} onChange={setPassword} isRequired isDisabled={busy} />
             <TextInput label="비밀번호 확인" type="password" placeholder="같은 비밀번호를 다시 입력하세요" value={confirmation} onChange={setConfirmation} isRequired isDisabled={busy} />
-            <HStack data-action-row><Button type="submit" label="초대 계정 만들기" isLoading={busy} /></HStack>
+            <HStack data-action-row><Button className="bit-create-action" type="submit" label="초대 계정 만들기" isLoading={busy} /></HStack>
           </VStack></form>
         </VStack>}
       </>}

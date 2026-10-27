@@ -21,7 +21,7 @@ export function FolderNameDialog({ from, onSave, onClose }: {
     if (refused) setError(refused);
   };
   return <CompactDialog title={from ? '폴더 편집' : '새 폴더'} width={480} isBusy={isBusy} onClose={onClose} onSubmit={() => { void save(); }}
-    footer={<><Button label="취소" variant="ghost" onClick={onClose} isDisabled={isBusy} /><Button type="submit" label={from ? '저장' : '폴더 만들기'} variant="primary" isLoading={isBusy} isDisabled={!name.trim()} /></>}>
+    footer={<><Button label="취소" variant="ghost" onClick={onClose} isDisabled={isBusy} /><Button className={from ? undefined : "bit-create-action"} type="submit" label={from ? '저장' : '폴더 만들기'} variant="primary" isLoading={isBusy} isDisabled={!name.trim()} /></>}>
     <TextInput label="이름" value={name} onChange={setName} isRequired hasAutoFocus isDisabled={isBusy} placeholder="예: 회의록"
       startIcon={<span style={{ color: color ?? 'var(--color-icon-secondary)' }}><NavIcon name="documents" /></span>} />
     <VStack gap={2}>

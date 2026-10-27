@@ -5,7 +5,7 @@ export type SortDirection = 'asc' | 'desc';
  * A key a list can be ordered by; its kind names its two ways (dates newest or oldest first, text from 가 or 하, a rank
  * from the highest or the lowest).
  */
-export type SortKey = { value: string; label: string; kind: 'date' | 'text' | 'rank' };
+export type SortKey = { value: string; label: string; kind: 'date' | 'text' | 'rank' | 'manual' };
 
 /**
  * A list's order as Plane keeps it: the key it is ordered by and, apart from it, which way. usual is the list's own
@@ -23,6 +23,7 @@ export const DIRECTION_LABELS: Record<SortKey['kind'], Record<SortDirection, str
   date: { desc: '최신 → 오래된', asc: '오래된 → 최신' },
   text: { asc: '가 → 하', desc: '하 → 가' },
   rank: { asc: '높은 → 낮은', desc: '낮은 → 높은' },
+  manual: { asc: '지정 순서', desc: '지정 순서' },
 };
 
 /** A key's natural way, taken when the key is chosen: dates newest first, text from the start, a rank from the highest. */

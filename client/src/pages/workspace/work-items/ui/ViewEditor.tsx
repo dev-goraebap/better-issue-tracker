@@ -26,7 +26,7 @@ export function ViewEditor({ initial, mode, onCancel, onSave }: {
     <div className={styles.editorEnd}>
       <Switch label="나만 보기" size="sm" value={draft.isPersonal} onChange={isPersonal => set({ isPersonal })} />
       <Button label="취소" variant="ghost" size="sm" onClick={onCancel} />
-      <Button type="submit" label={mode === 'create' ? '뷰 만들기' : '저장'} variant="primary" size="sm" isDisabled={!draft.name.trim()} />
+      <Button className={mode === "create" ? "bit-create-action" : undefined} type="submit" label={mode === 'create' ? '뷰 만들기' : '저장'} variant="primary" size="sm" isDisabled={!draft.name.trim()} />
     </div>
   </form>;
 }

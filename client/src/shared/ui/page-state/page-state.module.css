@@ -1,33 +1,12 @@
-/*
- * A state screen: the landscape, the title, the description and the action as one group. Alone in its room (a page with
- * nothing else to show) its box fills the height the page leaves (useFillRoom) and the group sits a little above the
- * middle of it; beside other content (isCompact) it keeps to the top under that content. The drawing sizes against the
- * room's width: up to 40rem in a wide one, 24rem in a narrow one (a phone, a dialog), its height never more than half
- * the window's, and a quarter on a low one, so the action stays in reach; isCompact keeps it at 26rem, never wider than
- * its room.
- */
-.room { display: flex; flex-direction: column; justify-content: center; inline-size: 100%; min-width: 0; }
-.room[data-compact] { justify-content: flex-start; }
-.state { container-type: inline-size; justify-content: flex-start; padding-block: var(--spacing-4) var(--spacing-6); }
-.state.compact { padding-block: var(--spacing-4); }
-/* The title reads as a note, not a heading over content: medium weight. Astryx sets it at raised specificity. */
-.state :is(h1, h2, h3, h4, h5, h6):not(#\#):not(#\#):not(#\#) { font-weight: var(--font-weight-medium); font-size: 1.25rem; }
-.state.compact :is(h1, h2, h3, h4, h5, h6):not(#\#):not(#\#):not(#\#) { font-size: 1rem; }
-.state :global(.astryx-empty-state-description) { max-inline-size: 28rem; line-height: 1.6; word-break: keep-all; }
-
-/* The drawing keeps its room from the start. One that had to be fetched comes in slowly once its file has arrived
-   (data-arrived): it fades in over a second while rising a few pixels, on a curve gentle at both ends so it neither pops
-   nor stops short. One already at hand starts arrived, so it shows at once with no transition. */
-.drawing { display: block; inline-size: min(40rem, 100cqi, 90dvh); max-inline-size: 100%; block-size: auto;
-  opacity: 0; translate: 0 0.5rem;
-  transition: opacity 1000ms cubic-bezier(0.45, 0, 0.25, 1), translate 1000ms cubic-bezier(0.45, 0, 0.25, 1); }
+/* One fixed illustration frame and one message rhythm, in pages, panes and dialogs alike. */
+.state { inline-size: 100%; padding-block: var(--spacing-4) var(--spacing-6); box-sizing: border-box;
+  animation: state-enter 420ms cubic-bezier(0.2, 0, 0, 1) both; }
+.state :is(h1, h2, h3, h4, h5, h6):not(#\#):not(#\#):not(#\#) { font-weight: var(--font-weight-medium); font-size: 1.125rem; }
+.state :global(.astryx-empty-state-description) { max-inline-size: 28rem; font-size: 0.8125rem; line-height: 1.6; word-break: keep-all; }
+.drawing { display: block; inline-size: 20rem; max-inline-size: 100%; block-size: 11rem; opacity: 0; translate: 0 0.25rem;
+  transition: opacity 600ms cubic-bezier(0.2, 0, 0, 1), translate 600ms cubic-bezier(0.2, 0, 0, 1); }
 .drawing[data-arrived] { opacity: 1; translate: 0 0; }
-@media (prefers-reduced-motion: reduce) { .drawing { translate: none; transition: none; } }
-.drawing.compact { inline-size: min(26rem, 100cqi); }
-@container (width < 48rem) { .drawing:not(.compact) { inline-size: min(24rem, 100cqi, 90dvh); } }
-/* A low window (a phone on its side, a zoomed page) gives the room to the words and the action first. */
-@media (height < 36rem) { .drawing:not(.compact) { inline-size: min(40rem, 100cqi, 50dvh); } }
-@container (width < 48rem) { .state:not(.compact) :is(h1, h2, h3, h4, h5, h6):not(#\#):not(#\#):not(#\#) { font-size: 1.125rem; } }
-/* The pen lines and the marks, in the theme's own icon colours. */
 .ink { fill: var(--illustration-ink, var(--color-icon-secondary)); }
 .accent { fill: var(--illustration-accent, var(--color-icon-accent)); }
+@keyframes state-enter { from { opacity: 0; transform: translateY(0.375rem); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .state { animation: none; } .drawing { translate: none; transition: none; } }

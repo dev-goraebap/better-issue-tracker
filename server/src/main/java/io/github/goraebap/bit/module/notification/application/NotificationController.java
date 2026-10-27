@@ -30,6 +30,12 @@ class NotificationController {
         return notificationService.list(actor, workspaceId, unread, cursor, size);
     }
 
+    @GetMapping("/{id}")
+    NotificationViews.Notice get(
+            @AuthenticationPrincipal CurrentUser actor, @PathVariable String workspaceId, @PathVariable String id) {
+        return notificationService.get(actor, workspaceId, id);
+    }
+
     @GetMapping("/unread-count")
     NotificationViews.Count unreadCount(@AuthenticationPrincipal CurrentUser actor, @PathVariable String workspaceId) {
         return new NotificationViews.Count(notificationService.unread(actor, workspaceId));

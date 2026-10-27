@@ -77,8 +77,8 @@ export const pickVariant = () => Math.floor(Math.random() * 3) as StateVariant;
  * the start; a drawing at hand (shown before, or in the browser's cache) shows at once, and one that has to be fetched
  * fades in once it has arrived. Decorative: the state's words carry its meaning.
  */
-export function StateLandscape({ kind, variant, hasAccent = true, isCompact = false }: {
-  kind: StateKind; variant?: StateVariant; hasAccent?: boolean; isCompact?: boolean;
+export function StateLandscape({ kind, variant, hasAccent = true }: {
+  kind: StateKind; variant?: StateVariant; hasAccent?: boolean;
 }) {
   // Masks and filters are found by id across the page, so each drawing keeps its own.
   const id = `landscape${useId().replace(/[^\w-]/g, '')}`;
@@ -91,7 +91,7 @@ export function StateLandscape({ kind, variant, hasAccent = true, isCompact = fa
     <use href={`#${id}-image`} filter={`url(#${id}-${part}-filter)`} />
   </mask>;
   return <svg viewBox={`0 ${TOP} ${SIZE.width} ${end + MARGIN - TOP}`} aria-hidden="true" focusable="false" data-state-art={name}
-    className={[styles.drawing, isCompact ? styles.compact : ''].filter(Boolean).join(' ')} data-arrived={arrived === name || undefined}>
+    className={styles.drawing} data-arrived={arrived === name || undefined}>
     <defs>
       <image id={`${id}-image`} href={fileOf(name)} {...SIZE}
         onLoad={() => { shown.add(name); setArrived(name); }} />

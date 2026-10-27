@@ -31,6 +31,9 @@ import tools.jackson.databind.json.JsonMapper;
 @Import(OpenApiContractTest.ExportSecurity.class)
 class OpenApiContractTest {
     @MockitoBean
+    private io.github.goraebap.bit.module.document.domain.DocumentOrderRepository documentOrderRepository;
+
+    @MockitoBean
     private DataSource dataSource;
 
     @MockitoBean

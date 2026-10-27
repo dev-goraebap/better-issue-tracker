@@ -48,7 +48,7 @@ export function CreateWorkspaceDialog({ isOpen, onClose, onCreated }: { isOpen: 
   };
   return <CompactDialog isOpen={isOpen} title="새 워크스페이스" subtitle="팀이나 제품 하나에 워크스페이스 하나를 둡니다." width={600} isBusy={isBusy} onClose={close}
     onSubmit={() => { void submit(); }}
-    footer={<><Button label="취소" variant="ghost" onClick={close} isDisabled={isBusy} /><Button type="submit" label="워크스페이스 만들기" variant="primary" isLoading={isBusy} /></>}>
+    footer={<><Button label="취소" variant="ghost" onClick={close} isDisabled={isBusy} /><Button className="bit-create-action" type="submit" label="워크스페이스 만들기" variant="primary" isLoading={isBusy} /></>}>
     <TextInput label="이름" value={name} onChange={setName} isRequired hasAutoFocus isDisabled={isBusy} placeholder="예: BIT 개발"
       status={nameError ? { type: 'error', message: nameError } : undefined} />
     <FormMessage message={error} />

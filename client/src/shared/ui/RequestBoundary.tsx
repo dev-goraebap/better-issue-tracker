@@ -1,3 +1,4 @@
+import { StateRegion } from './state-region/StateRegion';
 import { useState, type ReactNode } from 'react';
 import { Button, Text, VStack } from '@astryxdesign/core';
 import { isNotFound } from '@/shared/api';
@@ -27,7 +28,7 @@ export function RequestBoundary({ pending, hasData, error, missing = false, retr
     <PageState kind="error" variant={variant} title="정보를 불러오지 못했습니다" description="연결 상태를 확인하고 다시 시도해 주세요."
       actions={<Button label="다시 시도" variant="secondary" onClick={retry} />} />
   </div>;
-  if (!hasData || loading) return loading ? <InlineLoader label="화면 정보를 불러오는 중" /> : <div className={styles.waiting} aria-busy="true" aria-label="화면 정보를 불러오는 중" />;
+  if (!hasData || loading) return loading ? <InlineLoader label="화면 정보를 불러오는 중" /> : <StateRegion placement="center" busy label="화면 정보를 불러오는 중" />;
   return <div className={styles.reveal}>
     {!!error && <VStack gap={2} role="alert"><Text>새 정보를 가져오지 못해 이전 내용을 표시합니다.</Text><Button label="다시 시도" variant="secondary" onClick={retry} /></VStack>}
     {children}
