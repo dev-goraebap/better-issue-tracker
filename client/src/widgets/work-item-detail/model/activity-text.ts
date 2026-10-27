@@ -23,6 +23,41 @@ const timeText = (moment: string) => {
 };
 const listOf = (values: string[]) => values.map(value => `'${value}'`).join(', ');
 
+/**
+ * Whom a line of activity is about, when it is about a person: the one it was put on (담당자, 참석자), or the one taken
+ * off when nobody was put on. The timeline shows their picture in place of an icon (BIT-84).
+ */
+export function activityPerson({ field, before, after }: TimelineEntry): string | null {
+  if (field === 'assignee') return after ?? before ?? null;
+  if (field !== 'people') return null;
+  const was = ids(before);
+  const now = ids(after);
+  return now.find(id => !was.includes(id)) ?? was.find(id => !now.includes(id)) ?? null;
+}
+
+/** The icon a line of activity shows on the timeline's rule, by what happened, as GitHub marks an issue's events (BIT-84). */
+export function activityIcon({ action, field }: TimelineEntry): string {
+  if (action === 'created') return 'plus';
+  if (action === 'deleted') return 'delete';
+  if (action === 'restored') return 'retry';
+  switch (field) {
+    case 'title': return 'type';
+    case 'description': case 'body': return 'edit';
+    case 'place': return 'documents';
+    case 'priority': return 'priority';
+    case 'assignee': case 'people': return 'person';
+    case 'kind': case 'allDay': case 'startDate': case 'dueDate': return 'calendar';
+    case 'startsAt': case 'endsAt': return 'clock';
+    case 'reminder': return 'bell';
+    case 'column': return 'status';
+    case 'labels': return 'label';
+    case 'project': return 'board';
+    case 'attachments': return 'attach';
+    case 'relations': return 'link';
+    case 'archived': return 'lock';
+    default: return 'status';
+  }
+}
 
 /**
  * What a work item's activity says, after the person's name (D-078), as Linear words it: 업무를 만들었습니다, 상태를 할 일에서

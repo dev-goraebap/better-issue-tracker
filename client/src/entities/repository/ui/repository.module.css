@@ -1,18 +1,19 @@
 /* The states as GitHub colours them: open green, merged purple, closed red, a draft grey. */
-.links, .link, .badge { --pr-open: #3fb950; --pr-merged: #a371f7; --pr-closed: #f85149; --pr-draft: var(--color-icon-secondary); }
+.link, .badge { --pr-open: #3fb950; --pr-merged: #a371f7; --pr-closed: #f85149; --pr-draft: var(--color-icon-secondary); }
 
-/* A work item's code links: a row each, its mark, its words, its state and a hint that it opens elsewhere. */
-.links { display: flex; flex-direction: column; gap: 2px; margin: 0; padding: 0; list-style: none; }
-.link { display: flex; align-items: center; gap: var(--spacing-2); min-block-size: 2rem; padding: 0 var(--spacing-2); border-radius: var(--radius-element);
-  color: var(--color-text-primary); font-size: 0.8125rem; text-decoration: none; }
+/*
+ * A work item's code links on the timeline's rule (BIT-84), in an activity line's rhythm: one 20px line of 13px words,
+ * what it is in the quiet ink, its title in the primary, its state, who and when; the hover box reaches a little past
+ * the line without moving it.
+ */
+.link { display: flex; align-items: center; gap: var(--spacing-2); min-block-size: 1.25rem; margin: -0.125rem -0.375rem; padding: 0.125rem 0.375rem;
+  border-radius: var(--radius-element); color: var(--color-text-secondary); font-size: 0.8125rem; line-height: 1.25rem; text-decoration: none; }
 .link:hover { background: var(--color-overlay-hover); }
 .link:focus-visible { outline: var(--focus-outline-width) var(--focus-outline-style) var(--focus-outline-color); }
-.linkIcon { display: inline-grid; place-items: center; flex-shrink: 0; inline-size: 1rem; block-size: 1rem; color: var(--color-icon-secondary); }
-.linkIcon svg { inline-size: 0.9375rem; block-size: 0.9375rem; }
-.linkIcon[data-state="open"] { color: var(--pr-open); }
-.linkIcon[data-state="merged"] { color: var(--pr-merged); }
-.linkIcon[data-state="closed"] { color: var(--pr-closed); }
-.linkText { display: flex; align-items: baseline; gap: var(--spacing-1-5, 0.375rem); flex: 1; min-inline-size: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.linkText { display: flex; align-items: baseline; gap: var(--spacing-1-5, 0.375rem); flex: 1; min-inline-size: 0; overflow: hidden; white-space: nowrap; }
+.kind { flex-shrink: 0; }
+.title { min-inline-size: 0; overflow: hidden; text-overflow: ellipsis; font-weight: 500; color: var(--color-text-primary); }
+.meta { flex-shrink: 0; font-size: 0.75rem; white-space: nowrap; }
 .number { color: var(--color-text-secondary); font-variant-numeric: tabular-nums; }
 .sha, .branch { font-family: var(--font-family-mono, ui-monospace, monospace); font-size: 0.75rem; color: var(--color-text-secondary); }
 .branch { color: var(--color-text-primary); }

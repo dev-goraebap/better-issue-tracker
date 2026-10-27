@@ -38,6 +38,7 @@ export { MarkdownEditor, MarkdownView } from './markdown-editor';
 export { IconPicker, MarkIcon, type Mark } from './icon-picker';
 export { ColorPalette } from './color-palette';
 export { MoreMenu } from './more-menu';
+export { Timeline, TimelineItem } from './timeline';
 export { PropertyPicker, type PropertyOption } from './property-picker';
 export { DuePicker } from './due-picker';
 export { EventTimePicker, eventTimeText, type EventTime } from './event-time-picker';

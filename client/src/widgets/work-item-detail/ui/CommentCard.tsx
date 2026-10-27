@@ -1,15 +1,15 @@
 import { useState } from 'react';
 import { Button } from '@astryxdesign/core';
 import { agoText } from '@/shared/lib/date-text';
-import { MoreMenu, DefaultAvatar, MarkdownEditor, NavIcon } from '@/shared/ui';
+import { MoreMenu, DefaultAvatar, MarkdownEditor, NavIcon, TimelineItem } from '@/shared/ui';
 import { AttachmentBody, ReactionBar, fileHref } from '@/features/detail-engagement';
 import type { TimelineEntry } from '../api/timeline';
 import { actorText } from '../model/activity-text';
 import styles from './activity.module.css';
 
 /**
- * A comment in the work item's timeline (D-078), as Linear's: a card with the person's picture, name and when (수정됨 when
- * edited), the Markdown read as written. Its author may 수정 it in place (the same editor, Ctrl + Enter saves) and
+ * A comment in the work item's timeline (D-078): a card over the timeline's rule (BIT-84) with the person's picture, name
+ * and when (수정됨 when edited) in its head, the Markdown read as written. Its author may 수정 it in place (the same editor, Ctrl + Enter saves) and
  * delete it; someone who manages the workspace may delete anyone's.
  */
 export function CommentCard({ workspaceId, canReact, entry, canEdit, canDelete, onSave, onDelete }: {
@@ -27,7 +27,7 @@ export function CommentCard({ workspaceId, canReact, entry, canEdit, canDelete, 
     ...(canEdit ? [{ label: '수정', icon: <NavIcon name="edit" />, onClick: () => setDraft(entry.body ?? '') }] : []),
     ...(canDelete ? [{ label: '삭제', icon: <NavIcon name="delete" />, onClick: onDelete }] : []),
   ];
-  return <li className={styles.comment}>
+  return <TimelineItem kind="card">
     <article className={styles.card} aria-label={`${entry.actorName ?? ''}의 댓글`}>
       <header className={styles.cardHead}>
         {entry.actorId && <DefaultAvatar seed={entry.actorId} name={entry.actorName ?? ''} size={20} />}
@@ -47,5 +47,5 @@ export function CommentCard({ workspaceId, canReact, entry, canEdit, canDelete, 
         <ReactionBar target={{ workspaceId, type: 'comment', id: entry.id }} canWrite={canReact} />
       </div>
     </article>
-  </li>;
+  </TimelineItem>;
 }
