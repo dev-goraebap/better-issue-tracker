@@ -3,6 +3,8 @@ name: bit-backend
 description: BIT 서버(server/, Spring Boot·jOOQ·SQLite) 모듈 구조·계층 규칙, MCP·외부 기능 어댑터·다형 대상 처리와 개발·코드 스타일·모듈 간 조회. "서버 기능 추가", "API 구현", "모듈 만들어줘", "MCP 도구 구현", "백엔드 고쳐줘", Java 파일을 만들거나 고칠 때, 서버 설계를 바꿀 때 쓴다.
 ---
 
+작업 전에 [운영 프로젝트 문서 읽기](../bit-architecture/references/project-documents.md)에 따라 해당 영역의 문서를 MCP로 읽는다. 스킬의 절차와 현재 코드 계약을 함께 적용한다.
+
 서버는 `io.github.goraebap.bit` 아래 `module/<업무>`와 `shared/{config,domain,error,mail,persistence,storage,text,web}`으로 나눈 모듈형 모놀리스다. 모듈은 단수 소문자로 `module/` 바로 아래에 둔다(iam·workspace·project·workitem·decision·session·document·coderef·link·file·notification). 모듈 사이 순환 참조는 금지하며 의존 방향은 ArchUnit(`ArchitectureTest`)으로 강제한다. 로그인한 사용자 `CurrentUser`는 모든 모듈이 쓰므로 `shared/web`에 둔다. 모듈은 루트의 공개 계약(`*Facade`, `*Spi`, `*Event`)으로만 서로 부르고, 계층·트랜잭션·저장소 규칙은 [계층과 처리 흐름](references/03-layers.md)을 따른다.
 
 ## BIT 고유 규칙

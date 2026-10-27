@@ -3,6 +3,8 @@ name: bit-release
 description: BIT 배포(릴리스) 절차. 버전을 정하고 검사한 뒤 버전 파일을 맞추고, 후보 태그(v0.8.0-rc.1)로 GHCR 이미지를 만들어 확인하고, 같은 커밋에 정식 태그(v0.8.0)와 GitHub Release를 올린다. "배포해줘", "릴리스", "v0.8.0 내줘", "태그 달아줘", "RC 만들어줘", "이미지 올려줘", "새 버전 내자"라고 할 때 쓴다.
 ---
 
+작업 전에 [운영 프로젝트 문서 읽기](../bit-architecture/references/project-documents.md)에 따라 해당 영역의 문서를 MCP로 읽는다. 스킬의 절차와 현재 코드 계약을 함께 적용한다.
+
 배포본은 태그 하나와 그 커밋으로 식별한다. 태그를 푸시하면 GitHub Actions(`.github/workflows/release.yml`)가 루트 `Dockerfile`로 이미지를 만들어 `ghcr.io/dev-goraebap/better-issue-tracker`에 올린다(D-082). 이 스킬은 태그를 달기까지와 올라간 이미지를 확인하는 일을 한다. 서버에 띄우는 일(이미지 바꾸기·되돌리기)은 `bit-architecture`의 [배포](../bit-architecture/references/deploy.md)를 따른다.
 
 운영 서버 배포까지 요청받았으면 정식 이미지 검증 뒤 [운영 서버 배포](../../../docs/deployment.md)를 이어 수행한다. **서버의 `~/apps/bit/compose.yml`이 운영 실행 설정의 기준**이다. 같은 디렉터리의 `app.env`·`backups/`를 사용하고, 기존 외부 볼륨·프록시 네트워크를 보존한다. 다른 경로의 compose나 옛 `.local/home-deploy/deploy.sh`로 교체하지 않는다.
