@@ -1,11 +1,14 @@
-import { PageFrame, PageState } from '@/shared/ui';
+import { useParams, useSearch } from '@tanstack/react-router';
+import { DocumentFolder } from '@/widgets/document-folder';
+import { ProjectFolders } from './ProjectFolders';
 
 /**
- * PATTERN · 준비 중인 기능, /workspaces/$workspaceId/documents. The workspace's 문서함 (D-015) keeps its menu and says what it will
- * hold; its actions come with the feature (T-005 and the file store).
+ * 문서함, /workspaces/$workspaceId/documents (D-093, BIT-41): every project's folder at the top, then the workspace's
+ * own folders and documents (공통). ?folder= opens one of its own folders; a project's folders open on its 문서.
  */
 export function DocumentsPage() {
-  return <PageFrame title="문서함" icon="documents" chrome="header">
-    <PageState title="문서함은 준비 중입니다" description="폴더 트리로 산출물을 모으고 프로젝트 라벨로 거르는 공간입니다. 파일 저장소가 켜지면 여기서 문서를 올리고 옮길 수 있습니다." />
-  </PageFrame>;
+  const { workspaceId } = useParams({ strict: false }) as { workspaceId: string };
+  const { folder } = useSearch({ strict: false }) as { folder?: string };
+  return <DocumentFolder key={folder ?? 'top'} workspaceId={workspaceId} projectId={null} folderId={folder} title="문서함" rootLabel="문서함"
+    lead={<ProjectFolders workspaceId={workspaceId} />} />;
 }

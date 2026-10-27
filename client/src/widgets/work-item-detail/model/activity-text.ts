@@ -4,6 +4,8 @@ import type { TimelineEntry } from '../api/timeline';
 /** The names an activity's values are read with: people, the project's columns, the workspace's labels, the priorities. */
 export type ActivityNames = {
   people: ReadonlyMap<string, string>; columns: ReadonlyMap<string, string>; labels: ReadonlyMap<string, string>; priorities: Readonly<Record<string, string>>;
+  /** What the timeline is of: 업무 (the default) or 문서 (D-093). */
+  noun?: '업무' | '문서';
 };
 
 /** How long one person's description edits in a row read as one line. */
@@ -41,12 +43,15 @@ const object = (word: string, shown = word) => {
  */
 export function activityText(entry: TimelineEntry, names: ActivityNames): string {
   const { action, field, before, after } = entry;
-  if (action === 'created') return '업무를 만들었습니다';
-  if (action === 'deleted') return '업무를 삭제했습니다';
-  if (action === 'restored') return '업무를 되살렸습니다';
+  const noun = names.noun ?? '업무';
+  if (action === 'created') return `${noun}를 만들었습니다`;
+  if (action === 'deleted') return `${noun}를 삭제했습니다`;
+  if (action === 'restored') return `${noun}를 되살렸습니다`;
   switch (field) {
     case 'title': return `제목을 ${toward(after ?? '', `'${after ?? ''}'`)} 바꿨습니다`;
     case 'description': return '설명을 고쳤습니다';
+    case 'body': return '본문을 고쳤습니다';
+    case 'place': return '다른 폴더로 옮겼습니다';
     case 'priority': return after ? `우선순위를 ${toward(names.priorities[after] ?? after)} 바꿨습니다` : '우선순위를 지웠습니다';
     case 'assignee':
       if (!after) return '담당자를 비웠습니다';
@@ -82,7 +87,7 @@ export function activityText(entry: TimelineEntry, names: ActivityNames): string
       return added.length ? `라벨 ${named(added)} 달았습니다` : `라벨 ${named(removed)} 뗐습니다`;
     }
     case 'archived': return after === 'true' ? '보관했습니다' : '보관을 풀었습니다';
-    default: return '업무를 고쳤습니다';
+    default: return `${noun}를 고쳤습니다`;
   }
 }
 
@@ -94,7 +99,7 @@ export function foldTimeline(entries: readonly TimelineEntry[]): TimelineEntry[]
   const lines: TimelineEntry[] = [];
   for (const entry of entries) {
     const last = lines.at(-1);
-    const isEdit = (line?: TimelineEntry) => line?.kind === 'activity' && line.field === 'description';
+    const isEdit = (line?: TimelineEntry) => line?.kind === 'activity' && (line.field === 'description' || line.field === 'body');
     if (isEdit(entry) && isEdit(last) && last!.actorId === entry.actorId && Date.parse(entry.at) - Date.parse(last!.at) < FOLD_MS) lines[lines.length - 1] = entry;
     else lines.push(entry);
   }

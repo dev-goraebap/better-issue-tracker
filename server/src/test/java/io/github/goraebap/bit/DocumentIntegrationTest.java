@@ -150,6 +150,15 @@ class DocumentIntegrationTest {
         assertThat(top.folders()).extracting(DocumentViews.Folder::name).containsExactly("설계");
         var inside = documentService.contents(owner, workspace, project, screens);
         assertThat(inside.path()).extracting(DocumentViews.Folder::name).containsExactly("설계", "화면");
+        // A folder counts what is right in it; a project's part counts all of it, for 문서함's project folders.
+        assertThat(top.folders().getFirst().documentCount()).isZero();
+        assertThat(inside.path().getLast().documentCount()).isEqualTo(1);
+        assertThat(documentService.parts(owner, workspace, List.of(project)))
+                .singleElement()
+                .satisfies(part -> {
+                    assertThat(part.documentCount()).isEqualTo(1);
+                    assertThat(part.folderCount()).isEqualTo(2);
+                });
         assertThat(inside.documents()).singleElement().satisfies(document -> {
             assertThat(document.title()).isEqualTo("로그인 화면");
             assertThat(document.excerpt()).startsWith("# 로그인");
@@ -273,6 +282,13 @@ class DocumentIntegrationTest {
                         .items())
                 .extracting(DocumentViews.Summary::id)
                 .containsExactly(id);
+        // The lists say which work items a document is linked to.
+        assertThat(documentService.contents(owner, workspace, null, null).documents())
+                .filteredOn(document -> document.id().equals(id))
+                .singleElement()
+                .satisfies(document -> assertThat(document.workItems())
+                        .extracting(DocumentViews.LinkedWorkItem::reference)
+                        .containsExactly("DOC-1"));
         String comment = commentFacade.create(owner, workspace, TargetType.document, id, "Looks right");
         assertThat(comment).isNotBlank();
         assertThat(code(() -> documentService.unlink(owner, workspace, id, Ids.newId())))

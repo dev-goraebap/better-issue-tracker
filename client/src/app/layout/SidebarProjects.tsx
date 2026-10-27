@@ -1,5 +1,6 @@
 import { useState, type DragEvent, type KeyboardEvent, type MouseEvent, type ReactNode } from 'react';
 import { SideNavItem, useToast } from '@astryxdesign/core';
+import { NavIcon } from '@/shared/ui';
 import { useQueryClient } from '@tanstack/react-query';
 import { authError } from '@/shared/api';
 import { refreshProjects, reorderProjects, type Project } from '@/entities/project';
@@ -7,16 +8,30 @@ import styles from './app-layout.module.css';
 
 /** Where a dragged project would land: before or after the project under the pointer. */
 type Drop = { id: string; isAfter: boolean };
+type Section = 'work-items' | 'documents';
+
+const OPEN_KEY = 'bit.sidebar.open-projects';
+/** The projects the member left open or closed in the menu, in this browser; one not named is open while it is in view. */
+const readOpen = (): Record<string, boolean> => { try { return JSON.parse(localStorage.getItem(OPEN_KEY) ?? '{}') as Record<string, boolean>; } catch { return {}; } };
 
 /**
  * The menu's projects in the workspace's order (D-080). Someone who manages the workspace moves one by dragging it to
  * its place (a line shows where it lands) or, with it focused, Alt + ↑ / ↓; the new order shows at once and is the
  * workspace's for everyone. A refused change says so and the menu shows the order as saved.
+ *
+ * Each project opens to its two pages (D-093): 업무 and 문서. The project in view is open; the member opens or closes any
+ * other, and the menu keeps that in this browser.
  */
-export function SidebarProjects({ workspaceId, projects, currentId, canReorder, href, mark, onGo }: {
-  workspaceId: string; projects: Project[]; currentId?: string; canReorder: boolean; href: (project: Project) => string;
-  mark: (project: Project) => ReactNode; onGo: (href: string) => (event: MouseEvent) => void;
+export function SidebarProjects({ workspaceId, projects, currentId, currentSection, canReorder, href, mark, onGo }: {
+  workspaceId: string; projects: Project[]; currentId?: string; currentSection: Section; canReorder: boolean;
+  href: (project: Project, section: Section) => string; mark: (project: Project) => ReactNode; onGo: (href: string) => (event: MouseEvent) => void;
 }) {
+  const [open, setOpen] = useState(readOpen);
+  const toggle = (id: string, isOpen: boolean) => {
+    const next = { ...open, [id]: isOpen };
+    setOpen(next);
+    try { localStorage.setItem(OPEN_KEY, JSON.stringify(next)); } catch { /* It stays open or closed for this visit. */ }
+  };
   const client = useQueryClient();
   const toast = useToast();
   // The order just made, shown until the saved one comes back.
@@ -63,8 +78,14 @@ export function SidebarProjects({ workspaceId, projects, currentId, canReorder, 
     void save(order, id);
   };
   return <>{shown.map(project => {
-    const link = href(project);
-    const item = <SideNavItem key={project.id} label={project.name} href={link} icon={mark(project)} isSelected={currentId === project.id} onClick={onGo(link)} />;
+    const link = href(project, 'work-items');
+    const documents = href(project, 'documents');
+    const isOpen = open[project.id] ?? currentId === project.id;
+    const item = <SideNavItem key={project.id} label={project.name} href={link} icon={mark(project)} onClick={onGo(link)}
+      collapsible={{ isCollapsed: !isOpen, onCollapsedChange: isCollapsed => toggle(project.id, !isCollapsed) }}>
+      <SideNavItem label="업무" href={link} icon={<NavIcon name="tasks" />} isSelected={currentId === project.id && currentSection === 'work-items'} onClick={onGo(link)} />
+      <SideNavItem label="문서" href={documents} icon={<NavIcon name="document" />} isSelected={currentId === project.id && currentSection === 'documents'} onClick={onGo(documents)} />
+    </SideNavItem>;
     if (!canReorder) return item;
     return <div key={project.id} data-project-row={project.id} className={styles.projectRow} draggable title="끌거나 Alt + ↑/↓로 순서를 바꿉니다"
       data-dragging={dragging === project.id || undefined} data-drop={drop?.id === project.id && dragging !== project.id ? (drop.isAfter ? 'after' : 'before') : undefined}

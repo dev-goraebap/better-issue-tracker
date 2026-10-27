@@ -7,7 +7,9 @@ import java.util.List;
 public final class DocumentViews {
     private DocumentViews() {}
 
-    @Schema(name = "Folder")
+    @Schema(
+            name = "Folder",
+            requiredProperties = {"id", "projectId", "parentId", "name", "version", "documentCount", "updatedAt"})
     public record Folder(
             String id,
 
@@ -18,9 +20,28 @@ public final class DocumentViews {
             String parentId,
 
             String name,
-            long version) {}
+            long version,
 
-    @Schema(name = "DocumentSummary")
+            @Schema(description = "How many live documents are right in it")
+            long documentCount,
+
+            Instant updatedAt) {}
+
+    @Schema(
+            name = "DocumentSummary",
+            requiredProperties = {
+                "id",
+                "projectId",
+                "folderId",
+                "title",
+                "excerpt",
+                "labelIds",
+                "workItems",
+                "version",
+                "updatedAt",
+                "updatedBy",
+                "updatedByAgent"
+            })
     public record Summary(
             String id,
             @Schema(nullable = true) String projectId,
@@ -31,17 +52,45 @@ public final class DocumentViews {
             String excerpt,
 
             List<String> labelIds,
+
+            @Schema(description = "The work items it is linked to that the member may see, oldest link first")
+            List<LinkedWorkItem> workItems,
+
             long version,
             Instant updatedAt,
             String updatedBy,
             @Schema(nullable = true) String updatedByAgent) {
         public Summary {
             labelIds = List.copyOf(labelIds);
+            workItems = List.copyOf(workItems);
+        }
+
+        Summary with(List<LinkedWorkItem> linked) {
+            return new Summary(
+                    id,
+                    projectId,
+                    folderId,
+                    title,
+                    excerpt,
+                    labelIds,
+                    linked,
+                    version,
+                    updatedAt,
+                    updatedBy,
+                    updatedByAgent);
         }
     }
 
+    /** A project's part of the documents in numbers, for its folder at the top of 문서함 (BIT-41). */
+    @Schema(
+            name = "DocumentPart",
+            requiredProperties = {"projectId", "documentCount", "folderCount"})
+    public record Part(String projectId, long documentCount, long folderCount) {}
+
     /** One folder of a part opened: the folders from its top down to it, then what it holds. */
-    @Schema(name = "DocumentFolderContents")
+    @Schema(
+            name = "DocumentFolderContents",
+            requiredProperties = {"projectId", "folderId", "path", "folders", "documents"})
     public record Contents(
             @Schema(nullable = true) String projectId,
             @Schema(nullable = true) String folderId,
@@ -58,7 +107,9 @@ public final class DocumentViews {
         }
     }
 
-    @Schema(name = "DocumentPage")
+    @Schema(
+            name = "DocumentPage",
+            requiredProperties = {"items", "nextCursor"})
     public record Page(
             List<Summary> items, @Schema(nullable = true) String nextCursor) {
         public Page {
@@ -66,10 +117,30 @@ public final class DocumentViews {
         }
     }
 
-    @Schema(name = "LinkedWorkItem")
+    @Schema(
+            name = "LinkedWorkItem",
+            requiredProperties = {"linkId", "id", "projectId", "reference", "title"})
     public record LinkedWorkItem(String linkId, String id, String projectId, String reference, String title) {}
 
-    @Schema(name = "Document")
+    @Schema(
+            name = "Document",
+            requiredProperties = {
+                "id",
+                "projectId",
+                "folderId",
+                "path",
+                "title",
+                "body",
+                "labelIds",
+                "workItems",
+                "version",
+                "createdAt",
+                "createdBy",
+                "createdByAgent",
+                "updatedAt",
+                "updatedBy",
+                "updatedByAgent"
+            })
     public record Detail(
             String id,
             @Schema(nullable = true) String projectId,

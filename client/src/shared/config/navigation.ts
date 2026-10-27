@@ -46,6 +46,8 @@ export type AppPlace = {
   workspaceId?: string; projectId?: string;
   /** The workspace menu entry's path ('' for 홈), when the page is the workspace's. */
   workspaceSection?: string;
+  /** A project's 문서 (D-093), rather than its work items. */
+  projectSection?: 'documents';
   /** A work item's page, or 'new' for 새 업무. */
   itemId?: string;
   /** The item's page is its 편집 form. */
@@ -69,8 +71,10 @@ export function appPlace(pathname: string): AppPlace {
   const settings = /^\/settings(?:\/projects\/([^/]+))?(\/[^/]+)$/.exec(rest);
   if (settings) return { workspaceId, settingsProjectId: settings[1], settings: settings[2] };
   const project = /^\/projects\/([^/]+)(\/.*)?$/.exec(rest);
-  if (!project) return { workspaceId, workspaceSection: rest.startsWith('/inbox') ? '/inbox' : rest };
+  // 문서함's documents and their forms (/documents/…) belong to its menu entry.
+  if (!project) return { workspaceId, workspaceSection: rest.startsWith('/inbox') ? '/inbox' : rest.startsWith('/documents') ? '/documents' : rest };
   const [, projectId, inner = ''] = project;
+  if (inner.startsWith('/documents')) return { workspaceId, projectId, projectSection: 'documents' };
   const item = /^\/work-items\/([^/]+)(\/edit)?$/.exec(inner);
   return { workspaceId, projectId, itemId: item?.[1], isEditing: !!item?.[2] };
 }

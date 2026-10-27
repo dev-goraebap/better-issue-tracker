@@ -7,6 +7,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import java.net.URI;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -46,6 +47,15 @@ class DocumentController {
                 new DocumentQuery.Search(projectId, workspaceOnly, labelId, query, workItemId),
                 cursor,
                 limit);
+    }
+
+    @GetMapping("/parts")
+    @Operation(summary = "Projects' parts in numbers, for their folders at the top of 문서함 (BIT-41)")
+    List<DocumentViews.Part> parts(
+            @AuthenticationPrincipal CurrentUser actor,
+            @PathVariable String workspaceId,
+            @RequestParam(name = "projectId") @jakarta.validation.constraints.Size(max = 200) List<String> projectIds) {
+        return documentService.parts(actor, workspaceId, projectIds);
     }
 
     @GetMapping("/contents")

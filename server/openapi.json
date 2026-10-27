@@ -4212,6 +4212,48 @@
         }
       }
     },
+    "/api/v1/workspaces/{workspaceId}/documents/parts" : {
+      "get" : {
+        "tags" : [ "document-controller" ],
+        "summary" : "Projects' parts in numbers, for their folders at the top of 문서함 (BIT-41)",
+        "operationId" : "parts",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "projectId",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            },
+            "maxItems" : 200,
+            "minItems" : 0
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/DocumentPart"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/workspaces/{workspaceId}/documents/contents" : {
       "get" : {
         "tags" : [ "document-controller" ],
@@ -6742,8 +6784,18 @@
           "version" : {
             "type" : "integer",
             "format" : "int64"
+          },
+          "documentCount" : {
+            "type" : "integer",
+            "format" : "int64",
+            "description" : "How many live documents are right in it"
+          },
+          "updatedAt" : {
+            "type" : "string",
+            "format" : "date-time"
           }
-        }
+        },
+        "required" : [ "documentCount", "id", "name", "parentId", "projectId", "updatedAt", "version" ]
       },
       "DocumentPage" : {
         "type" : "object",
@@ -6757,7 +6809,8 @@
           "nextCursor" : {
             "type" : [ "string", "null" ]
           }
-        }
+        },
+        "required" : [ "items", "nextCursor" ]
       },
       "DocumentSummary" : {
         "type" : "object",
@@ -6784,6 +6837,13 @@
               "type" : "string"
             }
           },
+          "workItems" : {
+            "type" : "array",
+            "description" : "The work items it is linked to that the member may see, oldest link first",
+            "items" : {
+              "$ref" : "#/components/schemas/LinkedWorkItem"
+            }
+          },
           "version" : {
             "type" : "integer",
             "format" : "int64"
@@ -6798,7 +6858,29 @@
           "updatedByAgent" : {
             "type" : [ "string", "null" ]
           }
-        }
+        },
+        "required" : [ "excerpt", "folderId", "id", "labelIds", "projectId", "title", "updatedAt", "updatedBy", "updatedByAgent", "version", "workItems" ]
+      },
+      "LinkedWorkItem" : {
+        "type" : "object",
+        "properties" : {
+          "linkId" : {
+            "type" : "string"
+          },
+          "id" : {
+            "type" : "string"
+          },
+          "projectId" : {
+            "type" : "string"
+          },
+          "reference" : {
+            "type" : "string"
+          },
+          "title" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "id", "linkId", "projectId", "reference", "title" ]
       },
       "Document" : {
         "type" : "object",
@@ -6861,27 +6943,25 @@
           "updatedByAgent" : {
             "type" : [ "string", "null" ]
           }
-        }
+        },
+        "required" : [ "body", "createdAt", "createdBy", "createdByAgent", "folderId", "id", "labelIds", "path", "projectId", "title", "updatedAt", "updatedBy", "updatedByAgent", "version", "workItems" ]
       },
-      "LinkedWorkItem" : {
+      "DocumentPart" : {
         "type" : "object",
         "properties" : {
-          "linkId" : {
-            "type" : "string"
-          },
-          "id" : {
-            "type" : "string"
-          },
           "projectId" : {
             "type" : "string"
           },
-          "reference" : {
-            "type" : "string"
+          "documentCount" : {
+            "type" : "integer",
+            "format" : "int64"
           },
-          "title" : {
-            "type" : "string"
+          "folderCount" : {
+            "type" : "integer",
+            "format" : "int64"
           }
-        }
+        },
+        "required" : [ "documentCount", "folderCount", "projectId" ]
       },
       "DocumentFolderContents" : {
         "type" : "object",
@@ -6911,7 +6991,8 @@
               "$ref" : "#/components/schemas/DocumentSummary"
             }
           }
-        }
+        },
+        "required" : [ "documents", "folderId", "folders", "path", "projectId" ]
       },
       "Picture" : {
         "type" : "object",

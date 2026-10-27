@@ -60,7 +60,48 @@ public class DocumentService {
                 folderId,
                 Parts.path(part, folderId),
                 children,
-                documentQuery.documentsIn(workspaceId, projectId, folderId));
+                linked(actor, workspaceId, documentQuery.documentsIn(workspaceId, projectId, folderId)));
+    }
+
+    /** Each project's part in numbers, for the projects' folders at the top of 문서함; one not shared is refused. */
+    @Transactional(readOnly = true)
+    public List<DocumentViews.Part> parts(CurrentUser actor, String workspaceId, List<String> projectIds) {
+        var parts = new ArrayList<DocumentViews.Part>();
+        for (String projectId : new java.util.LinkedHashSet<>(projectIds)) {
+            this.parts.require(actor, workspaceId, projectId, false);
+            parts.add(documentQuery.part(workspaceId, projectId));
+        }
+        return parts;
+    }
+
+    /**
+     * The documents with the work items they are linked to, each work item read once whatever links to it; one the
+     * member may not see, or that is gone, is left out (D-014).
+     */
+    private List<DocumentViews.Summary> linked(
+            CurrentUser actor, String workspaceId, List<DocumentViews.Summary> documents) {
+        var links = documentQuery.links(
+                workspaceId, documents.stream().map(DocumentViews.Summary::id).toList());
+        var seen = new java.util.HashMap<String, java.util.Optional<DocumentViews.LinkedWorkItem>>();
+        return documents.stream()
+                .map(document -> document.with(links.getOrDefault(document.id(), List.of()).stream()
+                        .map(link -> seen.computeIfAbsent(link.workItemId(), id -> workItem(actor, workspaceId, link))
+                                .map(item -> new DocumentViews.LinkedWorkItem(
+                                        link.linkId(), item.id(), item.projectId(), item.reference(), item.title())))
+                        .flatMap(java.util.Optional::stream)
+                        .toList()))
+                .toList();
+    }
+
+    private java.util.Optional<DocumentViews.LinkedWorkItem> workItem(
+            CurrentUser actor, String workspaceId, DocumentQuery.Link link) {
+        try {
+            var item = targetFacade.requireAccess(actor, workspaceId, TargetType.work_item, link.workItemId(), false);
+            return java.util.Optional.of(new DocumentViews.LinkedWorkItem(
+                    link.linkId(), item.id(), item.projectId(), item.reference(), item.title()));
+        } catch (TargetNotFoundException | BusinessException gone) {
+            return java.util.Optional.empty();
+        }
     }
 
     @Transactional(readOnly = true)
@@ -68,10 +109,10 @@ public class DocumentService {
             CurrentUser actor, String workspaceId, DocumentQuery.Search search, String cursor, int limit) {
         parts.require(actor, workspaceId, search.projectId(), false);
         var items = documentQuery.search(workspaceId, search, cursor(cursor), limit + 1);
-        if (items.size() <= limit) return new DocumentViews.Page(items, null);
+        if (items.size() <= limit) return new DocumentViews.Page(linked(actor, workspaceId, items), null);
         var page = items.subList(0, limit);
         var last = page.getLast();
-        return new DocumentViews.Page(page, cursor(last.updatedAt(), last.id()));
+        return new DocumentViews.Page(linked(actor, workspaceId, page), cursor(last.updatedAt(), last.id()));
     }
 
     @Transactional(readOnly = true)

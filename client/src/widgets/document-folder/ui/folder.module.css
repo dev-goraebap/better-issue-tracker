@@ -1,0 +1,8 @@
+/* A folder's contents (BIT-41): rows from the card's edge to its edge. */
+.flush ul > li { padding-inline: 0; }
+.link { color: inherit; text-decoration: none; }
+.trail { display: flex; flex-wrap: wrap; align-items: center; gap: var(--spacing-1); margin-block-end: var(--spacing-3); font-size: 0.8125rem; color: var(--color-text-secondary); }
+.trail a { color: inherit; text-decoration: none; }
+.trail a:hover { color: var(--color-text-primary); }
+.trail [aria-current] { color: var(--color-text-primary); font-weight: 500; }
+.empty { padding-block: var(--spacing-8); }
