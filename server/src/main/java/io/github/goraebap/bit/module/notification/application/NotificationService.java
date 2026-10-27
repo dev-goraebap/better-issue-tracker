@@ -351,8 +351,7 @@ public class NotificationService {
     }
 
     private String link(Notification notice) {
-        return publicUrl + "/workspaces/" + notice.workspaceId() + "/projects/" + notice.projectId() + "/work-items/"
-                + notice.targetId();
+        return publicUrl + "/workspaces/" + notice.workspaceId() + "/work-items/id/" + notice.targetId();
     }
 
     /** Who made a change: their name, with the agent that acted for them (D-021). */

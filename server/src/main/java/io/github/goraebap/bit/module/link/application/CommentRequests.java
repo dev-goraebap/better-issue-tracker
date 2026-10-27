@@ -18,7 +18,18 @@ public final class CommentRequests {
             @NotNull String targetId,
 
             @NotBlank @Size(max = 20000) @Schema(description = "Markdown")
-            String body) {}
+            String body,
+
+            @Size(max = 20) java.util.List<@jakarta.validation.constraints.Pattern(regexp = "[A-Za-z][A-Za-z0-9]{9}") String>
+                    uploadIds) {
+        public Create {
+            uploadIds = uploadIds == null ? java.util.List.of() : java.util.List.copyOf(uploadIds);
+        }
+
+        public Create(TargetType targetType, String targetId, String body) {
+            this(targetType, targetId, body, java.util.List.of());
+        }
+    }
 
     @Schema(name = "UpdateComment")
     public record Update(

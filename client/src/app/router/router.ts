@@ -3,7 +3,7 @@ import { ApiError, bootstrapQueryOptions, capabilitiesQueryOptions, keyQueryOpti
 import { followHistory } from '@/shared/lib/history-trail';
 import { isId, ownSearch } from '@/shared/lib/route-search';
 import { projectKey, projectQuery } from '@/entities/project';
-import { byRefQuery, parseWorkItemSearch, parseNewWorkItemSearch } from '@/entities/work-item';
+import { itemQuery, byRefQuery, parseWorkItemSearch, parseNewWorkItemSearch } from '@/entities/work-item';
 import { workspaceKey, workspacePagesQuery, workspaceQuery, workspacesQuery } from '@/entities/workspace';
 import { BootstrapPage } from '@/pages/entry/bootstrap';
 import { ChangePasswordPage } from '@/pages/entry/change-password';
@@ -139,9 +139,19 @@ const itemDetail = createRoute({ getParentRoute: () => scoped, path: '/projects/
 const itemEdit = createRoute({ getParentRoute: () => scoped, path: '/projects/$projectId/work-items/$workItemId/edit', component: WorkItemEditPage,
   loader: async ({ params }) => { await loadProject(params.workspaceId, params.projectId); await loadWorkItem(queryClient, params.workspaceId, params.projectId, params.workItemId); } });
 // A key such as BIT-42 (an agent's or a commit's reference) leads to its work item; /work-items/new above wins over it.
+const workspaceItem = createRoute({ getParentRoute: () => scoped, path: '/work-items/id/$workItemId', component: WorkItemPage, validateSearch: ownSearch(parseWorkItemSearch),
+  loader: async ({ params }) => {
+    const item = await routeRead(() => queryClient.fetchQuery(itemQuery(params.workspaceId, '', params.workItemId)));
+    if (item.projectId) return leadTo(`/workspaces/${params.workspaceId}/projects/${item.projectId}/work-items/${item.id}`);
+  } });
+const workspaceItemEdit = createRoute({ getParentRoute: () => scoped, path: '/work-items/id/$workItemId/edit', component: WorkItemEditPage,
+  loader: async ({ params }) => {
+    const item = await routeRead(() => queryClient.fetchQuery(itemQuery(params.workspaceId, '', params.workItemId)));
+    if (item.projectId) return leadTo(`/workspaces/${params.workspaceId}/projects/${item.projectId}/work-items/${item.id}/edit`);
+  } });
 const itemReference = createRoute({ getParentRoute: () => scoped, path: '/work-items/$reference', loader: async ({ params }) => {
   const item = await routeRead(() => queryClient.fetchQuery(byRefQuery(params.workspaceId, params.reference)));
-  return leadTo(`/workspaces/${params.workspaceId}/projects/${item.projectId}/work-items/${item.id}`);
+  return leadTo(item.projectId ? `/workspaces/${params.workspaceId}/projects/${item.projectId}/work-items/${item.id}` : `/workspaces/${params.workspaceId}/work-items/id/${item.id}`);
 } });
 
 // 워크스페이스 설정 turns the menu into the workspace's settings: its pages, then each project's (D-061).
@@ -182,7 +192,7 @@ const routeTree = rootRoute.addChildren([
     start, chooser,
     scoped.addChildren([
       home, workItemsNew, inbox, myTasks, members, membersInvite, documents, documentNew, documentDetail, documentEdit, projects, projectDocuments,
-      projectItems, itemNew, itemDetail, itemEdit, itemReference, ...issueAddresses,
+      projectItems, itemNew, itemDetail, itemEdit, workspaceItem, workspaceItemEdit, itemReference, ...issueAddresses,
       settingsStart, settings, projectSettingsStart, projectSettings, oldProjectSettings,
     ]),
     profile, security, keys, appearance, ...legacy, shortAddress,

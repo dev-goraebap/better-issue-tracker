@@ -1,3 +1,4 @@
+import { refreshRelations } from '@/entities/relation';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useParams } from '@tanstack/react-router';
 import { authError } from '@/shared/api';
@@ -28,15 +29,16 @@ export function DocumentEditPage() {
     try {
       await updateDocument(workspaceId, document.id, {
         expectedVersion: document.version,
+        uploadIds: draft.uploadIds,
         ...(draft.title !== opened.title ? { title: draft.title } : {}),
         ...(draft.body !== opened.body ? { body: draft.body } : {}),
         ...(!same(draft.labelIds, opened.labelIds) ? { labelIds: draft.labelIds } : {}),
       });
     } catch (failure) { return authError(failure); }
-    await Promise.all([refreshDocuments(client, workspaceId), refreshTimeline(client, workspaceId, 'document', document.id)]);
+    await Promise.all([refreshRelations(client, workspaceId), refreshDocuments(client, workspaceId), refreshTimeline(client, workspaceId, 'document', document.id)]);
     leave(documentHref(workspaceId, { id: document.id, title: draft.title }));
     return undefined;
   };
-  return <DocumentForm key={document.id} workspaceId={workspaceId} title="문서 편집" back={back} initial={opened} saveLabel="저장"
+  return <DocumentForm key={document.id} documentId={document.id} workspaceId={workspaceId} title="문서 편집" back={back} initial={opened} saveLabel="저장"
     place={document.path.length > 0 ? document.path.map(folder => folder.name).join(' › ') : '맨 위'} onSave={save} onCancel={() => leave()} />;
 }

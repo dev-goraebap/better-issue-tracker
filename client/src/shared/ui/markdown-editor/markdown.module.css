@@ -44,7 +44,7 @@
 .content :global(.ProseMirror strong) { font-weight: 600; }
 /* The placeholder on the empty line in sight, in the quiet ink. */
 .content :global(.ProseMirror .is-empty::before) { content: attr(data-placeholder); float: inline-start; block-size: 0; color: var(--color-text-disabled); pointer-events: none; }
-.content :global(.ProseMirror-selectednode) { outline: 2px solid var(--color-border-emphasized); border-radius: 4px; }
+.editor .content :global(.ProseMirror-selectednode) { outline: 2px solid var(--color-border-emphasized); border-radius: 4px; }
 /* A comment's box: the text field's hairline with no fill (D-074), its inset inside. */
 .editor[data-variant="field"] .content :global(.ProseMirror) { padding: var(--spacing-2-5, 0.625rem) var(--bit-field-inset, 0.75rem); border: 1px solid var(--bit-field-border);
   border-radius: var(--bit-field-radius, 8px); font-size: 0.875rem; }
@@ -88,3 +88,20 @@
 .slashHint { font-family: var(--font-family-code); font-size: 0.6875rem; color: var(--color-text-disabled); }
 .slashEmpty { margin: 0; padding: var(--spacing-2); font-size: 0.75rem; color: var(--color-text-secondary); }
 @media (width < 64rem) { .slashItem { min-block-size: 2.75rem; font-size: 0.9375rem; } }
+
+.linkPicker { display: flex; justify-content: flex-end; padding-block-end: var(--spacing-2); }
+
+.attachmentBlock { position: relative; display: flex; align-items: start; gap: 8px; margin-block: 12px; border: 1px solid transparent; border-radius: 6px; }
+.attachmentBlock[data-selected] { border-color: var(--color-border-emphasized); }
+.blockContent { min-inline-size: 0; flex: 1; }
+.attachmentImage { display: block; max-inline-size: 100%; max-block-size: 32rem; object-fit: contain; border-radius: 6px; }
+.attachmentLink { display: inline-flex; align-items: center; gap: 8px; max-inline-size: 100%; padding: 10px 12px; border: 1px solid var(--color-border-subtle); border-radius: 6px; color: var(--color-text-primary); background: var(--color-background-muted); text-decoration: none; font-size: 13px; }
+.attachmentLink span { min-inline-size: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.attachmentLink svg { inline-size: 14px; block-size: 14px; flex-shrink: 0; color: var(--color-text-secondary); }
+.blockControls { display: flex; flex-direction: column; flex-shrink: 0; opacity: .4; }
+.attachmentBlock:hover .blockControls, .attachmentBlock:focus-within .blockControls { opacity: 1; }
+.blockControls button { display: grid; place-items: center; inline-size: 24px; block-size: 24px; padding: 3px; border: 0; background: transparent; color: var(--color-text-secondary); cursor: pointer; }
+.blockControls button[data-drag-handle] { cursor: grab; }
+.blockControls svg { inline-size: 14px; block-size: 14px; }
+.filePicker { display: flex; justify-content: flex-start; margin-block-start: var(--spacing-2); }
+@media (width < 64rem) { .blockControls { opacity: 1; } .blockControls button { inline-size: 30px; block-size: 30px; } }

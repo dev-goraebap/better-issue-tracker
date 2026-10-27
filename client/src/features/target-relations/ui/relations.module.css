@@ -1,0 +1,78 @@
+.hint { margin: var(--spacing-2) 0 0; color: var(--color-text-secondary); font-size: 0.8125rem; line-height: 1.6; }
+.progress { appearance: none; display: block; inline-size: 100%; block-size: 3px; margin-block: var(--spacing-1) var(--spacing-2); border: 0; background: var(--color-background-muted); border-radius: 2px; }
+.progress::-webkit-progress-bar { background: var(--color-background-muted); border-radius: 2px; }
+.progress::-webkit-progress-value { background: var(--color-text-secondary); border-radius: 2px; }
+.progress::-moz-progress-bar { background: var(--color-text-secondary); }
+.results { max-block-size: min(24rem, 45dvh); overflow-y: auto; min-block-size: 8rem; }
+.option { display: flex; align-items: center; gap: var(--spacing-3); min-block-size: 3.5rem; padding: var(--spacing-3); border-block-end: 1px solid var(--color-border-subtle); border-radius: var(--radius-element); cursor: pointer; }
+.option:hover, .option[data-selected] { background: var(--color-overlay-hover); }
+.option:focus-within { outline: 2px solid var(--color-text-secondary); outline-offset: -2px; }
+.optionText { display: flex; flex-direction: column; gap: var(--spacing-1); min-inline-size: 0; overflow-wrap: anywhere; }
+.optionText small { font-size: 0.75rem; color: var(--color-text-secondary); }
+.selection { display: flex; align-items: center; gap: var(--spacing-2); margin: 0; font-size: 0.8125rem; overflow-wrap: anywhere; }
+/* Compact, description-adjacent controls follow Plane's relation toolbar. */
+.toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: 2px; inline-size: fit-content; max-inline-size: 100%; padding: 3px; border: 1px solid var(--color-border-subtle); border-radius: 6px; background: color-mix(in srgb, var(--color-background-muted) 45%, transparent); }
+.toolbar button { font-size: 0.75rem; gap: var(--spacing-1-5, 0.375rem); min-block-size: 1.75rem; }
+.toolbar :global(.bit-nav-icon) { inline-size: 0.875rem; block-size: 0.875rem; }
+.section { min-inline-size: 0; }
+.sectionHead { display: flex; align-items: center; gap: var(--spacing-2); min-block-size: 2rem; border-block-end: 1px solid var(--color-border-subtle); }
+.sectionHead h2 { margin: 0; min-inline-size: 0; flex: 1; font-size: 0.8125rem; font-weight: 500; }
+.sectionHead h2 button { display: inline-flex; align-items: center; gap: var(--spacing-2); padding: 4px 0; border: 0; background: transparent; color: var(--color-text-secondary); font: inherit; cursor: pointer; }
+.sectionHead h2 button:hover { color: var(--color-text-primary); }
+.chevron { display: inline-flex; transition: transform 120ms ease; }
+.chevron[data-open] { transform: rotate(90deg); }
+.chevron svg { inline-size: 0.75rem; block-size: 0.75rem; }
+.count { font-size: 0.6875rem; padding-inline: 4px; color: var(--color-text-secondary); background: var(--color-background-muted); border-radius: 3px; }
+.completion { display: inline-flex; align-items: center; gap: 5px; font-size: 0.6875rem; color: var(--color-text-secondary); white-space: nowrap; }
+.completion svg { inline-size: 0.75rem; block-size: 0.75rem; }
+.list { list-style: none; margin: 0; padding: 0; }
+.row { display: flex; align-items: center; gap: 4px; min-inline-size: 0; min-block-size: 2.25rem; border-block-end: 1px solid var(--color-border-subtle); }
+.row:last-child { border-block-end: 0; }
+.target { display: flex; align-items: center; gap: var(--spacing-2); flex: 1; min-inline-size: 0; padding: 8px 4px; color: var(--color-text-primary); text-decoration: none; border-radius: 4px; font-size: 0.8125rem; }
+.row:hover { background: var(--color-overlay-hover); }
+.target:focus-visible { outline: 2px solid var(--color-text-secondary); outline-offset: -2px; }
+.mark { display: grid; place-items: center; flex-shrink: 0; inline-size: 1rem; color: var(--color-text-secondary); }
+.mark > svg { inline-size: 0.875rem; block-size: 0.875rem; }
+.reference { font-family: var(--font-family-code); font-size: 0.6875rem; color: var(--color-text-secondary); white-space: nowrap; }
+.rowTitle { flex: 1; min-inline-size: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.meta { display: inline-flex; align-items: center; gap: var(--spacing-2); flex-shrink: 0; margin-inline-start: auto; color: var(--color-text-secondary); font-size: 0.6875rem; }
+.origin { color: var(--color-text-secondary); font-size: 0.6875rem; }
+.people { display: inline-flex; gap: 3px; align-items: center; }
+.rowMenu { opacity: 0.3; }
+.row:hover .rowMenu, .row:focus-within .rowMenu { opacity: 1; }
+.parentContext { display: flex; align-items: center; gap: var(--spacing-2); min-inline-size: 0; color: var(--color-text-secondary); font-size: 0.75rem; }
+.parentContext > span { flex-shrink: 0; }
+.parentContext a { display: inline-flex; align-items: center; gap: var(--spacing-2); min-inline-size: 0; color: var(--color-text-secondary); text-decoration: none; }
+.parentContext a > span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.parentContext a:hover { color: var(--color-text-primary); }
+.option { position: relative; min-block-size: 3rem; font-size: 0.8125rem; }
+.option input[type=radio] { position: absolute; inline-size: 1px; block-size: 1px; opacity: 0; }
+.optionText { flex: 1; }
+.optionCheck { display: inline-flex; color: var(--color-text-primary); }
+@media (width < 64rem) {
+  .row { min-block-size: 2.75rem; }
+  .target { flex-wrap: wrap; min-block-size: 2rem; }
+  .rowTitle { min-inline-size: 6rem; }
+  .rowMenu { opacity: 1; }
+  .toolbar { gap: 2px; }
+  .toolbar button { min-block-size: 2.5rem; }
+}
+@media (prefers-reduced-motion: reduce) { .chevron { transition: none; } }
+
+/* Parent label, key and title share one line box despite different font families. */
+.parentContext { min-block-size: 1.75rem; line-height: 1.5rem; }
+.parentContext a { flex: 0 1 auto; line-height: inherit; }
+.parentContext .reference { font-size: 0.75rem; line-height: inherit; }
+.parentContext > svg { flex-shrink: 0; inline-size: 0.875rem; block-size: 0.875rem; }
+.parentContext > span, .parentContext a > span { display: inline-block; line-height: inherit; }
+
+.toolbar { border: 0; background: transparent; padding: 0; gap: 4px; }
+.toolbar button { color: var(--color-text-secondary); font-weight: 400; }
+.sectionHead { border: 0; }
+.row { border-color: transparent; }
+.childComposer { border: 1px solid var(--color-border-subtle); border-radius: 6px; padding: 12px; display: flex; flex-direction: column; gap: 12px; }
+.childTitle { display: flex; align-items: center; gap: 8px; }
+.childTitle svg { inline-size: 14px; block-size: 14px; color: var(--color-text-secondary); flex-shrink: 0; }
+.childTitle input { flex: 1; min-inline-size: 0; border: 0; background: transparent; color: var(--color-text-primary); font: inherit; font-size: 14px; outline-offset: 4px; }
+.childFoot { display: flex; align-items: center; gap: 6px; }
+.childFoot > span { margin-inline-end: auto; color: var(--color-text-secondary); font-size: 12px; }

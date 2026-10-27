@@ -61,6 +61,20 @@ class JooqLinkRepository implements LinkRepository {
     }
 
     @Override
+    public List<Link> around(String workspaceId, TargetType type, String id) {
+        return dslContext
+                .selectFrom(LINK)
+                .where(LINK.WORKSPACE_ID.eq(workspaceId))
+                .and(LINK.DELETED_AT.isNull())
+                .and(LINK.FROM_TYPE
+                        .eq(type.name())
+                        .and(LINK.FROM_ID.eq(id))
+                        .or(LINK.TO_TYPE.eq(type.name()).and(LINK.TO_ID.eq(id))))
+                .orderBy(LINK.CREATED_AT, LINK.LINK_ID)
+                .fetch(this::link);
+    }
+
+    @Override
     public boolean hasParent(String workspaceId, String id) {
         return dslContext.fetchExists(dslContext
                 .selectOne()

@@ -9,6 +9,7 @@ import {
   BackLink, DuePicker, EventTimePicker, FormMessage, MarkdownEditor, NavIcon, PageFoot, PageFrame, PropertyPicker, RepeatPicker, usePanelSurface, type EventTime,
   type Repeat,
 } from '@/shared/ui';
+import { useBodyFiles } from '@/features/detail-engagement';
 import { labelsQuery } from '@/entities/label';
 import { columnsQuery, ProjectMark, projectsQuery, type BoardColumn, type Project } from '@/entities/project';
 import { useMembers } from '@/entities/workspace';
@@ -67,6 +68,7 @@ export function NewWorkItem({ workspaceId, projectId, status, kind = 'task' }: {
   const members = useMembers(workspaceId).items;
   const titleBox = useRef<HTMLInputElement>(null);
   const [draft, setDraft] = useState<Draft>({ projectId, title: '', body: '', priority: 'medium', people: [], labelIds: [], time: { allDay: false }, reminder: 10 });
+  const files = useBodyFiles(draft.body);
   const [isMore, setMore] = useState(false);
   const [isBusy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -76,12 +78,12 @@ export function NewWorkItem({ workspaceId, projectId, status, kind = 'task' }: {
   const columns = useQuery({ ...columnsQuery(workspaceId, target?.id ?? ''), enabled: !!target }).data ?? [];
   // The status stays where the member put it; until then, where the address said to start, in the project picked.
   const shownStatus = draft.status && (draft.status === NO_STATUS || columns.some(column => column.id === draft.status)) ? draft.status : startColumn(columns, status);
-  const canCreate = !!draft.title.trim() && !!target && !isBusy;
+  const canCreate = !!draft.title.trim() && !!target && !isBusy && !files.isUploading;
   const create = async () => {
     if (!canCreate || !target) return;
     setBusy(true); setError('');
     try {
-      const common = { title: draft.title.trim(), description: draft.body.trim() || null, peopleIds: draft.people, labelIds: draft.labelIds };
+      const common = { title: draft.title.trim(), description: draft.body.trim() || null, uploadIds: files.uploadIds, peopleIds: draft.people, labelIds: draft.labelIds };
       const id = await createItem(workspaceId, target.id, isEvent
         ? { ...common, kind: 'event', ...eventFields(draft.time), columnId: null, reminderMinutes: draft.time.allDay ? null : draft.reminder ?? null }
         : { ...common, kind: 'task', priority: draft.priority, dueDate: draft.dueDate ?? null, columnId: shownStatus === NO_STATUS ? null : shownStatus });
@@ -91,7 +93,7 @@ export function NewWorkItem({ workspaceId, projectId, status, kind = 'task' }: {
       const href = workItemHref(workspaceId, { id, projectId: target.id });
       // The toast lives in a layer above the router, so its way to the work item navigates rather than linking.
       toast({ body: `${draft.title.trim()}을(를) 만들었습니다.`, endContent: <Button label="보기" variant="ghost" size="sm" onClick={() => void router.navigate({ href })} /> });
-      if (isMore) { set({ title: '', body: draft.templateId ? WORK_ITEM_TEMPLATES.find(each => each.id === draft.templateId)?.body ?? '' : '' }); titleBox.current?.focus(); return; }
+      if (isMore) { files.reset(); set({ title: '', body: draft.templateId ? WORK_ITEM_TEMPLATES.find(each => each.id === draft.templateId)?.body ?? '' : '' }); titleBox.current?.focus(); return; }
       if (panel) panel.onClose();
       else void router.navigate({ href, replace: true });
     } catch (failure) { setError(authError(failure)); }
@@ -105,7 +107,7 @@ export function NewWorkItem({ workspaceId, projectId, status, kind = 'task' }: {
   const titleField = <input ref={titleBox} className={styles.title} value={draft.title} placeholder={`${name.noun} 제목`} aria-label={`${name.noun} 제목`} autoFocus data-autofocus
     onChange={event => set({ title: event.target.value })} />;
   const descriptionField = <div className={styles.description}>
-    <MarkdownEditor value={draft.body} label="설명" placeholder="설명을 덧붙이세요… ( / 로 블록)" minHeight={panel ? '3.5rem' : '12rem'} onChange={body => set({ body })} />
+    <MarkdownEditor filePicker={files.picker} isDisabled={isBusy} value={draft.body} label="설명" placeholder="설명을 덧붙이세요… ( / 로 블록)" minHeight={panel ? '3.5rem' : '12rem'} onChange={body => set({ body })} />
   </div>;
   /** Starts the description from a template, or takes an untouched one back out (undefined). */
   const applyTemplate = (id?: string) => setDraft(previous => {
@@ -143,8 +145,7 @@ ${next.body}`) : isUntouched ? '' : previous.body;
   if (panel) return <div className={styles.dialog} onKeyDown={keys}>
     <header className={styles.head}>
       {projectPill}
-      <NavIcon name="forward" />
-      <h2 className={styles.headTitle}>{name.title}</h2>
+
       <span className={styles.headEnd}>
         <IconButton label="크게 보기" tooltip="크게 보기" variant="ghost" size="sm" icon={<NavIcon name="expand-page" />} onClick={() => void router.navigate({ href: panel.pageHref })} />
         <IconButton label="닫기" tooltip="닫기 (Esc)" variant="ghost" size="sm" icon={<NavIcon name="close" />} onClick={panel.onClose} />
@@ -160,7 +161,7 @@ ${next.body}`) : isUntouched ? '' : previous.body;
     ? <BackLink to="/workspaces/$workspaceId/projects/$projectId" params={{ workspaceId, projectId }} label="업무" />
     : <BackLink to="/workspaces/$workspaceId" params={{ workspaceId }} label="업무" />;
   const leave = () => void router.navigate({ href: projectId ? `/workspaces/${workspaceId}/projects/${projectId}` : `/workspaces/${workspaceId}` });
-  return <PageFrame title={name.title} width="narrow" back={back}>
+  return <PageFrame hideHeading title={name.title} width="narrow" back={back}>
     <div className={styles.page} onKeyDown={keys}>
       {titleField}
       {descriptionField}

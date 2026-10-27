@@ -149,7 +149,7 @@ final class AuthenticationFilter extends OncePerRequestFilter {
                 && (path.matches(project)
                         || path.matches(
                                 project
-                                        + "/[^/]+/(?:archive|unarchive|restore|columns(?:/reorder)?|work-items(?:/[^/]+/(?:move|archive|unarchive|restore))?)")))
+                                        + "/[^/]+/(?:archive|unarchive|restore|columns(?:/reorder)?|work-items(?:/[^/]+/(?:move|archive|unarchive|restore|children))?)")))
             return true;
         if (Set.of("PATCH", "DELETE").contains(method)
                 && path.matches(project + "/[^/]+(?:/(?:columns|work-items)/[^/]+)?")) return true;
@@ -171,11 +171,22 @@ final class AuthenticationFilter extends OncePerRequestFilter {
                 || Set.of("PATCH", "DELETE").contains(method) && path.matches(views + "/[^/]+")
                 || Set.of("PUT", "DELETE").contains(method) && path.matches(tweaks + "/[^/]+")) return true;
         if (path.equals("/api/mcp")) return true;
+        if (Set.of("GET", "HEAD", "POST", "DELETE").contains(method)
+                && path.matches("/api/v1/workspaces/[^/]+/relations(?:/[^/]+)?")) return true;
         // An agent reads and writes documents and their folders as its owner (D-093).
         if (method.equals("PUT") && path.matches("/api/v1/workspaces/[^/]+/documents/order")) return true;
         if (Set.of("GET", "HEAD", "POST", "PATCH", "DELETE").contains(method)
                 && path.matches("/api/v1/workspaces/[^/]+/(?:documents|folders)(?:/[^/]+){0,3}")) return true;
         // An agent reads a target's timeline and comments on it as its owner (D-078).
+        if (Set.of("GET", "HEAD", "PUT", "POST", "DELETE").contains(method)
+                && path.matches(
+                        "/api/v1/workspaces/[^/]+/engagement/[^/]+/[^/]+/(?:reactions|files(?:/[^/]+(?:/open)?)?)"))
+            return true;
+        if (method.equals("POST") && path.equals("/api/v1/files/uploads")) return true;
+        if (Set.of("GET", "HEAD", "PATCH", "DELETE", "PUT", "POST").contains(method)
+                && path.matches(
+                        "/api/v1/workspaces/[^/]+/work-items/id/[^/]+(?:/(?:project|status|archive|unarchive|restore|recurrence))?"))
+            return true;
         String comments = "/api/v1/workspaces/[^/]+/comments";
         if (Set.of("GET", "HEAD").contains(method) && path.matches("/api/v1/workspaces/[^/]+/timeline")
                 || method.equals("POST") && path.matches(comments)

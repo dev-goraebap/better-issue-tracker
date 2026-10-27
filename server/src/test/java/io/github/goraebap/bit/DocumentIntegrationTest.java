@@ -49,8 +49,11 @@ import tools.jackson.databind.json.JsonMapper;
 @SpringBootTest(
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
         properties = {
-            "app.secrets.generate=false", "app.auth.secret=document-integration-secret-at-least-32-characters",
-            "app.auth.cookie-secure=false", "app.auth.allowed-origins=http://localhost:8080"
+            "app.secrets.generate=false",
+            "app.auth.secret=document-integration-secret-at-least-32-characters",
+            "app.auth.cookie-secure=false",
+            "app.auth.allowed-origins=http://localhost:8080",
+            "app.auth.attempts-per-minute=1000"
         })
 class DocumentIntegrationTest {
     private static final JsonMapper JSON = JsonMapper.builder().build();
@@ -85,6 +88,15 @@ class DocumentIntegrationTest {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Autowired
+    private io.github.goraebap.bit.module.link.application.LinkService relationService;
+
+    @Autowired
+    private io.github.goraebap.bit.module.workitem.application.WorkItemHierarchyService hierarchyService;
+
+    @Autowired
+    private io.github.goraebap.bit.module.link.application.EngagementService engagementService;
+
     private CurrentUser owner;
     private String workspace;
     private String project;
@@ -99,6 +111,10 @@ class DocumentIntegrationTest {
     @BeforeEach
     void prepare() {
         for (String table : List.of(
+                "reaction",
+                "attachment",
+                "blob",
+                "pending_upload",
                 "document_order",
                 "notification",
                 "comment",
@@ -127,6 +143,273 @@ class DocumentIntegrationTest {
         owner = identity("owner");
         workspace = workspaceService.create(owner, "Docs", "docs-" + Ids.newId());
         project = projectService.create(owner, workspace, "Project", "DOC", null);
+    }
+
+    @Test
+    void projectSelectionAndRemovalKeepTheReferenceAndWorkspaceAccess() throws Exception {
+        String item = workItemService.create(
+                owner,
+                workspace,
+                project,
+                new WorkItem.Details("Portable", "Keep body", null, null, null, null, null),
+                null);
+        String reference = workItemService.get(owner, workspace, project, item).reference();
+        String comment = commentFacade.create(owner, workspace, TargetType.work_item, item, "Keep comment");
+        workItemService.changeProject(owner, workspace, item, null, 0);
+        var unassigned = workItemService.get(owner, workspace, null, item);
+        assertThat(unassigned.projectId()).isNull();
+        assertThat(unassigned.reference()).isEqualTo(reference);
+        assertThat(unassigned.description()).isEqualTo("Keep body");
+        assertThat(workItemService.findByRef(owner, workspace, reference).id()).isEqualTo(item);
+        engagementService.react(owner, workspace, "comment", comment, "👍", true);
+        var session = login(owner);
+        String path = "/api/v1/workspaces/" + workspace + "/work-items/id/" + item;
+        expect(http(session, "GET", path, null), 200);
+        expect(
+                http(
+                        session,
+                        "PATCH",
+                        path,
+                        "{\"expectedVersion\":" + unassigned.version() + ",\"description\":\"Keep body edited\"}"),
+                204);
+        expect(http(session, "GET", "/api/v1/workspaces/" + workspace + "/work-items", null), 200);
+        workItemService.changeWorkspaceStatus(owner, workspace, item, "done", unassigned.version() + 1);
+        assertThat(workItemService.get(owner, workspace, null, item).reference())
+                .isEqualTo(reference);
+        CurrentUser reader = identity("unassigned-reader");
+        membership(reader, "viewer");
+        expect(http(login(reader), "GET", path, null), 200);
+        assertThatThrownBy(
+                        () -> workItemService.changeProject(reader, workspace, item, project, unassigned.version() + 2))
+                .isInstanceOf(BusinessException.class);
+        String next = projectService.create(owner, workspace, "Next", "NXT", null);
+        var latest = workItemService.get(owner, workspace, null, item);
+        workItemService.changeProject(owner, workspace, item, next, latest.version());
+        assertThat(workItemService.get(owner, workspace, next, item).reference())
+                .isEqualTo(reference);
+        assertThat(workItemService.findByRef(owner, workspace, reference).projectId())
+                .isEqualTo(next);
+        assertThat(engagementService.reactions(owner, workspace, "comment", comment))
+                .hasSize(1);
+    }
+
+    @Test
+    void reactionsAreIdempotentOwnVotesAndCheckParentPermissions() throws Exception {
+        String doc = documentService.create(owner, workspace, project, null, "Reactions", "", Set.of());
+        CurrentUser member = identity("reaction-member");
+        membership(member, "member");
+        CurrentUser reader = identity("reaction-reader");
+        membership(reader, "viewer");
+        engagementService.react(owner, workspace, "document", doc, "👍", true);
+        engagementService.react(owner, workspace, "document", doc, "👍", true);
+        engagementService.react(member, workspace, "document", doc, "👍", true);
+        assertThat(engagementService.reactions(owner, workspace, "document", doc))
+                .singleElement()
+                .satisfies(row -> {
+                    assertThat(row.count()).isEqualTo(2);
+                    assertThat(row.mine()).isTrue();
+                });
+        engagementService.react(owner, workspace, "document", doc, "👍", false);
+        engagementService.react(owner, workspace, "document", doc, "👍", false);
+        assertThat(engagementService.reactions(reader, workspace, "document", doc))
+                .singleElement()
+                .satisfies(row -> {
+                    assertThat(row.count()).isEqualTo(1);
+                    assertThat(row.mine()).isFalse();
+                });
+        assertThatThrownBy(() -> engagementService.react(reader, workspace, "document", doc, "👍", true))
+                .isInstanceOf(BusinessException.class);
+        assertThatThrownBy(() -> engagementService.reactions(identity("reaction-outsider"), workspace, "document", doc))
+                .isInstanceOf(BusinessException.class);
+        assertThat(code(() -> engagementService.react(owner, workspace, "document", doc, "invalid", true)))
+                .isEqualTo("COMMON_INVALID_REQUEST");
+        String comment = commentFacade.create(owner, workspace, TargetType.document, doc, "Comment");
+        engagementService.react(member, workspace, "comment", comment, "🎉", true);
+        assertThat(engagementService.reactions(owner, workspace, "comment", comment))
+                .hasSize(1);
+        expect(
+                http(
+                        login(reader),
+                        "PUT",
+                        "/api/v1/workspaces/" + workspace + "/engagement/document/" + doc + "/reactions",
+                        "{\"emoji\":\"👍\",\"active\":true}"),
+                403);
+        documentService.delete(owner, workspace, doc, 0);
+        assertThatThrownBy(() -> engagementService.reactions(owner, workspace, "comment", comment))
+                .isInstanceOf(BusinessException.class);
+    }
+
+    @Test
+    void documentAndCommentFilesBindAtomicallyAndNeverOpenThroughAnotherOwner() throws Exception {
+        String doc = documentService.create(owner, workspace, project, null, "Files", "", Set.of());
+        String other = documentService.create(owner, workspace, project, null, "Other", "", Set.of());
+        var session = login(owner);
+        byte[] bytes = "attachment sample".getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        var response = http(
+                session,
+                "POST",
+                "/api/v1/files/uploads",
+                JSON.writeValueAsString(Map.of("filename", "sample.txt", "size", bytes.length)));
+        expect(response, 201);
+        var ticket = JSON.readTree(response.body());
+        var signed = URI.create(ticket.path("url").asText());
+        var put = HttpRequest.newBuilder(URI.create("http://localhost:" + port + signed))
+                .header("Content-Type", "text/plain")
+                .PUT(HttpRequest.BodyPublishers.ofByteArray(bytes))
+                .build();
+        expect(HttpClient.newHttpClient().send(put, HttpResponse.BodyHandlers.ofString()), 200);
+        String upload = ticket.path("id").asText();
+        String base = "/api/v1/workspaces/" + workspace + "/engagement/document/";
+        expect(
+                http(
+                        session,
+                        "POST",
+                        base + doc + "/files",
+                        JSON.writeValueAsString(Map.of("uploadIds", List.of(upload)))),
+                204);
+        assertThat(documentService.get(owner, workspace, doc).body())
+                .contains("[sample.txt](attachment:" + upload + ")");
+        assertThat(engagementService.files(owner, workspace, "document", doc))
+                .singleElement()
+                .satisfies(file -> assertThat(file.filename()).isEqualTo("sample.txt"));
+        expect(http(session, "GET", base + doc + "/files/" + upload + "/open", null), 302);
+        expect(http(session, "GET", base + other + "/files/" + upload + "/open", null), 404);
+        CurrentUser reader = identity("file-reader");
+        membership(reader, "viewer");
+        expect(http(login(reader), "GET", base + doc + "/files", null), 200);
+        expect(http(login(reader), "DELETE", base + doc + "/files/" + upload, null), 403);
+        Integer before = jdbcTemplate.queryForObject("SELECT count(*) FROM comment", Integer.class);
+        expect(
+                http(
+                        session,
+                        "POST",
+                        "/api/v1/workspaces/" + workspace + "/comments",
+                        JSON.writeValueAsString(Map.of(
+                                "targetType",
+                                "document",
+                                "targetId",
+                                doc,
+                                "body",
+                                "Fails atomically",
+                                "uploadIds",
+                                List.of(Ids.newId())))),
+                400);
+        assertThat(jdbcTemplate.queryForObject("SELECT count(*) FROM comment", Integer.class))
+                .isEqualTo(before);
+        engagementService.discard(owner, workspace, "document", doc, upload);
+        assertThat(engagementService.files(owner, workspace, "document", doc)).isEmpty();
+    }
+
+    @Test
+    void creatingWithMissingFilesRollsBackTheTarget() throws Exception {
+        var session = login(owner);
+        String upload = Ids.newId();
+        String body = "[missing.txt](attachment:" + upload + ")";
+        Integer documentsBefore = jdbcTemplate.queryForObject("SELECT count(*) FROM document", Integer.class);
+        Integer tasksBefore = jdbcTemplate.queryForObject("SELECT count(*) FROM work_item", Integer.class);
+        expect(
+                http(
+                        session,
+                        "POST",
+                        "/api/v1/workspaces/" + workspace + "/documents",
+                        JSON.writeValueAsString(
+                                Map.of("title", "Atomic document", "body", body, "uploadIds", List.of(upload)))),
+                400);
+        expect(
+                http(
+                        session,
+                        "POST",
+                        "/api/v1/workspaces/" + workspace + "/projects/" + project + "/work-items",
+                        JSON.writeValueAsString(
+                                Map.of("title", "Atomic task", "description", body, "uploadIds", List.of(upload)))),
+                400);
+        assertThat(jdbcTemplate.queryForObject("SELECT count(*) FROM document", Integer.class))
+                .isEqualTo(documentsBefore);
+        assertThat(jdbcTemplate.queryForObject("SELECT count(*) FROM work_item", Integer.class))
+                .isEqualTo(tasksBefore);
+    }
+
+    @Test
+    void referencesSeparateExplicitLinksFromBodyAndRespectVisibility() {
+        String target = documentService.create(owner, workspace, null, null, "Target", "", Set.of());
+        String href = "/workspaces/" + workspace + "/documents/target-" + target;
+        String source =
+                documentService.create(owner, workspace, project, null, "Source", "[Target](" + href + ")", Set.of());
+        assertThat(relationService.relations(owner, workspace, TargetType.document, target))
+                .hasSize(1)
+                .allSatisfy(r -> {
+                    assertThat(r.outgoing()).isFalse();
+                    assertThat(r.relation()).isEqualTo("mentions");
+                });
+        String explicit = relationService.connect(
+                owner, workspace, TargetType.document, source, "references", TargetType.document, target);
+        assertThat(relationService.relations(owner, workspace, TargetType.document, target))
+                .hasSize(2);
+        var revision = new DocumentRequests.Update();
+        revision.setExpectedVersion(0L);
+        revision.setBody("Removed link");
+        documentService.revise(owner, workspace, source, revision);
+        assertThat(relationService.relations(owner, workspace, TargetType.document, target))
+                .extracting(r -> r.relation())
+                .containsExactly("references");
+        CurrentUser reader = identity("relations-reader");
+        membership(reader, "viewer");
+        assertThat(relationService.relations(reader, workspace, TargetType.document, target))
+                .hasSize(1);
+        assertThatThrownBy(() -> relationService.connect(
+                        reader, workspace, TargetType.document, source, "references", TargetType.document, target))
+                .isInstanceOf(BusinessException.class);
+        assertThat(code(() -> relationService.connect(
+                        owner, workspace, TargetType.document, target, "references", TargetType.document, target)))
+                .isEqualTo("LINK_RELATION_INVALID");
+        assertThat(code(() -> relationService.connect(
+                        owner, workspace, TargetType.document, source, "mentions", TargetType.document, target)))
+                .isEqualTo("LINK_PROTECTED_RELATION");
+        relationService.disconnect(owner, workspace, explicit);
+        assertThat(relationService.relations(owner, workspace, TargetType.document, target))
+                .isEmpty();
+        assertThat(documentService.get(owner, workspace, source).title()).isEqualTo("Source");
+        var stranger = identity("relations-outsider");
+        assertThatThrownBy(() -> relationService.relations(stranger, workspace, TargetType.document, target))
+                .isInstanceOf(BusinessException.class);
+    }
+
+    @Test
+    void hierarchyIsAtomicAndRejectsCyclesAndSecondParents() throws Exception {
+        String parent = workItemService.create(
+                owner, workspace, project, new WorkItem.Details("Parent", null, null, null, null, null, null), null);
+        String child = hierarchyService.createChild(owner, workspace, project, parent, "Child", null);
+        assertThat(relationService.relations(owner, workspace, TargetType.work_item, parent))
+                .hasSize(1)
+                .allSatisfy(r -> {
+                    assertThat(r.title()).isEqualTo("Child");
+                    assertThat(r.outgoing()).isFalse();
+                });
+        assertThat(code(() -> relationService.connect(
+                        owner, workspace, TargetType.work_item, parent, "subtask_of", TargetType.work_item, child)))
+                .isEqualTo("LINK_CYCLE");
+        String other = workItemService.create(
+                owner, workspace, project, new WorkItem.Details("Other", null, null, null, null, null, null), null);
+        assertThat(code(() -> relationService.connect(
+                        owner, workspace, TargetType.work_item, child, "subtask_of", TargetType.work_item, other)))
+                .isEqualTo("LINK_PARENT_CONFLICT");
+        String link = relationService
+                .relations(owner, workspace, TargetType.work_item, child)
+                .getFirst()
+                .linkId();
+        relationService.disconnect(owner, workspace, link);
+        assertThat(workItemService.get(owner, workspace, project, child).title())
+                .isEqualTo("Child");
+        var client = login(owner);
+        var response = http(
+                client,
+                "POST",
+                "/api/v1/workspaces/" + workspace + "/projects/" + project + "/work-items/" + parent + "/children",
+                "{\"title\":\"API child\"}");
+        expect(response, 201);
+        expect(
+                http(client, "GET", "/api/v1/workspaces/" + workspace + "/relations?type=work_item&id=" + parent, null),
+                200);
     }
 
     @Test
@@ -543,6 +826,37 @@ class DocumentIntegrationTest {
                 .isEqualTo("doc-agent");
         var found = JSON.readTree(text(call(client, key, "list_documents", Map.of("query", "로그인"))));
         assertThat(found.path("items").get(0).path("folder").asString()).isEqualTo("설계");
+        var child = JSON.readTree(
+                text(call(client, key, "create_subtask", Map.of("parent", "DOC-1", "title", "Agent child"))));
+        assertThat(child.path("ref").asString()).isEqualTo("DOC-2");
+        var relations =
+                JSON.readTree(text(call(client, key, "list_relations", Map.of("type", "work_item", "id", "DOC-1"))));
+        assertThat(relations.size()).isEqualTo(2);
+        call(
+                client,
+                key,
+                "link_targets",
+                Map.of(
+                        "from_type",
+                        "work_item",
+                        "from",
+                        "DOC-2",
+                        "relation",
+                        "relates_to",
+                        "to_type",
+                        "document",
+                        "to",
+                        id));
+        var related =
+                JSON.readTree(text(call(client, key, "list_relations", Map.of("type", "work_item", "id", "DOC-2"))));
+        var link = java.util.stream.StreamSupport.stream(related.spliterator(), false)
+                .filter(row -> row.path("relation").asString().equals("relates_to"))
+                .findFirst()
+                .orElseThrow();
+        call(client, key, "unlink_targets", Map.of("id", link.path("linkId").asString()));
+        assertThat(relationService.relations(
+                        owner, workspace, TargetType.work_item, child.path("id").asString()))
+                .hasSize(1);
         var missing = mcp(
                 client,
                 key,

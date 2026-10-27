@@ -10,6 +10,10 @@ import java.util.Set;
 public interface WorkItemRepository {
     Optional<WorkItem> findById(String projectId, String id, boolean includeDeleted);
 
+    String reference(WorkItem item);
+
+    Optional<WorkItem> findByReference(String workspaceId, String reference);
+
     Optional<WorkItem> findTarget(String workspaceId, String id);
 
     long countAllById(String projectId, Set<String> ids);

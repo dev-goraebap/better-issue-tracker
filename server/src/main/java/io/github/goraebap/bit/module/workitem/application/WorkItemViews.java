@@ -99,7 +99,7 @@ public final class WorkItemViews {
     public record Item(
             String id,
             String workspaceId,
-            String projectId,
+            @Schema(nullable = true) String projectId,
             long number,
             String key,
             WorkItem.Kind kind,

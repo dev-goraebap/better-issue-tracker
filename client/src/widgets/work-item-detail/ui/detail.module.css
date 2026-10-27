@@ -1,47 +1,16 @@
-/* The body and the properties panel side by side; a phone stacks the panel under the body. */
-.layout { display: grid; grid-template-columns: minmax(0, 1fr) 15rem; gap: var(--spacing-10); align-items: start; }
-.main { min-inline-size: 0; }
-/* Linear's panel (D-067): quiet heads in 12px/500, a 28px line per property, its mark and value, no name column. */
-.aside { position: sticky; inset-block-start: calc(var(--workspace-topbar-height, 2.75rem) + var(--spacing-6)); display: flex; flex-direction: column; gap: var(--spacing-1); }
-/* In the modal the body scrolls on its own, under no header row: the panel sticks just under the body's top, the body a little roomier. */
-.layout[data-panel] { gap: var(--spacing-8); padding-block: var(--spacing-4) var(--spacing-6); }
-.layout[data-panel] .aside { inset-block-start: var(--spacing-4); }
-.asideHead { margin: 0; padding: var(--spacing-2) var(--spacing-2) var(--spacing-1); font-size: 0.75rem; font-weight: 500; color: var(--color-text-secondary); }
-.asideHead:not(:first-child) { margin-block-start: var(--spacing-4); }
-.properties { display: flex; flex-direction: column; gap: 2px; margin: 0; }
-.property { display: flex; align-items: center; min-block-size: 1.75rem; padding-inline: var(--spacing-2); border-radius: var(--radius-full); font-size: 0.8125rem; }
-.property:hover { background: var(--color-overlay-hover); }
-.property dd { display: flex; align-items: center; gap: var(--spacing-1-5, 0.375rem); min-inline-size: 0; margin: 0; color: var(--color-text-primary); }
-.property dd > span { color: var(--color-text-primary); }
-.spoken { position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-.dated { display: inline-flex; align-items: center; gap: var(--spacing-1-5, 0.375rem); }
-.dated svg { inline-size: 0.875rem; block-size: 0.875rem; color: var(--color-icon-secondary); }
-.dated[data-empty] { color: var(--color-text-secondary) !important; }
-.asideLabels { padding-inline: var(--spacing-2); }
-/* Under the panel, quietly: the key and when it was made and last changed. */
-.made { margin: var(--spacing-5) 0 0; padding-inline: var(--spacing-2); font-size: 0.75rem; color: var(--color-text-secondary); }
-.asideLabels > span { flex-wrap: wrap; }
-.person { display: inline-flex; align-items: center; gap: var(--spacing-1-5, 0.375rem); min-inline-size: 0; }
-.none { font-size: 0.8125rem; color: var(--color-text-secondary); }
-.key { font-family: var(--font-family-code); font-size: 0.75rem; color: var(--color-text-secondary); }
-/* Sections' lists keep the page's column, not the card's edges. */
-.main ul[aria-label] > li { padding-inline: 0; }
-.prose { font-size: 0.9375rem; line-height: 1.7; word-break: keep-all; }
-.prose p, .prose li { font-size: 0.9375rem; line-height: 1.7; }
-.prose p { margin: 0 0 var(--spacing-3); }
-.prose ul { margin: 0; padding-inline-start: var(--spacing-5); }
-.prose code { padding: 0.0625rem 0.3125rem; border-radius: 4px; background: var(--color-background-muted); font-family: var(--font-family-code); font-size: 0.8125rem; }
-@media (width < 64rem) {
-  .layout { grid-template-columns: minmax(0, 1fr); gap: var(--spacing-6); }
-  /* A phone reads the properties as Linear's row of pills under the title: each a 32px pill on the muted grey, wrapping,
-     the heads kept for assistive technology alone. */
-  .aside { position: static; order: -1; flex-direction: row; flex-wrap: wrap; gap: var(--spacing-1-5, 0.375rem); padding: 0 0 var(--spacing-5);
-    border-block-end: 1px solid var(--color-border); }
-  .asideHead { position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden; clip-path: inset(50%); }
-  .properties { display: contents; }
-  .property { min-block-size: 2rem; padding-inline: var(--spacing-3); background: var(--color-background-muted); }
-  .asideLabels { display: flex; align-items: center; padding-inline: 0; }
-}
-/* With a repository connected and nothing linked yet, how to link the work (D-087). */
-.codeHint { margin: 0; padding: var(--spacing-1) var(--spacing-2); font-size: 0.8125rem; line-height: 1.5; color: var(--color-text-secondary); }
-.codeHint code { font-family: var(--font-family-mono, ui-monospace, monospace); font-size: 0.75rem; color: var(--color-text-primary); }
+.inspectorTitle { margin: 0; font-size: 13px; }
+.inspectorSection { display: contents; }
+.inspectorField { min-inline-size: 0; max-inline-size: 100%; }
+.inspectorField > span:first-child { display: none; }
+.propertyValue { min-inline-size: 0; max-inline-size: 100%; font-size: 13px; }
+.propertyValue > span { max-inline-size: 100%; min-inline-size: 0; }
+.propertyValue button { max-inline-size: 100%; min-block-size: 28px; border-radius: 999px; white-space: nowrap; font-size: 13px; }
+.propertyValue button[aria-haspopup] { background: var(--color-background-muted); box-shadow: inset 0 0 0 1px var(--bit-chip-ring); }
+.propertyValue button:hover { background: var(--color-overlay-hover); }
+.projectName { display: inline-flex; align-items: center; gap: 6px; min-block-size: 28px; padding-inline: 8px; border-radius: 999px; background: var(--color-background-muted); box-shadow: inset 0 0 0 1px var(--bit-chip-ring); font-size: 13px; color: var(--color-text-secondary); }
+.description { min-inline-size: 0; font-size: 15px; line-height: 24px; }
+.audit { font-size: 12px; color: var(--color-text-secondary); }
+.key { font-family: var(--font-family-code); font-size: 12px; }
+.codeHint { margin: 0; font-size: 13px; line-height: 1.6; color: var(--color-text-secondary); }
+.codeHint code { font-family: var(--font-family-code); }
+@media (width < 64rem) { .propertyValue button, .projectName { min-block-size: 30px; } }

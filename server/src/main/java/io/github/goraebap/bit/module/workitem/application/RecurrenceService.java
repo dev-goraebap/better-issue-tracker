@@ -133,7 +133,7 @@ public class RecurrenceService {
                 u.setEndsAt(on.endsAt());
                 u.setAllDay(on.allDay());
             }
-            workItemService.revise(actor, workspaceId, projectId, later.id(), u);
+            workItemService.revise(actor, workspaceId, later.projectId(), later.id(), u);
         }
     }
 
@@ -179,7 +179,7 @@ public class RecurrenceService {
             LocalDate day,
             LocalDate lastDay) {
         for (var later : workItemRepository.findOccurrencesAfter(rule.id(), day))
-            workItemService.delete(actor, workspaceId, projectId, later.id(), later.version());
+            workItemService.delete(actor, workspaceId, later.projectId(), later.id(), later.version());
         rule.end(lastDay, actor.userId(), actor.agent(), clock.instant());
         recurrenceRepository.save(rule);
     }

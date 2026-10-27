@@ -43,3 +43,5 @@ export { DuePicker } from './due-picker';
 export { EventTimePicker, eventTimeText, type EventTime } from './event-time-picker';
 export { RepeatPicker, repeatText, type Repeat, type Weekday } from './repeat-picker';
 export { PanelDialog, RoutedPanel, Surface, SurfaceContext, usePanelSurface, type PanelSurface } from './side-panel';
+
+export { DetailLayout } from './detail-layout/DetailLayout';

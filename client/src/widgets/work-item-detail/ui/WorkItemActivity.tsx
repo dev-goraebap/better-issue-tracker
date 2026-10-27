@@ -53,10 +53,10 @@ export function WorkItemActivity({ workspaceId, projectId, workItemId, canWrite,
     {timeline.isPending || timeline.error
       ? <QueryMessage pending={timeline.isPending} error={timeline.error} retry={() => { void timeline.refetch(); }} />
       : <ol className={styles.timeline}>{lines.map(entry => entry.kind === 'comment'
-        ? <CommentCard key={entry.id} entry={entry} canEdit={canWrite && entry.actorId === me} canDelete={canWrite && (entry.actorId === me || canModerate)}
+        ? <CommentCard key={entry.id} workspaceId={workspaceId} canReact={canWrite} entry={entry} canEdit={canWrite && entry.actorId === me} canDelete={canWrite && (entry.actorId === me || canModerate)}
           onSave={body => run(() => updateComment(workspaceId, entry.id, { body, expectedVersion: entry.version }))} onDelete={() => setDeleting(entry)} />
         : <ActivityLine key={entry.id} entry={entry} names={names} />)}</ol>}
-    {canWrite && <CommentComposer onSend={body => run(() => createComment(workspaceId, { targetType, targetId: workItemId, body }))} />}
+    {canWrite && <CommentComposer onSend={(body, uploadIds) => run(() => createComment(workspaceId, { targetType, targetId: workItemId, body, uploadIds }))} />}
     {deleting && <ConfirmDialog title="댓글을 삭제할까요?" description="삭제한 댓글은 활동에서 사라집니다." confirmLabel="삭제" variant="destructive"
       onClose={() => setDeleting(null)}
       onConfirm={() => { const entry = deleting; setDeleting(null); void run(() => deleteComment(workspaceId, entry.id, entry.version)); }} />}

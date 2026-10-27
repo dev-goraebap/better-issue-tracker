@@ -54,6 +54,8 @@ class WorkItemMcpTools implements McpToolProvider {
             "긴급", WorkItem.Priority.urgent);
 
     private final WorkItemService workItemService;
+    private final WorkItemHierarchyService hierarchy;
+    private final io.github.goraebap.bit.module.link.LinkFacade links;
     private final RecurrenceService recurrenceService;
     private final WorkItemQueryService workItemQueryService;
     private final WorkItemFacade workItemFacade;
@@ -66,6 +68,17 @@ class WorkItemMcpTools implements McpToolProvider {
     @Override
     public List<McpTool> tools() {
         return List.of(
+                new McpTool(
+                        "set_work_item_project",
+                        "업무 프로젝트 선택·해제",
+                        "업무의 프로젝트를 선택하거나 none으로 해제합니다. 해제한 업무는 워크스페이스에 남고 기존 참조·내용을 보존합니다.",
+                        McpTool.input()
+                                .string("ref", "업무 참조", true)
+                                .string("project", "프로젝트 키 또는 none", true)
+                                .string("workspace", WORKSPACE, false)
+                                .build(),
+                        false,
+                        this::changeProject),
                 new McpTool(
                         "get_work_item_context",
                         "업무 맥락 읽기",
@@ -194,7 +207,48 @@ class WorkItemMcpTools implements McpToolProvider {
                                 .string("workspace", WORKSPACE, false)
                                 .build(),
                         false,
-                        this::comment));
+                        this::comment),
+                new McpTool(
+                        "create_subtask",
+                        "하위 작업 만들기",
+                        "상위 작업의 프로젝트에 하위 작업을 원자적으로 만듭니다. 부모 우선순위를 사용하며 시작 전 상태·미배정으로 생성합니다.",
+                        McpTool.input()
+                                .string("parent", "상위 작업 참조. 예: BIT-71", true)
+                                .string("title", "제목", true)
+                                .string("description", "마크다운 설명", false)
+                                .string("workspace", WORKSPACE, false)
+                                .build(),
+                        false,
+                        this::child));
+    }
+
+    private Object child(CurrentUser actor, McpArguments args) {
+        String w =
+                workspaceFacade.resolve(actor, args.optionalString("workspace").orElse(null));
+        var parent = workItemFacade.findByRef(actor, w, args.string("parent"));
+        String id = hierarchy.createChild(
+                actor,
+                w,
+                parent.projectId(),
+                parent.id(),
+                args.string("title"),
+                args.optionalString("description").orElse(null));
+        var item = workItemQueryService.get(actor, w, parent.projectId(), id);
+        var view = summary(item, projectFacade.boardColumns(actor, w, parent.projectId()));
+        view.put("id", id);
+        view.put("parent", parent.reference());
+        return view;
+    }
+
+    private Object changeProject(CurrentUser actor, McpArguments args) {
+        var at = locate(actor, args);
+        var item = workItemQueryService.get(actor, at.workspaceId(), at.projectId(), at.id());
+        String requested = args.string("project");
+        String next = "none".equalsIgnoreCase(requested)
+                ? null
+                : projectFacade.findByKey(actor, at.workspaceId(), requested).id();
+        workItemService.changeProject(actor, at.workspaceId(), at.id(), next, item.version());
+        return Map.of("updated", true, "ref", item.key());
     }
 
     private Object context(CurrentUser actor, McpArguments args) {
@@ -214,6 +268,7 @@ class WorkItemMcpTools implements McpToolProvider {
                 .map(line -> line(line, columns, people, labels))
                 .toList();
         view.put("timeline", timeline);
+        view.put("relations", links.relations(actor, at.workspaceId(), TargetType.work_item, at.id()));
         return view;
     }
 
@@ -244,8 +299,11 @@ class WorkItemMcpTools implements McpToolProvider {
                 page.items().stream()
                         .map(item -> summary(
                                 item,
-                                boards.computeIfAbsent(
-                                        item.projectId(), id -> projectFacade.boardColumns(actor, workspace, id))))
+                                item.projectId() == null
+                                        ? List.of()
+                                        : boards.computeIfAbsent(
+                                                item.projectId(),
+                                                id -> projectFacade.boardColumns(actor, workspace, id))))
                         .toList());
         result.put("nextCursor", page.nextCursor());
         return result;
@@ -334,6 +392,7 @@ class WorkItemMcpTools implements McpToolProvider {
 
     /** Sets the rule an agent described on a work item, from its day (D-092). */
     private void repeat(CurrentUser actor, String workspace, String projectId, String id, McpArguments args) {
+        if (projectId == null) throw new IllegalArgumentException("프로젝트를 선택한 뒤 반복을 설정하세요");
         var frequency =
                 switch (args.string("repeat").strip().toLowerCase(Locale.ROOT)) {
                     case "daily" -> Recurrence.Frequency.daily;
@@ -396,15 +455,27 @@ class WorkItemMcpTools implements McpToolProvider {
         var columns = columns(actor, at);
         if (status.isPresent()) {
             var item = workItemQueryService.get(actor, at.workspaceId(), at.projectId(), at.id());
-            workItemService.move(
-                    actor,
-                    at.workspaceId(),
-                    at.projectId(),
-                    at.id(),
-                    item.version(),
-                    column(columns, status.get()),
-                    null,
-                    null);
+            if (at.projectId() == null) {
+                String category =
+                        switch (status.get().strip().toLowerCase(Locale.ROOT)) {
+                            case "todo", "할 일" -> "todo";
+                            case "doing", "진행 중" -> "doing";
+                            case "done", "완료" -> "done";
+                            case "none", "backlog", "상태 없음" -> null;
+                            default -> throw new IllegalArgumentException("프로젝트 없는 작업의 상태는 todo, doing, done, none입니다");
+                        };
+                workItemService.changeWorkspaceStatus(actor, at.workspaceId(), at.id(), category, item.version());
+            } else {
+                workItemService.move(
+                        actor,
+                        at.workspaceId(),
+                        at.projectId(),
+                        at.id(),
+                        item.version(),
+                        column(columns, status.get()),
+                        null,
+                        null);
+            }
         }
         if (archive.isPresent()) {
             var item = workItemQueryService.get(actor, at.workspaceId(), at.projectId(), at.id());
@@ -448,7 +519,7 @@ class WorkItemMcpTools implements McpToolProvider {
     }
 
     private List<ProjectFacade.ColumnInfo> columns(CurrentUser actor, Located at) {
-        return projectFacade.boardColumns(actor, at.workspaceId(), at.projectId());
+        return at.projectId() == null ? List.of() : projectFacade.boardColumns(actor, at.workspaceId(), at.projectId());
     }
 
     /** A column by its name, else the first of a category, or backlog for none. */
@@ -511,11 +582,15 @@ class WorkItemMcpTools implements McpToolProvider {
         var view = new LinkedHashMap<String, Object>();
         view.put("ref", item.key());
         view.put("title", item.title());
+        view.put("projectId", item.projectId());
         String column = columns.stream()
                 .filter(c -> c.id().equals(item.columnId()))
                 .map(ProjectFacade.ColumnInfo::name)
                 .findFirst()
-                .orElse(item.columnId() == null ? "상태 없음" : null);
+                .orElse(
+                        item.projectId() == null && item.columnCategory() != null
+                                ? item.columnCategory().name()
+                                : item.columnId() == null ? "상태 없음" : null);
         if (column != null) view.put("status", column);
         view.put(
                 "category",

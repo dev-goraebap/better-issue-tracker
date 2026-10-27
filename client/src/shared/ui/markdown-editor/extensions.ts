@@ -4,6 +4,7 @@ import { Placeholder } from '@tiptap/extensions';
 import { Markdown } from '@tiptap/markdown';
 import { Plugin } from '@tiptap/pm/state';
 import StarterKit from '@tiptap/starter-kit';
+import { Attachment } from './attachment-extension';
 import { SlashCommand, type SlashStore } from './slash';
 
 /** Text that reads as Markdown when pasted: a heading, a list, a task, a quote, a fence, a rule, a table row, a link. */
@@ -78,13 +79,14 @@ const Task = TaskItem.configure({
  * stays out, Markdown having none. Text comes in and goes out as Markdown, so the stored description stays readable to
  * agents and API clients.
  */
-export function readingExtensions(): AnyExtension[] {
+export function readingExtensions(attachmentUrl?: (id: string) => string): AnyExtension[] {
   return [
     StarterKit.configure({
       heading: { levels: [1, 2, 3] },
       underline: false,
       link: { openOnClick: true, autolink: true, defaultProtocol: 'https', HTMLAttributes: { rel: 'noopener noreferrer nofollow', target: '_blank' } },
     }),
+    Attachment.configure({ attachmentUrl }),
     TaskList,
     Task,
     Markdown.configure({ indentation: { style: 'space', size: 2 } }),
@@ -92,13 +94,14 @@ export function readingExtensions(): AnyExtension[] {
 }
 
 /** The editing set: the reading set with the slash menu, Markdown paste, '- [ ] ', the placeholder and the send shortcut. */
-export function writingExtensions({ placeholder, store, onSubmit }: { placeholder: string; store: SlashStore; onSubmit?: () => void }): AnyExtension[] {
+export function writingExtensions({ placeholder, store, onSubmit, attachmentUrl }: { placeholder: string; store: SlashStore; onSubmit?: () => void; attachmentUrl?: (id: string) => string }): AnyExtension[] {
   return [
     StarterKit.configure({
       heading: { levels: [1, 2, 3] },
       underline: false,
       link: { openOnClick: false, autolink: true, linkOnPaste: true, defaultProtocol: 'https', HTMLAttributes: { rel: 'noopener noreferrer nofollow', target: '_blank' } },
     }),
+    Attachment.configure({ attachmentUrl }),
     TaskList,
     Task,
     Markdown.configure({ indentation: { style: 'space', size: 2 } }),

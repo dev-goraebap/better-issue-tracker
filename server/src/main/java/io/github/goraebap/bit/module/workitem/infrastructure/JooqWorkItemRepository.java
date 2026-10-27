@@ -35,6 +35,33 @@ import org.springframework.stereotype.Repository;
 class JooqWorkItemRepository implements WorkItemRepository {
     private final DSLContext dslContext;
 
+    private static String referenceKey(Record row) {
+        String ref = row.get(WORK_ITEM.PUBLIC_REF);
+        return ref == null ? row.get(PROJECT_KEY.KEY) : ref.substring(0, ref.lastIndexOf('-'));
+    }
+
+    @Override
+    public String reference(WorkItem item) {
+        if (item.publicRef() != null) return item.publicRef();
+        return dslContext
+                        .select(PROJECT_KEY.KEY)
+                        .from(PROJECT_KEY)
+                        .where(PROJECT_KEY.PROJECT_ID.eq(item.projectId()))
+                        .and(PROJECT_KEY.IS_CURRENT.isTrue())
+                        .fetchOne(PROJECT_KEY.KEY)
+                + "-" + item.number();
+    }
+
+    @Override
+    public Optional<WorkItem> findByReference(String workspaceId, String reference) {
+        return single(dslContext
+                .selectFrom(WORK_ITEM)
+                .where(WORK_ITEM.WORKSPACE_ID.eq(workspaceId))
+                .and(WORK_ITEM.PUBLIC_REF.eq(reference))
+                .and(WORK_ITEM.DELETED_AT.isNull())
+                .fetch());
+    }
+
     @Override
     public long countAllById(String projectId, Set<String> ids) {
         if (ids.isEmpty()) return 0;
@@ -51,7 +78,7 @@ class JooqWorkItemRepository implements WorkItemRepository {
     public Optional<WorkItem> findById(String projectId, String id, boolean includeDeleted) {
         return single(dslContext
                 .selectFrom(WORK_ITEM)
-                .where(WORK_ITEM.PROJECT_ID.eq(projectId))
+                .where((projectId == null ? WORK_ITEM.PROJECT_ID.isNull() : WORK_ITEM.PROJECT_ID.eq(projectId)))
                 .and(WORK_ITEM.WORK_ITEM_ID.eq(id))
                 .and(includeDeleted ? DSL.noCondition() : WORK_ITEM.DELETED_AT.isNull())
                 .fetch());
@@ -62,9 +89,9 @@ class JooqWorkItemRepository implements WorkItemRepository {
         return single(dslContext
                 .select(WORK_ITEM.fields())
                 .from(WORK_ITEM)
-                .join(PROJECT)
+                .leftJoin(PROJECT)
                 .on(PROJECT.PROJECT_ID.eq(WORK_ITEM.PROJECT_ID))
-                .where(PROJECT.WORKSPACE_ID.eq(workspaceId))
+                .where(WORK_ITEM.WORKSPACE_ID.eq(workspaceId))
                 .and(PROJECT.DELETED_AT.isNull())
                 .and(WORK_ITEM.WORK_ITEM_ID.eq(id))
                 .and(WORK_ITEM.DELETED_AT.isNull())
@@ -75,8 +102,9 @@ class JooqWorkItemRepository implements WorkItemRepository {
     public Optional<WorkItem> findByNumber(String projectId, long number) {
         return single(dslContext
                 .selectFrom(WORK_ITEM)
-                .where(WORK_ITEM.PROJECT_ID.eq(projectId))
+                .where((projectId == null ? WORK_ITEM.PROJECT_ID.isNull() : WORK_ITEM.PROJECT_ID.eq(projectId)))
                 .and(WORK_ITEM.NUMBER.eq(number))
+                .and(WORK_ITEM.PUBLIC_REF.isNull())
                 .and(WORK_ITEM.DELETED_AT.isNull())
                 .fetch());
     }
@@ -85,7 +113,7 @@ class JooqWorkItemRepository implements WorkItemRepository {
     public List<WorkItem> findColumnItems(String projectId, String columnId, boolean includeDeleted) {
         return items(dslContext
                 .selectFrom(WORK_ITEM)
-                .where(WORK_ITEM.PROJECT_ID.eq(projectId))
+                .where((projectId == null ? WORK_ITEM.PROJECT_ID.isNull() : WORK_ITEM.PROJECT_ID.eq(projectId)))
                 .and(columnId == null ? backlog() : WORK_ITEM.BOARD_COLUMN_ID.eq(columnId))
                 .and(includeDeleted ? DSL.noCondition() : WORK_ITEM.DELETED_AT.isNull())
                 .orderBy(WORK_ITEM.POSITION, WORK_ITEM.WORK_ITEM_ID)
@@ -125,11 +153,11 @@ class JooqWorkItemRepository implements WorkItemRepository {
     private List<Located> located(Condition condition) {
         var records = dslContext
                 .select(WORK_ITEM.fields())
-                .select(PROJECT_KEY.KEY, PROJECT.WORKSPACE_ID)
+                .select(PROJECT_KEY.KEY)
                 .from(WORK_ITEM)
-                .join(PROJECT)
+                .leftJoin(PROJECT)
                 .on(PROJECT.PROJECT_ID.eq(WORK_ITEM.PROJECT_ID))
-                .join(PROJECT_KEY)
+                .leftJoin(PROJECT_KEY)
                 .on(PROJECT_KEY.PROJECT_ID.eq(PROJECT.PROJECT_ID).and(PROJECT_KEY.IS_CURRENT.isTrue()))
                 .where(condition)
                 .and(WORK_ITEM.DELETED_AT.isNull())
@@ -140,7 +168,7 @@ class JooqWorkItemRepository implements WorkItemRepository {
         var labels = labels(ids);
         var people = people(ids);
         return records.stream()
-                .map(r -> new Located(r.get(PROJECT.WORKSPACE_ID), row(r, null, labels, people)))
+                .map(r -> new Located(r.get(WORK_ITEM.WORKSPACE_ID), row(r, null, labels, people)))
                 .toList();
     }
 
@@ -185,9 +213,9 @@ class JooqWorkItemRepository implements WorkItemRepository {
                 .select(WORK_ITEM.fields())
                 .select(PROJECT_KEY.KEY, BOARD_COLUMN.CATEGORY)
                 .from(WORK_ITEM)
-                .join(PROJECT)
+                .leftJoin(PROJECT)
                 .on(PROJECT.PROJECT_ID.eq(WORK_ITEM.PROJECT_ID))
-                .join(PROJECT_KEY)
+                .leftJoin(PROJECT_KEY)
                 .on(PROJECT_KEY.PROJECT_ID.eq(PROJECT.PROJECT_ID).and(PROJECT_KEY.IS_CURRENT.isTrue()))
                 .leftJoin(BOARD_COLUMN)
                 .on(BOARD_COLUMN.BOARD_COLUMN_ID.eq(WORK_ITEM.BOARD_COLUMN_ID))
@@ -209,13 +237,13 @@ class JooqWorkItemRepository implements WorkItemRepository {
         return new Row(
                 id,
                 r.get(WORK_ITEM.PROJECT_ID),
-                r.get(PROJECT_KEY.KEY),
+                referenceKey(r),
                 r.get(WORK_ITEM.NUMBER),
                 WorkItem.Kind.valueOf(r.get(WORK_ITEM.KIND)),
                 details(r, mine.stream().map(Person::id).collect(Collectors.toSet())),
                 labels.getOrDefault(id, Set.of()),
                 r.get(WORK_ITEM.BOARD_COLUMN_ID),
-                category,
+                r.get(WORK_ITEM.PROJECT_ID) == null ? r.get(WORK_ITEM.WORKSPACE_STATUS) : category,
                 r.get(WORK_ITEM.POSITION).doubleValue(),
                 r.get(WORK_ITEM.CLOSED_AT),
                 r.get(WORK_ITEM.ARCHIVED_AT),
@@ -233,6 +261,16 @@ class JooqWorkItemRepository implements WorkItemRepository {
         var d = w.details();
         r.setWorkItemId(w.id());
         r.setProjectId(w.projectId());
+        r.setWorkspaceId(
+                w.workspaceId() == null
+                        ? dslContext
+                                .select(PROJECT.WORKSPACE_ID)
+                                .from(PROJECT)
+                                .where(PROJECT.PROJECT_ID.eq(w.projectId()))
+                                .fetchOne(PROJECT.WORKSPACE_ID)
+                        : w.workspaceId());
+        r.setPublicRef(w.publicRef());
+        r.setWorkspaceStatus(w.workspaceStatus());
         r.setNumber(w.number());
         r.setKind(w.kind().name());
         r.setTitle(d.title());
@@ -310,7 +348,8 @@ class JooqWorkItemRepository implements WorkItemRepository {
     }
 
     private static Condition conditions(Query q) {
-        Condition where = PROJECT.WORKSPACE_ID
+        Condition where = WORK_ITEM
+                .WORKSPACE_ID
                 .eq(q.workspaceId())
                 .and(PROJECT.DELETED_AT.isNull())
                 .and(q.deleted() ? WORK_ITEM.DELETED_AT.isNotNull() : WORK_ITEM.DELETED_AT.isNull());
@@ -331,8 +370,10 @@ class JooqWorkItemRepository implements WorkItemRepository {
         else if (q.columnId() != null) where = where.and(WORK_ITEM.BOARD_COLUMN_ID.eq(q.columnId()));
         if (!q.columnIds().isEmpty()) where = where.and(WORK_ITEM.BOARD_COLUMN_ID.in(q.columnIds()));
         if (!q.categories().isEmpty() || q.noCategory()) {
-            Condition category =
-                    q.categories().isEmpty() ? DSL.falseCondition() : BOARD_COLUMN.CATEGORY.in(q.categories());
+            Condition category = q.categories().isEmpty()
+                    ? DSL.falseCondition()
+                    : DSL.coalesce(WORK_ITEM.WORKSPACE_STATUS, BOARD_COLUMN.CATEGORY)
+                            .in(q.categories());
             if (q.noCategory()) category = category.or(backlog());
             where = where.and(category);
         }
@@ -389,7 +430,7 @@ class JooqWorkItemRepository implements WorkItemRepository {
         return dslContext
                 .select(WORK_ITEM.BOARD_COLUMN_ID, count)
                 .from(WORK_ITEM)
-                .join(PROJECT)
+                .leftJoin(PROJECT)
                 .on(PROJECT.PROJECT_ID.eq(WORK_ITEM.PROJECT_ID))
                 .leftJoin(BOARD_COLUMN)
                 .on(BOARD_COLUMN.BOARD_COLUMN_ID.eq(WORK_ITEM.BOARD_COLUMN_ID))
@@ -401,7 +442,11 @@ class JooqWorkItemRepository implements WorkItemRepository {
 
     /** Tasks without a status (D-092): an event has no column either, but it is not waiting in the backlog. */
     private static Condition backlog() {
-        return WORK_ITEM.BOARD_COLUMN_ID.isNull().and(WORK_ITEM.KIND.eq(WorkItem.Kind.task.name()));
+        return WORK_ITEM
+                .BOARD_COLUMN_ID
+                .isNull()
+                .and(WORK_ITEM.WORKSPACE_STATUS.isNull())
+                .and(WORK_ITEM.KIND.eq(WorkItem.Kind.task.name()));
     }
 
     private Optional<WorkItem> single(List<? extends Record> records) {
@@ -453,21 +498,22 @@ class JooqWorkItemRepository implements WorkItemRepository {
 
     private WorkItem item(Record r, Set<String> labelIds, Set<String> peopleIds) {
         return WorkItem.fromPersistence(
-                r.get(WORK_ITEM.WORK_ITEM_ID),
-                r.get(WORK_ITEM.PROJECT_ID),
-                r.get(WORK_ITEM.NUMBER),
-                WorkItem.Kind.valueOf(r.get(WORK_ITEM.KIND)),
-                details(r, peopleIds),
-                labelIds,
-                r.get(WORK_ITEM.BOARD_COLUMN_ID),
-                r.get(WORK_ITEM.POSITION).doubleValue(),
-                r.get(WORK_ITEM.CLOSED_AT),
-                r.get(WORK_ITEM.ARCHIVED_AT),
-                r.get(WORK_ITEM.RECURRENCE_ID),
-                r.get(WORK_ITEM.OCCURRENCE_ON),
-                r.get(WORK_ITEM.REMINDER_MINUTES),
-                r.get(WORK_ITEM.VERSION),
-                AuditRecords.read(r));
+                        r.get(WORK_ITEM.WORK_ITEM_ID),
+                        r.get(WORK_ITEM.PROJECT_ID),
+                        r.get(WORK_ITEM.NUMBER),
+                        WorkItem.Kind.valueOf(r.get(WORK_ITEM.KIND)),
+                        details(r, peopleIds),
+                        labelIds,
+                        r.get(WORK_ITEM.BOARD_COLUMN_ID),
+                        r.get(WORK_ITEM.POSITION).doubleValue(),
+                        r.get(WORK_ITEM.CLOSED_AT),
+                        r.get(WORK_ITEM.ARCHIVED_AT),
+                        r.get(WORK_ITEM.RECURRENCE_ID),
+                        r.get(WORK_ITEM.OCCURRENCE_ON),
+                        r.get(WORK_ITEM.REMINDER_MINUTES),
+                        r.get(WORK_ITEM.VERSION),
+                        AuditRecords.read(r))
+                .locate(r.get(WORK_ITEM.WORKSPACE_ID), r.get(WORK_ITEM.PUBLIC_REF), r.get(WORK_ITEM.WORKSPACE_STATUS));
     }
 
     private WorkItem.Details details(Record r, Set<String> peopleIds) {

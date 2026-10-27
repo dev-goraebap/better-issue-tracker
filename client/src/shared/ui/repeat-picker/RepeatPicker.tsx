@@ -1,6 +1,6 @@
 import { BottomSheet, Popover } from '@astryxdesign/core';
 import { useMediaQuery } from '@astryxdesign/core/hooks';
-import { useId, useState } from 'react';
+import { useId, useRef, useState } from 'react';
 import { MOBILE_QUERY } from '@/shared/config';
 import { FrameBody, FrameHead } from '../frame';
 import { NavIcon } from '../NavIcon';
@@ -29,56 +29,67 @@ export const repeatText = (value?: Repeat) => {
  * in the quiet ink. Its box picks 매일 · 매주 · 매월, how many apart, a weekly rule's weekdays (none means the work item's
  * own) and a last day. Each occurrence is its own work item, made from this one. A phone opens it in a sheet.
  */
-export function RepeatPicker({ value, onChange, clearLabel = '반복 안 함' }: {
-  value?: Repeat; onChange: (value?: Repeat) => void; clearLabel?: string;
+export function RepeatPicker({ value, onChange, onCommit, clearLabel = '반복 안 함' }: {
+  value?: Repeat; onChange: (value?: Repeat) => void; clearLabel?: string; onCommit?: (value?: Repeat) => void;
 }) {
   const isMobile = useMediaQuery(MOBILE_QUERY);
   const [isOpen, setOpen] = useState(false);
   const titleId = useId();
-  const text = repeatText(value);
-  const set = (patch: Partial<Repeat>) => onChange({ frequency: 'weekly', interval: 1, weekdays: [], ...value, ...patch });
+  const [draft, setDraft] = useState(value); const current = useRef(value); const dirty = useRef(false);
+  const shown = onCommit && isOpen ? draft : value;
+  const open = (next: boolean) => {
+    if (next) { current.current = value; setDraft(value); dirty.current = false; }
+    else if (onCommit && dirty.current) { dirty.current = false; onCommit(current.current); }
+    setOpen(next);
+  };
+  const change = (next?: Repeat) => {
+    if (onCommit) { current.current = next; dirty.current = true; setDraft(next); }
+    else onChange(next);
+  };
+  const text = repeatText(shown);
+  const set = (patch: Partial<Repeat>) => change({ frequency: 'weekly', interval: 1, weekdays: [], ...shown, ...patch });
   const toggle = (day: Weekday) => {
-    const days = value?.weekdays ?? [];
+    const days = shown?.weekdays ?? [];
     set({ weekdays: days.includes(day) ? days.filter(each => each !== day) : [...days, day] });
   };
   const pill = (ref?: (node: HTMLElement | null) => void, onClick?: () => void) => <span ref={ref} className={styles.pillWrap}>
     <button type="button" className={styles.pill} data-empty={!text || undefined} aria-haspopup="dialog" aria-expanded={isOpen}
-      aria-label={text ? `반복: ${text}` : '반복 정하기'} onClick={onClick ?? (() => setOpen(true))}>
+      aria-label={text ? `반복: ${text}` : '반복 정하기'} onClick={onClick ?? (() => open(true))}>
       <NavIcon name="repeat" />{text ?? '반복'}
     </button>
   </span>;
   const box = <div className={styles.box} data-size={isMobile ? 'lg' : undefined}>
     <div className={styles.frequencies} role="radiogroup" aria-label="반복">
       {(['daily', 'weekly', 'monthly'] as const).map(frequency => <button key={frequency} type="button" role="radio" className={styles.choice}
-        aria-checked={value?.frequency === frequency} onClick={() => set({ frequency })}>{EVERY[frequency]}</button>)}
+        aria-checked={shown?.frequency === frequency} onClick={() => set({ frequency })}>{EVERY[frequency]}</button>)}
     </div>
-    {value && <>
+    {shown && <>
       <label className={styles.row}><span>간격</span>
         <span className={styles.every}>
-          <input type="number" min={1} max={52} className={styles.input} value={value.interval}
+          <input type="number" min={1} max={52} className={styles.input} value={shown.interval}
             onChange={event => set({ interval: Math.min(52, Math.max(1, Number(event.target.value) || 1)) })} />
-          {UNITS[value.frequency]}마다
+          {UNITS[shown.frequency]}마다
         </span>
       </label>
-      {value.frequency === 'weekly' && <div className={styles.days} role="group" aria-label="요일">
-        {DAYS.map(([day, word]) => <button key={day} type="button" className={styles.day} aria-pressed={value.weekdays.includes(day)} onClick={() => toggle(day)}>{word}</button>)}
+      {shown.frequency === 'weekly' && <div className={styles.days} role="group" aria-label="요일">
+        {DAYS.map(([day, word]) => <button key={day} type="button" className={styles.day} aria-pressed={shown.weekdays.includes(day)} onClick={() => toggle(day)}>{word}</button>)}
       </div>}
       <label className={styles.row}><span>끝나는 날</span>
-        <input type="date" className={styles.input} value={value.untilOn ?? ''} onChange={event => set({ untilOn: event.target.value || undefined })} />
+        <input type="date" className={styles.input} value={shown.untilOn ?? ''} onChange={event => set({ untilOn: event.target.value || undefined })} />
       </label>
-      <button type="button" className={styles.clear} onClick={() => { onChange(undefined); setOpen(false); }}>
+      <button type="button" className={styles.clear} onClick={() => { change(undefined); open(false); }}>
         <NavIcon name="close" />{clearLabel}
       </button>
     </>}
   </div>;
   if (isMobile) return <>
     {pill()}
-    {isOpen && <BottomSheet isOpen onOpenChange={setOpen} label="반복" height="hug">
-      <FrameHead title="반복" titleId={titleId} onClose={() => setOpen(false)} />
+    {isOpen && <BottomSheet isOpen onOpenChange={open} label="반복" height="hug">
+      <FrameHead title="반복" titleId={titleId} onClose={() => open(false)} />
       <FrameBody>{box}</FrameBody>
     </BottomSheet>}
   </>;
-  return <Popover isOpen={isOpen} onOpenChange={setOpen} placement="below" alignment="start" width={280} label="반복" className={styles.popover} content={box}>
+  return <Popover isOpen={isOpen} onOpenChange={open} placement="below" alignment="start" width={280} label="반복" className={styles.popover} content={box}>
     {({ ref, onClick }) => pill(ref, onClick)}
   </Popover>;
 }

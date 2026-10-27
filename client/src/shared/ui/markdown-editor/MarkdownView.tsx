@@ -8,8 +8,8 @@ import styles from './markdown.module.css';
  * same schema the editor writes with, so a description reads the same whether one may change it or not. Links open in
  * a new tab. empty is what shows for no text.
  */
-export function MarkdownView({ value, empty }: { value: string; empty?: string }) {
-  const editor = useEditor({ extensions: readingExtensions(), content: value, contentType: 'markdown', editable: false });
+export function MarkdownView({ value, empty, attachmentUrl }: { value: string; empty?: string; attachmentUrl?: (id: string) => string }) {
+  const editor = useEditor({ extensions: readingExtensions(attachmentUrl), content: value, contentType: 'markdown', editable: false });
   useEffect(() => {
     if (editor && editor.getMarkdown().trimEnd() !== value.trimEnd()) editor.commands.setContent(value, { contentType: 'markdown', emitUpdate: false });
   }, [editor, value]);

@@ -8,8 +8,8 @@ import styles from './item-list.module.css';
  * lies on the accent surface with its title bold. end is the row's own control (its menu) at the very end, on a phone
  * beside both lines.
  */
-export function ItemRow({ lead, title, meta, end, tone }: { lead?: ReactNode; title: ReactNode; meta?: ReactNode; end?: ReactNode; tone?: 'accent' }) {
-  return <li className={styles.row} data-tone={tone}>
+export function ItemRow({ lead, title, meta, end, tone, isTitleSingleLine = false }: { lead?: ReactNode; title: ReactNode; meta?: ReactNode; end?: ReactNode; tone?: 'accent'; isTitleSingleLine?: boolean }) {
+  return <li className={styles.row} data-tone={tone} data-title-single-line={isTitleSingleLine || undefined}>
     {lead && <span className={styles.lead}>{lead}</span>}
     <span className={styles.title}>{title}</span>
     {meta && <span className={styles.meta}>{meta}</span>}

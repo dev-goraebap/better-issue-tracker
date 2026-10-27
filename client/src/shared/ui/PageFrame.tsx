@@ -34,7 +34,7 @@ import styles from './page.module.css';
  * A detail replaces the shell breadcrumb with its back action, title and actions on desktop and phone.
  * Its content has no duplicate heading. Forms keep their own heading and the breadcrumb.
  */
-export function PageFrame({ title, icon, back, actions, tabs, hasRule = !!tabs, width: givenWidth, wrapsTitle = false, isDetail = false, chrome, tools, conditions, children }: {
+export function PageFrame({ title, icon, back, actions, tabs, hasRule = !!tabs, width: givenWidth, wrapsTitle = false, isDetail = false, headerLabel, hideHeading = false, chrome, tools, conditions, children }: {
   title: string; icon?: string; back?: ReactNode; actions?: ReactNode; tabs?: ReactNode; hasRule?: boolean;
   /**
    * The content's width (default 64rem). Under chrome="header" the content takes the card's whole width unless a width
@@ -45,6 +45,9 @@ export function PageFrame({ title, icon, back, actions, tabs, hasRule = !!tabs, 
   wrapsTitle?: boolean;
   /** Replaces the shell breadcrumb with the detail title and actions, without a duplicate content heading. */
   isDetail?: boolean;
+  headerLabel?: string;
+  /** Forms start at their title input; omit the duplicate page heading. */
+  hideHeading?: boolean;
   /**
    * header lays a list page out as Plane does: its actions and its toolbar's tools at the card's header row, its tabs in
    * a row under it, the conditions in force under them, the content across the whole width (HeaderChromePage). A phone
@@ -98,22 +101,22 @@ export function PageFrame({ title, icon, back, actions, tabs, hasRule = !!tabs, 
     {tools && targets.tools && createPortal(tools, targets.tools)}
     {conditions && targets.rows && createPortal(<div className={styles.conditions} data-action-row>{conditions}</div>, targets.rows)}
   </>;
-  return <VStack gap={6} className={`${styles.page} ${width === 'default' ? '' : styles[width]}`}>
+  return <VStack gap={6} className={`${styles.page} ${width === 'default' ? '' : styles[width]} ${isDetail && width === 'full' ? styles.detailFull : ''}`}>
     {legacy}
     {!targets.tools && tools}
     {wayBack && (targets.back
       ? createPortal(<BackButton link={wayBack} label="이전으로 돌아가기" isIconOnly />, targets.back)
       : <BackButton link={wayBack} label="이전으로 돌아가기" isIconOnly />)}
-    {detailHeader && targets.title && createPortal(<h1 className={styles.headerTitle} title={title}>{title}</h1>, targets.title)}
+    {detailHeader && targets.title && createPortal(headerLabel ? <span className={styles.headerTitle} title={headerLabel}>{headerLabel}</span> : <h1 className={styles.headerTitle} title={title}>{title}</h1>, targets.title)}
     {detailHeader && actions && detailActionTarget && createPortal(actions, detailActionTarget)}
     {!detailHeader && mobileBackToolbar && actions && targets.mobileActions && createPortal(actions, targets.mobileActions)}
     {tabs || hasRule
       // Without tabs a header with nothing in sight (no actions, or a phone's) leaves the page to the content with its rule.
-      ? <VStack gap={4} className={tabs || back ? undefined : actions ? styles.mobileQuiet : styles.quiet}>{!detailHeader && heading}
+      ? <VStack gap={4} className={tabs || back ? undefined : actions ? styles.mobileQuiet : styles.quiet}>{!detailHeader && !hideHeading && heading}
         <div className={`${styles.rule} ${tabs && actions ? styles.tabRow : ''}`}>{tabs}
           {tabs && actions && !mobileBackToolbar && !detailHeader && <HStack gap={2} vAlign="center" className={`${styles.tabActions} ${actionsClass}`} data-page-action>{actions}</HStack>}
         </div></VStack>
-      : !detailHeader && heading}
+      : !detailHeader && !hideHeading && heading}
     <PageWidthContext.Provider value={width}>
       <PageBack.Provider value={back}>{children}</PageBack.Provider>
     </PageWidthContext.Provider>

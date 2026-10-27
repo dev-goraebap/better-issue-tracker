@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Button } from '@astryxdesign/core';
 import { agoText } from '@/shared/lib/date-text';
-import { MoreMenu, DefaultAvatar, MarkdownEditor, MarkdownView, NavIcon } from '@/shared/ui';
+import { MoreMenu, DefaultAvatar, MarkdownEditor, NavIcon } from '@/shared/ui';
+import { AttachmentBody, ReactionBar, fileHref } from '@/features/detail-engagement';
 import type { TimelineEntry } from '../api/timeline';
 import { actorText } from '../model/activity-text';
 import styles from './activity.module.css';
@@ -11,8 +12,8 @@ import styles from './activity.module.css';
  * edited), the Markdown read as written. Its author may 수정 it in place (the same editor, Ctrl + Enter saves) and
  * delete it; someone who manages the workspace may delete anyone's.
  */
-export function CommentCard({ entry, canEdit, canDelete, onSave, onDelete }: {
-  entry: TimelineEntry; canEdit: boolean; canDelete: boolean; onSave: (body: string) => Promise<boolean>; onDelete: () => void;
+export function CommentCard({ workspaceId, canReact, entry, canEdit, canDelete, onSave, onDelete }: {
+  workspaceId: string; canReact: boolean; entry: TimelineEntry; canEdit: boolean; canDelete: boolean; onSave: (body: string) => Promise<boolean>; onDelete: () => void;
 }) {
   const [draft, setDraft] = useState<string | null>(null);
   const [isBusy, setBusy] = useState(false);
@@ -35,13 +36,16 @@ export function CommentCard({ entry, canEdit, canDelete, onSave, onDelete }: {
         {entry.editedAt && <span className={styles.time} title={new Date(entry.editedAt).toLocaleString('ko-KR')}>· 수정됨</span>}
         {items.length > 0 && draft === null && <span className={styles.cardMenu}><MoreMenu label="댓글 메뉴" variant="ghost" size="sm" placement="end" items={items} /></span>}
       </header>
-      {draft === null ? <div className={styles.cardBody}><MarkdownView value={entry.body ?? ''} /></div> : <div className={styles.cardEdit}>
-        <MarkdownEditor value={draft} onChange={setDraft} label="댓글 고치기" variant="field" autoFocus onSubmit={() => { void save(); }} isDisabled={isBusy} />
+      {draft === null ? <div className={styles.cardBody}><AttachmentBody target={{ workspaceId, type: 'comment', id: entry.id }} value={entry.body ?? ''} /></div> : <div className={styles.cardEdit}>
+        <MarkdownEditor attachmentUrl={id => fileHref({ workspaceId, type: 'comment', id: entry.id }, id, false)} value={draft} onChange={setDraft} label="댓글 고치기" variant="field" autoFocus onSubmit={() => { void save(); }} isDisabled={isBusy} />
         <div className={styles.actions}>
           <Button label="취소" variant="ghost" size="sm" onClick={() => setDraft(null)} isDisabled={isBusy} />
           <Button label="저장" variant="primary" size="sm" onClick={() => { void save(); }} isLoading={isBusy} isDisabled={!draft.trim()} />
         </div>
       </div>}
+      <div className={styles.commentExtras}>
+        <ReactionBar target={{ workspaceId, type: 'comment', id: entry.id }} canWrite={canReact} />
+      </div>
     </article>
   </li>;
 }

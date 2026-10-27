@@ -33,9 +33,9 @@ export function BoardView({ scope, items, search, onCreate, badges }: {
   const room = useFillRoom<HTMLDivElement>(true);
   const move = useBoardMove(lanes, canMove, styles.ghost, async (item, place) => {
     try {
-      await moveItem(scope.workspaceId, item.projectId, item.id, { expectedVersion: item.version, ...place });
+      await moveItem(scope.workspaceId, item.projectId ?? '', item.id, { expectedVersion: item.version, ...place });
     } catch (failure) { toast({ body: authError(failure) }); }
-    await refreshItems(client, scope.workspaceId, item.projectId);
+    await refreshItems(client, scope.workspaceId, item.projectId ?? '');
   });
   return <>
     <div ref={room} className={styles.room}><div ref={move.board} className={styles.board} role="list" aria-label="상태별 업무" data-dragging={move.carry?.by === 'pointer' || undefined}>

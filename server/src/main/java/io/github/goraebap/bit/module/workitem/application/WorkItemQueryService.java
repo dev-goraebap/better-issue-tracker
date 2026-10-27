@@ -43,30 +43,39 @@ public class WorkItemQueryService {
 
     @Transactional(readOnly = true)
     public WorkItemViews.Item get(CurrentUser actor, String workspaceId, String projectId, String id) {
-        var p = projectFacade.requireAccess(actor, workspaceId, projectId, false);
+        if (projectId == null) {
+            workspaceFacade.requireAccess(actor, workspaceId, WorkspaceFacade.Action.READ);
+            var target = workItemRepository
+                    .findTarget(workspaceId, id)
+                    .orElseThrow(WorkItemErrorCode.WORK_ITEM_NOT_FOUND::raise);
+            if (target.projectId() != null) return get(actor, workspaceId, target.projectId(), id);
+        } else projectFacade.requireAccess(actor, workspaceId, projectId, false);
         var w = workItemRepository
                 .findById(projectId, id, false)
                 .orElseThrow(WorkItemErrorCode.WORK_ITEM_NOT_FOUND::raise);
+        if (!workspaceId.equals(w.workspaceId())) throw WorkItemErrorCode.WORK_ITEM_NOT_FOUND.raise();
         var people = w.details().peopleIds().stream()
                 .map(person -> new WorkItemRepository.Person(
                         person, iamFacade.user(person).map(IamFacade.User::name).orElse("탈퇴한 사용자")))
                 .sorted(java.util.Comparator.comparing(WorkItemRepository.Person::name)
                         .thenComparing(WorkItemRepository.Person::id))
                 .toList();
-        var category = projectFacade
-                .findColumn(actor, workspaceId, projectId, w.columnId())
-                .map(ProjectFacade.ColumnRef::category)
-                .orElse(null);
+        var category = projectId == null
+                ? null
+                : projectFacade
+                        .findColumn(actor, workspaceId, projectId, w.columnId())
+                        .map(ProjectFacade.ColumnRef::category)
+                        .orElse(null);
         var row = new WorkItemRepository.Row(
                 w.id(),
                 projectId,
-                p.key(),
+                workItemRepository.reference(w).replaceFirst("-[0-9]+$", ""),
                 w.number(),
                 w.kind(),
                 w.details(),
                 w.labelIds(),
                 w.columnId(),
-                category == null ? null : category.name(),
+                projectId == null ? w.workspaceStatus() : category == null ? null : category.name(),
                 w.position(),
                 w.closedAt(),
                 w.archivedAt(),

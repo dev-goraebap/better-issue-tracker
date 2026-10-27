@@ -49,3 +49,5 @@
 @media (width < 64rem) { .backIcon { inline-size: 2.75rem; block-size: 2.75rem; } }
 
 .headerTitle { margin: 0; min-inline-size: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.875rem; line-height: 1.5; font-weight: 600; color: var(--color-text-primary); }
+
+.detailFull { padding: 0; gap: 0; }

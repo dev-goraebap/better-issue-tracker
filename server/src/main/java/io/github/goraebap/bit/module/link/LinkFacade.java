@@ -13,6 +13,10 @@ public interface LinkFacade {
             TargetType toType,
             String toId);
 
+    List<RelationRef> relations(CurrentUser actor, String workspaceId, TargetType type, String id);
+
+    void syncDocumentReferences(CurrentUser actor, String workspaceId, String documentId, String body);
+
     void disconnect(CurrentUser actor, String workspaceId, String linkId);
 
     void connectSessionRecord(

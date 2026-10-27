@@ -31,7 +31,7 @@ export function CompactDialog({ isOpen = true, title, subtitle, width = 560, isB
   </>;
   const content = <>
     <FrameHead title={title} subtitle={subtitle} onClose={close} />
-    {onSubmit ? <form onSubmit={event => { event.preventDefault(); if (!isBusy) onSubmit(); }}>{parts}</form> : parts}
+    {onSubmit ? <form onSubmit={event => { event.preventDefault(); event.stopPropagation(); if (!isBusy) onSubmit(); }}>{parts}</form> : parts}
   </>;
   if (isMobile) {
     const alert = isAlert ? { role: 'alertdialog', 'data-router-history': '' } : {};

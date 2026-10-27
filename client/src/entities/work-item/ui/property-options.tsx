@@ -1,4 +1,4 @@
-import { DefaultAvatar, type PropertyOption } from '@/shared/ui';
+import { DefaultAvatar, NavIcon, type PropertyOption } from '@/shared/ui';
 import { PRIORITIES } from '../model/labels';
 import type { ColumnCategory } from '../api/work-item';
 import { reminderText, type Priority } from '../model/work-item';
@@ -22,8 +22,8 @@ export const peopleOptions = (members: readonly { userId: string; name: string }
 export const NO_REMINDER = 'none';
 /** An event's reminder (BIT-39): when before its start its attendees hear of it. */
 export const reminderOptions: PropertyOption[] = [
-  ...[0, 5, 10, 30, 60, 1440].map(minutes => ({ value: String(minutes), label: reminderText(minutes) })),
-  { value: NO_REMINDER, label: '알림 없음' },
+  ...[0, 5, 10, 30, 60, 1440].map(minutes => ({ value: String(minutes), label: reminderText(minutes), icon: <NavIcon name="bell" /> })),
+  { value: NO_REMINDER, label: '알림 없음', icon: <NavIcon name="bell" /> },
 ];
 export const labelOptions = (labels: readonly { id: string; name: string; color: string }[]): PropertyOption[] =>
   labels.map(label => ({ value: label.id, label: label.name, icon: <span className={styles.labelDot} style={{ background: label.color }} /> }));

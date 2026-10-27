@@ -73,7 +73,7 @@ export function activityText(entry: TimelineEntry, names: ActivityNames): string
     case 'startDate': return after ? `시작일을 ${toward(dateText(after))} 정했습니다` : '시작일을 지웠습니다';
     case 'dueDate': return after ? `기한을 ${toward(dateText(after))} 정했습니다` : '기한을 지웠습니다';
     case 'column': {
-      const name = (id: string | null) => (id ? names.columns.get(id) ?? '지워진 상태' : '상태 없음');
+      const name = (id: string | null) => (id ? names.columns.get(id) ?? ({ todo: '할 일', doing: '진행 중', done: '완료' } as Record<string, string>)[id] ?? '이전 상태' : '상태 없음');
       return `상태를 ${name(before)}에서 ${toward(name(after))} 옮겼습니다`;
     }
     case 'labels': {
@@ -86,6 +86,9 @@ export function activityText(entry: TimelineEntry, names: ActivityNames): string
       if (added.length && removed.length) return `라벨 ${named(added)} 달고 ${named(removed)} 뗐습니다`;
       return added.length ? `라벨 ${named(added)} 달았습니다` : `라벨 ${named(removed)} 뗐습니다`;
     }
+    case 'project': return after ? '프로젝트를 변경했습니다' : '프로젝트 연결을 해제했습니다';
+    case 'attachments': return after === 'added' ? '파일을 첨부했습니다' : '첨부 파일을 삭제했습니다';
+    case 'relations': return after === 'added' ? '연결을 추가했습니다' : '연결을 해제했습니다';
     case 'archived': return after === 'true' ? '보관했습니다' : '보관을 풀었습니다';
     default: return `${noun}를 고쳤습니다`;
   }

@@ -49,3 +49,7 @@
   .meta { grid-area: meta; flex-wrap: wrap; gap: var(--spacing-1) var(--spacing-3); }
   .metaItem { inline-size: auto !important; }
 }
+
+/* Compact work lists keep one title line beside the trailing people. */
+.row[data-title-single-line] .title { display: block; white-space: nowrap; }
+.row[data-title-single-line] .title .rowLink:is(button) { white-space: nowrap; }

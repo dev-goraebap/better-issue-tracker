@@ -1,5 +1,5 @@
 import {
-  ArrowDownWideNarrow, ArrowLeft, ArrowLeftRight, ArrowRight, ArrowUpNarrowWide, ArrowUpDown, Bell, BookOpen, CalendarDays, Check, CheckCheck,
+  SmilePlus, Image, ArrowDownWideNarrow, ArrowLeft, ArrowLeftRight, ArrowRight, ArrowUpNarrowWide, ArrowUpDown, Bell, BookOpen, CalendarDays, Check, CheckCheck,
   ChevronDown, ChevronLeft, ChevronRight, ChevronsUpDown, CircleCheck, CircleDot, Clock, Copy, Ellipsis, File, FileText, Filter, Flag, Folder, GitBranch, GripVertical, Hash, House,
   Inbox, KanbanSquare, LayoutGrid, LayoutList, Link, ListFilter, ListTodo, Lock, LogOut, Mail, Maximize2, MessageSquare, Milestone, PanelLeft, Paperclip,
   SquarePen, Plus, RefreshCw, Repeat, Rows3, Scale, Search, Settings, Shield, SlidersHorizontal, Sparkles, Table2, Tag, Trash2, User, Users, Workflow, X,
@@ -59,6 +59,8 @@ const icons: Record<string, LucideIcon> = {
   edit: SquarePen,
   delete: Trash2,
   attach: Paperclip,
+  reaction: SmilePlus,
+  image: Image,
   comment: MessageSquare,
   mail: Mail,
   lock: Lock,

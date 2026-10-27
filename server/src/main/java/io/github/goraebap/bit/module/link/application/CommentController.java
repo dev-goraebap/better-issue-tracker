@@ -45,7 +45,8 @@ class CommentController {
             @AuthenticationPrincipal CurrentUser actor,
             @PathVariable String workspaceId,
             @Valid @RequestBody CommentRequests.Create request) {
-        String id = commentService.create(actor, workspaceId, request.targetType(), request.targetId(), request.body());
+        String id = commentService.createWithFiles(
+                actor, workspaceId, request.targetType(), request.targetId(), request.body(), request.uploadIds());
         return ResponseEntity.created(URI.create("/api/v1/workspaces/" + workspaceId + "/comments/" + id))
                 .build();
     }
