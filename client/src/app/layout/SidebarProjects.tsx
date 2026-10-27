@@ -19,8 +19,8 @@ const readOpen = (): Record<string, boolean> => { try { return JSON.parse(localS
  * its place (a line shows where it lands) or, with it focused, Alt + ↑ / ↓; the new order shows at once and is the
  * workspace's for everyone. A refused change says so and the menu shows the order as saved.
  *
- * Each project opens to its two pages (D-093): 업무 and 문서. The project in view is open; the member opens or closes any
- * other, and the menu keeps that in this browser.
+ * Each project opens to its two pages (D-093): 업무 and 문서. The project's own row only opens and closes them (BIT-83).
+ * The project in view is open; the member opens or closes any other, and the menu keeps that in this browser.
  */
 export function SidebarProjects({ workspaceId, projects, currentId, currentSection, canReorder, href, mark, onGo }: {
   workspaceId: string; projects: Project[]; currentId?: string; currentSection: Section; canReorder: boolean;
@@ -41,7 +41,7 @@ export function SidebarProjects({ workspaceId, projects, currentId, currentSecti
   const shown = moved ? moved.flatMap(id => projects.filter(project => project.id === id)) : projects;
   const save = async (order: string[], focusId?: string) => {
     setMoved(order);
-    if (focusId) requestAnimationFrame(() => document.querySelector<HTMLElement>(`[data-project-row="${focusId}"] a`)?.focus());
+    if (focusId) requestAnimationFrame(() => document.querySelector<HTMLElement>(`[data-project-row="${focusId}"] button`)?.focus());
     try { await reorderProjects(workspaceId, order); }
     catch (failure) { toast({ body: authError(failure) }); }
     finally { await refreshProjects(client, workspaceId); setMoved(null); }
@@ -81,7 +81,8 @@ export function SidebarProjects({ workspaceId, projects, currentId, currentSecti
     const link = href(project, 'work-items');
     const documents = href(project, 'documents');
     const isOpen = open[project.id] ?? currentId === project.id;
-    const item = <SideNavItem key={project.id} label={project.name} href={link} icon={mark(project)} onClick={onGo(link)}
+    // No link of its own, so the whole row opens and closes it with the chevron beside the name, as in the settings menu.
+    const item = <SideNavItem key={project.id} label={project.name} icon={mark(project)}
       collapsible={{ isCollapsed: !isOpen, onCollapsedChange: isCollapsed => toggle(project.id, !isCollapsed) }}>
       <SideNavItem label="업무" href={link} icon={<NavIcon name="tasks" />} isSelected={currentId === project.id && currentSection === 'work-items'} onClick={onGo(link)} />
       <SideNavItem label="문서" href={documents} icon={<NavIcon name="document" />} isSelected={currentId === project.id && currentSection === 'documents'} onClick={onGo(documents)} />
