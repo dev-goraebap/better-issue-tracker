@@ -1,0 +1,32 @@
+/*
+ * A history on one rule (BIT-84), as GitHub's issue timeline. The 1px rule runs down the line of a card's 20px avatar
+ * (past the card's 1px border and 12px in, so its middle is 23px in); each line of the history hangs its mark on it, the
+ * kind of change as a bare 16px icon in a 20px box, with its words 12px on and their first line level with the mark; a card
+ * (a comment) spans the whole width over the rule, its picture in its own head. Each entry draws its own piece of the
+ * rule, so it runs from the first entry to the last without sticking out above or below; --mark-at is where the rule
+ * meets the entry.
+ */
+.timeline { display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none;
+  --rail: 1.25rem; --rail-at: calc(var(--spacing-3) + 1px + 0.625rem); --rail-inset: calc(var(--rail-at) - var(--rail) / 2); }
+.item { position: relative; display: grid; grid-template-columns: var(--rail) minmax(0, 1fr); column-gap: var(--spacing-3); align-items: start;
+  padding-block: var(--spacing-1); padding-inline-start: var(--rail-inset); --mark-at: calc(var(--spacing-1) + var(--rail) / 2); }
+.item[data-kind="card"] { display: block; padding: var(--spacing-2) 0; --mark-at: var(--spacing-2); }
+.item::before { content: ''; position: absolute; inset-block: 0; inset-inline-start: calc(var(--rail-at) - 0.5px); inline-size: 1px;
+  background: var(--color-border-emphasized); }
+.item:first-child::before { inset-block-start: var(--mark-at); }
+.item:last-child::before { inset-block-end: auto; block-size: var(--mark-at); }
+.item:only-child::before { display: none; }
+
+/* A line's mark: the bare icon on the ground's colour, so the rule stops short above and below it. */
+.mark { position: relative; z-index: 1; display: grid; place-items: center; inline-size: var(--rail); block-size: var(--rail);
+  background: var(--color-background-surface); color: var(--color-icon-secondary); }
+.mark svg { inline-size: 1rem; block-size: 1rem; }
+.mark[data-tone="open"] { color: #3fb950; }
+.mark[data-tone="merged"] { color: #a371f7; }
+.mark[data-tone="closed"] { color: #f85149; }
+.mark[data-tone="draft"] { color: var(--color-icon-secondary); }
+
+/* A line's words: their first 20px line level with the mark. */
+.body { min-inline-size: 0; padding-block: calc((var(--rail) - 1.25rem) / 2); }
+/* A card covers the rule: it stands above it on a ground of its own. */
+.item[data-kind="card"] > .body { position: relative; z-index: 1; padding-block: 0; }

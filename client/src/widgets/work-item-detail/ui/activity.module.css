@@ -1,19 +1,11 @@
 /*
- * A work item's 활동 as Linear's (D-078): one 1px rule down the left that the lines of activity hang on, each a 16px
- * picture on the rule and a 13px line in the secondary ink (the name in the primary ink, 500); comments as cards on the
- * page's ground with a hairline, 10px corners, a 20px picture, the name and when over the Markdown; the comment box at
- * the foot, the design system's chat composer with its send button inside.
+ * A work item's 활동 (D-078) on the shared timeline's rule (BIT-84): each line a 13px sentence in the secondary ink (the
+ * name in the primary ink, 500); comments as cards with a hairline and the name and when over the Markdown, the
+ * person's picture on the rule; the comment box at the foot, the design system's chat composer with its send button inside.
  */
 .activity { display: flex; flex-direction: column; gap: var(--spacing-3); }
-.timeline { position: relative; display: flex; flex-direction: column; gap: var(--spacing-1); margin: 0; padding: 0; list-style: none; }
-.timeline::before { content: ''; position: absolute; inset-block: var(--spacing-2); inset-inline-start: 0.4375rem; inline-size: 1px; background: var(--color-border); }
-.event { position: relative; display: flex; align-items: flex-start; gap: var(--spacing-3); padding-block: var(--spacing-1-5, 0.375rem); }
-.mark { position: relative; display: inline-grid; place-items: center; flex-shrink: 0; inline-size: 1rem; block-size: 1.25rem; background: var(--color-background-surface); }
-.dot { inline-size: 0.375rem; block-size: 0.375rem; border-radius: 50%; background: var(--color-border-emphasized); }
 .eventText { margin: 0; min-inline-size: 0; font-size: 0.8125rem; line-height: 1.25rem; color: var(--color-text-secondary); word-break: keep-all; overflow-wrap: anywhere; }
-.actor { font-weight: 500; color: var(--color-text-primary); }
-.time { font-size: 0.75rem; color: var(--color-text-secondary); white-space: nowrap; }
-.comment { position: relative; padding-block: var(--spacing-2); }
+.actor { font-weight: 500; color: var(--color-text-primary); }.time { font-size: 0.75rem; color: var(--color-text-secondary); white-space: nowrap; }
 .card { border: 1px solid var(--color-border); border-radius: 10px; background: var(--color-background-surface); }
 .cardHead { display: flex; align-items: center; gap: var(--spacing-2); min-block-size: 2.5rem; padding: var(--spacing-1) var(--spacing-2) 0 var(--spacing-3); font-size: 0.8125rem; }
 .cardMenu { margin-inline-start: auto; }
@@ -24,13 +16,12 @@
  * The comment box (the design system's chat composer): its corners the comment cards' 10px rather than a chat's round
  * ones, and the editor's text a touch smaller, as a comment card's body.
  */
-.composer { --_chat-composer-radius: 10px; }
-.composer :global(.ProseMirror) { font-size: 0.875rem; }
+.composer { --_chat-composer-radius: 10px; }.composer :global(.ProseMirror) { font-size: 0.875rem; }
 .actions { display: flex; justify-content: flex-end; gap: var(--spacing-2); }
 
 .activity { padding-block-start: 20px; border-block-start: 1px solid var(--color-border-subtle); }
-.timeline::before { display: none; }
-.card { background: color-mix(in srgb, var(--color-background-muted) 45%, transparent); border-color: var(--color-border-subtle); border-radius: 8px; }
+/* Mixed into the ground rather than see-through, so the timeline's rule does not show through the card. */
+.card { background: color-mix(in srgb, var(--color-background-muted) 45%, var(--color-background-surface)); border-color: var(--color-border-subtle); border-radius: 8px; }
 .commentExtras { padding: 0 12px 8px; }
 .sendActions { display: inline-flex; align-items: center; gap: 6px; }
 .pendingFiles { list-style: none; margin: 4px 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }

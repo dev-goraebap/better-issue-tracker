@@ -5,4 +5,6 @@
 .room[data-placement="center"]::before, .room[data-placement="center"]::after { flex-grow: 1; }
 .room[data-compact] { min-block-size: 0; }
 .room[data-compact]::before, .room[data-compact]::after { display: none; }
+/* A page's message is placed by its height in the window (StateRegion), not by sharing the spare room. */
+.room[data-anchored]::before, .room[data-anchored]::after { display: none; }
 .content { display: flex; flex-direction: column; align-items: center; flex: 0 0 auto; inline-size: 100%; min-inline-size: 0; }

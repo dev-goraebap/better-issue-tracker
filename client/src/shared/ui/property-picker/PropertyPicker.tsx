@@ -2,6 +2,7 @@ import { BottomSheet, Popover } from '@astryxdesign/core';
 import { useMediaQuery } from '@astryxdesign/core/hooks';
 import { useId, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
 import { MOBILE_QUERY } from '@/shared/config';
+import { subject } from '@/shared/lib/korean-particle';
 import { FrameBody, FrameHead } from '../frame';
 import { NavIcon } from '../NavIcon';
 import styles from './property-picker.module.css';
@@ -75,7 +76,7 @@ export function PropertyPicker({ label, options, value, onChange, icon, isMultip
         {chosen.includes(option.value) && <span className={styles.tick}><NavIcon name="check" /></span>}
         {!isMobile && !query && index < 9 && <kbd className={styles.kbd}>{index + 1}</kbd>}
       </div>)}
-      {shown.length === 0 && <p className={styles.empty}>'{query}'에 맞는 {label}이 없습니다</p>}
+      {shown.length === 0 && <p className={styles.empty}>'{query}'에 맞는 {subject(label)} 없습니다</p>}
     </div>
   </div>;
   if (isMobile) return <>

@@ -1,4 +1,5 @@
 import { beforeText, dateText } from '@/shared/lib/date-text';
+import { object, toward } from '@/shared/lib/korean-particle';
 import type { TimelineEntry } from '../api/timeline';
 
 /** The names an activity's values are read with: people, the project's columns, the workspace's labels, the priorities. */
@@ -21,21 +22,42 @@ const timeText = (moment: string) => {
   return `${at.getMonth() + 1}월 ${at.getDate()}일 ${String(at.getHours()).padStart(2, '0')}:${String(at.getMinutes()).padStart(2, '0')}`;
 };
 const listOf = (values: string[]) => values.map(value => `'${value}'`).join(', ');
-/** The last syllable's final consonant (0 for none), or null when the word does not end in Hangul. */
-const final = (word: string) => {
-  const code = word.charCodeAt(word.length - 1) - 0xac00;
-  return code >= 0 && code <= 11171 ? code % 28 : null;
-};
-/** The word with 으로 or 로 as its last syllable asks (로 after a vowel or ㄹ), or (으)로 when that cannot be told. */
-const toward = (word: string, shown = word) => {
-  const end = final(word);
-  return end === null ? `${shown}(으)로` : end === 0 || end === 8 ? `${shown}로` : `${shown}으로`;
-};
-/** The word with 을/를, or 을(를) when that cannot be told. */
-const object = (word: string, shown = word) => {
-  const end = final(word);
-  return end === null ? `${shown}을(를)` : end === 0 ? `${shown}를` : `${shown}을`;
-};
+
+/**
+ * Whom a line of activity is about, when it is about a person: the one it was put on (담당자, 참석자), or the one taken
+ * off when nobody was put on. The timeline shows their picture in place of an icon (BIT-84).
+ */
+export function activityPerson({ field, before, after }: TimelineEntry): string | null {
+  if (field === 'assignee') return after ?? before ?? null;
+  if (field !== 'people') return null;
+  const was = ids(before);
+  const now = ids(after);
+  return now.find(id => !was.includes(id)) ?? was.find(id => !now.includes(id)) ?? null;
+}
+
+/** The icon a line of activity shows on the timeline's rule, by what happened, as GitHub marks an issue's events (BIT-84). */
+export function activityIcon({ action, field }: TimelineEntry): string {
+  if (action === 'created') return 'plus';
+  if (action === 'deleted') return 'delete';
+  if (action === 'restored') return 'retry';
+  switch (field) {
+    case 'title': return 'type';
+    case 'description': case 'body': return 'edit';
+    case 'place': return 'documents';
+    case 'priority': return 'priority';
+    case 'assignee': case 'people': return 'person';
+    case 'kind': case 'allDay': case 'startDate': case 'dueDate': return 'calendar';
+    case 'startsAt': case 'endsAt': return 'clock';
+    case 'reminder': return 'bell';
+    case 'column': return 'status';
+    case 'labels': return 'label';
+    case 'project': return 'board';
+    case 'attachments': return 'attach';
+    case 'relations': return 'link';
+    case 'archived': return 'lock';
+    default: return 'status';
+  }
+}
 
 /**
  * What a work item's activity says, after the person's name (D-078), as Linear words it: 업무를 만들었습니다, 상태를 할 일에서
@@ -62,8 +84,9 @@ export function activityText(entry: TimelineEntry, names: ActivityNames): string
       const person = (id: string) => names.people.get(id) ?? '지워진 구성원';
       const added = now.filter(id => !was.includes(id)).map(person);
       const removed = was.filter(id => !now.includes(id)).map(person);
-      if (added.length && removed.length) return `${listOf(added)}을(를) 넣고 ${listOf(removed)}을(를) 뺐습니다`;
-      return added.length ? `${listOf(added)}을(를) 넣었습니다` : `${listOf(removed)}을(를) 뺐습니다`;
+      const named = (people: string[]) => object(people.at(-1) ?? '', listOf(people));
+      if (added.length && removed.length) return `${named(added)} 넣고 ${named(removed)} 뺐습니다`;
+      return added.length ? `${named(added)} 넣었습니다` : `${named(removed)} 뺐습니다`;
     }
     case 'kind': return after === 'event' ? '일정으로 바꿨습니다' : '작업으로 바꿨습니다';
     case 'startsAt': return after ? `시작 시각을 ${toward(timeText(after))} 정했습니다` : '시작 시각을 지웠습니다';

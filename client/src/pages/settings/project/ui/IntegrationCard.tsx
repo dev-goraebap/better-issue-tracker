@@ -3,6 +3,7 @@ import { Button, Switch, useToast } from '@astryxdesign/core';
 import { useQueryClient } from '@tanstack/react-query';
 import { authError } from '@/shared/api';
 import { agoText } from '@/shared/lib/date-text';
+import { object } from '@/shared/lib/korean-particle';
 import { ConfirmDialog, SettingsAction, SettingsCard, SettingsRow } from '@/shared/ui';
 import type { Project } from '@/entities/project';
 import { disconnectRepository, importOpenIssues, providerName, ProviderMark, refreshIntegrations, reviseIntegration, type Integration } from '@/entities/repository';
@@ -35,7 +36,7 @@ export function IntegrationCard({ project, integration, canManage }: { project: 
   const configure = (patch: { syncsIssues?: boolean; commentsLink?: boolean }) =>
     run('configure', () => reviseIntegration(project.workspaceId, project.id, integration.id, { expectedVersion: integration.version, ...patch }));
   const copy = (value: string, what: string) => {
-    void navigator.clipboard?.writeText(value).then(() => toast({ body: `${what}을 복사했습니다` }), () => toast({ body: '복사하지 못했습니다' }));
+    void navigator.clipboard?.writeText(value).then(() => toast({ body: `${object(what)} 복사했습니다` }), () => toast({ body: '복사하지 못했습니다' }));
   };
   const heard = integration.lastEventAt ? `마지막으로 받은 웹훅 ${agoText(integration.lastEventAt)}` : '아직 받은 웹훅이 없습니다';
   return <SettingsCard title={`${name} · ${integration.repository}`} id={`integration-${integration.provider}`}>

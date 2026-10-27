@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { useToast } from '@astryxdesign/core';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { authError, sessionQueryOptions } from '@/shared/api';
-import { ConfirmDialog, QueryMessage, SectionHeader } from '@/shared/ui';
+import { ConfirmDialog, QueryMessage, SectionHeader, Timeline } from '@/shared/ui';
 import { labelsQuery } from '@/entities/label';
 import { columnsQuery } from '@/entities/project';
 import { PRIORITIES } from '@/entities/work-item';
@@ -15,8 +15,8 @@ import { CommentComposer } from './CommentComposer';
 import styles from './activity.module.css';
 
 /**
- * A work item's 활동 (D-078), as Linear's: what happened to it and what was said about it on one rule, oldest first, the
- * comments as cards between the lines of activity (a person's description edits in a row read as one), and the box to
+ * A work item's 활동 (D-078): what happened to it and what was said about it on one rule as GitHub draws an issue's
+ * (BIT-84), oldest first, the comments as cards between the lines of activity (a person's description edits in a row read as one), and the box to
  * comment at the foot. Someone who may write comments; their own they may 수정 and delete, and someone who manages the
  * workspace may delete anyone's. A viewer reads.
  */
@@ -52,10 +52,10 @@ export function WorkItemActivity({ workspaceId, projectId, workItemId, canWrite,
     <SectionHeader id="detail-activity" title="활동" />
     {timeline.isPending || timeline.error
       ? <QueryMessage pending={timeline.isPending} error={timeline.error} retry={() => { void timeline.refetch(); }} />
-      : <ol className={styles.timeline}>{lines.map(entry => entry.kind === 'comment'
+      : <Timeline label="활동 기록">{lines.map(entry => entry.kind === 'comment'
         ? <CommentCard key={entry.id} workspaceId={workspaceId} canReact={canWrite} entry={entry} canEdit={canWrite && entry.actorId === me} canDelete={canWrite && (entry.actorId === me || canModerate)}
           onSave={body => run(() => updateComment(workspaceId, entry.id, { body, expectedVersion: entry.version }))} onDelete={() => setDeleting(entry)} />
-        : <ActivityLine key={entry.id} entry={entry} names={names} />)}</ol>}
+        : <ActivityLine key={entry.id} entry={entry} names={names} />)}</Timeline>}
     {canWrite && <CommentComposer onSend={(body, uploadIds) => run(() => createComment(workspaceId, { targetType, targetId: workItemId, body, uploadIds }))} />}
     {deleting && <ConfirmDialog title="댓글을 삭제할까요?" description="삭제한 댓글은 활동에서 사라집니다." confirmLabel="삭제" variant="destructive"
       onClose={() => setDeleting(null)}

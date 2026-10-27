@@ -90,7 +90,8 @@ export function StateLandscape({ kind, variant, hasAccent = true }: {
   const layer = (part: 'ink' | 'accent') => <mask id={`${id}-${part}`} maskUnits="userSpaceOnUse" x="0" y="0" {...SIZE} style={{ maskType: 'alpha' }}>
     <use href={`#${id}-image`} filter={`url(#${id}-${part}-filter)`} />
   </mask>;
-  return <svg viewBox={`0 ${TOP} ${SIZE.width} ${end + MARGIN - TOP}`} aria-hidden="true" focusable="false" data-state-art={name}
+  // Set on the frame's floor, so the title sits as close under every drawing whatever its height.
+  return <svg viewBox={`0 ${TOP} ${SIZE.width} ${end + MARGIN - TOP}`} preserveAspectRatio="xMidYMax meet" aria-hidden="true" focusable="false" data-state-art={name}
     className={styles.drawing} data-arrived={arrived === name || undefined}>
     <defs>
       <image id={`${id}-image`} href={fileOf(name)} {...SIZE}
