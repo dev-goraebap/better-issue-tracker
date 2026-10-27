@@ -7,7 +7,7 @@ import { createContext, useContext } from 'react';
  * actions there (its create action floats as the +). Without them (a page outside the shell) a page keeps its chrome
  * inside its own content.
  */
-export type PageChromeTargets = { tools: HTMLElement | null; actions: HTMLElement | null; rows: HTMLElement | null; foot?: HTMLElement | null };
+export type PageChromeTargets = { tools: HTMLElement | null; actions: HTMLElement | null; rows: HTMLElement | null; foot?: HTMLElement | null; back?: HTMLElement | null; title?: HTMLElement | null; mobileActions?: HTMLElement | null };
 export const PageChromeContext = createContext<PageChromeTargets>({ tools: null, actions: null, rows: null, foot: null });
 
 /**
@@ -21,7 +21,7 @@ export const PageToolsContext = createContext<PageTools | null>(null);
 
 /**
  * Tells the shell the page in view has a way back of its own (PageFrame back: a detail, a form), so a phone gives it the
- * whole screen, no bars above or below. Set while the page is mounted, before it paints.
+ * whole screen with a compact header and no bottom navigation. Set while the page is mounted, before it paints.
  */
 export const PageBackShownContext = createContext<(hasBack: boolean) => void>(() => undefined);
 export const usePageTools = () => useContext(PageToolsContext);

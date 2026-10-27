@@ -8,6 +8,10 @@ import org.springframework.http.HttpStatus;
 @Getter
 @RequiredArgsConstructor
 public enum WorkspaceErrorCode implements ErrorCode {
+    WORKSPACE_ROLE_CONFLICT(HttpStatus.CONFLICT, "역할이 바뀌었습니다. 최신 내용을 확인해 주세요"),
+    WORKSPACE_ROLE_IN_USE(HttpStatus.CONFLICT, "사용 중인 역할입니다. 구성원의 역할을 먼저 변경해 주세요"),
+    WORKSPACE_ROLE_NAME_CONFLICT(HttpStatus.CONFLICT, "이미 있는 역할 이름입니다"),
+    WORKSPACE_ROLE_NOT_FOUND(HttpStatus.NOT_FOUND, "역할을 찾을 수 없습니다"),
     WORKSPACE_NOT_FOUND(HttpStatus.NOT_FOUND, "워크스페이스를 찾을 수 없습니다"),
     WORKSPACE_SLUG_CONFLICT(HttpStatus.CONFLICT, "이미 사용된 식별자입니다"),
     WORKSPACE_MEMBER_EXISTS(HttpStatus.CONFLICT, "이미 참여 중인 멤버입니다"),

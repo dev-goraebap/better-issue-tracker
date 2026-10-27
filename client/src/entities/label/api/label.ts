@@ -10,3 +10,5 @@ export const updateLabel = (w: string, id: string, body: components['schemas']['
 export const deleteLabel = (w: string, id: string, expectedVersion: number) => command('DELETE', `${labelBase(w)}/${encodeURIComponent(id)}?expectedVersion=${expectedVersion}`);
 /** After a label changes: the list, and the work items that show it. */
 export const refreshLabels = (client: QueryClient, w: string) => Promise.allSettled([client.invalidateQueries({ queryKey: ['workspace', w, 'labels'] }), client.invalidateQueries({ queryKey: ['workspace', w] })]);
+
+export const reorderLabels = (workspace: string, labels: readonly Label[]) => command('PUT', `${labelBase(workspace)}/order`, { labels: labels.map(label => ({ id: label.id, expectedVersion: label.version })) });

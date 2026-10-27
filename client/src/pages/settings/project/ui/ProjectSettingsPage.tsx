@@ -16,7 +16,7 @@ import { ProjectGeneralSettings } from './ProjectGeneralSettings';
 export function ProjectSettingsPage() {
   const { workspaceId, projectId, section } = useParams({ strict: false }) as { workspaceId: string; projectId: string; section: string };
   const project = useQuery(projectQuery(workspaceId, projectId));
-  const role = useQuery(workspaceQuery(workspaceId)).data?.myRole;
+  const role = useQuery(workspaceQuery(workspaceId)).data;
   const entry = PROJECT_SETTINGS_MENU.find(each => each.path === `/${section}`);
   if (!entry) return <PageFrame title="설정" icon="settings"><PageState kind="not-found" title="설정을 찾을 수 없습니다" /></PageFrame>;
   const canManage = canManageIn(role);

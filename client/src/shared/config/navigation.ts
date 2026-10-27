@@ -24,7 +24,7 @@ export const WORKSPACE_SETTINGS_MENU: readonly MenuEntry[] = [
 ];
 export const PROJECT_SETTINGS_MENU: readonly MenuEntry[] = [
   { path: '/general', label: '일반', icon: 'settings' },
-  { path: '/board', label: '보드 칸', icon: 'board' },
+  { path: '/board', label: '워크플로', icon: 'board' },
   { path: '/integrations', label: '저장소 연동', icon: 'branch' },
 ];
 
@@ -50,6 +50,7 @@ export type AppPlace = {
   projectSection?: 'documents';
   /** A work item's page, or 'new' for 새 업무. */
   itemId?: string;
+  documentRef?: string;
   /** The item's page is its 편집 form. */
   isEditing?: boolean;
   isWorkspaces?: boolean;
@@ -72,7 +73,11 @@ export function appPlace(pathname: string): AppPlace {
   if (settings) return { workspaceId, settingsProjectId: settings[1], settings: settings[2] };
   const project = /^\/projects\/([^/]+)(\/.*)?$/.exec(rest);
   // 문서함's documents and their forms (/documents/…) belong to its menu entry.
-  if (!project) return { workspaceId, workspaceSection: rest.startsWith('/inbox') ? '/inbox' : rest.startsWith('/documents') ? '/documents' : rest };
+  if (!project) {
+    const document = /^\/documents\/([^/]+)(\/edit)?$/.exec(rest);
+    if (document) return { workspaceId, workspaceSection: '/documents', documentRef: document[1], isEditing: !!document[2] };
+    return { workspaceId, workspaceSection: rest.startsWith('/inbox') ? '/inbox' : rest.startsWith('/documents') ? '/documents' : rest };
+  }
   const [, projectId, inner = ''] = project;
   if (inner.startsWith('/documents')) return { workspaceId, projectId, projectSection: 'documents' };
   const item = /^\/work-items\/([^/]+)(\/edit)?$/.exec(inner);

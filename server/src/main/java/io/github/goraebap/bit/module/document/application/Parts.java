@@ -26,10 +26,9 @@ class Parts {
     private final FolderRepository folderRepository;
 
     void require(CurrentUser actor, String workspaceId, String projectId, boolean writing) {
-        if (projectId != null) projectFacade.requireAccess(actor, workspaceId, projectId, writing);
-        else
-            workspaceFacade.requireAccess(
-                    actor, workspaceId, writing ? WorkspaceFacade.Action.WRITE_WORK : WorkspaceFacade.Action.READ);
+        if (projectId != null) projectFacade.requireAccess(actor, workspaceId, projectId, false);
+        workspaceFacade.requireAccess(
+                actor, workspaceId, writing ? WorkspaceFacade.Action.WRITE_DOCUMENTS : WorkspaceFacade.Action.READ);
     }
 
     /** The live folder of that part; a folder of another part, or none, is FOLDER_NOT_FOUND. */

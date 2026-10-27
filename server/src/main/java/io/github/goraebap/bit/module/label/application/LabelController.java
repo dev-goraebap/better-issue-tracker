@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -39,6 +40,15 @@ class LabelController {
         String id = labelService.create(actor, workspaceId, request.name(), request.color());
         return ResponseEntity.created(URI.create("/api/v1/workspaces/" + workspaceId + "/labels/" + id))
                 .build();
+    }
+
+    @PutMapping("/order")
+    ResponseEntity<Void> order(
+            @AuthenticationPrincipal CurrentUser actor,
+            @PathVariable String workspaceId,
+            @Valid @RequestBody LabelRequests.Order request) {
+        labelService.reorder(actor, workspaceId, request);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/{labelId}")

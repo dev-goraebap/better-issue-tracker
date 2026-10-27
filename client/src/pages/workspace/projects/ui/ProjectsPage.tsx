@@ -31,9 +31,9 @@ export function ProjectsPage() {
   const navigate = useNavigate();
   const client = useQueryClient();
   const panelId = useId();
-  const role = useQuery(workspaceQuery(workspaceId)).data?.myRole;
+  const role = useQuery(workspaceQuery(workspaceId)).data;
   const canManage = canManageIn(role);
-  const canWrite = canWriteIn(role);
+  const canWrite = canWriteIn(role, 'EDIT_SETTINGS');
   const tab: ProjectStatus = search.status ?? 'active';
   const result = useInfiniteQuery(projectsQuery(workspaceId, tab, search.q ?? ''));
   const rows = useMemo(() => result.data?.pages.flatMap(page => page.items) ?? [], [result.data]);

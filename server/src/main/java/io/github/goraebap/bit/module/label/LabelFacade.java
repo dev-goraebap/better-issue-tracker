@@ -18,9 +18,9 @@ public interface LabelFacade {
     /** Workspace access for label requests; a non-null id must also name a live label of the workspace. */
     void requireAccess(CurrentUser actor, String workspaceId, String labelId, boolean writing);
 
-    record LabelRef(String id, String name, String color, boolean system) {
+    record LabelRef(String id, String name, String color, boolean system, int position) {
         /** Display order everywhere labels are listed: system labels first, then by name. */
-        public static final Comparator<LabelRef> ORDER = Comparator.comparing((LabelRef label) -> !label.system())
+        public static final Comparator<LabelRef> ORDER = Comparator.comparingInt(LabelRef::position)
                 .thenComparing(LabelRef::name, String.CASE_INSENSITIVE_ORDER)
                 .thenComparing(LabelRef::id);
     }

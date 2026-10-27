@@ -7,7 +7,7 @@ import { CompactDialog, ConfirmDialog, FormMessage, Select, SettingsCard, Settin
 import {
   canManage, changeLogo, deleteWorkspace, forgetWorkspace, leaveWorkspace, refreshWorkspace, removeLogo, renameWorkspace, transferOwner, useMembers, WorkspaceMark, type Space,
 } from '@/entities/workspace';
-import { PictureDialog } from '@/features/picture-change';
+import { PictureButton, PictureDialog } from '@/features/picture-change';
 import styles from './workspace-settings.module.css';
 
 /**
@@ -22,7 +22,7 @@ export function GeneralSettings({ workspace }: { workspace: Space }) {
   const me = useQuery(sessionQueryOptions).data?.user.id;
   const members = useMembers(workspace.id).items;
   const isOwner = workspace.myRole === 'owner';
-  const canEdit = canManage(workspace.myRole);
+  const canEdit = canManage(workspace);
   const [name, setName] = useState(workspace.name);
   const [isBusy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -71,7 +71,7 @@ export function GeneralSettings({ workspace }: { workspace: Space }) {
   return <VStack gap={8}>
     <SettingsHead title="일반" description="워크스페이스의 이름과 소유자를 정합니다." />
     <SettingsCard title="세부 정보" id="workspace-details">
-      <SettingsRow lead={<WorkspaceMark workspace={{ id: workspace.id, name: name || workspace.name, logo: workspace.logo }} size="lg" />} label="이름"
+      <SettingsRow lead={<PictureButton label="워크스페이스 이미지 바꾸기" isDisabled={!canPicture} onClick={() => setPicturing(true)}><WorkspaceMark workspace={{ id: workspace.id, name: name || workspace.name, logo: workspace.logo }} size="lg" /></PictureButton>} label="이름"
         description={canEdit ? '바꾸면 구성원 모두에게 바로 보입니다.' : undefined}>
         {canEdit ? <form onSubmit={event => { event.preventDefault(); void rename(); }} className={styles.nameForm}>
           <TextInput label="이름" isLabelHidden size="sm" value={name} onChange={setName} isRequired isDisabled={isBusy}
@@ -79,9 +79,6 @@ export function GeneralSettings({ workspace }: { workspace: Space }) {
           <Button type="submit" label="저장" variant="secondary" size="sm" isDisabled={!name.trim() || name.trim() === workspace.name} isLoading={isBusy} />
         </form> : workspace.name}
       </SettingsRow>
-      {canPicture && <SettingsRow label="로고" description="메뉴 머리와 워크스페이스 목록에 보입니다. 없으면 이름 첫 글자로 보입니다.">
-        <Button label={workspace.logo ? '로고 바꾸기' : '로고 올리기'} variant="secondary" size="sm" onClick={() => setPicturing(true)} />
-      </SettingsRow>}
       <SettingsRow label="고정 주소" description="워크스페이스를 만들 때 정해지고 바뀌지 않습니다.">{workspace.slug}</SettingsRow>
     </SettingsCard>
     <FormMessage message={error} /><FormMessage message={notice} isError={false} />

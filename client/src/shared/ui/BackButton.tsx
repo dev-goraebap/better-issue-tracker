@@ -1,8 +1,9 @@
-import { Button } from '@astryxdesign/core';
+import { Button, Tooltip } from '@astryxdesign/core';
 import { useRouter, type LinkProps } from '@tanstack/react-router';
 import type { MouseEvent } from 'react';
 import { hasPrevious, isPlainClick } from '@/shared/lib/history-trail';
 import { NavIcon } from './NavIcon';
+import styles from './page.module.css';
 
 /**
  * Where a page's way back goes: to the screen before, through history, wherever the member came from (a list keeps
@@ -25,8 +26,9 @@ function useWayBack(link: LinkProps) {
  * A page's way back as a button, going back through history (useWayBack): '이전으로 돌아가기' as a state's main action, or
  * a quieter one (label, variant) at the start of a phone's foot row.
  */
-export function BackButton({ link, label = '이전으로 돌아가기', variant = 'primary' }: { link: LinkProps; label?: string; variant?: 'primary' | 'secondary' }) {
+export function BackButton({ link, label = '이전으로 돌아가기', variant = 'primary', isIconOnly = false }: { link: LinkProps; label?: string; variant?: 'primary' | 'secondary'; isIconOnly?: boolean }) {
   const { href, goBack } = useWayBack(link);
+  if (isIconOnly) return <Tooltip content={label}><a className={styles.backIcon} href={href} onClick={goBack} aria-label={label}><NavIcon name="back" /></a></Tooltip>;
   return <Button label={label} variant={variant} icon={variant === 'secondary' ? <NavIcon name="back" /> : undefined} href={href} onClick={goBack} />;
 }
 

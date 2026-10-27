@@ -36,7 +36,7 @@ export function DocumentFolder({ workspaceId, projectId, folderId, title, rootLa
   const [isDeleting, setDeletingBusy] = useState(false);
   const contents = useQuery(contentsQuery(workspaceId, projectId ?? undefined, folderId));
   const labels = useQuery(labelsQuery(workspaceId)).data ?? [];
-  const canWrite = canWriteIn(useQuery(workspaceQuery(workspaceId)).data?.myRole);
+  const canWrite = canWriteIn(useQuery(workspaceQuery(workspaceId)).data, 'WRITE_DOCUMENTS');
   const data = contents.data;
   const name = async (draft: FolderDraft) => {
     try {

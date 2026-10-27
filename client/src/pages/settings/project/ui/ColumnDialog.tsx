@@ -21,7 +21,7 @@ export function ColumnDialog({ project, column, onClose }: { project: Project; c
   const [isChecked, setChecked] = useState(false);
   const [isBusy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const nameError = isChecked && !name.trim() ? '칸 이름을 입력해 주세요.' : undefined;
+  const nameError = isChecked && !name.trim() ? '상태 이름을 입력해 주세요.' : undefined;
   const save = async () => {
     setChecked(true);
     if (!name.trim() || isBusy) return;
@@ -35,12 +35,12 @@ export function ColumnDialog({ project, column, onClose }: { project: Project; c
     } catch (failure) { setError(authError(failure)); }
     finally { setBusy(false); }
   };
-  return <CompactDialog isOpen title={column ? '칸 고치기' : '새 칸'} width={520} isBusy={isBusy} onClose={() => { if (!isBusy) onClose(); }} onSubmit={() => { void save(); }}
-    footer={<><Button label="취소" variant="ghost" onClick={onClose} isDisabled={isBusy} /><Button className={column ? undefined : "bit-create-action"} type="submit" label={column ? '저장' : '칸 만들기'} variant="primary" isLoading={isBusy} /></>}>
+  return <CompactDialog isOpen title={column ? '상태 고치기' : '상태 추가'} width={520} isBusy={isBusy} onClose={() => { if (!isBusy) onClose(); }} onSubmit={() => { void save(); }}
+    footer={<><Button label="취소" variant="ghost" onClick={onClose} isDisabled={isBusy} /><Button className={column ? undefined : "bit-create-action"} type="submit" label={column ? '저장' : '상태 추가'} variant="primary" isLoading={isBusy} /></>}>
     <TextInput label="이름" value={name} onChange={setName} isRequired hasAutoFocus isDisabled={isBusy} placeholder="예: 검토 중" status={nameError ? { type: 'error', message: nameError } : undefined} />
     <Select label="분류" options={[...CATEGORIES]} value={isFinal ? 'done' : category} onChange={value => setCategory((value ?? 'doing') as Category)} isDisabled={isBusy || isFinal}
-      description="전체 보드에서 이 칸의 업무가 놓일 곳입니다." />
-    <Switch label="완료 칸" value={isFinal} onChange={setFinal} isDisabled={isBusy} />
+      description="전체 보드에서 이 상태의 업무가 놓일 곳입니다." />
+    <Switch label="완료 상태" value={isFinal} onChange={setFinal} isDisabled={isBusy} />
     <FormMessage message={error} />
   </CompactDialog>;
 }

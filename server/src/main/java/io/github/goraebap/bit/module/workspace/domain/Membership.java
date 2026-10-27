@@ -33,6 +33,12 @@ public final class Membership {
         role = next;
     }
 
+    public void assignNonOwnerRole(WorkspaceRole next) {
+        if (role == WorkspaceRole.owner || next == WorkspaceRole.owner)
+            throw new IllegalArgumentException("Ownership requires transfer");
+        role = next;
+    }
+
     public void transferTo(Membership next) {
         if (role != WorkspaceRole.owner
                 || next.role == WorkspaceRole.owner

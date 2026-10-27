@@ -255,8 +255,8 @@ class WorkItemMigrationIntegrationTest {
                     .isEqualTo(2);
             assertThat(jdbc.queryForObject("SELECT target_type FROM comment", String.class))
                     .isEqualTo("work_item");
-            assertThat(jdbc.queryForObject("SELECT target_type FROM activity", String.class))
-                    .isEqualTo("work_item");
+            assertThat(jdbc.queryForList("SELECT target_type FROM activity", String.class))
+                    .containsOnly("work_item");
             assertThat(jdbc.queryForObject("SELECT owner_type FROM attachment", String.class))
                     .isEqualTo("work_item");
             assertThat(jdbc.queryForMap("SELECT work_item_id,kind FROM code_link"))

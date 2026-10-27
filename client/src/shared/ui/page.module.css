@@ -10,7 +10,7 @@
 @media (width < 64rem) { .page { padding: var(--spacing-5); } }
 @media (prefers-reduced-motion: reduce) { .reveal { animation: none; } }
 /* A list page's header: the title gives way to the action, then tabs sit on the rule that ends the header. */
-.titleRow { min-block-size: 2.5rem; }
+.titleRow { position: relative; min-block-size: 2.5rem; }
 .title { flex: 1; min-width: 0; }
 .titleIcon { display: grid; place-items: center; flex-shrink: 0; inline-size: 2rem; block-size: 2rem; border-radius: var(--radius-element);
   color: var(--color-icon-accent); background: var(--color-accent-muted); }
@@ -41,3 +41,11 @@
 /* Legacy conditions row (PageFrame conditions) under the header row, until the old pages move to ListToolbar. */
 .conditions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--spacing-3); padding: var(--spacing-2) var(--spacing-6); border-block-end: 1px solid var(--color-border); }
 @media (width < 64rem) { .conditions { padding-inline: var(--spacing-5); } }
+
+.backIcon { display: inline-grid; place-items: center; position: relative; flex: 0 0 auto; inline-size: 1.75rem; block-size: 1.75rem; border: 1px solid transparent; border-radius: 50%; color: var(--color-text-secondary); text-decoration: none; }
+.backIcon :global(.bit-nav-icon) { inline-size: 0.875rem; block-size: 0.875rem; }
+.backIcon:hover { border-color: var(--color-border-subtle); color: var(--color-text-primary); background: var(--color-overlay-hover); }
+.backIcon:focus-visible { outline: var(--focus-outline-width) var(--focus-outline-style) var(--focus-outline-color); outline-offset: 2px; }
+@media (width < 64rem) { .backIcon { inline-size: 2.75rem; block-size: 2.75rem; } }
+
+.headerTitle { margin: 0; min-inline-size: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.875rem; line-height: 1.5; font-weight: 600; color: var(--color-text-primary); }

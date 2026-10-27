@@ -64,14 +64,14 @@ public class WorkspaceService implements WorkspaceFacade {
     @Override
     @Transactional(readOnly = true)
     public boolean allows(CurrentUser actor, String workspaceId, Action action) {
-        return permits(access(actor, workspaceId, Action.READ).role(), action);
+        return permits(access(actor, workspaceId, Action.READ), action);
     }
 
     @Override
     @Transactional(readOnly = true)
     public void requireMemberManagement(CurrentUser actor, String workspaceId, String memberId) {
         var own = access(actor, workspaceId, Action.MANAGE_MEMBERS);
-        if (!own.role().manages(target(workspaceId, memberId).role())) throw CommonErrorCode.AUTH_FORBIDDEN.raise();
+        if (!manages(own, target(workspaceId, memberId))) throw CommonErrorCode.AUTH_FORBIDDEN.raise();
     }
 
     @Override
@@ -86,14 +86,118 @@ public class WorkspaceService implements WorkspaceFacade {
         Membership own = workspaceRepository
                 .findMember(id, actor.userId())
                 .orElseThrow(WorkspaceErrorCode.WORKSPACE_NOT_FOUND::raise);
-        if (!permits(own.role(), action)) throw CommonErrorCode.AUTH_FORBIDDEN.raise();
+        if (!permits(own, action)) throw CommonErrorCode.AUTH_FORBIDDEN.raise();
         return own;
     }
 
-    private static boolean permits(WorkspaceRole role, Action action) {
-        return !(action == Action.WRITE_WORK && role == WorkspaceRole.viewer
+    private boolean permits(Membership member, Action action) {
+        if (member.role() == WorkspaceRole.owner) return true;
+        var custom = workspaceRepository.memberCustomRole(member.id());
+        return custom.isPresent()
+                ? action != Action.OWNER && custom.get().permissions().contains(action.name())
+                : builtin(member.role(), action);
+    }
+
+    private Set<String> permissions(Membership member) {
+        return java.util.Arrays.stream(Action.values())
+                .filter(a -> permits(member, a))
+                .map(Enum::name)
+                .collect(Collectors.toSet());
+    }
+
+    private String customId(Membership m) {
+        return workspaceRepository
+                .memberCustomRole(m.id())
+                .map(WorkspaceRepository.CustomRole::id)
+                .orElse(null);
+    }
+
+    private String customName(Membership m) {
+        return workspaceRepository
+                .memberCustomRole(m.id())
+                .map(WorkspaceRepository.CustomRole::name)
+                .orElse(null);
+    }
+
+    private boolean manages(Membership own, Membership other) {
+        if (own.userId().equals(other.userId()) || other.role() == WorkspaceRole.owner) return false;
+        return own.role() == WorkspaceRole.owner
+                || other.role() != WorkspaceRole.admin
+                        && permits(own, Action.MANAGE_MEMBERS)
+                        && permissions(own).containsAll(permissions(other));
+    }
+
+    private boolean grants(Membership own, WorkspaceRole role) {
+        return role != WorkspaceRole.owner
+                && (role != WorkspaceRole.admin || own.role() == WorkspaceRole.owner)
+                && java.util.Arrays.stream(Action.values())
+                        .filter(a -> builtin(role, a))
+                        .allMatch(a -> permits(own, a));
+    }
+
+    private static boolean builtin(WorkspaceRole role, Action action) {
+        return !((action == Action.WRITE_WORK || action == Action.WRITE_DOCUMENTS || action == Action.MANAGE_LABELS)
+                        && role == WorkspaceRole.viewer
                 || action == Action.OWNER && role != WorkspaceRole.owner
                 || (action == Action.EDIT_SETTINGS || action == Action.MANAGE_MEMBERS) && !role.editsSettings());
+    }
+
+    @Transactional(readOnly = true)
+    public List<WorkspaceViews.CustomRole> customRoles(CurrentUser actor, String id) {
+        access(actor, id, Action.READ);
+        return workspaceRepository.customRoles(id).stream()
+                .map(this::customRoleView)
+                .toList();
+    }
+
+    private WorkspaceViews.CustomRole customRoleView(WorkspaceRepository.CustomRole r) {
+        return new WorkspaceViews.CustomRole(
+                r.id(), r.name(), r.permissions(), r.version(), workspaceRepository.customRoleHolders(r.id()));
+    }
+
+    @Transactional
+    public WorkspaceViews.CustomRole saveCustomRole(
+            CurrentUser actor, String id, String roleId, WorkspaceRequests.CustomRole request) {
+        var own = access(actor, id, Action.MANAGE_MEMBERS);
+        if (!permits(own, Action.EDIT_SETTINGS)) throw CommonErrorCode.AUTH_FORBIDDEN.raise();
+        var wanted =
+                request.permissions().stream().map(Enum::name).collect(Collectors.toCollection(java.util.HashSet::new));
+        wanted.add(Action.READ.name());
+        if (wanted.contains(Action.OWNER.name()) || !permissions(own).containsAll(wanted))
+            throw CommonErrorCode.AUTH_FORBIDDEN.raise();
+        String name = request.name().strip();
+        if (Set.of("owner", "admin", "member", "viewer", "소유자", "관리자", "멤버", "보기 전용")
+                        .contains(name.toLowerCase(Locale.ROOT))
+                || workspaceRepository.customRoles(id).stream()
+                        .anyMatch(r -> !r.id().equals(roleId) && r.name().equalsIgnoreCase(name)))
+            throw WorkspaceErrorCode.WORKSPACE_ROLE_NAME_CONFLICT.raise();
+        long version = 0;
+        if (roleId != null) {
+            var old = workspaceRepository
+                    .customRole(id, roleId)
+                    .orElseThrow(WorkspaceErrorCode.WORKSPACE_ROLE_NOT_FOUND::raise);
+            if (!permissions(own).containsAll(old.permissions())) throw CommonErrorCode.AUTH_FORBIDDEN.raise();
+            if (request.expectedVersion() == null || request.expectedVersion() != old.version())
+                throw WorkspaceErrorCode.WORKSPACE_ROLE_CONFLICT.raise();
+            version = old.version() + 1;
+        }
+        var role = new WorkspaceRepository.CustomRole(
+                roleId == null ? io.github.goraebap.bit.shared.domain.Ids.newId() : roleId, id, name, wanted, version);
+        workspaceRepository.saveCustomRole(role);
+        return customRoleView(role);
+    }
+
+    @Transactional
+    public void deleteCustomRole(CurrentUser actor, String id, String roleId, long version) {
+        var own = access(actor, id, Action.MANAGE_MEMBERS);
+        if (!permits(own, Action.EDIT_SETTINGS)) throw CommonErrorCode.AUTH_FORBIDDEN.raise();
+        var role = workspaceRepository
+                .customRole(id, roleId)
+                .orElseThrow(WorkspaceErrorCode.WORKSPACE_ROLE_NOT_FOUND::raise);
+        if (!permissions(own).containsAll(role.permissions())) throw CommonErrorCode.AUTH_FORBIDDEN.raise();
+        if (role.version() != version) throw WorkspaceErrorCode.WORKSPACE_ROLE_CONFLICT.raise();
+        if (workspaceRepository.customRoleHolders(roleId) > 0) throw WorkspaceErrorCode.WORKSPACE_ROLE_IN_USE.raise();
+        workspaceRepository.deleteCustomRole(roleId);
     }
 
     private Workspace space(String id) {
@@ -180,7 +284,21 @@ public class WorkspaceService implements WorkspaceFacade {
         return new WorkspaceViews.Spaces(
                 page.stream()
                         .map(w -> new WorkspaceViews.Space(
-                                w.id(), w.name(), w.slug(), w.myRole(), w.createdAt(), logos.get(w.id())))
+                                w.id(),
+                                w.name(),
+                                w.slug(),
+                                w.myRole(),
+                                w.createdAt(),
+                                logos.get(w.id()),
+                                permissions(workspaceRepository
+                                        .findMember(w.id(), actor.userId())
+                                        .orElseThrow()),
+                                customId(workspaceRepository
+                                        .findMember(w.id(), actor.userId())
+                                        .orElseThrow()),
+                                customName(workspaceRepository
+                                        .findMember(w.id(), actor.userId())
+                                        .orElseThrow())))
                         .toList(),
                 next);
     }
@@ -195,7 +313,10 @@ public class WorkspaceService implements WorkspaceFacade {
                 w.slug(),
                 own.role(),
                 w.createdAt(),
-                pictures(FileOwner.WORKSPACE, List.of(w.id())).get(w.id()));
+                pictures(FileOwner.WORKSPACE, List.of(w.id())).get(w.id()),
+                permissions(own),
+                customId(own),
+                customName(own));
     }
 
     /** Makes an uploaded square JPEG the workspace's logo; the one before goes (BIT-30). Its admins change it. */
@@ -283,7 +404,9 @@ public class WorkspaceService implements WorkspaceFacade {
                                     u.email(),
                                     m.role(),
                                     m.joinedAt(),
-                                    avatars.get(m.userId()));
+                                    avatars.get(m.userId()),
+                                    customId(m),
+                                    customName(m));
                         })
                         .toList(),
                 next);
@@ -298,13 +421,27 @@ public class WorkspaceService implements WorkspaceFacade {
     }
 
     @Transactional
-    public void role(CurrentUser actor, String id, String memberId, WorkspaceRole next) {
+    public void role(CurrentUser actor, String id, String memberId, String requested) {
         var own = access(actor, id, Action.MANAGE_MEMBERS);
-        var m = target(id, memberId);
-        if (!own.role().manages(m.role()) || !own.role().manages(next)) throw CommonErrorCode.AUTH_FORBIDDEN.raise();
-        m.changeRole(own.role(), next);
-        workspaceRepository.saveAll(List.of(m));
-        workspaceRepository.revokePending(id, m.userId(), next, actor.userId(), clock.instant());
+        var member = target(id, memberId);
+        if (!manages(own, member)) throw CommonErrorCode.AUTH_FORBIDDEN.raise();
+        WorkspaceRole next;
+        String customId = null;
+        try {
+            next = WorkspaceRole.valueOf(requested);
+        } catch (IllegalArgumentException invalid) {
+            var custom = workspaceRepository
+                    .customRole(id, requested)
+                    .orElseThrow(WorkspaceErrorCode.WORKSPACE_ROLE_NOT_FOUND::raise);
+            if (!permissions(own).containsAll(custom.permissions())) throw CommonErrorCode.AUTH_FORBIDDEN.raise();
+            next = WorkspaceRole.viewer;
+            customId = custom.id();
+        }
+        if (customId == null && !grants(own, next)) throw CommonErrorCode.AUTH_FORBIDDEN.raise();
+        member.assignNonOwnerRole(next);
+        workspaceRepository.saveAll(List.of(member));
+        workspaceRepository.assignCustomRole(member.id(), customId);
+        workspaceRepository.revokePending(id, member.userId(), next, actor.userId(), clock.instant());
         assertOwner(id);
     }
 
@@ -314,7 +451,7 @@ public class WorkspaceService implements WorkspaceFacade {
         var m = target(id, memberId);
         if (m.role() == WorkspaceRole.owner && own.role() == WorkspaceRole.owner)
             throw WorkspaceErrorCode.WORKSPACE_OWNER_REQUIRED.raise();
-        if (!own.role().manages(m.role())) throw CommonErrorCode.AUTH_FORBIDDEN.raise();
+        if (!manages(own, m)) throw CommonErrorCode.AUTH_FORBIDDEN.raise();
         if (actor.userId().equals(m.userId())) throw CommonErrorCode.COMMON_INVALID_REQUEST.raise();
         removeMember(actor, id, m);
     }
@@ -344,6 +481,8 @@ public class WorkspaceService implements WorkspaceFacade {
                 .findMember(id, userId)
                 .orElseThrow(WorkspaceErrorCode.WORKSPACE_INVALID_OWNER::raise);
         own.transferTo(next);
+        workspaceRepository.assignCustomRole(own.id(), null);
+        workspaceRepository.assignCustomRole(next.id(), null);
         workspaceRepository.saveAll(List.of(own, next));
         workspaceRepository.revokePending(id, actor.userId(), WorkspaceRole.admin, actor.userId(), clock.instant());
         assertOwner(id);
@@ -357,7 +496,7 @@ public class WorkspaceService implements WorkspaceFacade {
     @Transactional
     public WorkspaceViews.CreatedInvitation invite(CurrentUser actor, String id, String email, WorkspaceRole role) {
         var own = access(actor, id, Action.MANAGE_MEMBERS);
-        if (!own.role().manages(role)) throw CommonErrorCode.AUTH_FORBIDDEN.raise();
+        if (!grants(own, role)) throw CommonErrorCode.AUTH_FORBIDDEN.raise();
         String normalized = email.strip().toLowerCase(Locale.ROOT);
         var user = iamFacade.userByEmail(normalized);
         if (user.isPresent()
@@ -416,7 +555,7 @@ public class WorkspaceService implements WorkspaceFacade {
         var i = workspaceRepository
                 .findInvitation(id, invitationId)
                 .orElseThrow(WorkspaceErrorCode.WORKSPACE_NOT_FOUND::raise);
-        if (!own.role().manages(i.role())) throw CommonErrorCode.AUTH_FORBIDDEN.raise();
+        if (!grants(own, i.role())) throw CommonErrorCode.AUTH_FORBIDDEN.raise();
         return i;
     }
 
@@ -459,7 +598,7 @@ public class WorkspaceService implements WorkspaceFacade {
                 || iamFacade.user(i.invitedBy()).isEmpty())
             throw WorkspaceErrorCode.WORKSPACE_INVITATION_UNAVAILABLE.raise();
         var workItemr = workspaceRepository.findMember(i.workspaceId(), i.invitedBy());
-        if (workItemr.isEmpty() || !workItemr.get().role().manages(i.role()))
+        if (workItemr.isEmpty() || !grants(workItemr.get(), i.role()))
             throw WorkspaceErrorCode.WORKSPACE_INVITATION_UNAVAILABLE.raise();
     }
 

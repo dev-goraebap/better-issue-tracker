@@ -27,6 +27,40 @@ class WorkspaceController {
     private final WorkspaceService workspaceService;
     private final WorkspaceEnrollmentService workspaceEnrollmentService;
 
+    @GetMapping("/workspaces/{id}/roles")
+    List<WorkspaceViews.CustomRole> roles(@AuthenticationPrincipal CurrentUser actor, @PathVariable String id) {
+        return workspaceService.customRoles(actor, id);
+    }
+
+    @PostMapping("/workspaces/{id}/roles")
+    ResponseEntity<WorkspaceViews.CustomRole> createRole(
+            @AuthenticationPrincipal CurrentUser actor,
+            @PathVariable String id,
+            @Valid @RequestBody WorkspaceRequests.CustomRole request) {
+        var role = workspaceService.saveCustomRole(actor, id, null, request);
+        return ResponseEntity.created(URI.create("/api/v1/workspaces/" + id + "/roles/" + role.id()))
+                .body(role);
+    }
+
+    @PutMapping("/workspaces/{id}/roles/{roleId}")
+    WorkspaceViews.CustomRole updateRole(
+            @AuthenticationPrincipal CurrentUser actor,
+            @PathVariable String id,
+            @PathVariable String roleId,
+            @Valid @RequestBody WorkspaceRequests.CustomRole request) {
+        return workspaceService.saveCustomRole(actor, id, roleId, request);
+    }
+
+    @DeleteMapping("/workspaces/{id}/roles/{roleId}")
+    ResponseEntity<Void> deleteRole(
+            @AuthenticationPrincipal CurrentUser actor,
+            @PathVariable String id,
+            @PathVariable String roleId,
+            @RequestParam long expectedVersion) {
+        workspaceService.deleteCustomRole(actor, id, roleId, expectedVersion);
+        return ResponseEntity.noContent().build();
+    }
+
     @GetMapping("/me/workspaces")
     WorkspaceViews.Spaces list(
             @AuthenticationPrincipal CurrentUser actor,

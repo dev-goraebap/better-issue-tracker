@@ -217,6 +217,35 @@
         }
       }
     },
+    "/api/v1/workspaces/{workspaceId}/labels/order" : {
+      "put" : {
+        "tags" : [ "label-controller" ],
+        "operationId" : "order",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/Order"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        }
+      }
+    },
     "/api/v1/workspaces/{workspaceId}/documents/order" : {
       "put" : {
         "tags" : [ "document-controller" ],
@@ -240,6 +269,81 @@
           },
           "required" : true
         },
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{id}/roles/{roleId}" : {
+      "put" : {
+        "tags" : [ "workspace-controller" ],
+        "operationId" : "updateRole",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "roleId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CustomRole"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CustomWorkspaceRole"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete" : {
+        "tags" : [ "workspace-controller" ],
+        "operationId" : "deleteRole",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "roleId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "expectedVersion",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
         "responses" : {
           "200" : {
             "description" : "OK"
@@ -1789,6 +1893,69 @@
         "responses" : {
           "201" : {
             "description" : "댓글 작성"
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{id}/roles" : {
+      "get" : {
+        "tags" : [ "workspace-controller" ],
+        "operationId" : "roles",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/CustomWorkspaceRole"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post" : {
+        "tags" : [ "workspace-controller" ],
+        "operationId" : "createRole",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CustomRole"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CustomWorkspaceRole"
+                }
+              }
+            }
           }
         }
       }
@@ -4905,6 +5072,35 @@
         },
         "required" : [ "order" ]
       },
+      "Order" : {
+        "type" : "object",
+        "properties" : {
+          "labels" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/OrderItem"
+            },
+            "maxItems" : 10000,
+            "minItems" : 0
+          }
+        },
+        "required" : [ "labels" ]
+      },
+      "OrderItem" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string",
+            "pattern" : "[A-Za-z][A-Za-z0-9]{9}"
+          },
+          "expectedVersion" : {
+            "type" : "integer",
+            "format" : "int64",
+            "minimum" : 0
+          }
+        },
+        "required" : [ "expectedVersion", "id" ]
+      },
       "ReorderDocuments" : {
         "type" : "object",
         "properties" : {
@@ -4932,6 +5128,56 @@
           }
         },
         "required" : [ "expectedVersion", "order" ]
+      },
+      "CustomRole" : {
+        "type" : "object",
+        "properties" : {
+          "name" : {
+            "type" : "string",
+            "maxLength" : 64,
+            "minLength" : 0
+          },
+          "permissions" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "enum" : [ "READ", "WRITE_WORK", "WRITE_DOCUMENTS", "MANAGE_LABELS", "EDIT_SETTINGS", "MANAGE_MEMBERS", "OWNER" ]
+            },
+            "uniqueItems" : true
+          },
+          "expectedVersion" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        },
+        "required" : [ "name", "permissions" ]
+      },
+      "CustomWorkspaceRole" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "permissions" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            },
+            "uniqueItems" : true
+          },
+          "version" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "memberCount" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        },
+        "required" : [ "id", "memberCount", "name", "permissions", "version" ]
       },
       "Transfer" : {
         "type" : "object",
@@ -6154,8 +6400,7 @@
         "type" : "object",
         "properties" : {
           "role" : {
-            "type" : "string",
-            "enum" : [ "owner", "admin", "member", "viewer" ]
+            "type" : "string"
           }
         },
         "required" : [ "role" ]
@@ -7175,6 +7420,19 @@
           "logo" : {
             "$ref" : "#/components/schemas/Picture",
             "description" : "워크스페이스 로고(BIT-30). 없으면 이름 첫 글자"
+          },
+          "permissions" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            },
+            "uniqueItems" : true
+          },
+          "customRoleId" : {
+            "type" : "string"
+          },
+          "roleName" : {
+            "type" : "string"
           }
         },
         "required" : [ "createdAt", "id", "myRole", "name", "slug" ]
@@ -7205,6 +7463,12 @@
           "avatar" : {
             "$ref" : "#/components/schemas/Picture",
             "description" : "구성원의 사진(BIT-30). 없으면 그림 아바타"
+          },
+          "customRoleId" : {
+            "type" : "string"
+          },
+          "roleName" : {
+            "type" : "string"
           }
         },
         "required" : [ "email", "joinedAt", "memberId", "name", "role", "userId" ]

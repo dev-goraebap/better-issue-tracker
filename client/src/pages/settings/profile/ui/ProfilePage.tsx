@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { authError, capabilitiesQueryOptions, changeAvatar, removeAvatar, renameMe, sessionQueryOptions } from '@/shared/api';
 import { rememberPictures } from '@/shared/lib/person-pictures';
 import { DefaultAvatar, FormMessage, PageFrame, SettingsCard, SettingsHead, SettingsRow, StatusToken } from '@/shared/ui';
-import { PictureDialog } from '@/features/picture-change';
+import { PictureButton, PictureDialog } from '@/features/picture-change';
 
 /**
  * PATTERN · 설정 카드, /settings/profile (account settings, outside any workspace). SettingsHead on top, then SettingsCard
@@ -49,14 +49,11 @@ export function ProfilePage() {
       <SettingsHead title="프로필" description="팀원과 에이전트 기록에 내가 어떻게 보이는지 정합니다." />
       <form onSubmit={event => { event.preventDefault(); void save(); }}>
         <SettingsCard title="세부 정보" id="profile-details" actions={<Button type="submit" label="저장" variant="secondary" size="sm" isDisabled={!isChanged} isLoading={isBusy} />}>
-          <SettingsRow lead={<DefaultAvatar seed={me?.id ?? ''} name={me?.name ?? ''} size={40} />} label="이름" description="팀원과 에이전트 기록에 이 이름으로 보입니다.">
+          <SettingsRow lead={<PictureButton label="내 사진 바꾸기" isDisabled={!canPicture || !me} onClick={() => setPicturing(true)}><DefaultAvatar seed={me?.id ?? ''} name={me?.name ?? ''} size={40} /></PictureButton>} label="이름" description="팀원과 에이전트 기록에 이 이름으로 보입니다.">
             <TextInput label="이름" isLabelHidden size="sm" value={name} onChange={setTyped} isRequired isDisabled={isBusy || !me} />
           </SettingsRow>
-          {canPicture && <SettingsRow label="사진" description="이름 옆에 보입니다. 없으면 그림으로 보입니다.">
-            <Button label={me?.avatar ? '사진 바꾸기' : '사진 올리기'} variant="secondary" size="sm" isDisabled={!me} onClick={() => setPicturing(true)} />
-          </SettingsRow>}
           <SettingsRow label="이메일" description="이 주소로 로그인합니다. 바꾸려면 인스턴스 관리자에게 요청하세요.">
-            {me?.email}{me?.instanceAdmin && <> <StatusToken label="인스턴스 관리자" color="blue" /></>}
+            <VStack gap={2}><span>{me?.email}</span>{me?.instanceAdmin && <span><StatusToken label="인스턴스 관리자" color="blue" /></span>}</VStack>
           </SettingsRow>
         </SettingsCard>
       </form>

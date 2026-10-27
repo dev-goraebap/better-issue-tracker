@@ -48,6 +48,10 @@ final class WorkspaceHttpAuthorizationFilter extends OncePerRequestFilter {
             else if (suffix != null && suffix.startsWith("invitations")
                     || suffix != null && suffix.startsWith("members/") && !suffix.equals("members/me"))
                 action = WorkspaceFacade.Action.MANAGE_MEMBERS;
+            if (suffix != null
+                    && suffix.startsWith("roles")
+                    && !java.util.Set.of("GET", "HEAD", "OPTIONS").contains(method))
+                action = WorkspaceFacade.Action.MANAGE_MEMBERS;
             workspaceFacade.requireAccess((CurrentUser) request.getAttribute(CurrentUser.class.getName()), id, action);
             if (suffix != null && suffix.startsWith("members/") && !suffix.equals("members/me")) {
                 workspaceFacade.requireMemberManagement(

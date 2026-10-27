@@ -76,6 +76,10 @@ class WorkspaceIntegrationTest {
     void clean() {
         for (String table : List.of(
                 "notification",
+                "activity",
+                "document_label",
+                "document",
+                "folder",
                 "workspace_invitation",
                 "workspace_member",
                 "work_item_view_tweak",
@@ -600,6 +604,61 @@ class WorkspaceIntegrationTest {
                         user.toString());
                 expect(client.get(path), 401);
             }
+        }
+    }
+
+    @Test
+    void customRolesEnforceDocumentPermissionsLiveAndCannotEscalateOrRemoveOwnership() throws Exception {
+        try (Client owner = owner()) {
+            String path = space(owner, "custom-roles");
+            String user = fixture("writer@example.test", false);
+            String memberId = member(id(path), user, "member");
+            var created = owner.write(
+                    "POST",
+                    path + "/roles",
+                    Map.of("name", "문서 담당", "permissions", List.of("READ", "WRITE_DOCUMENTS")));
+            expect(created, 201);
+            String roleId = tree(created).path("id").asText();
+            expect(owner.write("PATCH", path + "/members/" + memberId, Map.of("role", roleId)), 204);
+            try (Client writer = login("writer@example.test")) {
+                String token = key(writer);
+                var own = tree(writer.get(path));
+                assertThat(own.path("roleName").asText()).isEqualTo("문서 담당");
+                expect(
+                        writer.bearerBody(
+                                "POST", path + "/documents", token, Map.of("title", "작성 가능한 문서", "body", "본문")),
+                        201);
+                expect(
+                        writer.bearerBody("POST", path + "/labels", token, Map.of("name", "금지", "color", "#000000")),
+                        403);
+                expect(writer.write("POST", path + "/roles", "bad JSON"), 403);
+                expect(writer.write("PATCH", path, Map.of("name", "금지")), 403);
+                expect(owner.write("DELETE", path + "/roles/" + roleId + "?expectedVersion=0", null), 409);
+                expect(
+                        owner.write(
+                                "PUT",
+                                path + "/roles/" + roleId,
+                                Map.of("name", "읽기 담당", "permissions", List.of("READ"), "expectedVersion", 0)),
+                        200);
+                expect(writer.bearerBody("POST", path + "/documents", token, Map.of("title", "권한 회수")), 403);
+                expect(
+                        owner.write(
+                                "PUT",
+                                path + "/roles/" + roleId,
+                                Map.of("name", "충돌", "permissions", List.of("READ"), "expectedVersion", 0)),
+                        409);
+            }
+            expect(
+                    owner.write("POST", path + "/roles", Map.of("name", "소유권 탈취", "permissions", List.of("OWNER"))),
+                    403);
+            String ownerMember = jdbc.queryForObject(
+                    "SELECT workspace_member_id FROM workspace_member WHERE workspace_id=? AND role='owner'",
+                    String.class,
+                    id(path));
+            expect(owner.write("PATCH", path + "/members/" + ownerMember, Map.of("role", roleId)), 403);
+            expect(owner.write("PATCH", path + "/members/" + memberId, Map.of("role", "member")), 204);
+            expect(owner.write("DELETE", path + "/roles/" + roleId + "?expectedVersion=1", null), 204);
+            assertThat(tree(owner.get(path + "/roles")).size()).isZero();
         }
     }
 

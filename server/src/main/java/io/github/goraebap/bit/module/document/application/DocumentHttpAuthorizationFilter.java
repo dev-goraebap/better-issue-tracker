@@ -41,7 +41,7 @@ final class DocumentHttpAuthorizationFilter extends OncePerRequestFilter {
             workspaceFacade.requireAccess(
                     actor,
                     id(match.group(1)),
-                    writing ? WorkspaceFacade.Action.WRITE_WORK : WorkspaceFacade.Action.READ);
+                    writing ? WorkspaceFacade.Action.WRITE_DOCUMENTS : WorkspaceFacade.Action.READ);
             chain.doFilter(request, response);
         } catch (BusinessException failure) {
             ProblemResponse.write(response, failure.errorCode());

@@ -39,7 +39,7 @@ export const removeLogo = (id: string) => command('DELETE', `${spacePath(id)}/lo
 export const transferOwner = (id: string, userId: string, currentPassword: string) => command('PUT', `${spacePath(id)}/owner`, { userId, currentPassword });
 export const deleteWorkspace = (id: string) => command('DELETE', spacePath(id));
 export const leaveWorkspace = (id: string) => command('DELETE', `${spacePath(id)}/members/me`);
-export const changeRole = (id: string, memberId: string, role: Role) => command('PATCH', `${spacePath(id)}/members/${encodeURIComponent(memberId)}`, { role });
+export const changeRole = (id: string, memberId: string, role: string) => command('PATCH', `${spacePath(id)}/members/${encodeURIComponent(memberId)}`, { role });
 export const removeMember = (id: string, memberId: string) => command('DELETE', `${spacePath(id)}/members/${encodeURIComponent(memberId)}`);
 /** Makes a one-time invitation and answers its token, shown once as a link. */
 export const createInvitation = (id: string, email: string, role: Role) => command<components['schemas']['CreatedInvitation']>('POST', `${spacePath(id)}/invitations`, { email, role });
@@ -54,3 +54,9 @@ export async function forgetWorkspace(client: QueryClient, id: string) {
   client.removeQueries({ queryKey: workspaceKey(id) });
   await client.invalidateQueries({ queryKey: ['workspaces'] });
 }
+
+export type CustomRole = { id: string; name: string; permissions: string[]; version: number; memberCount: number };
+export const customRolesQuery = (id: string) => queryOptions({ queryKey: [...workspaceKey(id), 'roles'], queryFn: ({ signal }) => readJson<CustomRole[]>(`${spacePath(id)}/roles`, signal) });
+export const saveCustomRole = (id: string, body: { name: string; permissions: string[]; expectedVersion?: number }, roleId?: string) =>
+  command<CustomRole>(roleId ? 'PUT' : 'POST', `${spacePath(id)}/roles${roleId ? `/${encodeURIComponent(roleId)}` : ''}`, body);
+export const deleteCustomRole = (id: string, role: CustomRole) => command('DELETE', `${spacePath(id)}/roles/${encodeURIComponent(role.id)}?expectedVersion=${role.version}`);
