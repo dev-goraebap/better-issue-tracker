@@ -114,6 +114,7 @@ export function AppLayout() {
     steps.push({ label: workspace.name, href: home, onClick: go(home) });
     if (place.projectId) {
       steps.push(scopeStep(projectName(place.projectId) ?? '프로젝트', projectPath(workspaceId, place.projectId)));
+      if (place.projectSection === 'documents') steps.push({ label: '문서' });
       const key = item.data?.key;
       if (place.itemId) steps.push({ label: place.itemId === 'new' ? '새 업무' : key && place.isEditing ? `${key} 편집` : key ?? '업무' });
     } else if (place.workspaceSection === '') steps.push(scopeStep('홈', home));
@@ -174,8 +175,9 @@ export function AppLayout() {
       {/* 프로젝트 with its + in a round box, as the toolbar's 필터; with none yet, a dashed card that makes the first. */}
       {workspace && <SideNavSection title="프로젝트" endContent={folded || !canMakeProjects ? undefined : <button type="button" className={styles.sectionAdd} aria-label="프로젝트 만들기"
         title="프로젝트 만들기" onClick={() => setCreatingProject(true)}><NavIcon name="plus" /></button>}>
-        <SidebarProjects workspaceId={workspaceId} projects={projects} currentId={place.projectId} canReorder={canMakeProjects && !folded}
-          href={project => projectPath(workspaceId, project.id)} mark={projectMark} onGo={go} />
+        <SidebarProjects workspaceId={workspaceId} projects={projects} currentId={place.projectId} currentSection={place.projectSection ?? 'work-items'}
+          canReorder={canMakeProjects && !folded} href={(project, section) => projectPath(workspaceId, project.id, section === 'documents' ? '/documents' : '')}
+          mark={projectMark} onGo={go} />
         {!folded && canMakeProjects && projects.length === 0 && <button type="button" className={styles.firstProject} onClick={() => setCreatingProject(true)}>
           <span className={styles.firstProjectMark} aria-hidden="true"><NavIcon name="board" /></span>
           <span className={styles.firstProjectText}><strong>첫 프로젝트 만들기</strong>업무를 묶어 보드와 일정으로 봅니다.</span>

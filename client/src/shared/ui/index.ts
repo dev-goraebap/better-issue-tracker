@@ -36,6 +36,8 @@ export { NotificationBell } from './notification-bell';
 export { SettingsAction, SettingsCard, SettingsHead, SettingsRow } from './settings-card';
 export { MarkdownEditor, MarkdownView } from './markdown-editor';
 export { IconPicker, MarkIcon, type Mark } from './icon-picker';
+export { ColorPalette } from './color-palette';
+export { MoreMenu } from './more-menu';
 export { PropertyPicker, type PropertyOption } from './property-picker';
 export { DuePicker } from './due-picker';
 export { EventTimePicker, eventTimeText, type EventTime } from './event-time-picker';

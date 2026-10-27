@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
-import { Button, MoreMenu, Text, TextInput, VStack } from '@astryxdesign/core';
+import { Button, Text, TextInput, VStack } from '@astryxdesign/core';
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
 import { authError, createKey, keyQueryOptions, revokeKey } from '@/shared/api';
 import { dateText } from '@/shared/lib/date-text';
-import { CompactDialog, ConfirmDialog, FormMessage, ListMore, NavIcon, PageFrame, QueryMessage, Select, SettingsCard, SettingsHead, SettingsRow, StatusToken } from '@/shared/ui';
+import { MoreMenu, CompactDialog, ConfirmDialog, FormMessage, ListMore, NavIcon, PageFrame, QueryMessage, Select, SettingsCard, SettingsHead, SettingsRow, StatusToken } from '@/shared/ui';
 import styles from './keys.module.css';
 
 const EXPIRY = [{ value: '7', label: '7일' }, { value: '30', label: '30일 (권장)' }, { value: '90', label: '90일' }, { value: '0', label: '만료 없음' }];

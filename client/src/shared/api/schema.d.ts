@@ -1114,6 +1114,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workspaces/{workspaceId}/documents/parts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Projects' parts in numbers, for their folders at the top of 문서함 (BIT-41) */
+        get: operations["parts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/workspaces/{workspaceId}/documents/contents": {
         parameters: {
             query?: never;
@@ -1580,6 +1597,8 @@ export interface components {
             /** @description The folder holding it; null for the part's top */
             parentId?: string | null;
             name: string;
+            /** @description Icon colour as #RRGGBB; omitted or null uses the theme's default */
+            color?: string | null;
         };
         MoveFolder: {
             /** Format: int64 */
@@ -1821,6 +1840,8 @@ export interface components {
             /** Format: int64 */
             expectedVersion: number;
             name: string;
+            /** @description Omitted keeps the colour; null restores the theme's default */
+            color?: string | null;
         };
         UpdateDocument: {
             /** Format: int64 */
@@ -2129,69 +2150,87 @@ export interface components {
             updatedAt: string;
         };
         Folder: {
-            id?: string;
+            id: string;
             /** @description The project whose part holds it; null for the workspace's own */
-            projectId?: string | null;
+            projectId: string | null;
             /** @description The folder holding it; null at the top of its part */
-            parentId?: string | null;
-            name?: string;
+            parentId: string | null;
+            name: string;
+            /** @description Icon colour as #RRGGBB; null uses the theme's default */
+            color: string | null;
             /** Format: int64 */
-            version?: number;
+            version: number;
+            /**
+             * Format: int64
+             * @description How many live documents are right in it
+             */
+            documentCount: number;
+            /** Format: date-time */
+            updatedAt: string;
         };
         DocumentPage: {
-            items?: components["schemas"]["DocumentSummary"][];
-            nextCursor?: string | null;
+            items: components["schemas"]["DocumentSummary"][];
+            nextCursor: string | null;
         };
         DocumentSummary: {
-            id?: string;
-            projectId?: string | null;
-            folderId?: string | null;
-            title?: string;
+            id: string;
+            projectId: string | null;
+            folderId: string | null;
+            title: string;
             /** @description The text's first characters, for a card */
-            excerpt?: string;
-            labelIds?: string[];
+            excerpt: string;
+            labelIds: string[];
+            /** @description The work items it is linked to that the member may see, oldest link first */
+            workItems: components["schemas"]["LinkedWorkItem"][];
             /** Format: int64 */
-            version?: number;
+            version: number;
             /** Format: date-time */
-            updatedAt?: string;
-            updatedBy?: string;
-            updatedByAgent?: string | null;
-        };
-        Document: {
-            id?: string;
-            projectId?: string | null;
-            folderId?: string | null;
-            /** @description The folders from the part's top down to the document's */
-            path?: components["schemas"]["Folder"][];
-            title?: string;
-            body?: string;
-            labelIds?: string[];
-            workItems?: components["schemas"]["LinkedWorkItem"][];
-            /** Format: int64 */
-            version?: number;
-            /** Format: date-time */
-            createdAt?: string;
-            createdBy?: string;
-            createdByAgent?: string | null;
-            /** Format: date-time */
-            updatedAt?: string;
-            updatedBy?: string;
-            updatedByAgent?: string | null;
+            updatedAt: string;
+            updatedBy: string;
+            updatedByAgent: string | null;
         };
         LinkedWorkItem: {
-            linkId?: string;
-            id?: string;
-            projectId?: string;
-            reference?: string;
-            title?: string;
+            linkId: string;
+            id: string;
+            projectId: string;
+            reference: string;
+            title: string;
+        };
+        Document: {
+            id: string;
+            projectId: string | null;
+            folderId: string | null;
+            /** @description The folders from the part's top down to the document's */
+            path: components["schemas"]["Folder"][];
+            title: string;
+            body: string;
+            labelIds: string[];
+            workItems: components["schemas"]["LinkedWorkItem"][];
+            /** Format: int64 */
+            version: number;
+            /** Format: date-time */
+            createdAt: string;
+            createdBy: string;
+            createdByAgent: string | null;
+            /** Format: date-time */
+            updatedAt: string;
+            updatedBy: string;
+            updatedByAgent: string | null;
+        };
+        DocumentPart: {
+            projectId: string;
+            /** Format: int64 */
+            documentCount: number;
+            /** Format: int64 */
+            folderCount: number;
         };
         DocumentFolderContents: {
-            projectId?: string | null;
-            folderId?: string | null;
+            projectId: string | null;
+            folderId: string | null;
             /** @description The folders from the part's top down to this one, this one last */
-            path?: components["schemas"]["Folder"][];
-            folders?: components["schemas"]["Folder"][];
-            documents?: components["schemas"]["DocumentSummary"][];
+            path: components["schemas"]["Folder"][];
+            folders: components["schemas"]["Folder"][];
+            documents: components["schemas"]["DocumentSummary"][];
         };
         Picture: {
             id: string;
@@ -4942,6 +4981,30 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["WorkItems"];
+                };
+            };
+        };
+    };
+    parts: {
+        parameters: {
+            query: {
+                projectId: string[];
+            };
+            header?: never;
+            path: {
+                workspaceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocumentPart"][];
                 };
             };
         };

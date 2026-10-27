@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import java.util.List;
 import java.util.Set;
@@ -135,12 +136,56 @@ public final class DocumentRequests {
             @Schema(nullable = true, description = "The folder holding it; null for the part's top")
             String parentId,
 
-            @NotBlank @Size(max = Folder.NAME_MAX) String name) {}
+            @NotBlank @Size(max = Folder.NAME_MAX) String name,
+
+            @Pattern(regexp = "#[0-9a-fA-F]{6}") @Schema(nullable = true, description = "Icon colour as #RRGGBB; omitted or null uses the theme's default")
+            String color) {}
 
     @Schema(name = "RenameFolder")
-    public record RenameFolder(
-            @NotNull @Min(0) Long expectedVersion,
-            @NotBlank @Size(max = Folder.NAME_MAX) String name) {}
+    public static final class RenameFolder {
+        @NotNull @Min(0) private Long expectedVersion;
+
+        @NotBlank @Size(max = Folder.NAME_MAX) private String name;
+
+        @Pattern(regexp = "#[0-9a-fA-F]{6}") private String color;
+
+        private boolean hasColor;
+
+        public Long getExpectedVersion() {
+            return expectedVersion;
+        }
+
+        public void setExpectedVersion(Long value) {
+            expectedVersion = value;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String value) {
+            name = value;
+        }
+
+        @Schema(nullable = true, description = "Omitted keeps the colour; null restores the theme's default")
+        public String getColor() {
+            return color;
+        }
+
+        public void setColor(String value) {
+            color = value;
+            hasColor = true;
+        }
+
+        public boolean hasColor() {
+            return hasColor;
+        }
+
+        @JsonAnySetter
+        public void unknown(String key, Object value) {
+            throw new IllegalArgumentException("Unsupported folder field");
+        }
+    }
 
     @Schema(name = "MoveFolder")
     public record MoveFolder(

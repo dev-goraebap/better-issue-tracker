@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { Button, MoreMenu } from '@astryxdesign/core';
+import { Button } from '@astryxdesign/core';
 import { agoText } from '@/shared/lib/date-text';
-import { DefaultAvatar, MarkdownEditor, MarkdownView, NavIcon } from '@/shared/ui';
+import { MoreMenu, DefaultAvatar, MarkdownEditor, MarkdownView, NavIcon } from '@/shared/ui';
 import type { TimelineEntry } from '../api/timeline';
 import { actorText } from '../model/activity-text';
 import styles from './activity.module.css';

@@ -36,14 +36,63 @@ class JooqDocumentQuery implements DocumentQuery {
 
     @Override
     public List<DocumentViews.Folder> folders(String workspaceId, String projectId) {
+        var count = DSL.field(DSL.selectCount()
+                        .from(DOCUMENT)
+                        .where(DOCUMENT.FOLDER_ID.eq(FOLDER.FOLDER_ID))
+                        .and(DOCUMENT.DELETED_AT.isNull()))
+                .as("document_count");
         return dslContext
-                .selectFrom(FOLDER)
+                .select(FOLDER.FOLDER_ID, FOLDER.PROJECT_ID, FOLDER.PARENT_FOLDER_ID, FOLDER.NAME, FOLDER.VERSION)
+                .select(FOLDER.COLOR, FOLDER.UPDATED_AT, count)
+                .from(FOLDER)
                 .where(FOLDER.WORKSPACE_ID.eq(workspaceId))
                 .and(JooqFolderRepository.part(projectId))
                 .and(FOLDER.DELETED_AT.isNull())
                 .orderBy(DSL.lower(FOLDER.NAME), FOLDER.FOLDER_ID)
                 .fetch(r -> new DocumentViews.Folder(
-                        r.getFolderId(), r.getProjectId(), r.getParentFolderId(), r.getName(), r.getVersion()));
+                        r.get(FOLDER.FOLDER_ID),
+                        r.get(FOLDER.PROJECT_ID),
+                        r.get(FOLDER.PARENT_FOLDER_ID),
+                        r.get(FOLDER.NAME),
+                        r.get(FOLDER.COLOR),
+                        r.get(FOLDER.VERSION),
+                        r.get(count),
+                        r.get(FOLDER.UPDATED_AT)));
+    }
+
+    @Override
+    public DocumentViews.Part part(String workspaceId, String projectId) {
+        long documents = dslContext.fetchCount(
+                DOCUMENT,
+                DOCUMENT.WORKSPACE_ID
+                        .eq(workspaceId)
+                        .and(DOCUMENT.PROJECT_ID.eq(projectId))
+                        .and(DOCUMENT.DELETED_AT.isNull()));
+        long folders = dslContext.fetchCount(
+                FOLDER,
+                FOLDER.WORKSPACE_ID
+                        .eq(workspaceId)
+                        .and(FOLDER.PROJECT_ID.eq(projectId))
+                        .and(FOLDER.DELETED_AT.isNull()));
+        return new DocumentViews.Part(projectId, documents, folders);
+    }
+
+    @Override
+    public Map<String, List<Link>> links(String workspaceId, Collection<String> documentIds) {
+        Map<String, List<Link>> links = new HashMap<>();
+        if (documentIds.isEmpty()) return links;
+        dslContext
+                .select(LINK.FROM_ID, LINK.LINK_ID, LINK.TO_ID)
+                .from(LINK)
+                .where(LINK.WORKSPACE_ID.eq(workspaceId))
+                .and(LINK.FROM_TYPE.eq(DOCUMENT_TYPE))
+                .and(LINK.FROM_ID.in(documentIds))
+                .and(LINK.TO_TYPE.eq(WORK_ITEM_TYPE))
+                .and(LINK.DELETED_AT.isNull())
+                .orderBy(LINK.CREATED_AT, LINK.LINK_ID)
+                .forEach(r -> links.computeIfAbsent(r.value1(), id -> new ArrayList<>())
+                        .add(new Link(r.value2(), r.value3())));
+        return links;
     }
 
     @Override
@@ -174,6 +223,7 @@ class JooqDocumentQuery implements DocumentQuery {
                         r.get(DOCUMENT.TITLE),
                         r.get(EXCERPT_FIELD),
                         labels.getOrDefault(r.get(DOCUMENT.DOCUMENT_ID), List.of()),
+                        List.<DocumentViews.LinkedWorkItem>of(),
                         r.get(DOCUMENT.VERSION),
                         r.get(DOCUMENT.UPDATED_AT),
                         r.get(DOCUMENT.UPDATED_BY),

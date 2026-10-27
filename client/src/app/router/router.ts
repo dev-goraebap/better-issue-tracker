@@ -20,6 +20,11 @@ import { ProjectSettingsPage } from '@/pages/settings/project';
 import { SecurityPage } from '@/pages/settings/security';
 import { loadWorkspaceSettings, WorkspaceSettingsPage } from '@/pages/settings/workspace';
 import { DocumentsPage } from '@/pages/workspace/documents';
+import { DocumentPage } from '@/pages/workspace/document';
+import { DocumentEditPage } from '@/pages/workspace/document-edit';
+import { NewDocumentPage } from '@/pages/workspace/document-new';
+import { ProjectDocumentsPage } from '@/pages/project/documents';
+import { parseFolderSearch, parseNewDocumentSearch } from '@/entities/document';
 import { InboxPage } from '@/pages/workspace/inbox';
 import { NewWorkItemPage } from '@/pages/workspace/work-item-new';
 import { WorkItemsPage, loadWorkItems } from '@/pages/workspace/work-items';
@@ -113,7 +118,14 @@ const members = createRoute({ getParentRoute: () => scoped, path: '/members', co
   loader: ({ params }) => loadMembers(queryClient, params.workspaceId) });
 // 구성원 초대 is a page of rows, as 호호 HR's 사원 등록 (D-079).
 const membersInvite = createRoute({ getParentRoute: () => scoped, path: '/members/invite', component: InvitePage });
-const documents = createRoute({ getParentRoute: () => scoped, path: '/documents', component: DocumentsPage });
+// 문서함 and its documents (D-093): a document at /documents/<제목>-<id>, 새 문서 and its edit form at their own addresses.
+const documents = createRoute({ getParentRoute: () => scoped, path: '/documents', component: DocumentsPage, validateSearch: ownSearch(parseFolderSearch) });
+const documentNew = createRoute({ getParentRoute: () => scoped, path: '/documents/new', component: NewDocumentPage, validateSearch: ownSearch(parseNewDocumentSearch) });
+const documentDetail = createRoute({ getParentRoute: () => scoped, path: '/documents/$documentRef', component: DocumentPage });
+const documentEdit = createRoute({ getParentRoute: () => scoped, path: '/documents/$documentRef/edit', component: DocumentEditPage });
+// A project's 문서 is 문서함's folder of it opened at once.
+const projectDocuments = createRoute({ getParentRoute: () => scoped, path: '/projects/$projectId/documents', component: ProjectDocumentsPage,
+  validateSearch: ownSearch(parseFolderSearch), loader: ({ params }) => loadProject(params.workspaceId, params.projectId) });
 const projects = createRoute({ getParentRoute: () => scoped, path: '/projects', component: ProjectsPage, validateSearch: ownSearch(parseProjectsSearch),
   loaderDeps: ({ search }) => search, loader: ({ params, deps }) => loadProjects(queryClient, params.workspaceId, deps) });
 
@@ -169,7 +181,7 @@ const routeTree = rootRoute.addChildren([
   workspace.addChildren([
     start, chooser,
     scoped.addChildren([
-      home, workItemsNew, inbox, myTasks, members, membersInvite, documents, projects,
+      home, workItemsNew, inbox, myTasks, members, membersInvite, documents, documentNew, documentDetail, documentEdit, projects, projectDocuments,
       projectItems, itemNew, itemDetail, itemEdit, itemReference, ...issueAddresses,
       settingsStart, settings, projectSettingsStart, projectSettings, oldProjectSettings,
     ]),

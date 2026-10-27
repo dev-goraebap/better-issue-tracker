@@ -150,6 +150,15 @@ class DocumentIntegrationTest {
         assertThat(top.folders()).extracting(DocumentViews.Folder::name).containsExactly("설계");
         var inside = documentService.contents(owner, workspace, project, screens);
         assertThat(inside.path()).extracting(DocumentViews.Folder::name).containsExactly("설계", "화면");
+        // A folder counts what is right in it; a project's part counts all of it, for 문서함's project folders.
+        assertThat(top.folders().getFirst().documentCount()).isZero();
+        assertThat(inside.path().getLast().documentCount()).isEqualTo(1);
+        assertThat(documentService.parts(owner, workspace, List.of(project)))
+                .singleElement()
+                .satisfies(part -> {
+                    assertThat(part.documentCount()).isEqualTo(1);
+                    assertThat(part.folderCount()).isEqualTo(2);
+                });
         assertThat(inside.documents()).singleElement().satisfies(document -> {
             assertThat(document.title()).isEqualTo("로그인 화면");
             assertThat(document.excerpt()).startsWith("# 로그인");
@@ -273,6 +282,13 @@ class DocumentIntegrationTest {
                         .items())
                 .extracting(DocumentViews.Summary::id)
                 .containsExactly(id);
+        // The lists say which work items a document is linked to.
+        assertThat(documentService.contents(owner, workspace, null, null).documents())
+                .filteredOn(document -> document.id().equals(id))
+                .singleElement()
+                .satisfies(document -> assertThat(document.workItems())
+                        .extracting(DocumentViews.LinkedWorkItem::reference)
+                        .containsExactly("DOC-1"));
         String comment = commentFacade.create(owner, workspace, TargetType.document, id, "Looks right");
         assertThat(comment).isNotBlank();
         assertThat(code(() -> documentService.unlink(owner, workspace, id, Ids.newId())))
@@ -338,6 +354,78 @@ class DocumentIntegrationTest {
         var other = identity("other");
         var otherClient = login(other);
         expect(http(otherClient, "GET", "/api/v1/workspaces/" + workspace + "/documents/" + id, null), 404);
+    }
+
+    @Test
+    void folderColoursPersistAndPartialEditsKeepOrClearThem() throws Exception {
+        String legacy = folderService.create(owner, workspace, project, null, "기본 폴더");
+        assertThat(folderService.list(owner, workspace, project))
+                .filteredOn(folder -> folder.id().equals(legacy))
+                .singleElement()
+                .satisfies(folder -> assertThat(folder.color()).isNull());
+        var client = login(owner);
+        String base = "/api/v1/workspaces/" + workspace + "/folders";
+        var created = http(
+                client,
+                "POST",
+                base,
+                JSON.writeValueAsString(Map.of("projectId", project, "name", "색상 폴더", "color", "#4cb782")));
+        expect(created, 201);
+        String id = created.headers().firstValue("Location").orElseThrow().replaceAll(".*/", "");
+        assertThat(folderService.list(owner, workspace, project))
+                .filteredOn(folder -> folder.id().equals(id))
+                .singleElement()
+                .satisfies(folder -> assertThat(folder.color()).isEqualTo("#4cb782"));
+        expect(
+                http(
+                        client,
+                        "PATCH",
+                        base + "/" + id,
+                        JSON.writeValueAsString(Map.of("expectedVersion", 0, "name", "바뀐 이름"))),
+                204);
+        assertThat(documentService
+                        .contents(owner, workspace, project, id)
+                        .path()
+                        .getLast()
+                        .color())
+                .isEqualTo("#4cb782");
+        expect(
+                http(
+                        client,
+                        "PATCH",
+                        base + "/" + id,
+                        JSON.writeValueAsString(Map.of("expectedVersion", 1, "name", "바뀐 이름", "color", "#eb5757"))),
+                204);
+        expect(
+                http(
+                        client,
+                        "PATCH",
+                        base + "/" + id,
+                        JSON.writeValueAsString(Map.of("expectedVersion", 1, "name", "오래된 수정", "color", "#112233"))),
+                409);
+        expect(
+                http(
+                        client,
+                        "PATCH",
+                        base + "/" + id,
+                        JSON.writeValueAsString(Map.of("expectedVersion", 2, "name", "바뀐 이름", "color", "red"))),
+                400);
+        assertThat(documentService
+                        .contents(owner, workspace, project, id)
+                        .path()
+                        .getLast()
+                        .color())
+                .isEqualTo("#eb5757");
+        expect(
+                http(client, "PATCH", base + "/" + id, "{\"expectedVersion\":2,\"name\":\"바뀐 이름\",\"color\":null}"),
+                204);
+        assertThat(documentService
+                        .contents(owner, workspace, project, id)
+                        .path()
+                        .getLast()
+                        .color())
+                .isNull();
+        expect(http(client, "POST", base, JSON.writeValueAsString(Map.of("name", "잘못된 색", "color", "#gggggg"))), 400);
     }
 
     @Test

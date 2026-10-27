@@ -45,7 +45,8 @@ class FolderController {
             @AuthenticationPrincipal CurrentUser actor,
             @PathVariable String workspaceId,
             @Valid @RequestBody DocumentRequests.CreateFolder request) {
-        String id = folderService.create(actor, workspaceId, request.projectId(), request.parentId(), request.name());
+        String id = folderService.create(
+                actor, workspaceId, request.projectId(), request.parentId(), request.name(), request.color());
         return ResponseEntity.created(URI.create("/api/v1/workspaces/" + workspaceId + "/folders/" + id))
                 .build();
     }
@@ -56,7 +57,14 @@ class FolderController {
             @PathVariable String workspaceId,
             @PathVariable String folderId,
             @Valid @RequestBody DocumentRequests.RenameFolder request) {
-        folderService.rename(actor, workspaceId, folderId, request.expectedVersion(), request.name());
+        folderService.rename(
+                actor,
+                workspaceId,
+                folderId,
+                request.getExpectedVersion(),
+                request.getName(),
+                request.getColor(),
+                request.hasColor());
         return ResponseEntity.noContent().build();
     }
 

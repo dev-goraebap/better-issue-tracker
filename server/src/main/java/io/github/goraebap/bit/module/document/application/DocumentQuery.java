@@ -20,6 +20,12 @@ public interface DocumentQuery {
     /** The live links from a document to work items, oldest first. */
     List<Link> links(String workspaceId, String documentId);
 
+    /** The live links from each of some documents to work items, oldest first. */
+    java.util.Map<String, List<Link>> links(String workspaceId, java.util.Collection<String> documentIds);
+
+    /** A project's live documents and folders counted. */
+    DocumentViews.Part part(String workspaceId, String projectId);
+
     /**
      * What to look for. projectId narrows to one project's part, workspaceOnly to the workspace's own part; neither
      * means every part. A null labelId, text or workItemId does not narrow.

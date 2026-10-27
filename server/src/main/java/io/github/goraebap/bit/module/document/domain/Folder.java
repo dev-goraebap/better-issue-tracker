@@ -19,16 +19,25 @@ public final class Folder {
     private final String projectId;
     private String parentId;
     private String name;
+    private String color;
     private long version;
     private Audit audit;
 
     private Folder(
-            String id, String workspaceId, String projectId, String parentId, String name, long version, Audit audit) {
+            String id,
+            String workspaceId,
+            String projectId,
+            String parentId,
+            String name,
+            String color,
+            long version,
+            Audit audit) {
         this.id = id;
         this.workspaceId = workspaceId;
         this.projectId = projectId;
         this.parentId = parentId;
         this.name = name;
+        this.color = color;
         this.version = version;
         this.audit = audit;
     }
@@ -38,6 +47,7 @@ public final class Folder {
             String projectId,
             String parentId,
             String name,
+            String color,
             String actor,
             String agent,
             Instant now) {
@@ -47,19 +57,29 @@ public final class Folder {
                 projectId,
                 parentId,
                 validName(name),
+                validColor(color),
                 0,
                 Audit.create(actor, agent, now));
     }
 
     public static Folder fromPersistence(
-            String id, String workspaceId, String projectId, String parentId, String name, long version, Audit audit) {
-        return new Folder(id, workspaceId, projectId, parentId, name, version, audit);
+            String id,
+            String workspaceId,
+            String projectId,
+            String parentId,
+            String name,
+            String color,
+            long version,
+            Audit audit) {
+        return new Folder(id, workspaceId, projectId, parentId, name, color, version, audit);
     }
 
-    public void rename(String name, String actor, String agent, Instant now) {
+    public void revise(String name, String color, String actor, String agent, Instant now) {
         String next = validName(name);
-        if (next.equals(this.name)) return;
+        String nextColor = validColor(color);
+        if (next.equals(this.name) && Objects.equals(nextColor, this.color)) return;
         this.name = next;
+        this.color = nextColor;
         touch(actor, agent, now);
     }
 
@@ -93,5 +113,11 @@ public final class Folder {
     private void touch(String actor, String agent, Instant now) {
         audit = audit.touch(actor, agent, now);
         version++;
+    }
+
+    private static String validColor(String value) {
+        if (value != null && !value.matches("#[0-9a-fA-F]{6}"))
+            throw new IllegalArgumentException("Invalid folder color");
+        return value;
     }
 }

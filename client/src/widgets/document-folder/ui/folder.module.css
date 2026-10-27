@@ -1,0 +1,18 @@
+/* A folder's contents (BIT-41), drawn as the other lists: the trail in the row under the header, the table edge to edge. */
+.trail { display: flex; align-items: center; gap: var(--spacing-2); min-inline-size: 0; font-size: 0.8125rem; color: var(--color-text-secondary); white-space: nowrap; }
+.trail a { color: inherit; text-decoration: none; }
+.trail a:hover { color: var(--color-text-primary); }
+.trail [aria-current] { overflow: hidden; text-overflow: ellipsis; font-weight: 500; color: var(--color-text-primary); }
+.step { color: var(--color-text-secondary); }
+.nameCell { display: flex; align-items: center; gap: var(--spacing-3); min-inline-size: 0; }
+.named { display: inline-flex; align-items: center; gap: var(--spacing-2); min-inline-size: 0; overflow: hidden; }
+.named > a { overflow: hidden; text-overflow: ellipsis; }
+.project { --project-color: var(--color-text-blue); }
+.project > a, .project .icon { color: var(--project-color); }
+.project > a { font-weight: 500; }
+.icon, .partMark { display: inline-flex; flex: 0 0 auto; color: var(--color-icon-secondary); }
+.icon { display: inline-grid; place-items: center; inline-size: 1.25rem; block-size: 1.25rem; }
+.icon svg { inline-size: 1rem; block-size: 1rem; }
+.partMark svg { inline-size: 0.875rem; block-size: 0.875rem; }
+.holds { flex: 0 0 auto; font-size: 0.75rem; font-variant-numeric: tabular-nums; color: var(--color-text-secondary); }
+.key { font-size: 0.8125rem; font-variant-numeric: tabular-nums; color: var(--color-text-secondary); }

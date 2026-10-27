@@ -171,7 +171,7 @@ erDiagram
 
 | 테이블 | 열 | 제약·인덱스 |
 |---|---|---|
-| `folder` | `folder_id`, `workspace_id`, `project_id?`, `parent_folder_id?`, `name varchar(128)`, `version`, 감사 | `ux_folder_area_parent_name` (workspace_id, coalesce(project_id,''), coalesce(parent_folder_id,''), lower(name), deleted_at IS NULL), `ck_folder_name` (앞뒤 공백 없음, `/` 없음), 프로젝트 FK는 (project_id, workspace_id) |
+| `folder` | `folder_id`, `workspace_id`, `project_id?`, `parent_folder_id?`, `name varchar(128)`, `color varchar(7)?`(V19, 아이콘 색상), `version`, 감사 | `ux_folder_area_parent_name` (workspace_id, coalesce(project_id,''), coalesce(parent_folder_id,''), lower(name), deleted_at IS NULL), `ck_folder_name` (앞뒤 공백 없음, `/` 없음), `ck_folder_color` (NULL 또는 #RRGGBB), 프로젝트 FK는 (project_id, workspace_id) |
 | `document` | `document_id`, `workspace_id`, `project_id?`, `folder_id?`, `title varchar(200)`, `body text`(마크다운, 200,000자 이하), `version`, 감사 | `ix_document_workspace_id_project_id_folder_id`, `ix_document_workspace_id_updated_at_id` |
 | `document_label` | `document_label_id`, `document_id`, `label_id`, `created_at`, `created_by`, `created_by_agent?` | `ux_document_label_document_id_label_id` |
 
