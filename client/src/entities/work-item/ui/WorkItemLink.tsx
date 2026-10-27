@@ -11,5 +11,6 @@ import type { WorkItemSearch } from '../model/search';
 export function WorkItemLink({ workspaceId, item, search, ...anchor }: Omit<AnchorHTMLAttributes<HTMLAnchorElement>, 'href'> & {
   workspaceId: string; item: Pick<WorkItem, 'id' | 'projectId'>; search?: WorkItemSearch; [data: `data-${string}`]: string | boolean | undefined;
 }) {
+  if (!item.projectId) return <Link to="/workspaces/$workspaceId/work-items/id/$workItemId" params={{ workspaceId, workItemId: item.id }} search={search ?? {}} {...anchor} />;
   return <Link to="/workspaces/$workspaceId/projects/$projectId/work-items/$workItemId" params={{ workspaceId, projectId: item.projectId, workItemId: item.id }} search={search ?? {}} {...anchor} />;
 }

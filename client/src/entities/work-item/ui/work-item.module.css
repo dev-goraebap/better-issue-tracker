@@ -16,10 +16,8 @@
 .label { display: inline-flex; align-items: center; gap: var(--spacing-1-5, 0.375rem); flex-shrink: 0; block-size: 1.25rem; padding-inline: 0.4375rem 0.5rem;
   box-sizing: border-box; border: 1px solid var(--color-border-control); border-radius: var(--radius-full); font-size: 0.75rem; color: var(--color-text-secondary); white-space: nowrap; }
 .labelDot { inline-size: 0.5rem; block-size: 0.5rem; border-radius: 50%; flex-shrink: 0; }
-/* A card's lead when nobody is assigned: an empty dashed circle the size of a picture. */
-.leadEmpty { display: block; inline-size: 2rem; block-size: 2rem; border: 1px dashed var(--color-border-emphasized, var(--color-border)); border-radius: 50%; box-sizing: border-box; }
 /* More people than shown: a quiet +N beside them (D-092). */
 .more { flex: none; margin-inline-start: 0.25rem; color: var(--color-text-secondary); font-size: 0.75rem; font-variant-numeric: tabular-nums; }
 /* A card's people as overlapping pictures, each ringed in the card's own ground. */
-.stack { display: inline-flex; align-items: center; }
+.stack { display: inline-flex; align-items: center; flex-shrink: 0; white-space: nowrap; }
 .stack > :not(:first-child):not(.more) { margin-inline-start: -0.375rem; box-shadow: 0 0 0 2px var(--color-background-surface, var(--color-background)); border-radius: 50%; }

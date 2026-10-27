@@ -38,6 +38,9 @@ public class ActivityService {
             TargetType.work_item,
                     Set.of(
                             "title",
+                            "relations",
+                            "project",
+                            "attachments",
                             "description",
                             "priority",
                             "assignee",
@@ -52,7 +55,7 @@ public class ActivityService {
                             "labels",
                             "column",
                             "archived"),
-            TargetType.document, Set.of("title", "body", "labels", "place"));
+            TargetType.document, Set.of("title", "body", "labels", "place", "relations", "project", "attachments"));
     private final ActivityRepository activityRepository;
     private final JsonMapper jsonMapper;
 

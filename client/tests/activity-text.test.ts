@@ -28,7 +28,12 @@ test('activity reads as a sentence with the particle its last word takes', () =>
   assert.equal(activityText(entry({ field: 'assignee', after: 'u2' }), names), '박서준에게 맡겼습니다');
   assert.equal(activityText(entry({ field: 'assignee', after: 'u1' }), names), '스스로 맡았습니다');
   assert.equal(activityText(entry({ field: 'dueDate', after: '2026-11-03' }), names), '기한을 11월 3일로 정했습니다');
-  assert.equal(activityText(entry({ field: 'column', before: 'c1', after: 'gone' }), names), '상태를 할 일에서 지워진 상태로 옮겼습니다');
+  assert.equal(activityText(entry({ field: 'column', before: 'c1', after: 'gone' }), names), '상태를 할 일에서 이전 상태로 옮겼습니다');
+});
+
+test('workspace status history retains its readable category after project removal', () => {
+  assert.equal(activityText(entry({ field: 'column', before: 'todo', after: 'doing' }), names), '상태를 할 일에서 진행 중으로 옮겼습니다');
+  assert.equal(activityText(entry({ field: 'column', before: 'doing', after: 'done' }), names), '상태를 진행 중에서 완료로 옮겼습니다');
 });
 
 test("one person's description edits within half an hour read as one line, at the last", () => {

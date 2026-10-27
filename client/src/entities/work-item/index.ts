@@ -1,5 +1,5 @@
 export {
-  workBase, itemPath, itemQuery, itemsQuery, workspaceItemsQuery, byRefQuery, createItem, moveItem, updateItem, repeatItem, stopRepeating, archiveItem, deleteItem, refreshItems, taskParams,
+  setItemProject, setWorkspaceStatus, workBase, itemPath, itemQuery, itemsQuery, workspaceItemsQuery, byRefQuery, createItem, moveItem, updateItem, repeatItem, stopRepeating, archiveItem, deleteItem, refreshItems, taskParams,
 } from './api/work-item';
 export type { WorkItem, ItemLabel, ColumnCategory, TaskFilters } from './api/work-item';
 export { PRIORITIES } from './model/labels';

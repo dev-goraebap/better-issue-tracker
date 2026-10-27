@@ -1,6 +1,6 @@
 import { Button } from '@astryxdesign/core';
 import { useQuery } from '@tanstack/react-query';
-import { Link } from '@tanstack/react-router';
+import { WorkItemLink } from '@/entities/work-item';
 import { NavIcon, QueryMessage } from '@/shared/ui';
 import { noticeQuery, NotificationAvatar, notificationKind } from '@/entities/notification';
 import styles from './inbox.module.css';
@@ -21,11 +21,9 @@ export function InboxDetail({ workspaceId, noticeId, onClose }: { workspaceId: s
       </div>
       <h2>{notice.title}</h2>
       <p className={styles.messageText}>{notice.body}</p>
-      {notice.projectId && notice.targetType === 'work_item' && <Link className={styles.contentLink}
-        to="/workspaces/$workspaceId/projects/$projectId/work-items/$workItemId"
-        params={{ workspaceId, projectId: notice.projectId, workItemId: notice.targetId }}>
+      {notice.targetType === 'work_item' && <WorkItemLink className={styles.contentLink} workspaceId={workspaceId} item={{ id: notice.targetId, projectId: null }}>
         해당 업무로 이동<NavIcon name="external" />
-      </Link>}
+      </WorkItemLink>}
     </div>
   </article>;
 }

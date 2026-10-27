@@ -45,3 +45,5 @@
   .body { padding-inline: var(--spacing-5); }
   .foot { padding-inline: var(--spacing-5); }
 }
+
+.body[data-detail-full] { padding: 0; }

@@ -134,7 +134,10 @@ public final class WorkItem {
     }
 
     private final String id;
-    private final String projectId;
+    private String projectId;
+    private String workspaceId;
+    private String publicRef;
+    private String workspaceStatus;
     private final long number;
     private Kind kind;
     private Details details;
@@ -255,6 +258,44 @@ public final class WorkItem {
      * Sets a new event's reminder, minutes before it starts (D-092, BIT-39); a task has none. Made with the item, so it
      * is not an edit of it.
      */
+    /** Identity metadata is set at creation/hydration, independently of later membership changes. */
+    public WorkItem locate(String workspace, String reference, String status) {
+        this.workspaceId = workspace;
+        this.publicRef = reference;
+        this.workspaceStatus = status;
+        return this;
+    }
+
+    public void relocate(
+            String project,
+            String reference,
+            String column,
+            boolean finalColumn,
+            String category,
+            String actor,
+            String agent,
+            Instant now) {
+        if (Objects.equals(projectId, project)) return;
+        this.projectId = project;
+        this.publicRef = reference;
+        this.columnId = column;
+        this.workspaceStatus = project == null ? category : null;
+        this.closedAt = finalColumn ? (closedAt == null ? now : closedAt) : null;
+        this.position = 0;
+        touch(actor, agent, now);
+    }
+
+    public void setWorkspaceStatus(String category, String actor, String agent, Instant now) {
+        if (projectId != null
+                || kind != Kind.task
+                || category != null && !Set.of("todo", "doing", "done").contains(category))
+            throw new IllegalArgumentException("Invalid workspace status");
+        if (Objects.equals(workspaceStatus, category)) return;
+        workspaceStatus = category;
+        closedAt = "done".equals(category) ? (closedAt == null ? now : closedAt) : null;
+        touch(actor, agent, now);
+    }
+
     public void remind(Integer minutes) {
         this.reminderMinutes = reminder(kind, minutes);
     }
@@ -305,6 +346,7 @@ public final class WorkItem {
                 && Objects.equals(reminder, reminderMinutes)) return;
         this.reminderMinutes = reminder;
         if (nextKind == Kind.event) {
+            workspaceStatus = null;
             columnId = null;
             closedAt = null;
         }

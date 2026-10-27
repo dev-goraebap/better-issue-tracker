@@ -4,6 +4,38 @@
  */
 
 export interface paths {
+    "/api/v1/workspaces/{workspaceId}/work-items/id/{workItemId}/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["changeWorkspaceStatus"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{workspaceId}/work-items/id/{workItemId}/project": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["changeProject"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/workspaces/{workspaceId}/view-tweaks/{viewKey}": {
         parameters: {
             query?: never;
@@ -77,6 +109,22 @@ export interface paths {
         };
         get?: never;
         put: operations["order"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{workspaceId}/engagement/{type}/{id}/reactions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["reactions"];
+        put: operations["react"];
         post?: never;
         delete?: never;
         options?: never;
@@ -213,48 +261,16 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/workspaces/{workspaceId}/views": {
+    "/api/v1/workspaces/{workspaceId}/work-items/id/{id}/unarchive": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations["list"];
+        get?: never;
         put?: never;
-        post: operations["create_1"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/workspaces/{workspaceId}/projects": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["list_1"];
-        put?: never;
-        post: operations["create_2"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/work-items": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["list_2"];
-        put?: never;
-        post: operations["create_3"];
+        post: operations["unarchive"];
         delete?: never;
         options?: never;
         head?: never;
@@ -270,7 +286,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["unarchive"];
+        post: operations["unarchive_1"];
         delete?: never;
         options?: never;
         head?: never;
@@ -293,7 +309,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/work-items/{id}/move": {
+    "/api/v1/workspaces/{workspaceId}/work-items/id/{id}/restore": {
         parameters: {
             query?: never;
             header?: never;
@@ -302,7 +318,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["move"];
+        post: operations["restore_1"];
         delete?: never;
         options?: never;
         head?: never;
@@ -325,6 +341,118 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workspaces/{workspaceId}/work-items/id/{id}/archive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["archive_1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{workspaceId}/views": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list"];
+        put?: never;
+        post: operations["create_1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{workspaceId}/relations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_1"];
+        put?: never;
+        post: operations["connect"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{workspaceId}/projects": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_2"];
+        put?: never;
+        post: operations["create_2"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/work-items": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_3"];
+        put?: never;
+        post: operations["create_3"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/work-items/{workItemId}/children": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["createChild"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/work-items/{id}/move": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["move"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/workspaces/{workspaceId}/projects/{projectId}/unarchive": {
         parameters: {
             query?: never;
@@ -334,7 +462,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["unarchive_1"];
+        post: operations["unarchive_2"];
         delete?: never;
         options?: never;
         head?: never;
@@ -350,7 +478,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["restore_1"];
+        post: operations["restore_2"];
         delete?: never;
         options?: never;
         head?: never;
@@ -380,10 +508,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_3"];
+        get: operations["list_4"];
         put?: never;
         /** Connect a repository: the token is checked against the host before it is kept */
-        post: operations["connect"];
+        post: operations["connect_1"];
         delete?: never;
         options?: never;
         head?: never;
@@ -448,7 +576,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["archive_1"];
+        post: operations["archive_2"];
         delete?: never;
         options?: never;
         head?: never;
@@ -494,7 +622,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_4"];
+        get: operations["list_5"];
         put?: never;
         post: operations["create_4"];
         delete?: never;
@@ -511,7 +639,7 @@ export interface paths {
             cookie?: never;
         };
         /** Every folder of one part, by name: a project's, or the workspace's own when projectId is left out */
-        get: operations["list_5"];
+        get: operations["list_6"];
         put?: never;
         post: operations["create_5"];
         delete?: never;
@@ -530,6 +658,22 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["move_1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{workspaceId}/engagement/{type}/{id}/files": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["files"];
+        put?: never;
+        post: operations["attach"];
         delete?: never;
         options?: never;
         head?: never;
@@ -562,7 +706,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["restore_2"];
+        post: operations["restore_3"];
         delete?: never;
         options?: never;
         head?: never;
@@ -778,7 +922,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/workspaces/{workspaceId}/views/{viewId}": {
+    "/api/v1/workspaces/{workspaceId}/work-items/id/{id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -794,7 +938,7 @@ export interface paths {
         patch: operations["revise"];
         trace?: never;
     };
-    "/api/v1/workspaces/{workspaceId}/projects/{projectId}": {
+    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/work-items/{id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -810,7 +954,7 @@ export interface paths {
         patch: operations["revise_1"];
         trace?: never;
     };
-    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/work-items/{id}": {
+    "/api/v1/workspaces/{workspaceId}/views/{viewId}": {
         parameters: {
             query?: never;
             header?: never;
@@ -826,6 +970,22 @@ export interface paths {
         patch: operations["revise_2"];
         trace?: never;
     };
+    "/api/v1/workspaces/{workspaceId}/projects/{projectId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_3"];
+        put?: never;
+        post?: never;
+        delete: operations["delete_3"];
+        options?: never;
+        head?: never;
+        patch: operations["revise_3"];
+        trace?: never;
+    };
     "/api/v1/workspaces/{workspaceId}/projects/{projectId}/integrations/{integrationId}": {
         parameters: {
             query?: never;
@@ -839,7 +999,7 @@ export interface paths {
         delete: operations["disconnect"];
         options?: never;
         head?: never;
-        patch: operations["revise_3"];
+        patch: operations["revise_4"];
         trace?: never;
     };
     "/api/v1/workspaces/{workspaceId}/projects/{projectId}/integration-rules": {
@@ -881,13 +1041,13 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_3"];
+        get: operations["get_4"];
         put?: never;
         post?: never;
-        delete: operations["delete_3"];
+        delete: operations["delete_4"];
         options?: never;
         head?: never;
-        patch: operations["revise_4"];
+        patch: operations["revise_5"];
         trace?: never;
     };
     "/api/v1/workspaces/{workspaceId}/folders/{folderId}": {
@@ -900,7 +1060,7 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        delete: operations["delete_4"];
+        delete: operations["delete_5"];
         options?: never;
         head?: never;
         patch: operations["rename"];
@@ -913,13 +1073,13 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_4"];
+        get: operations["get_5"];
         put?: never;
         post?: never;
-        delete: operations["delete_5"];
+        delete: operations["delete_6"];
         options?: never;
         head?: never;
-        patch: operations["revise_5"];
+        patch: operations["revise_6"];
         trace?: never;
     };
     "/api/v1/workspaces/{workspaceId}/comments/{commentId}": {
@@ -932,10 +1092,10 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        delete: operations["delete_6"];
+        delete: operations["delete_7"];
         options?: never;
         head?: never;
-        patch: operations["revise_6"];
+        patch: operations["revise_7"];
         trace?: never;
     };
     "/api/v1/workspaces/{id}": {
@@ -945,10 +1105,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_5"];
+        get: operations["get_6"];
         put?: never;
         post?: never;
-        delete: operations["delete_7"];
+        delete: operations["delete_8"];
         options?: never;
         head?: never;
         patch: operations["rename_1"];
@@ -1122,7 +1282,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_6"];
+        get: operations["list_7"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1138,7 +1298,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_7"];
+        get: operations["list_8"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1154,7 +1314,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_6"];
+        get: operations["get_7"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1187,6 +1347,22 @@ export interface paths {
             cookie?: never;
         };
         get: operations["mine"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{workspaceId}/engagement/{type}/{id}/files/{fileId}/open": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["open"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1300,7 +1476,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_8"];
+        get: operations["list_9"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1392,6 +1568,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workspaces/{workspaceId}/work-items/id/{id}/recurrence": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["stopRepeating_1"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{workspaceId}/relations/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["disconnect_1"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/workspaces/{workspaceId}/projects/{projectId}/members/{userId}": {
         parameters: {
             query?: never;
@@ -1403,6 +1611,22 @@ export interface paths {
         put?: never;
         post?: never;
         delete: operations["remove_1"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{workspaceId}/engagement/{type}/{id}/files/{fileId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["discard"];
         options?: never;
         head?: never;
         patch?: never;
@@ -1460,6 +1684,16 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        WorkspaceStatus: {
+            /** Format: int64 */
+            expectedVersion: number;
+            category?: string;
+        };
+        ProjectChange: {
+            /** Format: int64 */
+            expectedVersion: number;
+            projectId?: string;
+        };
         PutWorkItemViewTweak: {
             /** @enum {string|null} */
             layout?: "list" | "calendar" | "board" | "timeline" | "cards" | "history" | null;
@@ -1507,6 +1741,10 @@ export interface components {
             /** Format: int64 */
             expectedVersion: number;
         };
+        React: {
+            emoji: string;
+            active: boolean;
+        };
         ReorderDocuments: {
             projectId?: string;
             folderId?: string;
@@ -1550,6 +1788,10 @@ export interface components {
             name: string;
             slug: string;
         };
+        WorkItemVersion: {
+            /** Format: int64 */
+            expectedVersion: number;
+        };
         CreateWorkItemView: {
             name: string;
             description?: string | null;
@@ -1571,6 +1813,15 @@ export interface components {
             assignee?: string;
             /** @description Label ids, or system for the decision label */
             label?: string;
+        };
+        Connect: {
+            /** @enum {string} */
+            fromType: "work_item" | "decision" | "session_record" | "artifact" | "code_ref" | "document";
+            fromId: string;
+            relation: string;
+            /** @enum {string} */
+            toType: "work_item" | "decision" | "session_record" | "artifact" | "code_ref" | "document";
+            toId: string;
         };
         CreateProject: {
             name: string;
@@ -1618,10 +1869,11 @@ export interface components {
             reminderMinutes?: number | null;
             /** @description Workspace labels to attach; omitted or null attaches none */
             labelIds?: string[] | null;
+            uploadIds?: string[];
         };
-        WorkItemVersion: {
-            /** Format: int64 */
-            expectedVersion: number;
+        Child: {
+            title: string;
+            description?: string;
         };
         MoveWorkItem: {
             /** Format: int64 */
@@ -1717,6 +1969,9 @@ export interface components {
             /** @description The folder of the same part to move under; null for its top */
             parentId?: string | null;
         };
+        AttachFiles: {
+            uploadIds: string[];
+        };
         CreateDocument: {
             /** @description The project whose part holds it; omitted or null for the workspace's own */
             projectId?: string | null;
@@ -1726,6 +1981,7 @@ export interface components {
             /** @description Markdown; omitted or null is empty */
             body?: string | null;
             labelIds?: string[] | null;
+            uploadIds?: string[];
         };
         DocumentVersion: {
             /** Format: int64 */
@@ -1748,6 +2004,7 @@ export interface components {
             targetId: string;
             /** @description Markdown */
             body: string;
+            uploadIds?: string[];
         };
         Invite: {
             /** Format: email */
@@ -1841,32 +2098,8 @@ export interface components {
         TemporaryPassword: {
             temporaryPassword: string;
         };
-        UpdateWorkItemView: {
-            /** Format: int64 */
-            expectedVersion: number;
-            name?: string;
-            description?: string | null;
-            icon?: string;
-            color?: string;
-            /** @description Only the view's owner may change it; making it shared needs owner, admin or member */
-            isPersonal?: boolean;
-            /** @enum {string} */
-            layout?: "list" | "calendar" | "board" | "timeline" | "cards" | "history";
-            /** @description Replaces all filters */
-            filters?: components["schemas"]["WorkItemViewFilters"];
-            sort?: components["schemas"]["WorkItemViewSort"];
-            columns?: ("status" | "priority" | "assignee" | "labels" | "due" | "updated" | "created")[];
-        };
-        UpdateProject: {
-            /** Format: int64 */
-            expectedVersion: number;
-            name?: string;
-            key?: string;
-            description?: string | null;
-            icon?: string | null;
-            color?: string | null;
-        };
         UpdateWorkItem: {
+            uploadIds?: string[];
             /** Format: int64 */
             expectedVersion: number;
             title?: string;
@@ -1895,6 +2128,31 @@ export interface components {
             labelIds?: string[] | null;
             /** @description Omitted: people are kept. Present: the whole set is replaced */
             peopleIds?: string[] | null;
+        };
+        UpdateWorkItemView: {
+            /** Format: int64 */
+            expectedVersion: number;
+            name?: string;
+            description?: string | null;
+            icon?: string;
+            color?: string;
+            /** @description Only the view's owner may change it; making it shared needs owner, admin or member */
+            isPersonal?: boolean;
+            /** @enum {string} */
+            layout?: "list" | "calendar" | "board" | "timeline" | "cards" | "history";
+            /** @description Replaces all filters */
+            filters?: components["schemas"]["WorkItemViewFilters"];
+            sort?: components["schemas"]["WorkItemViewSort"];
+            columns?: ("status" | "priority" | "assignee" | "labels" | "due" | "updated" | "created")[];
+        };
+        UpdateProject: {
+            /** Format: int64 */
+            expectedVersion: number;
+            name?: string;
+            key?: string;
+            description?: string | null;
+            icon?: string | null;
+            color?: string | null;
         };
         ReviseRepositoryIntegration: {
             /** Format: int64 */
@@ -1955,6 +2213,7 @@ export interface components {
             color?: string | null;
         };
         UpdateDocument: {
+            uploadIds?: string[];
             /** Format: int64 */
             expectedVersion: number;
             title?: string;
@@ -1978,7 +2237,7 @@ export interface components {
         WorkItem: {
             id: string;
             workspaceId: string;
-            projectId: string;
+            projectId: string | null;
             /** Format: int64 */
             number: number;
             key: string;
@@ -2136,6 +2395,21 @@ export interface components {
             before: string | null;
             after: string | null;
         };
+        RelationRef: {
+            linkId: string;
+            relation: string;
+            outgoing: boolean;
+            /** @enum {string} */
+            type: "work_item" | "decision" | "session_record" | "artifact" | "code_ref" | "document";
+            id: string;
+            projectId?: string;
+            reference?: string;
+            title: string;
+            category?: string;
+            status?: string;
+            people: string[];
+            peopleIds: string[];
+        };
         PullRequestBadge: {
             workItemId: string;
             /** @enum {string} */
@@ -2288,6 +2562,26 @@ export interface components {
             documentCount: number;
             /** Format: date-time */
             updatedAt: string;
+        };
+        ReactionView: {
+            emoji: string;
+            /** Format: int32 */
+            count: number;
+            mine: boolean;
+            userIds: string[];
+        };
+        AttachedFile: {
+            id: string;
+            filename: string;
+            contentType: string;
+            /** Format: int64 */
+            size: number;
+            image: boolean;
+            dominantColor?: string;
+            /** Format: int32 */
+            width?: number;
+            /** Format: int32 */
+            height?: number;
         };
         DocumentPage: {
             items: components["schemas"]["DocumentSummary"][];
@@ -2498,6 +2792,56 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    changeWorkspaceStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+                workItemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WorkspaceStatus"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    changeProject: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+                workItemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProjectChange"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     putTweak: {
         parameters: {
             query?: never;
@@ -2655,6 +2999,56 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["Order"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    reactions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+                type: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReactionView"][];
+                };
+            };
+        };
+    };
+    react: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+                type: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["React"];
             };
         };
         responses: {
@@ -2915,6 +3309,159 @@ export interface operations {
             };
         };
     };
+    unarchive: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WorkItemVersion"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    unarchive_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+                projectId: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WorkItemVersion"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    restore: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+                projectId: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WorkItemVersion"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    restore_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WorkItemVersion"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    archive: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+                projectId: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WorkItemVersion"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    archive_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WorkItemVersion"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     list: {
         parameters: {
             query?: never;
@@ -2962,6 +3509,55 @@ export interface operations {
         };
     };
     list_1: {
+        parameters: {
+            query: {
+                type: "work_item" | "decision" | "session_record" | "artifact" | "code_ref" | "document";
+                id: string;
+            };
+            header?: never;
+            path: {
+                workspaceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RelationRef"][];
+                };
+            };
+        };
+    };
+    connect: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Connect"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    list_2: {
         parameters: {
             query?: {
                 status?: string;
@@ -3014,7 +3610,7 @@ export interface operations {
             };
         };
     };
-    list_2: {
+    list_3: {
         parameters: {
             query?: {
                 /** @description A column id of the project, or backlog */
@@ -3089,51 +3685,25 @@ export interface operations {
             };
         };
     };
-    unarchive: {
+    createChild: {
         parameters: {
             query?: never;
             header?: never;
             path: {
                 workspaceId: string;
                 projectId: string;
-                id: string;
+                workItemId: string;
             };
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["WorkItemVersion"];
+                "application/json": components["schemas"]["Child"];
             };
         };
         responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    restore: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                workspaceId: string;
-                projectId: string;
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["WorkItemVersion"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
+            /** @description 하위 작업 생성 */
+            201: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -3167,33 +3737,7 @@ export interface operations {
             };
         };
     };
-    archive: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                workspaceId: string;
-                projectId: string;
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["WorkItemVersion"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    unarchive_1: {
+    unarchive_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -3218,7 +3762,7 @@ export interface operations {
             };
         };
     };
-    restore_1: {
+    restore_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -3268,7 +3812,7 @@ export interface operations {
             };
         };
     };
-    list_3: {
+    list_4: {
         parameters: {
             query?: never;
             header?: never;
@@ -3291,7 +3835,7 @@ export interface operations {
             };
         };
     };
-    connect: {
+    connect_1: {
         parameters: {
             query?: never;
             header?: never;
@@ -3415,7 +3959,7 @@ export interface operations {
             };
         };
     };
-    archive_1: {
+    archive_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -3481,7 +4025,7 @@ export interface operations {
             };
         };
     };
-    list_4: {
+    list_5: {
         parameters: {
             query?: never;
             header?: never;
@@ -3527,7 +4071,7 @@ export interface operations {
             };
         };
     };
-    list_5: {
+    list_6: {
         parameters: {
             query?: {
                 projectId?: string;
@@ -3600,6 +4144,56 @@ export interface operations {
             };
         };
     };
+    files: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+                type: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AttachedFile"][];
+                };
+            };
+        };
+    };
+    attach: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+                type: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AttachFiles"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     search: {
         parameters: {
             query?: {
@@ -3654,7 +4248,7 @@ export interface operations {
             };
         };
     };
-    restore_2: {
+    restore_3: {
         parameters: {
             query?: never;
             header?: never;
@@ -4117,6 +4711,155 @@ export interface operations {
             header?: never;
             path: {
                 workspaceId: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkItem"];
+                };
+            };
+        };
+    };
+    delete: {
+        parameters: {
+            query: {
+                expectedVersion: number;
+            };
+            header?: never;
+            path: {
+                workspaceId: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    revise: {
+        parameters: {
+            query?: {
+                scope?: "single" | "following";
+            };
+            header?: never;
+            path: {
+                workspaceId: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateWorkItem"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+                projectId: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkItem"];
+                };
+            };
+        };
+    };
+    delete_1: {
+        parameters: {
+            query: {
+                expectedVersion: number;
+            };
+            header?: never;
+            path: {
+                workspaceId: string;
+                projectId: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    revise_1: {
+        parameters: {
+            query?: {
+                scope?: "single" | "following";
+            };
+            header?: never;
+            path: {
+                workspaceId: string;
+                projectId: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateWorkItem"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
                 viewId: string;
             };
             cookie?: never;
@@ -4134,7 +4877,7 @@ export interface operations {
             };
         };
     };
-    delete: {
+    delete_2: {
         parameters: {
             query: {
                 expectedVersion: number;
@@ -4157,7 +4900,7 @@ export interface operations {
             };
         };
     };
-    revise: {
+    revise_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -4182,7 +4925,7 @@ export interface operations {
             };
         };
     };
-    get_1: {
+    get_3: {
         parameters: {
             query?: never;
             header?: never;
@@ -4205,7 +4948,7 @@ export interface operations {
             };
         };
     };
-    delete_1: {
+    delete_3: {
         parameters: {
             query: {
                 expectedVersion: number;
@@ -4228,7 +4971,7 @@ export interface operations {
             };
         };
     };
-    revise_1: {
+    revise_3: {
         parameters: {
             query?: never;
             header?: never;
@@ -4241,82 +4984,6 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["UpdateProject"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    get_2: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                workspaceId: string;
-                projectId: string;
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["WorkItem"];
-                };
-            };
-        };
-    };
-    delete_2: {
-        parameters: {
-            query: {
-                expectedVersion: number;
-            };
-            header?: never;
-            path: {
-                workspaceId: string;
-                projectId: string;
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    revise_2: {
-        parameters: {
-            query?: {
-                scope?: "single" | "following";
-            };
-            header?: never;
-            path: {
-                workspaceId: string;
-                projectId: string;
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["UpdateWorkItem"];
             };
         };
         responses: {
@@ -4351,7 +5018,7 @@ export interface operations {
             };
         };
     };
-    revise_3: {
+    revise_4: {
         parameters: {
             query?: never;
             header?: never;
@@ -4504,7 +5171,7 @@ export interface operations {
             };
         };
     };
-    get_3: {
+    get_4: {
         parameters: {
             query?: never;
             header?: never;
@@ -4527,7 +5194,7 @@ export interface operations {
             };
         };
     };
-    delete_3: {
+    delete_4: {
         parameters: {
             query: {
                 expectedVersion: number;
@@ -4550,7 +5217,7 @@ export interface operations {
             };
         };
     };
-    revise_4: {
+    revise_5: {
         parameters: {
             query?: never;
             header?: never;
@@ -4575,7 +5242,7 @@ export interface operations {
             };
         };
     };
-    delete_4: {
+    delete_5: {
         parameters: {
             query: {
                 expectedVersion: number;
@@ -4623,7 +5290,7 @@ export interface operations {
             };
         };
     };
-    get_4: {
+    get_5: {
         parameters: {
             query?: never;
             header?: never;
@@ -4646,7 +5313,7 @@ export interface operations {
             };
         };
     };
-    delete_5: {
+    delete_6: {
         parameters: {
             query: {
                 expectedVersion: number;
@@ -4669,7 +5336,7 @@ export interface operations {
             };
         };
     };
-    revise_5: {
+    revise_6: {
         parameters: {
             query?: never;
             header?: never;
@@ -4694,7 +5361,7 @@ export interface operations {
             };
         };
     };
-    delete_6: {
+    delete_7: {
         parameters: {
             query: {
                 expectedVersion: number;
@@ -4717,7 +5384,7 @@ export interface operations {
             };
         };
     };
-    revise_6: {
+    revise_7: {
         parameters: {
             query?: never;
             header?: never;
@@ -4742,7 +5409,7 @@ export interface operations {
             };
         };
     };
-    get_5: {
+    get_6: {
         parameters: {
             query?: never;
             header?: never;
@@ -4764,7 +5431,7 @@ export interface operations {
             };
         };
     };
-    delete_7: {
+    delete_8: {
         parameters: {
             query?: never;
             header?: never;
@@ -5140,7 +5807,7 @@ export interface operations {
             };
         };
     };
-    list_6: {
+    list_7: {
         parameters: {
             query?: never;
             header?: never;
@@ -5162,7 +5829,7 @@ export interface operations {
             };
         };
     };
-    list_7: {
+    list_8: {
         parameters: {
             query?: {
                 unread?: boolean;
@@ -5188,7 +5855,7 @@ export interface operations {
             };
         };
     };
-    get_6: {
+    get_7: {
         parameters: {
             query?: never;
             header?: never;
@@ -5279,6 +5946,31 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["WorkItems"];
                 };
+            };
+        };
+    };
+    open: {
+        parameters: {
+            query?: {
+                download?: boolean;
+            };
+            header?: never;
+            path: {
+                workspaceId: string;
+                type: string;
+                id: string;
+                fileId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
@@ -5448,7 +6140,7 @@ export interface operations {
             };
         };
     };
-    list_8: {
+    list_9: {
         parameters: {
             query?: {
                 cursor?: string;
@@ -5591,6 +6283,50 @@ export interface operations {
             };
         };
     };
+    stopRepeating_1: {
+        parameters: {
+            query: {
+                expectedVersion: number;
+            };
+            header?: never;
+            path: {
+                workspaceId: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    disconnect_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     remove_1: {
         parameters: {
             query?: never;
@@ -5606,6 +6342,29 @@ export interface operations {
         responses: {
             /** @description Member taken off */
             204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    discard: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+                type: string;
+                id: string;
+                fileId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };

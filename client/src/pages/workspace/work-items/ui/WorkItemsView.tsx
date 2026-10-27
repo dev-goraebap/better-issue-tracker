@@ -59,7 +59,7 @@ export function WorkItemsView({ scope, view, tweak, effective, workItems, labels
   // The pull requests of the work items on screen, for their badges, when the server keeps repository integrations (D-087).
   const hasRepositories = useQuery(capabilitiesQueryOptions).data?.gitIntegration ?? false;
   const badgeIds = rows.slice(0, 500).map(row => row.id);
-  const badgeProjects = [...new Set(rows.slice(0, 500).map(row => row.projectId))];
+  const badgeProjects = [...new Set(rows.slice(0, 500).map(row => row.projectId).filter((id): id is string => !!id))];
   const pulls = useQuery({ ...pullBadgesQuery(workspaceId, badgeProjects, badgeIds), enabled: hasRepositories && badgeIds.length > 0 }).data;
   const badges = useMemo(() => {
     const byWorkItem = new Map<string, NonNullable<typeof pulls>>();
@@ -128,11 +128,11 @@ export function WorkItemsView({ scope, view, tweak, effective, workItems, labels
   const moveDays = async (item: WorkItem, by: number) => {
     const later = (moment: string) => new Date(Date.parse(moment) + by * 86_400_000).toISOString();
     try {
-      await updateItem(workspaceId, item.projectId, item.id, { expectedVersion: item.version,
+      await updateItem(workspaceId, item.projectId ?? '', item.id, { expectedVersion: item.version,
         ...(item.startDate ? { startDate: shiftDay(item.startDate, by) } : {}), ...(item.dueDate ? { dueDate: shiftDay(item.dueDate, by) } : {}),
         ...(item.startsAt ? { startsAt: later(item.startsAt) } : {}), ...(item.endsAt ? { endsAt: later(item.endsAt) } : {}) });
     } catch (failure) { toast({ body: authError(failure) }); }
-    await refreshItems(client, workspaceId, item.projectId);
+    await refreshItems(client, workspaceId, item.projectId ?? '');
   };
   const isNarrowed = !!search.q || effective.isFiltered || Object.values(view.filters).some(Boolean);
   const visible = rows.slice(0, shown);
@@ -140,7 +140,7 @@ export function WorkItemsView({ scope, view, tweak, effective, workItems, labels
   const empty = (what: string, hint: string) => <PageState kind={isNarrowed ? 'search' : 'empty'} title={isNarrowed ? `조건에 맞는 ${what}이 없습니다` : `아직 ${what}이 없습니다`}
     description={isNarrowed ? '검색어나 필터를 바꿔 보세요.' : hint}
     actions={isNarrowed && (search.q || effective.isFiltered) ? <Button label="조건 지우기" variant="secondary" onClick={() => go({ q: undefined, ...Object.fromEntries(FILTER_KEYS.map(key => [key, undefined])) })} /> : undefined} />;
-  const withStatus = rows.filter(row => row.columnId);
+  const withStatus = rows.filter(row => row.columnCategory);
   return <>
     <ListToolbar search={{ label: '업무 검색', placeholder: '제목이나 키로 찾기', value: search.q, onChange: q => { setShown(SLICE); go({ q }, true); } }}
       filters={filters} onFiltersChange={changeFilters} order={order} views={views} display={display} applied={applied}

@@ -86,14 +86,7 @@ class DocumentController {
             @AuthenticationPrincipal CurrentUser actor,
             @PathVariable String workspaceId,
             @Valid @RequestBody DocumentRequests.Create request) {
-        String id = documentService.create(
-                actor,
-                workspaceId,
-                request.projectId(),
-                request.folderId(),
-                request.title(),
-                request.body(),
-                request.labels());
+        String id = documentService.createWithFiles(actor, workspaceId, request);
         return ResponseEntity.created(URI.create("/api/v1/workspaces/" + workspaceId + "/documents/" + id))
                 .build();
     }

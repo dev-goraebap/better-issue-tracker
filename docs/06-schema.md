@@ -268,3 +268,13 @@ erDiagram
 - V21은 문서·업무에 `created` 활동이 없는 경우에만 기존 생성 감사의 사람·에이전트·시각으로 복구한다. 정상 생성 이벤트를 중복하지 않는다.
 - V22는 label.position으로 워크스페이스 공유 순서를 저장한다. 기존 시스템/이름 정렬을 초기 순서로 보존하고 새 라벨은 뒤에 붙인다. 변경은 전체 라벨 집합과 각 라벨 버전을 검사한다.
 - V23의 workspace_custom_role은 워크스페이스별 이름·명시적 권한·버전을 저장한다. workspace_member_custom_role은 멤버십에 정의를 연결한다. 연결된 역할이 있으면 기본 역할보다 명시적 권한을 우선하며 OWNER는 사용자 정의 권한에 포함할 수 없다. 다른 프로젝트의 접근 범위와 단일 소유권은 그대로다. 사용 중인 역할은 삭제할 수 없다(D-099/BIT-68).
+
+
+### 상세 리액션·문서 첨부 (D-101 / BIT-76)
+
+V25는 `reaction`(reaction_id, workspace_id, target_type, target_id, emoji, user_id, created_at, created_by_agent)을 추가한다. target_type은 work_item·document·comment이고, workspace/대상/사용자/emoji 고유 인덱스로 중복 반응을 막는다. 대상 존재·읽기/쓰기 권한은 매 요청 재검사하며 다른 사람의 반응을 지우지 않는다. attachment의 owner_type에 document를 추가하며 기존 행·외래 키·감사 열·인덱스는 보존한다. 댓글 첨부는 댓글 작성과 같은 트랜잭션에서 확정한다.
+
+
+## V26 프로젝트 선택 사항 (D-103 / BIT-78)
+
+`work_item.workspace_id`가 작업의 필수 소유 범위이며 `project_id`는 nullable이다. 이동·해제 시 `public_ref`에 기존 참조를 고정하고, 프로젝트 없는 작업은 `workspace_status`(todo/doing/done/null)를 사용한다. 프로젝트 번호 고유 인덱스는 참조가 고정되지 않은 행에 적용하고, 고정 참조는 워크스페이스 안에서 유일하다. 기존 업무·라벨·사람·코드 링크를 보존하여 테이블을 재구성한다. 삭제·워크스페이스 권한·버전 검사는 기존과 같다.

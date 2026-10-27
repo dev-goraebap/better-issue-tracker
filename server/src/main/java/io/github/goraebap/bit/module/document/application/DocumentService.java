@@ -46,6 +46,7 @@ public class DocumentService {
     private final TargetFacade targetFacade;
     private final ApplicationEventPublisher applicationEventPublisher;
     private final Clock clock;
+    private final io.github.goraebap.bit.module.file.FileFacade fileFacade;
 
     /** One folder of a part opened (folderId null: the part's top): the way down to it and what it holds. */
     @Transactional(readOnly = true)
@@ -152,6 +153,24 @@ public class DocumentService {
     }
 
     @Transactional
+    public String createWithFiles(CurrentUser actor, String workspaceId, DocumentRequests.Create request) {
+        for (var upload : request.uploadIds()) {
+            if (request.body() == null || !request.body().contains("attachment:" + upload))
+                throw io.github.goraebap.bit.shared.error.CommonErrorCode.COMMON_INVALID_REQUEST.raise();
+        }
+        String id = create(
+                actor,
+                workspaceId,
+                request.projectId(),
+                request.folderId(),
+                request.title(),
+                request.body(),
+                request.labels());
+        fileFacade.attach(actor, request.uploadIds(), io.github.goraebap.bit.module.file.FileOwner.DOCUMENT, id);
+        return id;
+    }
+
+    @Transactional
     public String create(
             CurrentUser actor,
             String workspaceId,
@@ -174,6 +193,7 @@ public class DocumentService {
                 actor.agent(),
                 clock.instant());
         documentRepository.save(document);
+        linkFacade.syncDocumentReferences(actor, workspaceId, document.id(), document.body());
         changed(actor, document, "created", List.of());
         return document.id();
     }
@@ -190,9 +210,15 @@ public class DocumentService {
         String previousBody = document.body();
         var previousLabels = document.labelIds();
         long before = document.version();
+        for (var upload : request.getUploadIds()) {
+            if (body == null || !body.contains("attachment:" + upload))
+                throw io.github.goraebap.bit.shared.error.CommonErrorCode.COMMON_INVALID_REQUEST.raise();
+        }
+        fileFacade.attach(actor, request.getUploadIds(), io.github.goraebap.bit.module.file.FileOwner.DOCUMENT, id);
         document.revise(title, body, labelIds, actor.userId(), actor.agent(), clock.instant());
         if (document.version() == before) return;
         documentRepository.save(document);
+        linkFacade.syncDocumentReferences(actor, workspaceId, document.id(), document.body());
         var changes = new ArrayList<FieldChange>();
         if (!previousTitle.equals(document.title()))
             changes.add(new FieldChange("title", previousTitle, document.title()));

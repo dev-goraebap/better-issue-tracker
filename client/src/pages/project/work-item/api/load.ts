@@ -7,7 +7,7 @@ import { itemQuery } from '@/entities/work-item';
 export function loadWorkItem(client: QueryClient, workspaceId: string, projectId: string, workItemId: string) {
   return Promise.all([
     client.prefetchQuery(itemQuery(workspaceId, projectId, workItemId)),
-    client.prefetchQuery(columnsQuery(workspaceId, projectId)),
+    projectId ? client.prefetchQuery(columnsQuery(workspaceId, projectId)) : Promise.resolve(),
     client.prefetchQuery(labelsQuery(workspaceId)),
   ]);
 }

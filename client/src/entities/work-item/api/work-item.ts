@@ -11,7 +11,7 @@ export type TaskFilters = {
   projectId?: string[]; labelId?: string[]; columnId?: string[]; category?: string[];
 };
 export const workBase = (w: string, p: string) => `/api/v1/workspaces/${encodeURIComponent(w)}/projects/${encodeURIComponent(p)}/work-items`;
-export const itemPath = (w: string, p: string, id: string) => `${workBase(w, p)}/${encodeURIComponent(id)}`;
+export const itemPath = (w: string, p: string, id: string) => p ? `${workBase(w, p)}/${encodeURIComponent(id)}` : `/api/v1/workspaces/${encodeURIComponent(w)}/work-items/id/${encodeURIComponent(id)}`;
 const root = (w: string, p: string) => ['workspace', w, 'project', p] as const;
 export function taskParams(filters: TaskFilters, cursor?: string) {
   const params = new URLSearchParams();
@@ -49,4 +49,7 @@ export const stopRepeating = (w: string, p: string, id: string, expectedVersion:
 export const archiveItem = (w: string, p: string, id: string, expectedVersion: number, isArchived = true) => command('POST', `${itemPath(w, p, id)}/${isArchived ? 'archive' : 'unarchive'}`, { expectedVersion });
 /** Deletes a work item (soft: an administrator can restore it). */
 export const deleteItem = (w: string, p: string, id: string, expectedVersion: number) => command('DELETE', `${itemPath(w, p, id)}?expectedVersion=${expectedVersion}`);
-export const refreshItems = (client: QueryClient, w: string, p: string) => Promise.allSettled([client.invalidateQueries({ queryKey: root(w, p) }), client.invalidateQueries({ queryKey: ['workspace', w, 'items'] }), client.invalidateQueries({ queryKey: ['workspace', w, 'task-ref'] })]);
+export const refreshItems = (client: QueryClient, w: string, p: string) => Promise.allSettled([client.invalidateQueries({ queryKey: ['workspace', w, 'relations'] }),client.invalidateQueries({ queryKey: root(w, p) }), client.invalidateQueries({ queryKey: ['workspace', w, 'items'] }), client.invalidateQueries({ queryKey: ['workspace', w, 'task-ref'] })]);
+
+export const setItemProject = (w: string, id: string, projectId: string | null, expectedVersion: number) => command('PUT', `/api/v1/workspaces/${encodeURIComponent(w)}/work-items/id/${encodeURIComponent(id)}/project`, { projectId, expectedVersion });
+export const setWorkspaceStatus = (w: string, id: string, category: string | null, expectedVersion: number) => command('PUT', `/api/v1/workspaces/${encodeURIComponent(w)}/work-items/id/${encodeURIComponent(id)}/status`, { category, expectedVersion });

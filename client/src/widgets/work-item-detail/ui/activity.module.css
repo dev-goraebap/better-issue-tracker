@@ -27,3 +27,16 @@
 .composer { --_chat-composer-radius: 10px; }
 .composer :global(.ProseMirror) { font-size: 0.875rem; }
 .actions { display: flex; justify-content: flex-end; gap: var(--spacing-2); }
+
+.activity { padding-block-start: 20px; border-block-start: 1px solid var(--color-border-subtle); }
+.timeline::before { display: none; }
+.card { background: color-mix(in srgb, var(--color-background-muted) 45%, transparent); border-color: var(--color-border-subtle); border-radius: 8px; }
+.commentExtras { padding: 0 12px 8px; }
+.sendActions { display: inline-flex; align-items: center; gap: 6px; }
+.pendingFiles { list-style: none; margin: 4px 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.pendingFiles li { display: flex; align-items: center; gap: 6px; min-inline-size: 0; font-size: 12px; color: var(--color-text-secondary); }
+.pendingFiles li > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pendingFiles svg { inline-size: 14px; block-size: 14px; flex-shrink: 0; }
+.pendingFiles button { display: grid; place-items: center; padding: 4px; border: 0; background: transparent; color: inherit; cursor: pointer; }
+
+.commentFileAction { display: flex; align-items: center; min-block-size: 28px; }

@@ -53,7 +53,7 @@ export function eventWhen(item: Pick<WorkItem, 'kind' | 'startDate' | 'dueDate' 
 }
 
 /** A work item's page, for what navigates rather than links (a calendar's bar, a toast's 보기). */
-export const workItemHref = (workspaceId: string, item: Pick<WorkItem, 'id' | 'projectId'>) => `/workspaces/${workspaceId}/projects/${item.projectId}/work-items/${item.id}`;
+export const workItemHref = (workspaceId: string, item: Pick<WorkItem, 'id' | 'projectId'>) => item.projectId ? `/workspaces/${workspaceId}/projects/${item.projectId}/work-items/${item.id}` : `/workspaces/${workspaceId}/work-items/id/${item.id}`;
 
 /** An event's time as the picker holds it, in the member's own time zone (D-092). */
 export function eventTimeOf(item: Pick<WorkItem, 'startDate' | 'dueDate' | 'startsAt' | 'endsAt' | 'allDay'>): EventTime {

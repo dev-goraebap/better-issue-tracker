@@ -35,6 +35,7 @@ class DocumentMcpTools implements McpToolProvider {
     private static final String PROJECT = "프로젝트 키. 예: ORM. 생략하면 워크스페이스 공통 문서";
     private static final String FOLDER = "폴더 경로. 예: 설계/화면. 생략하면 맨 위";
     private final DocumentService documentService;
+    private final io.github.goraebap.bit.module.link.LinkFacade relationFacade;
     private final FolderService folderService;
     private final DocumentQuery documentQuery;
     private final ProjectFacade projectFacade;
@@ -180,6 +181,7 @@ class DocumentMcpTools implements McpToolProvider {
                             return entry;
                         })
                         .toList());
+        view.put("relations", relationFacade.relations(actor, workspace, TargetType.document, document.id()));
         return view;
     }
 

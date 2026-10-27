@@ -14,7 +14,7 @@ public enum LinkErrorCode implements ErrorCode {
     LINK_CYCLE(HttpStatus.CONFLICT, "순환하는 관계를 만들 수 없습니다"),
     LINK_REPLACEMENT_CONFLICT(HttpStatus.CONFLICT, "이미 대체 결정이 있습니다"),
     LINK_PARENT_CONFLICT(HttpStatus.CONFLICT, "이미 상위 작업이 있습니다"),
-    LINK_PROTECTED_RELATION(HttpStatus.CONFLICT, "결정 대체 흐름에서 변경해 주세요");
+    LINK_PROTECTED_RELATION(HttpStatus.CONFLICT, "원본 편집 흐름에서 변경해 주세요");
     private final HttpStatus status;
     private final String message;
 }

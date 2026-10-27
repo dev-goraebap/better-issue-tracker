@@ -30,6 +30,8 @@ public final class Link {
                                     && toType == TargetType.artifact;
                         case "supersedes" -> fromType == TargetType.decision && toType == TargetType.decision;
                         case "blocks", "subtask_of" -> workPair;
+                        case "references", "mentions" ->
+                            fromType == TargetType.document && toType == TargetType.document;
                         case "relates_to" ->
                             workPair
                                     || sessionWork

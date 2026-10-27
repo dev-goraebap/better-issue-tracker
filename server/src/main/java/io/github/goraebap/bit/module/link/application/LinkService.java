@@ -25,6 +25,12 @@ public class LinkService implements LinkFacade {
     private final TargetFacade targets;
     private final WorkspaceFacade workspaceFacade;
     private final Clock clock;
+    private final RelationQuery relationQuery;
+    private final io.github.goraebap.bit.module.project.ProjectFacade projectFacade;
+    private final org.springframework.context.ApplicationEventPublisher events;
+
+    @org.springframework.beans.factory.annotation.Value("${app.auth.allowed-origins}")
+    private String origins;
 
     @Override
     @Transactional(propagation = Propagation.MANDATORY)
@@ -77,10 +83,18 @@ public class LinkService implements LinkFacade {
             String relation,
             TargetType toType,
             String toId) {
-        targets.requireAccess(actor, workspaceId, fromType, fromId, true);
-        targets.requireAccess(actor, workspaceId, toType, toId, true);
+        if ("mentions".equals(relation)) throw LinkErrorCode.LINK_PROTECTED_RELATION.raise();
+        var from = targets.requireAccess(actor, workspaceId, fromType, fromId, true);
+        var to = targets.requireAccess(actor, workspaceId, toType, toId, !"references".equals(relation));
         if ("supersedes".equals(relation)) throw LinkErrorCode.LINK_PROTECTED_RELATION.raise();
-        return connect(actor, workspaceId, edge(fromType, fromId, relation, toType, toId));
+        var edge = edge(fromType, fromId, relation, toType, toId);
+        boolean exists = repository.findActive(workspaceId, edge).isPresent();
+        String id = connect(actor, workspaceId, edge);
+        if (!exists) {
+            changed(actor, from, "added");
+            changed(actor, to, "added");
+        }
+        return id;
     }
 
     @Override
@@ -104,12 +118,16 @@ public class LinkService implements LinkFacade {
         workspaceFacade.requireAccess(actor, workspaceId, WorkspaceFacade.Action.READ);
         var link = repository.findById(workspaceId, id).orElseThrow(LinkErrorCode.LINK_NOT_FOUND::raise);
         var edge = link.edge();
-        targets.requireAccess(actor, workspaceId, edge.fromType(), edge.fromId(), true);
-        targets.requireAccess(actor, workspaceId, edge.toType(), edge.toId(), true);
+        if ("mentions".equals(edge.relation())) throw LinkErrorCode.LINK_PROTECTED_RELATION.raise();
+        var from = targets.requireAccess(actor, workspaceId, edge.fromType(), edge.fromId(), true);
+        var to = targets.requireAccess(
+                actor, workspaceId, edge.toType(), edge.toId(), !"references".equals(edge.relation()));
         if ("supersedes".equals(edge.relation())) throw LinkErrorCode.LINK_PROTECTED_RELATION.raise();
         if (link.deletedAt() != null) return;
         link.disconnect(actor.userId(), agent(actor), clock.instant());
         repository.save(link);
+        changed(actor, from, "removed");
+        changed(actor, to, "removed");
     }
 
     private String connect(CurrentUser actor, String workspaceId, Link.Edge edge) {
@@ -124,6 +142,110 @@ public class LinkService implements LinkFacade {
         var link = Link.create(workspaceId, edge, actor.userId(), agent(actor), clock.instant());
         repository.save(link);
         return link.id();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<io.github.goraebap.bit.module.link.RelationRef> relations(
+            CurrentUser actor, String workspace, TargetType type, String id) {
+        targets.requireAccess(actor, workspace, type, id, false);
+        var links = repository.around(workspace, type, id);
+        var summaries = new java.util.HashMap<String, RelationQuery.Summary>();
+        for (var targetType : List.of(TargetType.work_item, TargetType.document)) {
+            var ids = links.stream()
+                    .map(link -> link.edge())
+                    .map(e -> e.fromType() == type && e.fromId().equals(id)
+                            ? new java.util.AbstractMap.SimpleEntry<>(e.toType(), e.toId())
+                            : new java.util.AbstractMap.SimpleEntry<>(e.fromType(), e.fromId()))
+                    .filter(e -> e.getKey() == targetType)
+                    .map(java.util.Map.Entry::getValue)
+                    .collect(Collectors.toSet());
+            for (var summary : relationQuery.summaries(workspace, targetType, ids))
+                summaries.put(targetType + ":" + summary.id(), summary);
+        }
+        var readable = new java.util.HashMap<String, Boolean>();
+        var result = new ArrayList<io.github.goraebap.bit.module.link.RelationRef>();
+        for (var link : links) {
+            var e = link.edge();
+            boolean outgoing = e.fromType() == type && e.fromId().equals(id);
+            var summary =
+                    summaries.get((outgoing ? e.toType() : e.fromType()) + ":" + (outgoing ? e.toId() : e.fromId()));
+            if (summary == null) continue;
+            if (summary.projectId() != null
+                    && !readable.computeIfAbsent(summary.projectId(), project -> {
+                        try {
+                            projectFacade.requireAccess(actor, workspace, project, false);
+                            return true;
+                        } catch (io.github.goraebap.bit.shared.error.BusinessException denied) {
+                            return false;
+                        }
+                    })) continue;
+            result.add(new io.github.goraebap.bit.module.link.RelationRef(
+                    link.id(),
+                    e.relation(),
+                    outgoing,
+                    summary.type(),
+                    summary.id(),
+                    summary.projectId(),
+                    summary.reference(),
+                    summary.title(),
+                    summary.category(),
+                    summary.status(),
+                    summary.people(),
+                    summary.peopleIds()));
+        }
+        return List.copyOf(result);
+    }
+
+    @Override
+    @Transactional(propagation = Propagation.MANDATORY)
+    public void syncDocumentReferences(CurrentUser actor, String workspace, String document, String body) {
+        var desired = io.github.goraebap.bit.module.link.domain.DocumentReferences.ids(
+                body,
+                workspace,
+                java.util.Arrays.stream(origins.split(",")).map(String::strip).collect(Collectors.toSet()));
+        var existing = repository.around(workspace, TargetType.document, document).stream()
+                .filter(l -> l.edge().relation().equals("mentions")
+                        && l.edge().fromId().equals(document))
+                .toList();
+        for (var link : existing)
+            if (!desired.contains(link.edge().toId())) {
+                link.disconnect(actor.userId(), actor.agent(), clock.instant());
+                repository.save(link);
+            }
+        for (var id : desired)
+            if (!id.equals(document)) {
+                try {
+                    targets.requireAccess(actor, workspace, TargetType.document, id, false);
+                } catch (io.github.goraebap.bit.shared.error.BusinessException denied) {
+                    continue;
+                }
+                connect(actor, workspace, edge(TargetType.document, document, "mentions", TargetType.document, id));
+            }
+    }
+
+    public String resolve(CurrentUser actor, String workspace, TargetType type, String value) {
+        String id = type == TargetType.work_item
+                ? relationQuery.workItemId(workspace, value.toUpperCase(java.util.Locale.ROOT))
+                : value;
+        if (id == null) throw LinkErrorCode.LINK_TARGET_NOT_FOUND.raise();
+        return targets.requireAccess(actor, workspace, type, id, false).id();
+    }
+
+    private void changed(CurrentUser actor, io.github.goraebap.bit.module.link.TargetRef target, String change) {
+        if (target.type() != TargetType.document && target.type() != TargetType.work_item) return;
+        events.publishEvent(new io.github.goraebap.bit.module.link.TargetChangedEvent(
+                target.workspaceId(),
+                target.projectId(),
+                target.type(),
+                target.id(),
+                "changed",
+                target.version(),
+                actor.userId(),
+                actor.agent(),
+                clock.instant(),
+                List.of(new io.github.goraebap.bit.module.link.TargetChangedEvent.FieldChange(
+                        "relations", null, change))));
     }
 
     private static Link.Edge edge(TargetType fromType, String fromId, String relation, TargetType toType, String toId) {

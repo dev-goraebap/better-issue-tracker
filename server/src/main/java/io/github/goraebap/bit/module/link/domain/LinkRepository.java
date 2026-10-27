@@ -10,6 +10,8 @@ public interface LinkRepository {
 
     List<Link> findAllActive(String workspaceId, List<Link.Edge> edges);
 
+    List<Link> around(String workspaceId, io.github.goraebap.bit.module.link.TargetType type, String id);
+
     boolean hasParent(String workspaceId, String childId);
 
     boolean hasReplacement(String workspaceId, String oldDecisionId);

@@ -54,8 +54,12 @@ public final class WorkItemRequests {
             Integer reminderMinutes,
 
             @Size(max = MAX_LABELS) @Schema(nullable = true, description = "Workspace labels to attach; omitted or null attaches none")
-            List<@NotNull String> labelIds) {
+            List<@NotNull String> labelIds,
+
+            @Size(max = 20) List<@NotNull @jakarta.validation.constraints.Pattern(regexp = "[A-Za-z][A-Za-z0-9]{9}") String>
+                    uploadIds) {
         public Create {
+            uploadIds = uploadIds == null ? List.of() : List.copyOf(uploadIds);
             labelIds = labelIds == null ? null : List.copyOf(labelIds);
             peopleIds = peopleIds == null ? null : List.copyOf(peopleIds);
         }
@@ -124,6 +128,18 @@ public final class WorkItemRequests {
 
     @Schema(name = "UpdateWorkItem")
     public static final class Update {
+        @Size(max = 20) private java.util.List<
+                        @NotNull @jakarta.validation.constraints.Pattern(regexp = "[A-Za-z][A-Za-z0-9]{9}") String>
+                uploadIds = java.util.List.of();
+
+        public java.util.List<String> getUploadIds() {
+            return uploadIds;
+        }
+
+        public void setUploadIds(java.util.List<String> value) {
+            uploadIds = value == null ? java.util.List.of() : java.util.List.copyOf(value);
+        }
+
         @NotNull @Min(0) private Long expectedVersion;
 
         private String title;

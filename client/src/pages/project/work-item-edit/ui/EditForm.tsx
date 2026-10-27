@@ -7,6 +7,7 @@ import {
   CompactDialog, ConfirmDialog, DuePicker, EventTimePicker, FormMessage, MarkdownEditor, NavIcon, PageFoot, PageFrame, PropertyPicker, RepeatPicker, type EventTime,
   type Repeat,
 } from '@/shared/ui';
+import { useBodyFiles, fileHref } from '@/features/detail-engagement';
 import { labelsQuery } from '@/entities/label';
 import { columnsQuery } from '@/entities/project';
 import { useMembers } from '@/entities/workspace';
@@ -46,8 +47,8 @@ export function EditForm({ item, back }: { item: WorkItem; back: ReactNode }) {
   const returnTo = useReturnTo();
   const client = useQueryClient();
   const formId = useId();
-  const { workspaceId, projectId, id } = item;
-  const columns = useQuery(columnsQuery(workspaceId, projectId)).data ?? [];
+  const { workspaceId, id } = item; const projectId = item.projectId ?? '';
+  const columns = useQuery({ ...columnsQuery(workspaceId, projectId), enabled: !!projectId }).data ?? [];
   const labels = useQuery(labelsQuery(workspaceId)).data ?? [];
   const members = useMembers(workspaceId).items;
   const [opened] = useState<Draft>(() => ({
@@ -57,6 +58,7 @@ export function EditForm({ item, back }: { item: WorkItem; back: ReactNode }) {
     reminder: item.reminderMinutes ?? undefined,
   }));
   const [draft, setDraft] = useState(opened);
+  const files = useBodyFiles(draft.body);
   const isEvent = draft.kind === 'event';
   const [isChecked, setChecked] = useState(false);
   const [isBusy, setBusy] = useState(false);
@@ -65,10 +67,10 @@ export function EditForm({ item, back }: { item: WorkItem; back: ReactNode }) {
   const set = (patch: Partial<Draft>) => setDraft(previous => ({ ...previous, ...patch }));
   const titleError = isChecked && !draft.title.trim() ? '제목을 입력해 주세요.' : '';
   // Back to the work item through history when it is the page before, so back from there does not return to the form.
-  const leave = () => returnTo({ to: '/workspaces/$workspaceId/projects/$projectId/work-items/$workItemId', params: { workspaceId, projectId, workItemId: id } });
+  const leave = () => !projectId ? returnTo({ href: `/workspaces/${workspaceId}/work-items/id/${id}` }) : returnTo({ to: '/workspaces/$workspaceId/projects/$projectId/work-items/$workItemId', params: { workspaceId, projectId, workItemId: id } });
   const save = async (scope?: Scope, isStopConfirmed = false) => {
     setChecked(true);
-    if (!draft.title.trim() || isBusy) return;
+    if (!draft.title.trim() || isBusy || files.isUploading) return;
     const changes: Omit<components['schemas']['UpdateWorkItem'], 'expectedVersion'> = {
       ...(draft.title.trim() !== opened.title ? { title: draft.title.trim() } : {}),
       ...(draft.body !== opened.body ? { description: draft.body.trim() || null } : {}),
@@ -82,6 +84,7 @@ export function EditForm({ item, back }: { item: WorkItem; back: ReactNode }) {
       ...(!isEvent && draft.dueDate !== opened.dueDate ? { dueDate: draft.dueDate ?? null } : {}),
       ...(!sameSet(draft.labelIds, opened.labelIds) ? { labelIds: draft.labelIds } : {}),
     };
+    if (files.uploadIds.length) changes.uploadIds = files.uploadIds;
     const hasChanges = Object.keys(changes).length > 0;
     const isRepeatChanged = !sameRepeat(draft.repeat, opened.repeat);
     if (hasChanges && item.recurrence && !scope) { setAsking({ question: 'scope' }); return; }
@@ -108,16 +111,16 @@ export function EditForm({ item, back }: { item: WorkItem; back: ReactNode }) {
     } catch (failure) { setError(authError(failure)); }
     finally { setBusy(false); }
   };
-  return <PageFrame title={`${item.key} 편집`} width="narrow" back={back}>
+  return <PageFrame hideHeading title={`${item.key} 편집`} width="narrow" back={back}>
     <form id={formId} className={styles.form} noValidate onSubmit={event => { event.preventDefault(); void save(); }}>
       <input className={styles.title} value={draft.title} placeholder="업무 제목" aria-label="업무 제목" required autoFocus disabled={isBusy}
         aria-invalid={titleError ? true : undefined} onChange={event => set({ title: event.target.value })} />
       {titleError && <FormMessage message={titleError} />}
-      <MarkdownEditor value={draft.body} onChange={body => set({ body })} label="설명" minHeight="14rem" isDisabled={isBusy} onSubmit={() => { void save(); }}
+      <MarkdownEditor attachmentUrl={fileId => fileHref({ workspaceId, type: 'work_item', id }, fileId, false)} filePicker={files.picker} value={draft.body} onChange={body => set({ body })} label="설명" minHeight="14rem" isDisabled={isBusy} onSubmit={() => { void save(); }}
         placeholder="설명을 덧붙이세요… ( / 로 블록)" />
       <div className={styles.pills} role="group" aria-label="속성">
         <PropertyPicker label="종류" icon="board" options={KIND_OPTIONS} value={draft.kind} onChange={value => set({ kind: (value as Kind | undefined) ?? draft.kind })} />
-        {!isEvent && <PropertyPicker label="상태" icon="status" options={statusOptions(columns)} value={draft.status} onChange={value => set({ status: (value as string | undefined) ?? NO_STATUS })} />}
+        {!isEvent && projectId && <PropertyPicker label="상태" icon="status" options={statusOptions(columns)} value={draft.status} onChange={value => set({ status: (value as string | undefined) ?? NO_STATUS })} />}
         {!isEvent && <PropertyPicker label="우선순위" icon="priority" options={priorityOptions} value={draft.priority} onChange={value => set({ priority: value as Priority | undefined })} />}
         <PropertyPicker label={isEvent ? '참석자' : '담당자'} icon="person" options={peopleOptions(members)} value={draft.people} isMultiple
           onChange={value => set({ people: (value as string[] | undefined) ?? [] })} />
@@ -127,7 +130,7 @@ export function EditForm({ item, back }: { item: WorkItem; back: ReactNode }) {
         {!isEvent && <DuePicker label="시작일" asDate value={draft.startDate} onChange={startDate => set({ startDate })} />}
         {!isEvent && <DuePicker value={draft.dueDate} onChange={dueDate => set({ dueDate })} />}
         <PropertyPicker label="라벨" icon="label" options={labelOptions(labels)} value={draft.labelIds} isMultiple onChange={value => set({ labelIds: (value as string[] | undefined) ?? [] })} />
-        <RepeatPicker value={draft.repeat} onChange={repeat => set({ repeat })} clearLabel={item.recurrence ? '반복 끝내기' : '반복 안 함'} />
+        {!projectId ? <span title="프로젝트를 선택한 뒤 반복을 설정하세요."><NavIcon name="repeat" />{item.recurrence ? '기존 반복 유지' : '반복 없음'}</span> : <RepeatPicker value={draft.repeat} onChange={repeat => set({ repeat })} clearLabel={item.recurrence ? '반복 끝내기' : '반복 안 함'} />}
       </div>
       <FormMessage message={error} />
     </form>
@@ -141,7 +144,7 @@ export function EditForm({ item, back }: { item: WorkItem; back: ReactNode }) {
     {asking?.question === 'stop' && <ConfirmDialog title="반복을 끝낼까요?" description="이 회차 뒤에 만들어진 회차를 지우고, 더는 만들지 않습니다. 이 회차는 남습니다."
       confirmLabel="반복 끝내기" variant="destructive" onClose={() => setAsking(undefined)} onConfirm={() => { void save(asking.scope, true); }} />}
     <PageFoot start={<Button label="취소" variant="ghost" onClick={leave} isDisabled={isBusy} />}>
-      <Button type="submit" form={formId} label="저장" variant="primary" isLoading={isBusy} />
+      <Button type="submit" form={formId} label="저장" variant="primary" isLoading={isBusy} isDisabled={files.isUploading} />
     </PageFoot>
   </PageFrame>;
 }

@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class WorkItemTargetService implements TargetSpi {
     private final WorkItemRepository repository;
     private final ProjectFacade projectFacade;
+    private final io.github.goraebap.bit.module.workspace.WorkspaceFacade workspaceFacade;
 
     @Override
     @Transactional(readOnly = true)
@@ -34,13 +35,20 @@ public class WorkItemTargetService implements TargetSpi {
     @Transactional(readOnly = true)
     public TargetRef requireAccess(CurrentUser actor, String workspaceId, String id, boolean writing) {
         var item = repository.findTarget(workspaceId, id).orElseThrow(TargetNotFoundException::new);
-        var project = projectFacade.requireAccess(actor, workspaceId, item.projectId(), writing);
+        if (item.projectId() == null)
+            workspaceFacade.requireAccess(
+                    actor,
+                    workspaceId,
+                    writing
+                            ? io.github.goraebap.bit.module.workspace.WorkspaceFacade.Action.WRITE_WORK
+                            : io.github.goraebap.bit.module.workspace.WorkspaceFacade.Action.READ);
+        else projectFacade.requireAccess(actor, workspaceId, item.projectId(), writing);
         return new TargetRef(
                 type(),
                 id,
                 workspaceId,
-                project.id(),
-                project.key() + "-" + item.number(),
+                item.projectId(),
+                repository.reference(item),
                 item.details().title(),
                 item.version(),
                 null);

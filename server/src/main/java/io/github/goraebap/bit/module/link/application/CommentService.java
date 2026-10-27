@@ -24,6 +24,20 @@ public class CommentService implements CommentFacade {
     private final WorkspaceFacade workspaceFacade;
     private final ApplicationEventPublisher applicationEventPublisher;
     private final Clock clock;
+    private final io.github.goraebap.bit.module.file.FileFacade fileFacade;
+
+    @Transactional
+    public String createWithFiles(
+            CurrentUser actor,
+            String workspaceId,
+            TargetType type,
+            String id,
+            String body,
+            java.util.List<String> uploadIds) {
+        String commentId = create(actor, workspaceId, type, id, body);
+        fileFacade.attach(actor, uploadIds, io.github.goraebap.bit.module.file.FileOwner.COMMENT, commentId);
+        return commentId;
+    }
 
     @Override
     @Transactional

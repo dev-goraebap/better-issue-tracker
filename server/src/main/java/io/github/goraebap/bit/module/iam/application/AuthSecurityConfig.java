@@ -220,6 +220,42 @@ class AuthSecurityConfig {
                         .authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/v1/hooks/*")
                         .permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/workspaces/*/relations")
+                        .authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/workspaces/*/relations")
+                        .authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/workspaces/*/relations/*")
+                        .authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/workspaces/*/projects/*/work-items/*/children")
+                        .authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/workspaces/*/engagement/**")
+                        .authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/workspaces/*/engagement/*/*/reactions")
+                        .authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/workspaces/*/engagement/*/*/files")
+                        .authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/workspaces/*/engagement/*/*/files/*")
+                        .authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/workspaces/*/work-items/id/*")
+                        .authenticated()
+                        .requestMatchers(HttpMethod.PATCH, "/api/v1/workspaces/*/work-items/id/*")
+                        .authenticated()
+                        .requestMatchers(
+                                HttpMethod.DELETE,
+                                "/api/v1/workspaces/*/work-items/id/*",
+                                "/api/v1/workspaces/*/work-items/id/*/recurrence")
+                        .authenticated()
+                        .requestMatchers(
+                                HttpMethod.PUT,
+                                "/api/v1/workspaces/*/work-items/id/*/project",
+                                "/api/v1/workspaces/*/work-items/id/*/status")
+                        .authenticated()
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/api/v1/workspaces/*/work-items/id/*/archive",
+                                "/api/v1/workspaces/*/work-items/id/*/unarchive",
+                                "/api/v1/workspaces/*/work-items/id/*/restore")
+                        .authenticated()
                         // Documents and their folders (D-093).
                         .requestMatchers(HttpMethod.PUT, "/api/v1/workspaces/*/documents/order")
                         .authenticated()

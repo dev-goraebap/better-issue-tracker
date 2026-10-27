@@ -10,5 +10,5 @@ import { WorkItemDetail } from '@/widgets/work-item-detail';
 export function WorkItemPage() {
   const { workspaceId, projectId, workItemId } = useParams({ strict: false }) as { workspaceId: string; projectId: string; workItemId: string };
   const search = useSearch({ strict: false }) as WorkItemSearch;
-  return <WorkItemDetail key={workItemId} workspaceId={workspaceId} projectId={projectId} id={workItemId} search={search} />;
+  return <WorkItemDetail key={workItemId} workspaceId={workspaceId} projectId={projectId ?? ''} id={workItemId} search={search} />;
 }

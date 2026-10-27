@@ -1,0 +1,29 @@
+.actions { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; min-block-size: 28px; }
+.iconButton { display: inline-grid; place-items: center; inline-size: 28px; block-size: 28px; padding: 5px; border: 0; border-radius: 5px; background: transparent; color: var(--color-text-secondary); cursor: pointer; }
+.iconButton:hover { color: var(--color-text-primary); background: var(--color-overlay-hover); }
+.iconButton svg { inline-size: 15px; block-size: 15px; }
+.iconButton:disabled { opacity: .5; cursor: default; }
+.reaction { display: inline-flex; align-items: center; gap: 6px; min-block-size: 28px; padding: 3px 8px; border: 1px solid var(--color-border-subtle); border-radius: 6px; background: var(--color-background-muted); color: var(--color-text-secondary); font: inherit; font-size: 12px; cursor: pointer; }
+.reaction[data-mine] { border-color: color-mix(in srgb, var(--color-accent, #5e6ad2) 55%, transparent); background: color-mix(in srgb, var(--color-accent, #5e6ad2) 17%, transparent); color: var(--color-text-primary); }
+.reaction:disabled { cursor: default; }
+.picker { padding: 6px; }
+.picker input { box-sizing: border-box; inline-size: 100%; padding: 8px; border: 0; border-block-end: 1px solid var(--color-border-subtle); background: transparent; color: var(--color-text-primary); font: inherit; font-size: 13px; }
+.pickerLabel { display: block; padding: 10px 4px 6px; color: var(--color-text-secondary); font-size: 12px; }
+.emojis { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 2px; }
+.emojis button { display: grid; place-items: center; min-block-size: 36px; padding: 0; border: 0; border-radius: 4px; background: transparent; font-size: 21px; cursor: pointer; }
+.emojis button:hover { background: var(--color-overlay-hover); }
+.actions button:focus-visible, .emojis button:focus-visible, .fileLink:focus-visible { outline: 2px solid var(--color-text-secondary); outline-offset: 2px; }
+.upload { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 6px; max-inline-size: 100%; }
+.hiddenInput { display: none; }
+.uploadStatus, .retry { font-size: 12px; color: var(--color-text-secondary); }
+.retry { border: 0; background: none; padding: 4px 0; text-align: start; cursor: pointer; }
+.error { color: var(--color-text-danger, #e17575); font-size: 12px; line-height: 1.5; overflow-wrap: anywhere; }
+.files { display: flex; flex-direction: column; gap: 6px; }
+.file { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; min-inline-size: 0; padding-block: 4px; }
+.fileLink { display: flex; align-items: center; flex: 1; min-inline-size: 0; gap: 8px; padding: 6px 0; color: var(--color-text-primary); text-decoration: none; font-size: 13px; }
+.fileLink > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fileLink small { color: var(--color-text-secondary); margin-inline-start: auto; white-space: nowrap; font-size: 11px; }
+.fileLink svg { inline-size: 14px; block-size: 14px; flex-shrink: 0; color: var(--color-text-secondary); }
+.preview { flex: 1 0 100%; }
+.preview img { display: block; max-inline-size: min(100%, 320px); max-block-size: 180px; object-fit: contain; border-radius: 6px; border: 1px solid var(--color-border-subtle); }
+@media (width < 64rem) { .iconButton { inline-size: 36px; block-size: 36px; } .reaction { min-block-size: 32px; } .emojis button { min-block-size: 40px; } }

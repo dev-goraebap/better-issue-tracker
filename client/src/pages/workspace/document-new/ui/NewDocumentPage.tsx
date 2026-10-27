@@ -1,3 +1,4 @@
+import { refreshRelations } from '@/entities/relation';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import { authError } from '@/shared/api';
@@ -24,9 +25,9 @@ export function NewDocumentPage() {
   const save = async (draft: DocumentDraft) => {
     let id: string;
     try {
-      id = await createDocument(workspaceId, { projectId: project ?? null, folderId: folder ?? null, title: draft.title, body: draft.body, labelIds: draft.labelIds });
+      id = await createDocument(workspaceId, { projectId: project ?? null, folderId: folder ?? null, title: draft.title, body: draft.body, uploadIds: draft.uploadIds, labelIds: draft.labelIds });
     } catch (failure) { return authError(failure); }
-    await refreshDocuments(client, workspaceId);
+    await Promise.all([refreshDocuments(client, workspaceId), refreshRelations(client, workspaceId)]);
     void navigate({ href: documentHref(workspaceId, { id, title: draft.title }), replace: true });
     return undefined;
   };

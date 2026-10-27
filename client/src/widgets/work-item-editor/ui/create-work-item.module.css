@@ -30,6 +30,7 @@
 
 /* A phone: the sheet's own head gives way to the dialog's; the pills scroll sideways in one row; the foot keeps above the keyboard. */
 @media (width < 64rem) {
+  .projectChip { block-size: 2rem; flex-shrink: 0; padding-inline: var(--spacing-2) var(--spacing-3); font-size: 0.8125rem; }
   .head { padding: var(--spacing-6) var(--spacing-3) 0 var(--spacing-5); }
   .body { flex: 1; padding-inline: var(--spacing-5); }
   .title { font-size: 1.25rem; }
