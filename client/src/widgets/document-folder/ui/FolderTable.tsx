@@ -1,10 +1,10 @@
 import type { CSSProperties, ReactNode } from 'react';
-import { MoreMenu } from '@astryxdesign/core';
 import { useMediaQuery } from '@astryxdesign/core/hooks';
 import { MOBILE_QUERY } from '@/shared/config';
 import { dateText } from '@/shared/lib/date-text';
-import { ITEM_ROW_LINK, ItemList, ItemMeta, ItemRow, NavIcon, SHEET_ROW_LINK, SheetTable, type SheetColumn } from '@/shared/ui';
+import { MoreMenu, ITEM_ROW_LINK, ItemList, ItemMeta, ItemRow, NavIcon, SHEET_ROW_LINK, SheetTable, type SheetColumn } from '@/shared/ui';
 import { DocumentLink, FolderLink, type Folder } from '@/entities/document';
+import { ProjectMark } from '@/entities/project';
 import { LabelTokens } from '@/entities/work-item';
 import type { Label } from '@/entities/label';
 import type { FolderRow } from '../model/rows';
@@ -25,10 +25,10 @@ export function FolderTable({ workspaceId, projectId, rows, labels, foot, onRena
   const name = (row: FolderRow, link: string) => {
     switch (row.kind) {
       case 'project': return <span className={`${styles.named} ${styles.project}`} style={row.project.color ? { '--project-color': row.project.color } as CSSProperties : undefined}>
-        <span className={styles.icon}><NavIcon name="documents" /></span>
+        <ProjectMark project={row.project} />
         <FolderLink className={link} workspaceId={workspaceId} projectId={row.project.id}>{row.project.name}</FolderLink>
         <span className={styles.partMark} title="프로젝트 폴더"><NavIcon name="link" /></span></span>;
-      case 'folder': return <span className={styles.named}><span className={styles.icon}><NavIcon name="documents" /></span>
+      case 'folder': return <span className={styles.named}><span className={styles.icon} style={row.folder.color ? { color: row.folder.color } : undefined}><NavIcon name="documents" /></span>
         <FolderLink className={link} workspaceId={workspaceId} projectId={projectId} folderId={row.folder.id}>{row.folder.name}</FolderLink></span>;
       case 'document': return <span className={styles.named}><span className={styles.icon}><NavIcon name="document" /></span>
         <DocumentLink className={link} workspaceId={workspaceId} document={row.document}>{row.document.title}</DocumentLink></span>;
@@ -45,7 +45,7 @@ export function FolderTable({ workspaceId, projectId, rows, labels, foot, onRena
   const changed = (row: FolderRow) => row.kind === 'folder' ? dateText(row.folder.updatedAt) : row.kind === 'document' ? dateText(row.document.updatedAt) : '';
   const menu = (row: FolderRow) => (row.kind === 'folder' && onRename && onDelete
     ? <MoreMenu label={`${row.folder.name} 메뉴`} variant="ghost" size="sm" placement="end" items={[
-      { label: '이름 바꾸기', icon: <NavIcon name="edit" />, onClick: () => onRename(row.folder) },
+      { label: '이름·색상 바꾸기', icon: <NavIcon name="edit" />, onClick: () => onRename(row.folder) },
       { label: '지우기', icon: <NavIcon name="delete" />, onClick: () => onDelete(row.folder) },
     ]} /> : undefined);
   if (isMobile) return <><ItemList label="폴더 내용">{rows.map(row => <ItemRow key={`${row.kind}-${row.id}`} title={name(row, ITEM_ROW_LINK)}

@@ -1,10 +1,11 @@
 import { useState, type ReactNode } from 'react';
-import { IconButton, MoreMenu, useToast, VStack } from '@astryxdesign/core';
+import { IconButton, useToast, VStack } from '@astryxdesign/core';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { authError, isNotFound } from '@/shared/api';
 import { dateText } from '@/shared/lib/date-text';
 import {
+  MoreMenu,
   BackLink, ConfirmDialog, MarkdownView, NavIcon, PageState, QueryMessage, repeatText, SectionHeader, SettingsAction, Surface, usePanelSurface,
 } from '@/shared/ui';
 import { columnsQuery } from '@/entities/project';

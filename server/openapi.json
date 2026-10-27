@@ -5324,6 +5324,11 @@
             "type" : "string",
             "maxLength" : 128,
             "minLength" : 0
+          },
+          "color" : {
+            "type" : [ "string", "null" ],
+            "description" : "Icon colour as #RRGGBB; omitted or null uses the theme's default",
+            "pattern" : "#[0-9a-fA-F]{6}"
           }
         },
         "required" : [ "name" ]
@@ -5989,6 +5994,11 @@
             "type" : "string",
             "maxLength" : 128,
             "minLength" : 0
+          },
+          "color" : {
+            "type" : [ "string", "null" ],
+            "description" : "Omitted keeps the colour; null restores the theme's default",
+            "pattern" : "#[0-9a-fA-F]{6}"
           }
         },
         "required" : [ "expectedVersion", "name" ]
@@ -6781,6 +6791,10 @@
           "name" : {
             "type" : "string"
           },
+          "color" : {
+            "type" : [ "string", "null" ],
+            "description" : "Icon colour as #RRGGBB; null uses the theme's default"
+          },
           "version" : {
             "type" : "integer",
             "format" : "int64"
@@ -6795,7 +6809,7 @@
             "format" : "date-time"
           }
         },
-        "required" : [ "documentCount", "id", "name", "parentId", "projectId", "updatedAt", "version" ]
+        "required" : [ "color", "documentCount", "id", "name", "parentId", "projectId", "updatedAt", "version" ]
       },
       "DocumentPage" : {
         "type" : "object",

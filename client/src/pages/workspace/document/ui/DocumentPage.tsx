@@ -1,11 +1,11 @@
 import { useState } from 'react';
-import { MoreMenu, useToast } from '@astryxdesign/core';
+import { useToast } from '@astryxdesign/core';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useParams } from '@tanstack/react-router';
 import { authError, isNotFound } from '@/shared/api';
 import { dateText } from '@/shared/lib/date-text';
 import { afterOverlayClose } from '@/shared/lib/back-close';
-import { BackLink, ConfirmDialog, MarkdownView, NavIcon, PageFrame, PageState, QueryMessage, SectionHeader, SettingsAction } from '@/shared/ui';
+import { MoreMenu, BackLink, ConfirmDialog, MarkdownView, NavIcon, PageFrame, PageState, QueryMessage, SectionHeader, SettingsAction } from '@/shared/ui';
 import { labelsQuery } from '@/entities/label';
 import { canManage, canWrite as canWriteIn, useMembers, workspaceQuery } from '@/entities/workspace';
 import { LabelTokens } from '@/entities/work-item';

@@ -55,6 +55,7 @@ class JooqFolderRepository implements FolderRepository {
         r.setProjectId(f.projectId());
         r.setParentFolderId(f.parentId());
         r.setName(f.name());
+        r.setColor(f.color());
         r.setVersion(f.version());
         AuditRecords.write(r, f.audit());
         dslContext
@@ -77,6 +78,7 @@ class JooqFolderRepository implements FolderRepository {
                 r.get(FOLDER.PROJECT_ID),
                 r.get(FOLDER.PARENT_FOLDER_ID),
                 r.get(FOLDER.NAME),
+                r.get(FOLDER.COLOR),
                 r.get(FOLDER.VERSION),
                 AuditRecords.read(r));
     }

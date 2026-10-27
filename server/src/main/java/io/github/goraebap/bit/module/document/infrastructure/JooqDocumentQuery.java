@@ -43,7 +43,7 @@ class JooqDocumentQuery implements DocumentQuery {
                 .as("document_count");
         return dslContext
                 .select(FOLDER.FOLDER_ID, FOLDER.PROJECT_ID, FOLDER.PARENT_FOLDER_ID, FOLDER.NAME, FOLDER.VERSION)
-                .select(FOLDER.UPDATED_AT, count)
+                .select(FOLDER.COLOR, FOLDER.UPDATED_AT, count)
                 .from(FOLDER)
                 .where(FOLDER.WORKSPACE_ID.eq(workspaceId))
                 .and(JooqFolderRepository.part(projectId))
@@ -54,6 +54,7 @@ class JooqDocumentQuery implements DocumentQuery {
                         r.get(FOLDER.PROJECT_ID),
                         r.get(FOLDER.PARENT_FOLDER_ID),
                         r.get(FOLDER.NAME),
+                        r.get(FOLDER.COLOR),
                         r.get(FOLDER.VERSION),
                         r.get(count),
                         r.get(FOLDER.UPDATED_AT)));

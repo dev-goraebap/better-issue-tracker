@@ -4,6 +4,7 @@ import { authError } from '@/shared/api';
 import { BackLink, PageFrame, QueryMessage } from '@/shared/ui';
 import { documentHref, documentIdOf, documentQuery, refreshDocuments, updateDocument } from '@/entities/document';
 import { DocumentForm, type DocumentDraft } from '@/widgets/document-editor';
+import { refreshTimeline } from '@/widgets/work-item-detail';
 
 const same = (a: readonly string[], b: readonly string[]) => a.length === b.length && a.every(each => b.includes(each));
 
@@ -32,7 +33,7 @@ export function DocumentEditPage() {
         ...(!same(draft.labelIds, opened.labelIds) ? { labelIds: draft.labelIds } : {}),
       });
     } catch (failure) { return authError(failure); }
-    await refreshDocuments(client, workspaceId);
+    await Promise.all([refreshDocuments(client, workspaceId), refreshTimeline(client, workspaceId, 'document', document.id)]);
     leave(documentHref(workspaceId, { id: document.id, title: draft.title }));
     return undefined;
   };

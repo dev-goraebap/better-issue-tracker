@@ -1597,6 +1597,8 @@ export interface components {
             /** @description The folder holding it; null for the part's top */
             parentId?: string | null;
             name: string;
+            /** @description Icon colour as #RRGGBB; omitted or null uses the theme's default */
+            color?: string | null;
         };
         MoveFolder: {
             /** Format: int64 */
@@ -1838,6 +1840,8 @@ export interface components {
             /** Format: int64 */
             expectedVersion: number;
             name: string;
+            /** @description Omitted keeps the colour; null restores the theme's default */
+            color?: string | null;
         };
         UpdateDocument: {
             /** Format: int64 */
@@ -2152,6 +2156,8 @@ export interface components {
             /** @description The folder holding it; null at the top of its part */
             parentId: string | null;
             name: string;
+            /** @description Icon colour as #RRGGBB; null uses the theme's default */
+            color: string | null;
             /** Format: int64 */
             version: number;
             /**

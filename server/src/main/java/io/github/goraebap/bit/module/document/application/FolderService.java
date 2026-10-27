@@ -30,21 +30,39 @@ public class FolderService {
 
     @Transactional
     public String create(CurrentUser actor, String workspaceId, String projectId, String parentId, String name) {
+        return create(actor, workspaceId, projectId, parentId, name, null);
+    }
+
+    @Transactional
+    public String create(
+            CurrentUser actor, String workspaceId, String projectId, String parentId, String name, String color) {
         parts.require(actor, workspaceId, projectId, true);
         if (parentId != null) parts.requireFolder(workspaceId, projectId, parentId);
         var siblings = folderRepository.findAllByPart(workspaceId, projectId);
         requireFreeName(siblings, parentId, name, null);
-        var folder =
-                Folder.create(workspaceId, projectId, parentId, name, actor.userId(), actor.agent(), clock.instant());
+        var folder = Folder.create(
+                workspaceId, projectId, parentId, name, color, actor.userId(), actor.agent(), clock.instant());
         folderRepository.save(folder);
         return folder.id();
     }
 
     @Transactional
     public void rename(CurrentUser actor, String workspaceId, String id, long expectedVersion, String name) {
+        rename(actor, workspaceId, id, expectedVersion, name, null, false);
+    }
+
+    @Transactional
+    public void rename(
+            CurrentUser actor,
+            String workspaceId,
+            String id,
+            long expectedVersion,
+            String name,
+            String color,
+            boolean hasColor) {
         var folder = access(actor, workspaceId, id, expectedVersion);
         requireFreeName(folderRepository.findAllByPart(workspaceId, folder.projectId()), folder.parentId(), name, id);
-        folder.rename(name, actor.userId(), actor.agent(), clock.instant());
+        folder.revise(name, hasColor ? color : folder.color(), actor.userId(), actor.agent(), clock.instant());
         folderRepository.save(folder);
     }
 
@@ -96,8 +114,8 @@ public class FolderService {
                 continue;
             }
             if (!create) throw DocumentErrorCode.FOLDER_NOT_FOUND.raise();
-            var folder =
-                    Folder.create(workspaceId, projectId, under, name, actor.userId(), actor.agent(), clock.instant());
+            var folder = Folder.create(
+                    workspaceId, projectId, under, name, null, actor.userId(), actor.agent(), clock.instant());
             folderRepository.save(folder);
             part.add(folder);
             parentId = folder.id();

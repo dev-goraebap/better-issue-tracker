@@ -8,7 +8,7 @@ import { labelsQuery } from '@/entities/label';
 import { canWrite as canWriteIn, workspaceQuery } from '@/entities/workspace';
 import { contentsQuery, createFolder, deleteFolder, refreshDocuments, renameFolder, type Folder } from '@/entities/document';
 import { rowsOf, type ProjectFolder } from '../model/rows';
-import { FolderNameDialog } from './FolderNameDialog';
+import { FolderNameDialog, type FolderDraft } from './FolderNameDialog';
 import { FolderTable } from './FolderTable';
 import { FolderTrail } from './FolderTrail';
 
@@ -32,10 +32,10 @@ export function DocumentFolder({ workspaceId, projectId, folderId, title, rootLa
   const labels = useQuery(labelsQuery(workspaceId)).data ?? [];
   const canWrite = canWriteIn(useQuery(workspaceQuery(workspaceId)).data?.myRole);
   const data = contents.data;
-  const name = async (value: string) => {
+  const name = async (draft: FolderDraft) => {
     try {
-      if (naming?.folder) await renameFolder(workspaceId, naming.folder.id, { expectedVersion: naming.folder.version, name: value });
-      else await createFolder(workspaceId, { projectId, parentId: folderId ?? null, name: value });
+      if (naming?.folder) await renameFolder(workspaceId, naming.folder.id, { expectedVersion: naming.folder.version, ...draft });
+      else await createFolder(workspaceId, { projectId, parentId: folderId ?? null, ...draft });
     } catch (failure) { return authError(failure); }
     await refreshDocuments(client, workspaceId);
     setNaming(null);
@@ -73,7 +73,7 @@ export function DocumentFolder({ workspaceId, projectId, folderId, title, rootLa
       {choices.map(choice => <Button key={choice.label} label={choice.label} icon={<NavIcon name={choice.icon} />} variant="ghost"
         onClick={() => { setChoosing(false); choice.onClick(); }} />)}
     </CompactDialog>}
-    {naming && <FolderNameDialog from={naming.folder?.name} onSave={name} onClose={() => setNaming(null)} />}
+    {naming && <FolderNameDialog from={naming.folder} onSave={name} onClose={() => setNaming(null)} />}
     {deleting && <ConfirmDialog title={`'${deleting.name}' 폴더를 지울까요?`} description="빈 폴더만 지울 수 있습니다. 안의 폴더와 문서를 먼저 옮기거나 지우세요."
       confirmLabel="지우기" variant="destructive" word="삭제" isPending={isDeleting} error={deleteError} onClose={() => setDeleting(null)} onConfirm={() => { void remove(); }} />}
   </PageFrame>;

@@ -1,5 +1,5 @@
 import { useCallback, useId, useMemo, useState } from 'react';
-import { Button, MoreMenu } from '@astryxdesign/core';
+import { Button } from '@astryxdesign/core';
 import { useMediaQuery } from '@astryxdesign/core/hooks';
 import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate, useParams, useSearch } from '@tanstack/react-router';
@@ -7,6 +7,7 @@ import { MOBILE_QUERY } from '@/shared/config';
 import { authError } from '@/shared/api';
 import { dateText } from '@/shared/lib/date-text';
 import {
+  MoreMenu,
   FormMessage, ITEM_ROW_LINK, ItemList, ItemMeta, ItemRow, ListMore, ListToolbar, NavIcon, PageFrame, PageState, PageTabs, QueryMessage, SHEET_ROW_LINK, SheetTable, type PageTab, type SheetColumn,
 } from '@/shared/ui';
 import { ProjectMark, projectsQuery, refreshProjects, reorderProjects, restoreProject, type Project, type ProjectStatus } from '@/entities/project';

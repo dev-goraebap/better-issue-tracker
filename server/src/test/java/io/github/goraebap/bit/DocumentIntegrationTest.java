@@ -357,6 +357,78 @@ class DocumentIntegrationTest {
     }
 
     @Test
+    void folderColoursPersistAndPartialEditsKeepOrClearThem() throws Exception {
+        String legacy = folderService.create(owner, workspace, project, null, "기본 폴더");
+        assertThat(folderService.list(owner, workspace, project))
+                .filteredOn(folder -> folder.id().equals(legacy))
+                .singleElement()
+                .satisfies(folder -> assertThat(folder.color()).isNull());
+        var client = login(owner);
+        String base = "/api/v1/workspaces/" + workspace + "/folders";
+        var created = http(
+                client,
+                "POST",
+                base,
+                JSON.writeValueAsString(Map.of("projectId", project, "name", "색상 폴더", "color", "#4cb782")));
+        expect(created, 201);
+        String id = created.headers().firstValue("Location").orElseThrow().replaceAll(".*/", "");
+        assertThat(folderService.list(owner, workspace, project))
+                .filteredOn(folder -> folder.id().equals(id))
+                .singleElement()
+                .satisfies(folder -> assertThat(folder.color()).isEqualTo("#4cb782"));
+        expect(
+                http(
+                        client,
+                        "PATCH",
+                        base + "/" + id,
+                        JSON.writeValueAsString(Map.of("expectedVersion", 0, "name", "바뀐 이름"))),
+                204);
+        assertThat(documentService
+                        .contents(owner, workspace, project, id)
+                        .path()
+                        .getLast()
+                        .color())
+                .isEqualTo("#4cb782");
+        expect(
+                http(
+                        client,
+                        "PATCH",
+                        base + "/" + id,
+                        JSON.writeValueAsString(Map.of("expectedVersion", 1, "name", "바뀐 이름", "color", "#eb5757"))),
+                204);
+        expect(
+                http(
+                        client,
+                        "PATCH",
+                        base + "/" + id,
+                        JSON.writeValueAsString(Map.of("expectedVersion", 1, "name", "오래된 수정", "color", "#112233"))),
+                409);
+        expect(
+                http(
+                        client,
+                        "PATCH",
+                        base + "/" + id,
+                        JSON.writeValueAsString(Map.of("expectedVersion", 2, "name", "바뀐 이름", "color", "red"))),
+                400);
+        assertThat(documentService
+                        .contents(owner, workspace, project, id)
+                        .path()
+                        .getLast()
+                        .color())
+                .isEqualTo("#eb5757");
+        expect(
+                http(client, "PATCH", base + "/" + id, "{\"expectedVersion\":2,\"name\":\"바뀐 이름\",\"color\":null}"),
+                204);
+        assertThat(documentService
+                        .contents(owner, workspace, project, id)
+                        .path()
+                        .getLast()
+                        .color())
+                .isNull();
+        expect(http(client, "POST", base, JSON.writeValueAsString(Map.of("name", "잘못된 색", "color", "#gggggg"))), 400);
+    }
+
+    @Test
     void anAgentWritesFindsAndLinksDocumentsOverMcp() throws Exception {
         labelService.create(owner, workspace, "설계", "#112233");
         workItemService.create(

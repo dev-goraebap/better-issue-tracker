@@ -11,6 +11,7 @@
 .project > a, .project .icon { color: var(--project-color); }
 .project > a { font-weight: 500; }
 .icon, .partMark { display: inline-flex; flex: 0 0 auto; color: var(--color-icon-secondary); }
+.icon { display: inline-grid; place-items: center; inline-size: 1.25rem; block-size: 1.25rem; }
 .icon svg { inline-size: 1rem; block-size: 1rem; }
 .partMark svg { inline-size: 0.875rem; block-size: 0.875rem; }
 .holds { flex: 0 0 auto; font-size: 0.75rem; font-variant-numeric: tabular-nums; color: var(--color-text-secondary); }

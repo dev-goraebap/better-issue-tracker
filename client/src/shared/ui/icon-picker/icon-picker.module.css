@@ -22,10 +22,6 @@
 .searchBox svg { inline-size: 0.875rem; block-size: 0.875rem; flex-shrink: 0; }
 .search { flex: 1; min-inline-size: 0; border: 0; outline: 0; background: none; font: inherit; font-size: 0.8125rem; color: var(--color-text-primary); }
 .search::placeholder { color: var(--color-text-disabled); }
-.colors { display: flex; flex-wrap: wrap; gap: 0.3125rem; padding: 2px; }
-.color { inline-size: 1.25rem; block-size: 1.25rem; padding: 0; border: 0; border-radius: 50%; cursor: pointer; }
-.color[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--color-background-popover), 0 0 0 3.5px var(--color-text-primary); }
-.color:focus-visible { outline: var(--focus-outline-width) var(--focus-outline-style) var(--focus-outline-color); outline-offset: 3px; }
 
 .grid { max-block-size: 20rem; overflow-y: auto; overscroll-behavior: contain; padding: var(--spacing-1) var(--spacing-2) var(--spacing-2); }
 .panel[data-size="lg"] .grid { max-block-size: none; flex: 1; min-block-size: 0; }

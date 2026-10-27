@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
-import { MARK_ICONS, PALETTE } from '@/shared/config';
+import { MARK_ICONS } from '@/shared/config';
+import { ColorPalette } from '../color-palette';
 import { NavIcon } from '../NavIcon';
 import { iconOf, LEGACY_MARKS, loadedIcons, loadIcons, searchIcons } from './catalog';
 import styles from './icon-picker.module.css';
@@ -86,10 +87,7 @@ export function IconPanel({ value, isMobile, onPick, onColor }: {
             }
           }} />
       </label>
-      <div className={styles.colors} role="group" aria-label="색">
-        {PALETTE.map(color => <button key={color.value} type="button" aria-pressed={value.color === color.value} aria-label={color.name} title={color.name}
-          className={styles.color} style={{ background: color.value }} onClick={() => onColor(color.value)} />)}
-      </div>
+      <ColorPalette value={value.color} onChange={onColor} />
     </div>
     <div ref={grid} className={styles.grid} role="group" aria-label="아이콘" onKeyDown={keys}>
       {body}

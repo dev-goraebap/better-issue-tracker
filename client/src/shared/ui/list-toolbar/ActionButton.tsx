@@ -6,7 +6,8 @@ import type { ListAction } from './ListToolbar';
 export function ActionButton({ action, size }: { action: ListAction; size?: 'sm' }) {
   const variant = action.isCreate ? 'primary' : 'secondary';
   const icon = <NavIcon name={action.icon ?? 'plus'} />;
-  if (!action.choices?.length) return <Button label={action.label} variant={variant} size={size} icon={icon} onClick={action.onClick} />;
-  return <DropdownMenu button={{ label: action.label, variant, size, icon, endContent: <NavIcon name="chevron-down" /> }} alignment="end" menuWidth={160}
+  const className = action.isCreate ? 'bit-create-action' : undefined;
+  if (!action.choices?.length) return <Button label={action.label} variant={variant} size={size} icon={icon} onClick={action.onClick} className={className} />;
+  return <DropdownMenu button={{ label: action.label, variant, size, icon, className, endContent: <NavIcon name="chevron-down" /> }} alignment="end" menuWidth={160}
     items={action.choices.map(choice => ({ label: choice.label, icon: choice.icon ? <NavIcon name={choice.icon} /> : undefined, onClick: choice.onClick }))} />;
 }

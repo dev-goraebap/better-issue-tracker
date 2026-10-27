@@ -9,7 +9,16 @@ public final class DocumentViews {
 
     @Schema(
             name = "Folder",
-            requiredProperties = {"id", "projectId", "parentId", "name", "version", "documentCount", "updatedAt"})
+            requiredProperties = {
+                "id",
+                "projectId",
+                "parentId",
+                "name",
+                "color",
+                "version",
+                "documentCount",
+                "updatedAt"
+            })
     public record Folder(
             String id,
 
@@ -20,6 +29,10 @@ public final class DocumentViews {
             String parentId,
 
             String name,
+
+            @Schema(nullable = true, description = "Icon colour as #RRGGBB; null uses the theme's default")
+            String color,
+
             long version,
 
             @Schema(description = "How many live documents are right in it")
