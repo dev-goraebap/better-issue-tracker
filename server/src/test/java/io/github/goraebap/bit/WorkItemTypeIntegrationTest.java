@@ -302,7 +302,7 @@ class WorkItemTypeIntegrationTest {
     }
 
     @Test
-    void changingTypeOrKindIsCheckedAgainstTheParentAndTheChildren() {
+    void changingTypeIsCheckedAgainstTheParentAndTheChildrenAndKindNeverChanges() {
         String epic = create("Epic", "에픽", null);
         String story = hierarchyService.createChild(owner, workspace, project, epic, "Story", null, types.get("스토리"));
         String task = hierarchyService.createChild(owner, workspace, project, story, "Task", null, null);
@@ -336,27 +336,12 @@ class WorkItemTypeIntegrationTest {
         assertThat(children.errorCode().code()).isEqualTo("WORK_ITEM_PARENT_NOT_ALLOWED");
         assertThat(children.getMessage()).contains("하위 업무 1개", "스토리", "'버그'");
 
-        // A story with typed children cannot become an event; an event becoming a task gets the default type.
+        // A task never becomes an event (D-108), whatever its place among the types.
         var toEvent = update(version(story));
         toEvent.setKind(WorkItem.Kind.event);
-        var event = catchThrowableOfType(
-                BusinessException.class, () -> workItemService.revise(owner, workspace, project, story, toEvent));
-        assertThat(event.errorCode().code()).isEqualTo("WORK_ITEM_PARENT_NOT_ALLOWED");
-        assertThat(event.getMessage()).contains("일정으로 바꿀 수 없습니다");
+        assertThat(code(() -> workItemService.revise(owner, workspace, project, story, toEvent)))
+                .isEqualTo("WORK_ITEM_KIND_FIXED");
         String loose = create("Loose", null, null);
-        var looseToEvent = update(version(loose));
-        looseToEvent.setKind(WorkItem.Kind.event);
-        workItemService.revise(owner, workspace, project, loose, looseToEvent);
-        assertThat(workItemQueryService.get(owner, workspace, project, loose).type())
-                .isNull();
-        var back = update(version(loose));
-        back.setKind(WorkItem.Kind.task);
-        workItemService.revise(owner, workspace, project, loose, back);
-        assertThat(workItemQueryService
-                        .get(owner, workspace, project, loose)
-                        .type()
-                        .id())
-                .isEqualTo(types.get("작업"));
 
         // Changing the type and the parent together is checked as one change.
         var promote = update(version(loose));

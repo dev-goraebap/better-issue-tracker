@@ -109,28 +109,6 @@ public final class WorkItem {
                     d.endsAt(),
                     d.allDay());
         }
-
-        /**
-         * These details as the other kind keeps them (D-092): a task keeps its dates, and an event made from a task
-         * with dates lasts those whole days; a timed event loses its times when it becomes a task.
-         */
-        public Details as(Kind kind) {
-            if (kind == Kind.task)
-                return new Details(
-                        title, description, priority, triggerType, peopleIds, startDate, dueDate, null, null, false);
-            if (startsAt != null || endsAt != null || allDay) return this;
-            return new Details(
-                    title,
-                    description,
-                    priority,
-                    triggerType,
-                    peopleIds,
-                    startDate,
-                    dueDate,
-                    null,
-                    null,
-                    startDate != null || dueDate != null);
-        }
     }
 
     private final String id;

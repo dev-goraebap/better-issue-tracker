@@ -301,20 +301,20 @@ public class WorkItemService implements WorkItemFacade, ColumnWorkItemSpi {
         var w = access(actor, workspaceId, projectId, id, true, false);
         version(w, request.getExpectedVersion());
         var d = w.details();
-        var kind = request.hasKind() ? request.getKind() : w.kind();
-        // A new kind keeps what fits it (D-092); what the request gives still wins.
-        var base = kind == w.kind() ? d : d.as(kind);
+        // A task stays a task and an event an event (D-108): another kind is refused, the same one changes nothing.
+        if (request.hasKind() && request.getKind() != w.kind()) throw WorkItemErrorCode.WORK_ITEM_KIND_FIXED.raise();
+        var kind = w.kind();
         var next = new WorkItem.Details(
                 request.hasTitle() ? request.getTitle() : d.title(),
                 request.hasDescription() ? request.getDescription() : d.description(),
                 request.hasPriority() ? request.getPriority() : d.priority(),
                 request.hasTriggerType() ? request.getTriggerType() : d.triggerType(),
                 request.hasPeopleIds() ? request.people() : d.peopleIds(),
-                request.hasStartDate() ? request.getStartDate() : base.startDate(),
-                request.hasDueDate() ? request.getDueDate() : base.dueDate(),
-                request.hasStartsAt() ? request.getStartsAt() : base.startsAt(),
-                request.hasEndsAt() ? request.getEndsAt() : base.endsAt(),
-                request.hasAllDay() ? request.getAllDay() : base.allDay());
+                request.hasStartDate() ? request.getStartDate() : d.startDate(),
+                request.hasDueDate() ? request.getDueDate() : d.dueDate(),
+                request.hasStartsAt() ? request.getStartsAt() : d.startsAt(),
+                request.hasEndsAt() ? request.getEndsAt() : d.endsAt(),
+                request.hasAllDay() ? request.getAllDay() : d.allDay());
         validateDates(next);
         next = shape(kind, next);
         if (!next.peopleIds().equals(d.peopleIds())) people(actor, workspaceId, next.peopleIds());
@@ -323,7 +323,6 @@ public class WorkItemService implements WorkItemFacade, ColumnWorkItemSpi {
         String previousType = w.typeId();
         String typeId = hierarchy(workspaceId, w, kind, request);
         long before = w.version();
-        var previousKind = w.kind();
         var previousLabels = w.labelIds();
         String previousColumn = w.columnId();
         Integer previousReminder = w.reminderMinutes();
@@ -339,17 +338,7 @@ public class WorkItemService implements WorkItemFacade, ColumnWorkItemSpi {
         // The parent moves after the item is saved, so the link module's own rule check reads its new type.
         if (request.hasParentId()) linkFacade.setParent(actor, workspaceId, id, request.getParentId());
         if (w.version() == before) return;
-        if (previousColumn != null && w.columnId() == null) {
-            // An item that became an event left the board: the column it left closes its gap.
-            var old = projectFacade.requireColumn(actor, workspaceId, projectId, previousColumn);
-            applyOrder(
-                    actor,
-                    workItemRepository.findColumnItems(projectId, previousColumn, false),
-                    previousColumn,
-                    old.finalColumn());
-        }
         var changes = new ArrayList<FieldChange>();
-        field(changes, "kind", text(previousKind), text(kind));
         field(changes, "type", previousType, w.typeId());
         field(changes, "title", d.title(), next.title());
         // A description is written in place and saved as it is typed: the activity says it changed, not what it said.
