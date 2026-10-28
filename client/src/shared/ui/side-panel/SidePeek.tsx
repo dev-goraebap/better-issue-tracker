@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import styles from './side-panel.module.css';
 
 const WIDTH_KEY = 'bit.peek.width';
-const MIN_WIDTH = 420;
+const MIN_WIDTH = 520;
 const START_WIDTH = 640;
 const STEP = 16;
 
@@ -23,7 +23,7 @@ const widest = (host: HTMLElement) => Math.min(host.clientWidth, Math.max(START_
  * A detail at the right of the page's card on a desktop (BIT-103): a rectangle the card's whole height, its head on the
  * card's header row, sharing the card's right corners. A clear layer over the rest of the card closes it when pressed,
  * so the list stays in sight. It opens 640px wide; the handle on its left edge (a drag, or ←/→ with it focused) widens
- * it as far as the card's middle (on a narrow card, still 640px) and narrows it to 420px, and the width is kept in
+ * it as far as the card's middle (on a narrow card, still 640px) and narrows it to 520px, and the width is kept in
  * this browser. Escape closes it while no dialog is open over it, and focus starts in it. isRouted marks a panel whose
  * pages have their own addresses (data-router-history).
  */
