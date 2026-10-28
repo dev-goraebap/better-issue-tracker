@@ -21,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 public class LinkService implements LinkFacade {
+    private static final String SUBTASK_OF = "subtask_of";
     private final LinkRepository repository;
     private final TargetFacade targets;
     private final WorkspaceFacade workspaceFacade;
@@ -28,6 +29,7 @@ public class LinkService implements LinkFacade {
     private final RelationQuery relationQuery;
     private final io.github.goraebap.bit.module.project.ProjectFacade projectFacade;
     private final org.springframework.context.ApplicationEventPublisher events;
+    private final io.github.goraebap.bit.module.link.SubtaskRuleSpi subtaskRuleSpi;
 
     @org.springframework.beans.factory.annotation.Value("${app.auth.allowed-origins}")
     private String origins;
@@ -124,10 +126,64 @@ public class LinkService implements LinkFacade {
                 actor, workspaceId, edge.toType(), edge.toId(), !"references".equals(edge.relation()));
         if ("supersedes".equals(edge.relation())) throw LinkErrorCode.LINK_PROTECTED_RELATION.raise();
         if (link.deletedAt() != null) return;
+        if (SUBTASK_OF.equals(edge.relation())) subtaskRuleSpi.requireParentOptional(workspaceId, edge.fromId());
         link.disconnect(actor.userId(), agent(actor), clock.instant());
         repository.save(link);
         changed(actor, from, "removed");
         changed(actor, to, "removed");
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public java.util.Map<String, String> parents(String workspaceId, Set<String> childIds) {
+        return repository.findParentIds(workspaceId, childIds);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Set<String> children(String workspaceId, String parentId) {
+        return repository.findChildIds(workspaceId, parentId);
+    }
+
+    @Override
+    @Transactional
+    public void setParent(CurrentUser actor, String workspaceId, String childId, String parentId) {
+        var child = targets.requireAccess(actor, workspaceId, TargetType.work_item, childId, true);
+        var current = repository.findParentLink(workspaceId, childId);
+        String before = current.map(link -> link.edge().toId()).orElse(null);
+        if (java.util.Objects.equals(before, parentId)) return;
+        var now = clock.instant();
+        io.github.goraebap.bit.module.link.TargetRef to = null;
+        Link.Edge edge = null;
+        if (parentId == null) {
+            subtaskRuleSpi.requireParentOptional(workspaceId, childId);
+        } else {
+            to = targets.requireAccess(actor, workspaceId, TargetType.work_item, parentId, true);
+            edge = edge(TargetType.work_item, childId, SUBTASK_OF, TargetType.work_item, parentId);
+            if (repository.pathExists(workspaceId, SUBTASK_OF, parentId, childId))
+                throw LinkErrorCode.LINK_CYCLE.raise();
+            subtaskRuleSpi.requireParentAllowed(workspaceId, childId, parentId);
+        }
+        // The old link goes first: a work item has one live parent link at a time.
+        if (current.isPresent()) {
+            var link = current.get();
+            link.disconnect(actor.userId(), agent(actor), now);
+            repository.save(link);
+            // A parent since deleted keeps its link (D-104) but has no activity to tell.
+            try {
+                changed(
+                        actor,
+                        targets.requireAccess(actor, workspaceId, TargetType.work_item, before, false),
+                        "removed");
+            } catch (io.github.goraebap.bit.shared.error.BusinessException gone) {
+                if (gone.errorCode() != LinkErrorCode.LINK_TARGET_NOT_FOUND) throw gone;
+            }
+        }
+        if (edge != null) {
+            repository.save(Link.create(workspaceId, edge, actor.userId(), agent(actor), now));
+            changed(actor, to, "added");
+        }
+        changed(actor, child, parentId == null ? "removed" : "added");
     }
 
     private String connect(CurrentUser actor, String workspaceId, Link.Edge edge) {
@@ -135,8 +191,10 @@ public class LinkService implements LinkFacade {
         if (current.isPresent()) return current.get().id();
         if (edge.acyclic() && repository.pathExists(workspaceId, edge.relation(), edge.toId(), edge.fromId()))
             throw LinkErrorCode.LINK_CYCLE.raise();
-        if ("subtask_of".equals(edge.relation()) && repository.hasParent(workspaceId, edge.fromId()))
+        if (SUBTASK_OF.equals(edge.relation()) && repository.hasParent(workspaceId, edge.fromId()))
             throw LinkErrorCode.LINK_PARENT_CONFLICT.raise();
+        if (SUBTASK_OF.equals(edge.relation()))
+            subtaskRuleSpi.requireParentAllowed(workspaceId, edge.fromId(), edge.toId());
         if ("supersedes".equals(edge.relation()) && repository.hasReplacement(workspaceId, edge.toId()))
             throw LinkErrorCode.LINK_REPLACEMENT_CONFLICT.raise();
         var link = Link.create(workspaceId, edge, actor.userId(), agent(actor), clock.instant());

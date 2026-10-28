@@ -14,9 +14,11 @@ export type PropertyOption = { value: string; label: string; icon?: ReactNode };
  * property's name in the quiet ink), opening a menu with a search across its top ('우선순위 바꾸기…'), rows of 32px,
  * the chosen ones ticked. Typing narrows the rows; the arrow keys move, Enter picks, and while nothing is typed the
  * number keys pick the first nine. One choice closes the menu; a multiple one (labels) stays open to pick more. A phone
- * opens the same rows in a bottom sheet.
+ * opens the same rows in a bottom sheet. With onSearch the rows are a search the caller runs (상위 업무 among all the
+ * work items): the words go there and the rows show as they come. isRequired marks a property that must be set before
+ * the item is made; the form says so when it is not.
  */
-export function PropertyPicker({ label, options, value, onChange, icon, isMultiple = false }: {
+export function PropertyPicker({ label, options, value, onChange, icon, isMultiple = false, isRequired = false, onSearch, isSearching = false }: {
   /** The property's name: the pill's text while unset, and the menu's. */
   label: string;
   options: PropertyOption[];
@@ -26,6 +28,12 @@ export function PropertyPicker({ label, options, value, onChange, icon, isMultip
   /** The pill's mark while unset (a NavIcon name). */
   icon: string;
   isMultiple?: boolean;
+  /** Must be set before the item is made: the unset pill says so. */
+  isRequired?: boolean;
+  /** Where the typed words go when the caller finds the rows itself, which then show unfiltered. */
+  onSearch?: (words: string) => void;
+  /** The caller's search is under way. */
+  isSearching?: boolean;
 }) {
   const isMobile = useMediaQuery(MOBILE_QUERY);
   const [isOpen, setOpen] = useState(false);
@@ -35,8 +43,8 @@ export function PropertyPicker({ label, options, value, onChange, icon, isMultip
   const titleId = useId();
   const list = useRef<HTMLDivElement>(null);
   const chosen = value === undefined ? [] : typeof value === 'string' ? [value] : [...value];
-  const shown = useMemo(() => options.filter(option => !query || option.label.toLowerCase().includes(query.toLowerCase())), [options, query]);
-  const open = (next: boolean) => { setOpen(next); setQuery(''); setAt(0); };
+  const shown = useMemo(() => (onSearch ? options : options.filter(option => !query || option.label.toLowerCase().includes(query.toLowerCase()))), [options, query, onSearch]);
+  const open = (next: boolean) => { setOpen(next); setQuery(''); setAt(0); onSearch?.(''); };
   const pick = (picked: string) => {
     if (!isMultiple) { onChange(picked === chosen[0] ? chosen[0] : picked); open(false); return; }
     const next = chosen.includes(picked) ? chosen.filter(each => each !== picked) : [...chosen, picked];
@@ -56,18 +64,18 @@ export function PropertyPicker({ label, options, value, onChange, icon, isMultip
   const shownValue = matched.length === 0 ? undefined : matched;
   const pill = (ref?: (node: HTMLElement | null) => void, onClick?: () => void) => <span ref={ref} className={styles.wrap}>
     <button type="button" className={styles.pill} data-empty={!shownValue || undefined} aria-haspopup={isMobile ? 'dialog' : 'listbox'} aria-expanded={isOpen}
-      aria-label={`${label}: ${shownValue ? shownValue.map(option => option.label).join(', ') : '없음'}`} onClick={onClick ?? (() => open(true))}>
+      aria-label={`${label}${isRequired ? ' (필수)' : ''}: ${shownValue ? shownValue.map(option => option.label).join(', ') : '없음'}`} onClick={onClick ?? (() => open(true))}>
       {shownValue
         ? isMultiple && shownValue.length > 1
           ? <><span className={styles.dots}>{shownValue.map(option => <span key={option.value} className={styles.mark}>{option.icon}</span>)}</span>{label} {shownValue.length}</>
-          : <><span className={styles.mark}>{shownValue[0]!.icon}</span>{shownValue[0]!.label}</>
-        : <><span className={styles.mark}><NavIcon name={icon} /></span>{label}</>}
+          : <><span className={styles.mark}>{shownValue[0]!.icon}</span><span className={styles.pillText}>{shownValue[0]!.label}</span></>
+        : <><span className={styles.mark}><NavIcon name={icon} /></span>{label}{isRequired && <span className={styles.required} aria-hidden="true">*</span>}</>}
     </button>
   </span>;
   const menu = <div className={styles.menu} data-size={isMobile ? 'lg' : undefined}>
     <input className={styles.search} value={query} autoFocus={!isMobile} placeholder={`${label} ${isMultiple ? '고르기' : '바꾸기'}…`} aria-label={`${label} 찾기`}
       aria-controls={listId} aria-activedescendant={shown[at] ? `${listId}-${at}` : undefined}
-      onChange={event => { setQuery(event.target.value); setAt(0); }} onKeyDown={keys} />
+      onChange={event => { setQuery(event.target.value); setAt(0); onSearch?.(event.target.value); }} onKeyDown={keys} />
     <div ref={list} id={listId} role="listbox" aria-label={label} aria-multiselectable={isMultiple || undefined} className={styles.list}>
       {shown.map((option, index) => <div key={option.value} id={`${listId}-${index}`} role="option" aria-selected={chosen.includes(option.value)}
         data-active={index === at || undefined} className={styles.option} onMouseEnter={() => setAt(index)} onClick={() => pick(option.value)}>
@@ -76,7 +84,7 @@ export function PropertyPicker({ label, options, value, onChange, icon, isMultip
         {chosen.includes(option.value) && <span className={styles.tick}><NavIcon name="check" /></span>}
         {!isMobile && !query && index < 9 && <kbd className={styles.kbd}>{index + 1}</kbd>}
       </div>)}
-      {shown.length === 0 && <p className={styles.empty}>'{query}'에 맞는 {subject(label)} 없습니다</p>}
+      {shown.length === 0 && <p className={styles.empty}>{isSearching ? '찾고 있습니다…' : query ? `'${query}'에 맞는 ${subject(label)} 없습니다` : `고를 수 있는 ${subject(label)} 없습니다`}</p>}
     </div>
   </div>;
   if (isMobile) return <>

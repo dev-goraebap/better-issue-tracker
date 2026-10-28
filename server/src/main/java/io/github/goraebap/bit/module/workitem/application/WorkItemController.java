@@ -65,7 +65,13 @@ class WorkItemController {
     public record Child(
             @jakarta.validation.constraints.NotBlank @jakarta.validation.constraints.Size(max = 200) String title,
 
-            @jakarta.validation.constraints.Size(max = 20000) String description) {}
+            @jakarta.validation.constraints.Size(max = 20000) String description,
+
+            @jakarta.validation.constraints.Pattern(regexp = WorkItemRequests.ID) @io.swagger.v3.oas.annotations.media.Schema(
+                    nullable = true,
+                    description =
+                            "The subtask's type (D-104); null is the workspace's default. It must allow the parent's type")
+            String typeId) {}
 
     @PostMapping("/projects/{projectId}/work-items/{workItemId}/children")
     @ApiResponse(responseCode = "201", description = "하위 작업 생성")
@@ -76,7 +82,7 @@ class WorkItemController {
             @PathVariable String workItemId,
             @Valid @RequestBody Child request) {
         String id = hierarchy.createChild(
-                actor, workspaceId, projectId, workItemId, request.title(), request.description());
+                actor, workspaceId, projectId, workItemId, request.title(), request.description(), request.typeId());
         return ResponseEntity.created(URI.create(
                         "/api/v1/workspaces/" + workspaceId + "/projects/" + projectId + "/work-items/" + id))
                 .build();

@@ -109,6 +109,8 @@ erDiagram
 | `work_item_person` | `work_item_person_id`, `work_item_id`, `iam_user_id`, `created_at`, `created_by`, `created_by_agent?` | `ux_work_item_person_work_item_id_iam_user_id`, `ix_work_item_person_iam_user_id_work_item_id` |
 | `recurrence` | `recurrence_id`, `workspace_id`, `project_id`, `frequency`(daily·weekly·monthly), `interval_count`, `weekdays?`, `starts_on`, `until_on?`, `time_zone`, 본보기(`kind`, `title`, `description?`, `priority?`, `people_ids`, `label_ids`, `board_column_id?`, `date_parts`, `span_days`, `start_time?`, `duration_minutes?`, `all_day`), `version`, 감사 열 | `ix_recurrence_project_id`, `ix_recurrence_until_on` |
 | `work_item_label` | `work_item_label_id`, `work_item_id`, `label_id`, `created_at`, `created_by`, `created_by_agent?` | `ux_work_item_label_work_item_id_label_id`, `ix_work_item_label_label_id_work_item_id` |
+| `work_item_type` | `work_item_type_id`, `workspace_id`, `name varchar(32)`, `icon varchar(32)?`, `color varchar(7)`, `position integer`, `is_default boolean`, `parent_required boolean`, `version bigint`, 감사 | `ux_work_item_type_workspace_id_name` (workspace_id, lower(name), deleted_at IS NULL), `ux_work_item_type_workspace_id_default` (is_default=1), `ix_work_item_type_workspace_id_position` |
+| `work_item_type_parent` | `work_item_type_parent_id`, `work_item_type_id`, `parent_work_item_type_id`, `created_at`, `created_by`, `created_by_agent?` | `ux_work_item_type_parent_type_parent`, `ix_work_item_type_parent_parent_work_item_type_id` |
 
 - **상태는 컬럼 하나로**: `board_column_id`가 NULL이면 백로그다. Kaneo처럼 상태 문자열과 컬럼 ID를 함께 두지 않는다 (D-009).
 - **`closed_at`**: `is_final` 컬럼으로 옮길 때 채우고, 다른 컬럼으로 나오면 비운다. 결정의 "이행 2/3" 계산(D-012)이 이 값을 센다.
@@ -278,3 +280,13 @@ V25는 `reaction`(reaction_id, workspace_id, target_type, target_id, emoji, user
 ## V26 프로젝트 선택 사항 (D-103 / BIT-78)
 
 `work_item.workspace_id`가 작업의 필수 소유 범위이며 `project_id`는 nullable이다. 이동·해제 시 `public_ref`에 기존 참조를 고정하고, 프로젝트 없는 작업은 `workspace_status`(todo/doing/done/null)를 사용한다. 프로젝트 번호 고유 인덱스는 참조가 고정되지 않은 행에 적용하고, 고정 참조는 워크스페이스 안에서 유일하다. 기존 업무·라벨·사람·코드 링크를 보존하여 테이블을 재구성한다. 삭제·워크스페이스 권한·버전 검사는 기존과 같다.
+
+
+## V27 업무 유형 (D-104 / BIT-89)
+
+- `work_item_type`: 워크스페이스의 업무 유형(이름·아이콘·색·순서). 이름은 trim 후 1~32자이고 공간 안에서 대소문자를 가리지 않고 고유하다(삭제된 행 제외). `icon`은 화면이 그리는 아이콘 이름(`epic`·`story`·`tasks`·`bug` 등)을 그대로 저장한다. 기본 유형(`is_default=1`)은 공간에 하나뿐이고(부분 고유 인덱스), 지울 수 없고 상위 필수일 수 없다(CHECK). 삭제는 `deleted_at` 소프트 삭제다.
+- `work_item_type_parent`: 그 유형이 들어갈 수 있는 상위 유형. 행이 없으면 최상위 유형이다. `parent_required=1`이면 행이 하나 이상이어야 하며 서비스가 검사한다. 유형을 지우면 다른 유형의 허용 목록에서 그 행을 지운다.
+- `work_item.work_item_type_id`(`work_item_type` FK, `ix_work_item_work_item_type_id`): 작업은 꼭 하나, 일정은 NULL. 열 추가로는 CHECK를 붙일 수 없어 서비스와 도메인이 지킨다.
+- 마이그레이션은 모든 워크스페이스에 에픽(`epic`, 최상위)·스토리(`story`, 에픽 밑 필수)·작업(`tasks`, 에픽·스토리·작업 밑 선택, 기본)·버그(`bug`, 에픽·스토리·작업 밑 선택)를 넣고, 기존 작업을 모두 '작업'으로 채운다. 작업 밑 작업이 허용되므로 기존 `subtask_of` 연결은 그대로 맞는다. 이전에 일정 밑에 둔 작업이 있으면 그 연결은 남고 다음 변경 때 검사한다. 새 워크스페이스는 생성 트랜잭션 안에서 같은 네 유형을 받는다.
+- 규칙(상위 유형·필수)은 `link`의 `subtask_of`를 기준으로 서비스가 검사한다. 상위 업무를 지워도(소프트 삭제) 하위 연결은 남고, 규칙은 다음 명시적 변경(유형·종류·상위 바꾸기, 연결·끊기) 때 다시 본다. 규칙을 바꿀 때 어긋나게 되는 업무 수는 `link`와 `work_item`을 함께 읽어 센다.
+

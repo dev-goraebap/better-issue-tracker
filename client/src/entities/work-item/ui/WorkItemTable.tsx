@@ -1,6 +1,7 @@
 import { useMemo, type ReactNode } from 'react';
 import { SHEET_ROW_LINK, SheetTable, type ListSort, type SheetColumn } from '@/shared/ui';
 import { dateText } from '@/shared/lib/date-text';
+import { TypeMark } from '@/entities/work-item-type/@x/work-item';
 import type { WorkItem } from '../api/work-item';
 import type { WorkItemSearch } from '../model/search';
 import type { ViewColumn } from '../model/views';
@@ -14,7 +15,7 @@ import styles from './work-item.module.css';
 /**
  * A desktop's work items as the list (D-064), each property a column the view shows (D-066): the key and title link the
  * row to the work item's page, carrying the view and its conditions so the way back returns to the same list; a work item
- * without a property leaves its cell empty. Headers with a sortKey set the order. A project's list names each status
+ * without a property leaves its cell empty. A task's type (D-104) marks it between the key and the title. Headers with a sortKey set the order. A project's list names each status
  * by its column (columnNames); 전체 by the column's category.
  */
 export function WorkItemTable({ workspaceId, rows, search, columns, columnNames, order, foot, badges }: {
@@ -35,6 +36,7 @@ export function WorkItemTable({ workspaceId, rows, search, columns, columnNames,
     return [
       { key: 'title', header: '제목', sortKey: 'title', render: row => <>
         <span className={styles.key}>{row.key}</span>
+        {row.type && <TypeMark type={row.type} />}
         <WorkItemLink workspaceId={workspaceId} item={row} search={search} className={SHEET_ROW_LINK}>{row.title}</WorkItemLink>
         {badges?.get(row.id)}
       </> },

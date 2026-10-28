@@ -22,6 +22,13 @@ public final class WorkItemViews {
             requiredProperties = {"id", "name", "color", "system"})
     public record Label(String id, String name, String color, boolean system) {}
 
+    /** A work item's type as lists show it (D-104). */
+    @Schema(
+            name = "WorkItemTypeRef",
+            requiredProperties = {"id", "name", "icon", "color"})
+    public record Type(
+            String id, String name, @Schema(nullable = true) String icon, String color) {}
+
     @Schema(
             name = "WorkItemPerson",
             requiredProperties = {"id", "name"})
@@ -68,6 +75,8 @@ public final class WorkItemViews {
                 "number",
                 "key",
                 "kind",
+                "type",
+                "parentId",
                 "title",
                 "description",
                 "columnId",
@@ -103,6 +112,13 @@ public final class WorkItemViews {
             long number,
             String key,
             WorkItem.Kind kind,
+
+            @Schema(nullable = true, description = "A task's type (D-104); null for an event")
+            Type type,
+
+            @Schema(nullable = true, description = "The live work item it is a subtask of (subtask_of); null for none")
+            String parentId,
+
             String title,
             @Schema(nullable = true) String description,
             @Schema(nullable = true) String columnId,

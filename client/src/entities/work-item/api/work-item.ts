@@ -4,11 +4,11 @@ import { command, createAt, readJson, type components } from '@/shared/api';
 export type WorkItem = components['schemas']['WorkItem'];
 export type ItemLabel = WorkItem['labels'][number];
 export type ColumnCategory = NonNullable<WorkItem['columnCategory']>;
-/** The lists' conditions; arrays are sent as repeated parameters (projectId, labelId, columnId and category are any-of). */
+/** The lists' conditions; arrays are sent as repeated parameters (projectId, labelId, typeId, columnId and category are any-of). */
 export type TaskFilters = {
   q?: string; column?: string; personId?: string; kind?: string[]; priority?: string; triggerType?: string; archived?: boolean; deleted?: boolean; closed?: string;
   from?: string; to?: string; sort?: string; direction?: string; size?: number; hasDates?: boolean;
-  projectId?: string[]; labelId?: string[]; columnId?: string[]; category?: string[];
+  projectId?: string[]; labelId?: string[]; typeId?: string[]; columnId?: string[]; category?: string[];
 };
 export const workBase = (w: string, p: string) => `/api/v1/workspaces/${encodeURIComponent(w)}/projects/${encodeURIComponent(p)}/work-items`;
 export const itemPath = (w: string, p: string, id: string) => p ? `${workBase(w, p)}/${encodeURIComponent(id)}` : `/api/v1/workspaces/${encodeURIComponent(w)}/work-items/id/${encodeURIComponent(id)}`;

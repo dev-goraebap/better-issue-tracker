@@ -75,6 +75,46 @@ class JooqWorkItemRepository implements WorkItemRepository {
     }
 
     @Override
+    public List<WorkItem> findAllById(String workspaceId, Set<String> ids) {
+        if (ids.isEmpty()) return List.of();
+        return items(dslContext
+                .selectFrom(WORK_ITEM)
+                .where(WORK_ITEM.WORKSPACE_ID.eq(workspaceId))
+                .and(WORK_ITEM.WORK_ITEM_ID.in(ids))
+                .and(WORK_ITEM.DELETED_AT.isNull())
+                .fetch());
+    }
+
+    @Override
+    public Optional<WorkItem> findAnyById(String workspaceId, String id) {
+        return single(dslContext
+                .selectFrom(WORK_ITEM)
+                .where(WORK_ITEM.WORKSPACE_ID.eq(workspaceId))
+                .and(WORK_ITEM.WORK_ITEM_ID.eq(id))
+                .fetch());
+    }
+
+    @Override
+    public Map<String, String> findReferences(String workspaceId, Set<String> ids) {
+        if (ids.isEmpty()) return Map.of();
+        var references = new HashMap<String, String>();
+        dslContext
+                .select(WORK_ITEM.WORK_ITEM_ID, WORK_ITEM.PUBLIC_REF, WORK_ITEM.NUMBER, PROJECT_KEY.KEY)
+                .from(WORK_ITEM)
+                .leftJoin(PROJECT_KEY)
+                .on(PROJECT_KEY.PROJECT_ID.eq(WORK_ITEM.PROJECT_ID).and(PROJECT_KEY.IS_CURRENT.isTrue()))
+                .where(WORK_ITEM.WORKSPACE_ID.eq(workspaceId))
+                .and(WORK_ITEM.WORK_ITEM_ID.in(ids))
+                .and(WORK_ITEM.DELETED_AT.isNull())
+                .forEach(r -> references.put(
+                        r.get(WORK_ITEM.WORK_ITEM_ID),
+                        r.get(WORK_ITEM.PUBLIC_REF) != null
+                                ? r.get(WORK_ITEM.PUBLIC_REF)
+                                : r.get(PROJECT_KEY.KEY) + "-" + r.get(WORK_ITEM.NUMBER)));
+        return Map.copyOf(references);
+    }
+
+    @Override
     public Optional<WorkItem> findById(String projectId, String id, boolean includeDeleted) {
         return single(dslContext
                 .selectFrom(WORK_ITEM)
@@ -240,6 +280,7 @@ class JooqWorkItemRepository implements WorkItemRepository {
                 referenceKey(r),
                 r.get(WORK_ITEM.NUMBER),
                 WorkItem.Kind.valueOf(r.get(WORK_ITEM.KIND)),
+                r.get(WORK_ITEM.WORK_ITEM_TYPE_ID),
                 details(r, mine.stream().map(Person::id).collect(Collectors.toSet())),
                 labels.getOrDefault(id, Set.of()),
                 r.get(WORK_ITEM.BOARD_COLUMN_ID),
@@ -273,6 +314,7 @@ class JooqWorkItemRepository implements WorkItemRepository {
         r.setWorkspaceStatus(w.workspaceStatus());
         r.setNumber(w.number());
         r.setKind(w.kind().name());
+        r.setWorkItemTypeId(w.typeId());
         r.setTitle(d.title());
         r.setDescription(d.description());
         r.setBoardColumnId(w.columnId());
@@ -386,6 +428,7 @@ class JooqWorkItemRepository implements WorkItemRepository {
                     .and(WORK_ITEM_LABEL.LABEL_ID.in(q.labelIds()))
                     .and(LABEL.WORKSPACE_ID.eq(q.workspaceId()))
                     .and(LABEL.DELETED_AT.isNull())));
+        if (!q.typeIds().isEmpty()) where = where.and(WORK_ITEM.WORK_ITEM_TYPE_ID.in(q.typeIds()));
         if (!q.priorities().isEmpty())
             where = where.and(WORK_ITEM.PRIORITY.in(
                     q.priorities().stream().map(Enum::name).toList()));
@@ -513,7 +556,8 @@ class JooqWorkItemRepository implements WorkItemRepository {
                         r.get(WORK_ITEM.REMINDER_MINUTES),
                         r.get(WORK_ITEM.VERSION),
                         AuditRecords.read(r))
-                .locate(r.get(WORK_ITEM.WORKSPACE_ID), r.get(WORK_ITEM.PUBLIC_REF), r.get(WORK_ITEM.WORKSPACE_STATUS));
+                .locate(r.get(WORK_ITEM.WORKSPACE_ID), r.get(WORK_ITEM.PUBLIC_REF), r.get(WORK_ITEM.WORKSPACE_STATUS))
+                .typed(r.get(WORK_ITEM.WORK_ITEM_TYPE_ID));
     }
 
     private WorkItem.Details details(Record r, Set<String> peopleIds) {

@@ -1,0 +1,4 @@
+/* A type's mark (D-104): its icon in its colour, 14px (16px at md), on the line's middle so titles after it line up. */
+.mark { display: inline-grid; place-items: center; flex-shrink: 0; vertical-align: -0.125em; }
+.mark svg { inline-size: 0.875rem; block-size: 0.875rem; stroke-width: 2; }
+.mark[data-size='md'] svg { inline-size: 1rem; block-size: 1rem; }

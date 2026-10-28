@@ -149,6 +149,9 @@ public final class WorkItem {
     private String recurrenceId;
     private LocalDate occurrenceOn;
     private Integer reminderMinutes;
+    /** A task's type (D-104); an event has none. */
+    private String typeId;
+
     private long version;
     private Audit audit;
 
@@ -189,6 +192,7 @@ public final class WorkItem {
             String projectId,
             long number,
             Kind kind,
+            String typeId,
             Details details,
             Set<String> labelIds,
             String columnId,
@@ -197,12 +201,13 @@ public final class WorkItem {
             String actor,
             String agent,
             Instant now) {
+        requireType(kind, typeId);
         if (number < 1 || !Double.isFinite(position) || position < 0 || columnId == null && finalColumn)
             throw new IllegalArgumentException("Invalid work item position or number");
         Objects.requireNonNull(kind, "kind");
         if (kind == Kind.event && columnId != null) throw new IllegalArgumentException("An event has no column");
         Details valid = Details.of(kind, Objects.requireNonNull(details, "details"));
-        return new WorkItem(
+        var item = new WorkItem(
                 Ids.newId(),
                 projectId,
                 number,
@@ -218,6 +223,8 @@ public final class WorkItem {
                 null,
                 0,
                 Audit.create(actor, agent, now));
+        item.typeId = typeId;
+        return item;
     }
 
     public static WorkItem fromPersistence(
@@ -296,6 +303,12 @@ public final class WorkItem {
         touch(actor, agent, now);
     }
 
+    /** The type a stored work item has; set as it is read, like its place. */
+    public WorkItem typed(String value) {
+        this.typeId = value;
+        return this;
+    }
+
     public void remind(Integer minutes) {
         this.reminderMinutes = reminder(kind, minutes);
     }
@@ -316,12 +329,12 @@ public final class WorkItem {
     }
 
     public void revise(Details next, String actor, String agent, Instant now) {
-        revise(kind, next, labelIds, reminderMinutes, actor, agent, now);
+        revise(kind, typeId, next, labelIds, reminderMinutes, actor, agent, now);
     }
 
     /** One revision for the fields and the label set together, so a combined edit is one version. */
     public void revise(Details next, Set<String> nextLabelIds, String actor, String agent, Instant now) {
-        revise(kind, next, nextLabelIds, reminderMinutes, actor, agent, now);
+        revise(kind, typeId, next, nextLabelIds, reminderMinutes, actor, agent, now);
     }
 
     /**
@@ -330,6 +343,7 @@ public final class WorkItem {
      */
     public void revise(
             Kind nextKind,
+            String nextTypeId,
             Details next,
             Set<String> nextLabelIds,
             Integer nextReminder,
@@ -337,10 +351,12 @@ public final class WorkItem {
             String agent,
             Instant now) {
         Objects.requireNonNull(nextKind, "kind");
+        requireType(nextKind, nextTypeId);
         Details valid = Details.of(nextKind, Objects.requireNonNull(next, "details"));
         Set<String> labels = Set.copyOf(Objects.requireNonNull(nextLabelIds, "labelIds"));
         Integer reminder = reminder(nextKind, nextReminder);
         if (nextKind == kind
+                && Objects.equals(nextTypeId, typeId)
                 && valid.equals(details)
                 && labels.equals(labelIds)
                 && Objects.equals(reminder, reminderMinutes)) return;
@@ -351,6 +367,7 @@ public final class WorkItem {
             closedAt = null;
         }
         this.kind = nextKind;
+        this.typeId = nextTypeId;
         this.details = valid;
         this.labelIds = labels;
         touch(actor, agent, now);
@@ -390,6 +407,12 @@ public final class WorkItem {
         }
         audit = audit.restore(actor, agent, now);
         version++;
+    }
+
+    /** A task has exactly one type and an event none (D-104). */
+    private static void requireType(Kind kind, String typeId) {
+        if (kind == Kind.task && typeId == null) throw new IllegalArgumentException("A task has a type");
+        if (kind == Kind.event && typeId != null) throw new IllegalArgumentException("An event has no type");
     }
 
     private void touch(String actor, String agent, Instant now) {

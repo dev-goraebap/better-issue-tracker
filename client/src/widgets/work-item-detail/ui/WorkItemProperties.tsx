@@ -7,6 +7,7 @@ import { ConfirmDialog, DuePicker, EventTimePicker, NavIcon, PropertyPicker, Rep
 import { labelsQuery } from '@/entities/label';
 import { columnsQuery } from '@/entities/project';
 import { useMembers } from '@/entities/workspace';
+import { TypeMark, typeOptions, workItemTypesQuery } from '@/entities/work-item-type';
 import {
   eventFields, eventTimeOf, eventWhen, itemQuery, labelOptions, LabelTokens, moveItem, NO_REMINDER, NO_STATUS, peopleOptions, PersonCell,
   priorityOptions, PriorityMark, refreshItems, reminderOptions, reminderText, repeatBody, repeatItem, repeatOf, statusOptions, StatusBadge, setWorkspaceStatus, stopRepeating, updateItem, type WorkItem,
@@ -22,12 +23,16 @@ const KIND_OPTIONS = [
   { value: 'event', label: '일정', icon: <NavIcon name="calendar" /> },
 ];
 
-/** Properties change directly beneath the title. Serialize writes so rapid multi-selection keeps every choice. */
+/**
+ * Properties change directly beneath the title. Serialize writes so rapid multi-selection keeps every choice. A task's
+ * type (D-104) changes here too; a type its parent or subtasks rule out is refused, and the toast says why.
+ */
 export function WorkItemProperties({ item, canWrite }: { item: WorkItem; canWrite: boolean }) {
   const { workspaceId: w, id } = item; const p = item.projectId ?? '';
   const client = useQueryClient(); const toast = useToast();
   const columns = useQuery({ ...columnsQuery(w, p), enabled: !!p }).data ?? [];
   const labels = useQuery(labelsQuery(w)).data ?? [];
+  const types = useQuery(workItemTypesQuery(w)).data ?? [];
   const members = useMembers(w).items;
   const [preview, setPreview] = useState<Patch & { columnId?: string | null }>({});
   const queue = useRef(Promise.resolve()); const pending = useRef(0);
@@ -57,6 +62,9 @@ export function WorkItemProperties({ item, canWrite }: { item: WorkItem; canWrit
     {/* 작업 or 일정 changes here since the edit page is gone (D-107); the server moves its fields over (D-092). */}
     {canWrite && field('종류', 'board', <PropertyPicker label="종류" icon={isEvent ? 'calendar' : 'board'} options={KIND_OPTIONS} value={item.kind}
       onChange={value => { if (value && value !== item.kind) patch({ kind: value as WorkItem['kind'] }); }} />)}
+    {!isEvent && field('유형', 'tasks', canWrite
+      ? <PropertyPicker label="유형" icon="tasks" options={typeOptions(types)} value={preview.typeId ?? item.type?.id} onChange={value => { if (value && value !== (preview.typeId ?? item.type?.id)) patch({ typeId: value as string }); }} />
+      : item.type ? <span className={styles.typeValue}><TypeMark type={item.type} />{item.type.name}</span> : '없음')}
     {!isEvent && field('상태', 'status', canWrite
       ? <PropertyPicker label="상태" icon="status" options={p ? statusOptions(columns) : [
         { value: 'todo', label: '할 일', icon: <StatusBadge category="todo" isLabelHidden /> }, { value: 'doing', label: '진행 중', icon: <StatusBadge category="doing" isLabelHidden /> }, { value: 'done', label: '완료', icon: <StatusBadge category="done" isLabelHidden /> }, { value: NO_STATUS, label: '상태 없음' },

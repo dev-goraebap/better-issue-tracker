@@ -2,10 +2,11 @@ import { useQuery } from '@tanstack/react-query';
 import { useParams } from '@tanstack/react-router';
 import { WORKSPACE_SETTINGS_MENU } from '@/shared/config';
 import { PageFrame, PageState, QueryMessage } from '@/shared/ui';
-import { canWrite, workspaceQuery } from '@/entities/workspace';
+import { canManage, canWrite, workspaceQuery } from '@/entities/workspace';
 import { GeneralSettings } from './GeneralSettings';
 import { LabelsSettings } from './LabelsSettings';
 import { RolesSettings } from './RolesSettings';
+import { TypesSettings } from './TypesSettings';
 
 /**
  * PATTERN · 워크스페이스 설정, /workspaces/$workspaceId/settings/$section (the menu turned into the workspace's settings, D-061).
@@ -22,6 +23,7 @@ export function WorkspaceSettingsPage() {
     {!workspace.data ? <QueryMessage pending={workspace.isPending} error={workspace.error} retry={() => { void workspace.refetch(); }} />
       : section === 'general' ? <GeneralSettings key={workspace.data.id} workspace={workspace.data} />
       : section === 'roles' ? <RolesSettings workspaceId={workspaceId} />
+      : section === 'types' ? <TypesSettings workspaceId={workspaceId} canWrite={canManage(role)} />
       : <LabelsSettings workspaceId={workspaceId} canWrite={canWrite(role, 'MANAGE_LABELS')} />}
   </PageFrame>;
 }

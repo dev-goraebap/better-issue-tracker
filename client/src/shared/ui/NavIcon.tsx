@@ -4,6 +4,7 @@ import {
   Inbox, KanbanSquare, LayoutGrid, LayoutList, Link, ListFilter, ListTodo, Lock, LogOut, Mail, Maximize2, MessageSquare, Milestone, PanelLeft, Paperclip,
   SquarePen, Plus, RefreshCw, Repeat, Rows3, Scale, Search, Settings, Shield, SlidersHorizontal, Sparkles, Table2, Tag, Trash2, User, Users, Workflow, X,
   ArrowUp, Bold, Bot, Bug, LayoutTemplate, Download, ExternalLink, GitCommitHorizontal, GitMerge, GitPullRequest, GitPullRequestClosed, GitPullRequestDraft, Unplug, Webhook, Code, Heading1, Heading2, Heading3, Italic, List, ListChecks, ListOrdered, Minus, Redo2, SquareCode, Strikethrough, TextQuote, Type, Undo2, Unlink,
+  BookMarked, Lightbulb, Rocket, Target, Wrench, Zap,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -100,6 +101,13 @@ const icons: Record<string, LucideIcon> = {
   // Work item templates (D-077).
   bug: Bug,
   template: LayoutTemplate,
+  // Work item types (D-104): the defaults' marks (에픽, 스토리; 작업 is tasks, 버그 bug) and a few more to pick from.
+  epic: Zap,
+  story: BookMarked,
+  idea: Lightbulb,
+  target: Target,
+  rocket: Rocket,
+  wrench: Wrench,
   // Repository integrations (D-087).
   'pull-request': GitPullRequest,
   'pull-request-draft': GitPullRequestDraft,

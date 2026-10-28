@@ -8,6 +8,9 @@
   border-radius: var(--radius-full); background: var(--color-background-muted); box-shadow: inset 0 0 0 1px var(--bit-chip-ring);
   font: inherit; font-size: 0.75rem; font-weight: 500; color: var(--color-text-primary); white-space: nowrap; cursor: pointer; }
 .pill[data-empty] { color: var(--color-text-secondary); }
+/* A long value (a work item's title) ends in an ellipsis; a required property unset shows its mark in the danger ink. */
+.pillText { max-inline-size: 16rem; overflow: hidden; text-overflow: ellipsis; }
+.required { margin-inline-start: -0.125rem; color: var(--color-text-danger, var(--color-danger)); }
 .pill:hover, .pill[aria-expanded="true"] { background: var(--color-background-gray); }
 .pill:focus-visible { outline: var(--focus-outline-width) var(--focus-outline-style) var(--focus-outline-color); }
 .mark { display: inline-grid; place-items: center; flex-shrink: 0; color: var(--color-icon-secondary); }

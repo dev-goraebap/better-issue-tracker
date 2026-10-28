@@ -42,6 +42,8 @@ class WorkItemMcpTools implements McpToolProvider {
     private static final String REPEAT_EVERY = "반복 간격: 2면 격주·격월 (기본 1)";
     private static final String REPEAT_ON = "매주 반복할 요일들: mon, tue, wed, thu, fri, sat, sun (생략하면 그 업무의 요일)";
     private static final String REPEAT_UNTIL = "마지막 회차가 올 수 있는 날 YYYY-MM-DD (생략하면 끝없이)";
+    private static final String TYPE =
+            "업무 유형 이름(예: 에픽, 스토리, 작업, 버그). 생략하면 워크스페이스의 기본 유형입니다. 유형마다 둘 수 있는 상위가 정해져 있으니 모르면 list_work_item_types로 확인합니다.";
     private static final String TIME_ZONE = "반복 시각의 시간대(예: Asia/Seoul). 생략하면 starts_at의 시간대, 그것도 없으면 Asia/Seoul";
     private static final Map<String, WorkItem.Priority> PRIORITIES = Map.of(
             "low", WorkItem.Priority.low,
@@ -64,6 +66,7 @@ class WorkItemMcpTools implements McpToolProvider {
     private final LabelFacade labelFacade;
     private final CommentFacade commentFacade;
     private final TimelineFacade timelineFacade;
+    private final WorkItemTypeService workItemTypeService;
 
     @Override
     public List<McpTool> tools() {
@@ -100,6 +103,7 @@ class WorkItemMcpTools implements McpToolProvider {
                                 .string("assignee", "담당자나 참석자: me, 이메일, 또는 이름", false)
                                 .choice("kind", "종류로 거르기: task(작업), event(일정)", List.of("task", "event"), false)
                                 .string("label", "라벨 이름. 예: 결정기록", false)
+                                .string("type", "업무 유형 이름으로 거르기. 예: 버그 (일정은 유형이 없어 빠집니다)", false)
                                 .bool("include_closed", "완료한 업무도 넣을지. 결정기록은 대부분 완료 상태라 찾을 때 true를 주세요.")
                                 .integer("limit", "가져올 개수 (기본 30)", 1, 100)
                                 .string("cursor", "앞 응답의 nextCursor로 다음 쪽을 읽습니다", false)
@@ -110,7 +114,7 @@ class WorkItemMcpTools implements McpToolProvider {
                 new McpTool(
                         "create_work_item",
                         "업무 만들기",
-                        "새 업무를 만들고 참조(예: ORM-20)를 돌려줍니다. 설명은 마크다운입니다. 지금 맡아 작업할 업무면 assignee에 me를 주고, 나중으로 미뤄 두는 업무면 비워 둡니다. 결정기록(앞으로 다른 작업이 따라야 할 선택)은 작업 업무와 따로 만들고, labels에 '결정기록'을 넣어 설명을 ## 맥락 / ## 결정 / ## 검토한 대안 으로 쓰세요.",
+                        "새 업무를 만들고 참조(예: ORM-20)를 돌려줍니다. 설명은 마크다운입니다. type으로 업무 유형을 고르며, 상위가 필요한 유형(예: 스토리는 에픽 아래)은 여기서 만들 수 없으니 create_subtask로 상위 업무 아래에 만드세요. 지금 맡아 작업할 업무면 assignee에 me를 주고, 나중으로 미뤄 두는 업무면 비워 둡니다. 결정기록(앞으로 다른 작업이 따라야 할 선택)은 작업 업무와 따로 만들고, labels에 '결정기록'을 넣어 설명을 ## 맥락 / ## 결정 / ## 검토한 대안 으로 쓰세요.",
                         McpTool.input()
                                 .string("project", "프로젝트 키. 예: ORM", true)
                                 .string("title", "제목", true)
@@ -120,6 +124,7 @@ class WorkItemMcpTools implements McpToolProvider {
                                         List.of("task", "event"),
                                         false)
                                 .string("description", "마크다운 설명", false)
+                                .string("type", TYPE + " 일정에는 쓰지 않습니다.", false)
                                 .string("status", STATUS + " 생략하면 첫 '할 일' 칸입니다. 일정에는 쓰지 않습니다.", false)
                                 .choice(
                                         "priority",
@@ -151,7 +156,7 @@ class WorkItemMcpTools implements McpToolProvider {
                 new McpTool(
                         "update_work_item",
                         "업무 고치기",
-                        "업무의 준 값만 바꿉니다. 맡은 업무의 담당자가 비어 있으면 assignee에 me를 주세요. 값을 지우려면 assignee·priority·start_date·due_date에 none을 주세요. labels는 준 목록으로 통째로 바꿉니다. 상태는 move_work_item으로 옮깁니다. 반복 업무의 회차는 scope: following이면 이 회차와 이후 회차(와 규칙)를 함께 고칩니다. 설명은 이후 회차에 옮기지 않습니다.",
+                        "업무의 준 값만 바꿉니다. 맡은 업무의 담당자가 비어 있으면 assignee에 me를 주세요. type으로 유형을, parent로 상위 업무를 바꿉니다(상위와 하위 업무가 새 유형의 규칙에 맞아야 합니다). 값을 지우려면 assignee·priority·start_date·due_date에 none을 주세요. labels는 준 목록으로 통째로 바꿉니다. 상태는 move_work_item으로 옮깁니다. 반복 업무의 회차는 scope: following이면 이 회차와 이후 회차(와 규칙)를 함께 고칩니다. 설명은 이후 회차에 옮기지 않습니다.",
                         McpTool.input()
                                 .string("ref", "업무 참조. 예: ORM-14", true)
                                 .string("title", "새 제목", false)
@@ -160,6 +165,11 @@ class WorkItemMcpTools implements McpToolProvider {
                                 .string("assignee", "담당자(참석자) 한 명으로 바꿈: me, 이메일, 이름, 또는 none", false)
                                 .strings("people", "담당자나 참석자 여럿 (이 목록으로 바뀝니다, []는 비움)", false)
                                 .choice("kind", "종류를 바꿈: task 또는 event", List.of("task", "event"), false)
+                                .string("type", "업무 유형 이름으로 바꿈. 예: 버그", false)
+                                .string(
+                                        "parent",
+                                        "이 업무를 둘 상위 업무 참조(예: BIT-71). 지금 상위를 바꾸며, none이면 상위에서 뺍니다(상위가 필요한 유형은 뺄 수 없음)",
+                                        false)
                                 .strings("labels", "라벨 이름들 (이 목록으로 바뀝니다)", false)
                                 .string("start_date", "시작일 YYYY-MM-DD 또는 none", false)
                                 .string("due_date", "기한 YYYY-MM-DD 또는 none", false)
@@ -211,11 +221,12 @@ class WorkItemMcpTools implements McpToolProvider {
                 new McpTool(
                         "create_subtask",
                         "하위 작업 만들기",
-                        "상위 작업의 프로젝트에 하위 작업을 원자적으로 만듭니다. 부모 우선순위를 사용하며 시작 전 상태·미배정으로 생성합니다.",
+                        "상위 작업의 프로젝트에 하위 작업을 원자적으로 만듭니다. 부모 우선순위를 사용하며 시작 전 상태·미배정으로 생성합니다. type의 유형이 상위의 유형 아래에 올 수 있어야 합니다(예: 스토리는 에픽 아래, 작업·버그는 에픽·스토리·작업 아래).",
                         McpTool.input()
                                 .string("parent", "상위 작업 참조. 예: BIT-71", true)
                                 .string("title", "제목", true)
                                 .string("description", "마크다운 설명", false)
+                                .string("type", TYPE, false)
                                 .string("workspace", WORKSPACE, false)
                                 .build(),
                         false,
@@ -232,9 +243,10 @@ class WorkItemMcpTools implements McpToolProvider {
                 parent.projectId(),
                 parent.id(),
                 args.string("title"),
-                args.optionalString("description").orElse(null));
+                args.optionalString("description").orElse(null),
+                args.optionalString("type").map(name -> typeId(actor, w, name)).orElse(null));
         var item = workItemQueryService.get(actor, w, parent.projectId(), id);
-        var view = summary(item, projectFacade.boardColumns(actor, w, parent.projectId()));
+        var view = summary(item, projectFacade.boardColumns(actor, w, parent.projectId()), Map.of());
         view.put("id", id);
         view.put("parent", parent.reference());
         return view;
@@ -259,13 +271,17 @@ class WorkItemMcpTools implements McpToolProvider {
                 .collect(Collectors.toMap(WorkspaceFacade.MemberRef::userId, WorkspaceFacade.MemberRef::name));
         var labels = labelFacade.findAll(actor, at.workspaceId()).stream()
                 .collect(Collectors.toMap(LabelFacade.LabelRef::id, LabelFacade.LabelRef::name));
-        var view = summary(item, columns);
+        var types = workItemTypeService.findAll(actor, at.workspaceId()).stream()
+                .collect(Collectors.toMap(
+                        io.github.goraebap.bit.module.workitem.domain.WorkItemType::id,
+                        io.github.goraebap.bit.module.workitem.domain.WorkItemType::name));
+        var view = summary(item, columns, parents(actor, at.workspaceId(), List.of(item)));
         view.put("description", item.description());
         view.put("createdAt", item.createdAt());
         view.put("createdByAgent", item.createdByAgent());
         view.put("updatedAt", item.updatedAt());
         var timeline = timelineFacade.lines(actor, at.workspaceId(), TargetType.work_item, at.id(), 200).stream()
-                .map(line -> line(line, columns, people, labels))
+                .map(line -> line(line, columns, people, labels, types))
                 .toList();
         view.put("timeline", timeline);
         view.put("relations", links.relations(actor, at.workspaceId(), TargetType.work_item, at.id()));
@@ -284,6 +300,7 @@ class WorkItemMcpTools implements McpToolProvider {
         args.optionalString("kind").ifPresent(kind -> filters.setKind(List.of(kind)));
         args.optionalString("label")
                 .ifPresent(name -> filters.setLabelId(List.copyOf(labelIds(actor, workspace, List.of(name)))));
+        args.optionalString("type").ifPresent(name -> filters.setTypeId(List.of(typeId(actor, workspace, name))));
         if (!args.bool("include_closed").orElse(false)) filters.setClosed(false);
         filters.setSize(Math.clamp(args.integer("limit", 30), 1, 100));
         args.optionalString("cursor").ifPresent(filters::setCursor);
@@ -293,6 +310,7 @@ class WorkItemMcpTools implements McpToolProvider {
                 : workItemQueryService.listWorkspace(actor, workspace, (WorkItemRequests.WorkspaceListRequest) filters);
         // Each project's columns read once, so every work item says its column by name.
         var boards = new java.util.HashMap<String, List<ProjectFacade.ColumnInfo>>();
+        var parents = parents(actor, workspace, page.items());
         var result = new LinkedHashMap<String, Object>();
         result.put(
                 "items",
@@ -303,7 +321,8 @@ class WorkItemMcpTools implements McpToolProvider {
                                         ? List.of()
                                         : boards.computeIfAbsent(
                                                 item.projectId(),
-                                                id -> projectFacade.boardColumns(actor, workspace, id))))
+                                                id -> projectFacade.boardColumns(actor, workspace, id)),
+                                parents))
                         .toList());
         result.put("nextCursor", page.nextCursor());
         return result;
@@ -344,10 +363,14 @@ class WorkItemMcpTools implements McpToolProvider {
         Integer reminder = args.has("remind_before")
                 ? reminder(args.string("remind_before"))
                 : kind == WorkItem.Kind.event && details.startsAt() != null ? Integer.valueOf(10) : null;
-        String id = workItemService.create(actor, workspace, project.id(), kind, details, column, labels, reminder);
+        String type = args.optionalString("type")
+                .map(name -> typeId(actor, workspace, name))
+                .orElse(null);
+        String id = workItemService.create(
+                actor, workspace, project.id(), kind, type, null, details, column, labels, reminder);
         if (args.has("repeat")) repeat(actor, workspace, project.id(), id, args);
         var item = workItemQueryService.get(actor, workspace, project.id(), id);
-        return summary(item, columns);
+        return summary(item, columns, Map.of());
     }
 
     private Object update(CurrentUser actor, McpArguments args) {
@@ -359,6 +382,14 @@ class WorkItemMcpTools implements McpToolProvider {
         args.optionalString("description").ifPresent(request::setDescription);
         args.optionalString("priority").ifPresent(value -> request.setPriority(isNone(value) ? null : priority(value)));
         args.optionalString("kind").map(this::kind).ifPresent(request::setKind);
+        args.optionalString("type").ifPresent(name -> request.setTypeId(typeId(actor, at.workspaceId(), name)));
+        args.optionalString("parent")
+                .ifPresent(ref -> request.setParentId(
+                        isNone(ref)
+                                ? null
+                                : workItemFacade
+                                        .findByRef(actor, at.workspaceId(), ref)
+                                        .id()));
         people(actor, at.workspaceId(), args).ifPresent(ids -> request.setPeopleIds(List.copyOf(ids)));
         if (args.has("starts_at"))
             request.setStartsAt(instant(args, "starts_at").orElse(null));
@@ -387,7 +418,7 @@ class WorkItemMcpTools implements McpToolProvider {
             } else repeat(actor, at.workspaceId(), at.projectId(), at.id(), args);
         }
         var item = workItemQueryService.get(actor, at.workspaceId(), at.projectId(), at.id());
-        return summary(item, columns(actor, at));
+        return summary(item, columns(actor, at), parents(actor, at.workspaceId(), List.of(item)));
     }
 
     /** Sets the rule an agent described on a work item, from its day (D-092). */
@@ -481,7 +512,8 @@ class WorkItemMcpTools implements McpToolProvider {
             var item = workItemQueryService.get(actor, at.workspaceId(), at.projectId(), at.id());
             workItemService.archive(actor, at.workspaceId(), at.projectId(), at.id(), item.version(), archive.get());
         }
-        return summary(workItemQueryService.get(actor, at.workspaceId(), at.projectId(), at.id()), columns);
+        var item = workItemQueryService.get(actor, at.workspaceId(), at.projectId(), at.id());
+        return summary(item, columns, parents(actor, at.workspaceId(), List.of(item)));
     }
 
     private Object comment(CurrentUser actor, McpArguments args) {
@@ -566,6 +598,29 @@ class WorkItemMcpTools implements McpToolProvider {
         return ids;
     }
 
+    /** A live work item type by its name, letter case aside. */
+    private String typeId(CurrentUser actor, String workspace, String name) {
+        var types = workItemTypeService.findAll(actor, workspace);
+        String wanted = name.strip();
+        return types.stream()
+                .filter(type -> type.name().equalsIgnoreCase(wanted))
+                .map(io.github.goraebap.bit.module.workitem.domain.WorkItemType::id)
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("'" + wanted + "' 업무 유형이 없습니다. 유형: "
+                        + types.stream()
+                                .map(io.github.goraebap.bit.module.workitem.domain.WorkItemType::name)
+                                .collect(Collectors.joining(", "))));
+    }
+
+    /** The keys of the items' parents, read once for all of them. */
+    private Map<String, String> parents(CurrentUser actor, String workspace, List<WorkItemViews.Item> items) {
+        var ids = items.stream()
+                .map(WorkItemViews.Item::parentId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+        return ids.isEmpty() ? Map.of() : workItemQueryService.references(actor, workspace, ids);
+    }
+
     private WorkItem.Priority priority(String value) {
         var priority = PRIORITIES.get(value.toLowerCase(Locale.ROOT));
         if (priority == null) throw new IllegalArgumentException("priority는 low, medium, high, urgent 중 하나입니다.");
@@ -576,13 +631,18 @@ class WorkItemMcpTools implements McpToolProvider {
         return "none".equalsIgnoreCase(value) || "없음".equals(value);
     }
 
-    /** A work item as an agent reads it in a list: its key, title, status, priority, assignee, labels and dates. */
+    /**
+     * A work item as an agent reads it in a list: its key, title, type, parent, status, priority, assignee, labels and
+     * dates. {@code parents} gives the keys of the parents it may name.
+     */
     private static LinkedHashMap<String, Object> summary(
-            WorkItemViews.Item item, List<ProjectFacade.ColumnInfo> columns) {
+            WorkItemViews.Item item, List<ProjectFacade.ColumnInfo> columns, Map<String, String> parents) {
         var view = new LinkedHashMap<String, Object>();
         view.put("ref", item.key());
         view.put("title", item.title());
         view.put("projectId", item.projectId());
+        if (item.type() != null) view.put("type", item.type().name());
+        if (item.parentId() != null) view.put("parent", parents.getOrDefault(item.parentId(), item.parentId()));
         String column = columns.stream()
                 .filter(c -> c.id().equals(item.columnId()))
                 .map(ProjectFacade.ColumnInfo::name)
@@ -635,7 +695,8 @@ class WorkItemMcpTools implements McpToolProvider {
             TimelineFacade.Line line,
             List<ProjectFacade.ColumnInfo> columns,
             Map<String, String> people,
-            Map<String, String> labels) {
+            Map<String, String> labels,
+            Map<String, String> types) {
         var view = new LinkedHashMap<String, Object>();
         view.put("at", line.at());
         view.put("who", line.actorName());
@@ -677,6 +738,7 @@ class WorkItemMcpTools implements McpToolProvider {
                             case "people" ->
                                 "사람: " + everyone.apply(line.before()) + " → " + everyone.apply(line.after());
                             case "kind" -> "종류: " + ("event".equals(line.after()) ? "일정" : "작업");
+                            case "type" -> "유형: " + type(types, line.before()) + " → " + type(types, line.after());
                             case "startsAt" -> "시작 시각: " + Objects.requireNonNullElse(line.after(), "없음");
                             case "endsAt" -> "끝 시각: " + Objects.requireNonNullElse(line.after(), "없음");
                             case "allDay" -> "true".equals(line.after()) ? "종일 일정으로" : "시각 일정으로";
@@ -690,6 +752,10 @@ class WorkItemMcpTools implements McpToolProvider {
                 };
         view.put("activity", text);
         return view;
+    }
+
+    private static String type(Map<String, String> types, String id) {
+        return id == null ? "없음" : types.getOrDefault(id, "지워진 유형");
     }
 
     private WorkItem.Kind kind(String value) {

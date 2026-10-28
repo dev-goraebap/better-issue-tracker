@@ -19,6 +19,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 
 public final class WorkItemRequests {
     static final int MAX_LABELS = 50;
+    static final String ID = "[A-Za-z][A-Za-z0-9]{9}";
 
     private WorkItemRequests() {}
 
@@ -55,6 +56,18 @@ public final class WorkItemRequests {
 
             @Size(max = MAX_LABELS) @Schema(nullable = true, description = "Workspace labels to attach; omitted or null attaches none")
             List<@NotNull String> labelIds,
+
+            @jakarta.validation.constraints.Pattern(regexp = ID) @Schema(
+                    nullable = true,
+                    description =
+                            "A task's type (D-104); omitted or null is the workspace's default. An event has none")
+            String typeId,
+
+            @jakarta.validation.constraints.Pattern(regexp = ID) @Schema(
+                    nullable = true,
+                    description =
+                            "A work item of the workspace to make it a subtask of, in the same step; needed for a type that requires a parent")
+            String parentId,
 
             @Size(max = 20) List<@NotNull @jakarta.validation.constraints.Pattern(regexp = "[A-Za-z][A-Za-z0-9]{9}") String>
                     uploadIds) {
@@ -161,6 +174,11 @@ public final class WorkItemRequests {
 
         @Size(max = WorkItem.MAX_PEOPLE) private List<@NotNull String> peopleIds;
 
+        @jakarta.validation.constraints.Pattern(regexp = ID) private String typeId;
+
+        @jakarta.validation.constraints.Pattern(regexp = ID) private String parentId;
+
+        private boolean hasTypeId, hasParentId;
         private boolean hasTitle, hasDescription, hasPriority, hasTriggerType, hasStartDate, hasDueDate;
         private boolean hasLabelIds, hasPeopleIds, hasKind, hasStartsAt, hasEndsAt, hasAllDay;
 
@@ -302,6 +320,40 @@ public final class WorkItemRequests {
             return hasLabelIds;
         }
 
+        @Schema(
+                nullable = true,
+                description = "A task's type (D-104); null is the workspace's default. Refused when its parent or "
+                        + "children would break the type's rules")
+        public String getTypeId() {
+            return typeId;
+        }
+
+        public void setTypeId(String value) {
+            typeId = value;
+            hasTypeId = true;
+        }
+
+        public boolean hasTypeId() {
+            return hasTypeId;
+        }
+
+        @Schema(
+                nullable = true,
+                description = "The work item to sit under (subtask_of), replacing the one it has; null leaves it under "
+                        + "none, which a type that requires a parent refuses")
+        public String getParentId() {
+            return parentId;
+        }
+
+        public void setParentId(String value) {
+            parentId = value;
+            hasParentId = true;
+        }
+
+        public boolean hasParentId() {
+            return hasParentId;
+        }
+
         Set<String> labels() {
             return labelIds == null ? Set.of() : Set.copyOf(labelIds);
         }
@@ -418,6 +470,7 @@ public final class WorkItemRequests {
         private @Schema(nullable = true) String personId;
         private List<String> kind = List.of();
         private List<String> labelId = List.of();
+        private List<String> typeId = List.of();
         private List<String> category = List.of();
         private Boolean hasDates;
         private List<String> priority = List.of();
@@ -466,6 +519,15 @@ public final class WorkItemRequests {
 
         public void setLabelId(List<String> value) {
             labelId = value == null ? List.of() : List.copyOf(value);
+        }
+
+        @Schema(description = "Any of these work item types (repeatable). Events have no type, so they drop out")
+        public List<String> getTypeId() {
+            return List.copyOf(typeId);
+        }
+
+        public void setTypeId(List<String> value) {
+            typeId = value == null ? List.of() : List.copyOf(value);
         }
 
         @Schema(description = "Any of todo, doing, done, or none for items without a status (repeatable)")

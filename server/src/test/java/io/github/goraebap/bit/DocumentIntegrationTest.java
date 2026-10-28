@@ -126,6 +126,8 @@ class DocumentIntegrationTest {
                 "work_item_person",
                 "work_item_label",
                 "work_item",
+                "work_item_type_parent",
+                "work_item_type",
                 "board_column",
                 "project_member",
                 "project_key",
@@ -378,7 +380,7 @@ class DocumentIntegrationTest {
     void hierarchyIsAtomicAndRejectsCyclesAndSecondParents() throws Exception {
         String parent = workItemService.create(
                 owner, workspace, project, new WorkItem.Details("Parent", null, null, null, null, null, null), null);
-        String child = hierarchyService.createChild(owner, workspace, project, parent, "Child", null);
+        String child = hierarchyService.createChild(owner, workspace, project, parent, "Child", null, null);
         assertThat(relationService.relations(owner, workspace, TargetType.work_item, parent))
                 .hasSize(1)
                 .allSatisfy(r -> {

@@ -27,12 +27,14 @@
 | `list_members` | workspace | 구성원 이름·이메일·역할 (담당자 지정용) |
 | `list_projects` | project | 프로젝트 키·이름·설명과 보드 칸, 워크스페이스 순서대로 |
 | `list_labels` | label | 라벨 이름 (결정기록은 system) |
+| `list_work_item_types` | workitem | 업무 유형을 순서대로: 이름·아이콘·기본 유형인지(`isDefault`)·상위 필수(`parentRequired`)·상위가 될 수 있는 유형 이름(`allowedParents`, 비면 최상위) (D-104) |
 | `get_work_item_context` | workitem | 업무 전체: 속성, 마크다운 설명, 댓글과 활동 타임라인을 한 번에 |
-| `list_work_items` | workitem | 프로젝트·제목·분류·담당자·라벨로 찾기, 커서 페이징. 완료는 `include_closed`일 때만 |
-| `create_work_item` | workitem | 새 업무. `kind`(task·event), 칸·사람(`assignee` 하나 또는 `people` 여럿)·라벨은 이름으로, 일정은 `starts_at`·`ends_at`(시간대 포함) 또는 `all_day`와 날짜. `repeat`(daily·weekly·monthly)·`repeat_every`·`repeat_on`·`repeat_until`·`time_zone`으로 반복. 일정 알림은 `remind_before`(분, 시각 일정 기본 10) |
-| `update_work_item` | workitem | 준 값만 바꿈. `none`으로 지움. `kind`를 바꾸면 그 종류에 맞는 값만 남김. 반복 업무는 `scope: following`이면 이후 회차도 바꿈. `repeat`로 이 회차부터 새 규칙, `repeat: none`이면 이후 회차를 지우고 반복을 끝냄. `remind_before`로 일정 알림(분 또는 none). 버전은 도구가 최신으로 맞춤 |
+| `list_work_items` | workitem | 프로젝트·제목·분류·담당자·라벨·유형(`type`)으로 찾기, 커서 페이징. 완료는 `include_closed`일 때만. 각 업무에 `type`(유형 이름)과 `parent`(상위 업무 참조)가 붙는다 |
+| `create_work_item` | workitem | 새 업무. `kind`(task·event), `type`(유형 이름, 생략하면 기본 유형, 일정은 없음), 칸·사람(`assignee` 하나 또는 `people` 여럿)·라벨은 이름으로, 일정은 `starts_at`·`ends_at`(시간대 포함) 또는 `all_day`와 날짜. `repeat`(daily·weekly·monthly)·`repeat_every`·`repeat_on`·`repeat_until`·`time_zone`으로 반복. 일정 알림은 `remind_before`(분, 시각 일정 기본 10) |
+| `update_work_item` | workitem | 준 값만 바꿈. `none`으로 지움. `kind`를 바꾸면 그 종류에 맞는 값만 남김. `type`으로 유형을, `parent`(업무 참조 또는 none)로 상위 업무를 한 번에 바꿈. 반복 업무는 `scope: following`이면 이후 회차도 바꿈. `repeat`로 이 회차부터 새 규칙, `repeat: none`이면 이후 회차를 지우고 반복을 끝냄. `remind_before`로 일정 알림(분 또는 none). 버전은 도구가 최신으로 맞춤 |
 | `move_work_item` | workitem | 칸 이름·분류(todo/doing/done)·backlog로 옮기기, 보관·해제 |
 | `add_comment` | workitem | 업무에 마크다운 댓글 |
+| `create_subtask` | workitem | 상위 업무(`parent`)의 프로젝트에 하위 업무를 만들고 `subtask_of`로 잇기. `type`(생략하면 기본 유형)은 상위의 유형 아래에 올 수 있어야 함 |
 | `list_documents` | document | 폴더 경로로 열거나 제목·라벨·프로젝트로 찾기, 최근 고친 순, 커서 페이징 |
 | `get_document` | document | 문서 하나: 위치, 라벨, 마크다운 본문, 연결된 업무, 댓글과 활동 |
 | `create_document` | document | 새 문서. 프로젝트는 키, 폴더는 경로(없으면 만듦), 라벨은 이름 |
@@ -41,6 +43,7 @@
 
 - **가리키는 법**: 업무는 `ORM-14`, 프로젝트는 키, 칸·사람·라벨은 이름. 워크스페이스가 하나면 생략하고, 여럿이면 `workspace`에 이름이나 슬러그를 준다. 참조만 주면 속한 워크스페이스에서 찾아본다.
 - **결정**: 결정 엔티티 도구 대신 `labels: ["결정기록"]`을 단 업무로 만든다(D-085). 결정기록은 앞으로 다른 작업이 따라야 할 선택만 담고 그 선택이 나온 작업 업무와 따로 만든다. 본문은 맥락 / 결정 / 검토한 대안이고, 확정한 결정은 고치지 않고 새 결정기록으로 대체한다. 서버 안내문(instructions)과 도구 설명에 같은 기준을 적어 두었다. 업무끼리 잇는 도구와 결정 상태(제안·확정·대체)를 바꾸는 도구는 아직 없어, 그때까지는 본문에 참조를 적는다.
+- **업무 유형(D-104)**: 작업은 유형이 꼭 하나이고 일정은 없다. 유형은 이름으로 주고(대소문자 무시), 모르면 `list_work_item_types`로 확인한다. 상위가 필요한 유형(기본은 스토리 → 에픽 밑)은 `create_work_item`이 아니라 `create_subtask`로 만든다. 규칙에 어긋나는 만들기·연결·끊기(`link_targets`·`unlink_targets` 포함)·유형/종류 바꾸기는 `WORK_ITEM_PARENT_REQUIRED`나 `WORK_ITEM_PARENT_NOT_ALLOWED`로 거절되고, 메시지에 해당 유형·업무·개수와 고치는 방법이 적힌다. 서버 안내문에 같은 규칙을 짧게 적었고, 만들기 전에 담당자·시작일·기한·우선순위·라벨·유형·상위를 사용자 말대로 채우고 모르는 것만 제안값과 함께 한 번에 묻게 했다.
 - **오류**: 업무 오류는 `코드: 메시지`, 잘못된 인자는 무엇이 틀렸는지(예: 없는 칸이면 그 프로젝트의 칸 목록)를 도구 오류로 돌려준다.
 - **아직 없는 것**: 위 표 밖의 도구(검색·결정·세션·산출물·연결·추적·프로젝트 개요)는 그 기능이 생길 때 붙인다.
 

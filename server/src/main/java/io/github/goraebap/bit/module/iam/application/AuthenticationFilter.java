@@ -162,6 +162,12 @@ final class AuthenticationFilter extends OncePerRequestFilter {
         if (Set.of("GET", "HEAD").contains(method) && path.matches(labels + "(?:/[^/]+)?")
                 || method.equals("POST") && path.matches(labels)
                 || Set.of("PATCH", "DELETE").contains(method) && path.matches(labels + "/[^/]+")) return true;
+        // An agent reads the workspace's work item types; its owner's role decides whether it may change them (D-104).
+        String types = "/api/v1/workspaces/[^/]+/work-item-types";
+        if (Set.of("GET", "HEAD").contains(method) && path.matches(types + "(?:/[^/]+)?")
+                || method.equals("POST") && path.matches(types)
+                || method.equals("PUT") && path.matches(types + "/order")
+                || Set.of("PATCH", "DELETE").contains(method) && path.matches(types + "/[^/]+")) return true;
         String views = "/api/v1/workspaces/[^/]+/views";
         String tweaks = "/api/v1/workspaces/[^/]+/view-tweaks";
         String orders = "/api/v1/workspaces/[^/]+/view-orders";

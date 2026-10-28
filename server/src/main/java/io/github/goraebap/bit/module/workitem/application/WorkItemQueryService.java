@@ -40,6 +40,8 @@ public class WorkItemQueryService {
     private final LabelFacade labelFacade;
     private final IamFacade iamFacade;
     private final SecretTokens secretTokens;
+    private final WorkItemTypeService workItemTypeService;
+    private final io.github.goraebap.bit.module.link.LinkFacade linkFacade;
 
     @Transactional(readOnly = true)
     public WorkItemViews.Item get(CurrentUser actor, String workspaceId, String projectId, String id) {
@@ -72,6 +74,7 @@ public class WorkItemQueryService {
                 workItemRepository.reference(w).replaceFirst("-[0-9]+$", ""),
                 w.number(),
                 w.kind(),
+                w.typeId(),
                 w.details(),
                 w.labelIds(),
                 w.columnId(),
@@ -85,13 +88,25 @@ public class WorkItemQueryService {
                 w.version(),
                 w.audit(),
                 people);
-        return view(workspaceId, row, labels(actor, workspaceId, List.of(row)), rules(List.of(row)));
+        return view(
+                workspaceId,
+                row,
+                labels(actor, workspaceId, List.of(row)),
+                rules(List.of(row)),
+                hierarchy(workspaceId, List.of(row)));
     }
 
     @Transactional(readOnly = true)
     public WorkItemViews.Item byRef(CurrentUser actor, String workspaceId, String reference) {
         var ref = workItemFacade.findByRef(actor, workspaceId, reference);
         return get(actor, workspaceId, ref.projectId(), ref.id());
+    }
+
+    /** The keys (BIT-12) of the live work items among the ids, for an agent reading which item another sits under. */
+    @Transactional(readOnly = true)
+    public Map<String, String> references(CurrentUser actor, String workspaceId, Set<String> ids) {
+        workspaceFacade.requireAccess(actor, workspaceId, WorkspaceFacade.Action.READ);
+        return workItemRepository.findReferences(workspaceId, ids);
     }
 
     /** The project list ({@code projectId} set) or My Tasks ({@code mine}). */
@@ -151,6 +166,7 @@ public class WorkItemQueryService {
                 Boolean.toString(q.backlog()),
                 ids(q.columnIds()),
                 ids(q.labelIds()),
+                ids(q.typeIds()),
                 String.join(",", q.categories().stream().sorted().toList()),
                 Boolean.toString(q.noCategory()),
                 names(q.priorities()),
@@ -171,8 +187,12 @@ public class WorkItemQueryService {
         String next = rows.size() > request.getSize() ? encode(scope, page.getLast(), sort) : null;
         var labels = labels(actor, workspaceId, page);
         var rules = rules(page);
+        var hierarchy = hierarchy(workspaceId, page);
         return new WorkItemViews.WorkItems(
-                page.stream().map(row -> view(workspaceId, row, labels, rules)).toList(), next);
+                page.stream()
+                        .map(row -> view(workspaceId, row, labels, rules, hierarchy))
+                        .toList(),
+                next);
     }
 
     private WorkItemRepository.Query query(
@@ -230,7 +250,8 @@ public class WorkItemQueryService {
                 .collect(Collectors.toUnmodifiableSet());
         if (projectIds.size() > 100
                 || columnIds.size() > 100
-                || request.getLabelId().size() > 100) throw CommonErrorCode.COMMON_INVALID_REQUEST.raise();
+                || request.getLabelId().size() > 100
+                || request.getTypeId().size() > 100) throw CommonErrorCode.COMMON_INVALID_REQUEST.raise();
         String person = mine ? actor.userId() : request.getPersonId();
         var kinds = values(request.getKind(), WorkItem.Kind.class);
         return new WorkItemRepository.Query(
@@ -243,6 +264,7 @@ public class WorkItemQueryService {
                 backlog,
                 columnIds,
                 Set.copyOf(request.getLabelId()),
+                Set.copyOf(split(request.getTypeId())),
                 categoryNames,
                 noCategory,
                 priorities,
@@ -275,11 +297,37 @@ public class WorkItemQueryService {
                 .collect(Collectors.toMap(Recurrence::id, WorkItemViews.Repeat::of));
     }
 
+    /** The types and live parents of every row shown together (D-104): a few lookups for the page, not one per row. */
+    private Hierarchy hierarchy(String workspaceId, Collection<WorkItemRepository.Row> rows) {
+        var typeIds = rows.stream()
+                .map(WorkItemRepository.Row::typeId)
+                .filter(java.util.Objects::nonNull)
+                .collect(Collectors.toSet());
+        var types = typeIds.isEmpty()
+                ? Map.<String, WorkItemViews.Type>of()
+                : workItemTypeService.findAllById(workspaceId, typeIds).values().stream()
+                        .collect(Collectors.toMap(
+                                io.github.goraebap.bit.module.workitem.domain.WorkItemType::id,
+                                t -> new WorkItemViews.Type(t.id(), t.name(), t.icon(), t.color())));
+        var parents = linkFacade.parents(
+                workspaceId, rows.stream().map(WorkItemRepository.Row::id).collect(Collectors.toSet()));
+        var live = workItemRepository.findReferences(workspaceId, Set.copyOf(parents.values()));
+        var liveParents = parents.entrySet().stream()
+                .filter(e -> live.containsKey(e.getValue()))
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        return new Hierarchy(types, liveParents, live);
+    }
+
+    /** Types by id, each child's live parent, and those parents' keys. */
+    record Hierarchy(
+            Map<String, WorkItemViews.Type> types, Map<String, String> parents, Map<String, String> references) {}
+
     private WorkItemViews.Item view(
             String workspaceId,
             WorkItemRepository.Row row,
             Map<String, LabelFacade.LabelRef> labels,
-            Map<String, WorkItemViews.Repeat> rules) {
+            Map<String, WorkItemViews.Repeat> rules,
+            Hierarchy hierarchy) {
         var d = row.details();
         var a = row.audit();
         return new WorkItemViews.Item(
@@ -289,6 +337,8 @@ public class WorkItemQueryService {
                 row.number(),
                 row.projectKey() + "-" + row.number(),
                 row.kind(),
+                row.typeId() == null ? null : hierarchy.types().get(row.typeId()),
+                hierarchy.parents().get(row.id()),
                 d.title(),
                 d.description(),
                 row.columnId(),

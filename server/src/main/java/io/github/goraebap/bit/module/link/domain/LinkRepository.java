@@ -14,6 +14,15 @@ public interface LinkRepository {
 
     boolean hasParent(String workspaceId, String childId);
 
+    /** The live subtask_of link from a work item to its parent. */
+    Optional<Link> findParentLink(String workspaceId, String childId);
+
+    /** Each child's live subtask_of parent, for the children that have one. */
+    java.util.Map<String, String> findParentIds(String workspaceId, java.util.Set<String> childIds);
+
+    /** The work items with a live subtask_of link to this one. */
+    java.util.Set<String> findChildIds(String workspaceId, String parentId);
+
     boolean hasReplacement(String workspaceId, String oldDecisionId);
 
     boolean pathExists(String workspaceId, String relation, String fromId, String toId);
