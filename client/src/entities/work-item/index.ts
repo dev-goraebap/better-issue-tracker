@@ -14,6 +14,7 @@ export {
   type ViewSort, type ViewTweak,
 } from './model/views';
 export { orderViews } from './model/view-order';
+export { GROUPINGS, groupWorkItems, limitGroups, nestLines, subtaskProgress, type Grouping, type GroupContext, type ListLine, type WorkItemGroup } from './model/grouping';
 export { scopeItemsQuery, useScopeItems } from './model/use-scope-items';
 export { tweaksQuery, viewOrdersQuery, viewsQuery } from './api/view';
 export { StatusBadge } from './ui/StatusBadge';
@@ -21,7 +22,6 @@ export { PriorityMark } from './ui/PriorityMark';
 export { LabelTokens } from './ui/LabelTokens';
 export { PersonCell, type WorkItemPerson } from './ui/PersonCell';
 export { PeopleAvatars } from './ui/PeopleAvatars';
-export { WorkItemTable } from './ui/WorkItemTable';
-export { WorkItemRows } from './ui/WorkItemRows';
+export { WorkItemList } from './ui/WorkItemList';
 export { WorkItemLink } from './ui/WorkItemLink';
 export { labelOptions, NO_REMINDER, NO_STATUS, peopleOptions, priorityOptions, reminderOptions, statusOptions } from './ui/property-options';

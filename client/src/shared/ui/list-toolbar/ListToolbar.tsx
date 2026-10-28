@@ -90,7 +90,11 @@ export type ListViews = { label: string; value: string; options: { value: string
  * What else the 표시 menu holds (Linear's display options): the columns shown as chips to turn on and off, a foot of the
  * page's own (초기화, 모두의 기본값으로 저장), and whether the list differs from its usual look (the dot on 표시).
  */
-export type ListDisplay = { columns?: { label: string; options: ListOption[]; value: readonly string[]; onChange: (value: string[]) => void }; foot?: ReactNode; isChanged?: boolean };
+export type ListDisplay = {
+  /** What the rows are gathered by (D-106), one of its options at a time. */
+  grouping?: { label: string; options: ListOption[]; value: string; onChange: (value: string) => void };
+  columns?: { label: string; options: ListOption[]; value: readonly string[]; onChange: (value: string[]) => void }; foot?: ReactNode; isChanged?: boolean;
+};
 
 
 /**

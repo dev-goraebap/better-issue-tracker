@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import styles from './item-list.module.css';
 
 /**
@@ -6,10 +6,14 @@ import styles from './item-list.module.css';
  * ITEM_ROW_LINK opens the row from anywhere on it), and the row's properties at its end, small (12px) and in the
  * secondary colour, each ItemMeta keeping its width so they line up from row to row. A row to notice (an unread one)
  * lies on the accent surface with its title bold. end is the row's own control (its menu) at the very end, on a phone
- * beside both lines.
+ * beside both lines. depth sets a row in under the one above it (a subtask under its parent, D-106), with a guide line
+ * down its parent's mark.
  */
-export function ItemRow({ lead, title, meta, end, tone, isTitleSingleLine = false }: { lead?: ReactNode; title: ReactNode; meta?: ReactNode; end?: ReactNode; tone?: 'accent'; isTitleSingleLine?: boolean }) {
-  return <li className={styles.row} data-tone={tone} data-title-single-line={isTitleSingleLine || undefined}>
+export function ItemRow({ lead, title, meta, end, tone, depth = 0, isTitleSingleLine = false }: {
+  lead?: ReactNode; title: ReactNode; meta?: ReactNode; end?: ReactNode; tone?: 'accent'; depth?: number; isTitleSingleLine?: boolean;
+}) {
+  return <li className={styles.row} data-tone={tone} data-title-single-line={isTitleSingleLine || undefined} data-depth={depth > 0 ? depth : undefined}
+    style={depth > 0 ? { '--depth': depth } as CSSProperties : undefined}>
     {lead && <span className={styles.lead}>{lead}</span>}
     <span className={styles.title}>{title}</span>
     {meta && <span className={styles.meta}>{meta}</span>}

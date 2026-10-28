@@ -13,9 +13,9 @@ import type { Member } from '@/entities/workspace';
 import { PullBadge, pullBadgesQuery } from '@/entities/repository';
 import { TypeMark, workItemTypesQuery } from '@/entities/work-item-type';
 import {
-  CATEGORY_LABELS, FILTER_KEYS, filterWorkItems, WorkItemRows, WorkItemTable, NO_FILTER, PRIORITIES, refreshItems, setViewTweak, SYSTEM_LABEL, updateItem,
-  updateView, VIEW_COLUMNS, VIEW_LAYOUTS, VIEW_SORT_KEYS, type effectiveView, type WorkItemSearch, type WorkItemView, type ViewColumn, type ViewLayout, type ViewSort, type ViewTweak,
-  type WorkItem,
+  CATEGORY_LABELS, FILTER_KEYS, filterWorkItems, GROUPINGS, groupWorkItems, limitGroups, NO_FILTER, PRIORITIES, refreshItems, setViewTweak, subtaskProgress, SYSTEM_LABEL,
+  updateItem, updateView, VIEW_COLUMNS, VIEW_LAYOUTS, VIEW_SORT_KEYS, WorkItemList, type effectiveView, type Grouping, type WorkItemSearch, type WorkItemView, type ViewColumn,
+  type ViewLayout, type ViewSort, type ViewTweak, type WorkItem,
 } from '@/entities/work-item';
 import { currentDay, shiftDay } from '../model/dates';
 import type { Scope } from '../model/scope';
@@ -38,9 +38,10 @@ const same = <T,>(a: T, b: T) => JSON.stringify(a) === JSON.stringify(b);
  *   changed from the view's own puts 되돌리기 and 저장 at the filters row's end. A view stores no type, so the type
  *   filter stays the address's: 저장 keeps it there and 되돌리기 takes it off. 저장 writes the filters into the view when the
  *   member may change it, and otherwise (전체 업무, a view of someone else's) makes a new view from them (onSaveAsView).
- * - 표시 picks the layout, the order and the columns shown; they stay the member's own (setViewTweak) until 초기화 drops
+ * - 표시 picks the layout, the order, the grouping and the columns shown; they stay the member's own (setViewTweak) until 초기화 drops
  *   them or '모두의 기본값으로 저장' writes them into the view for everyone.
- * - 리스트 shows every work item (a table on a desktop, cards on a phone), 칸반 those with a status, 캘린더 and 타임라인
+ * - 리스트 shows every work item as Linear's rows (D-106), gathered by the view's grouping with subtasks in under their
+ *   parents (a phone's rows as small cards), 칸반 those with a status, 캘린더 and 타임라인
  *   those with a day, 카드 every work item as Keep's cards, 히스토리 every work item down a timeline by month.
  */
 export function WorkItemsView({ scope, view, tweak, effective, workItems, labels, members, search, go, onCreate, onSaveAsView }: {
@@ -54,6 +55,8 @@ export function WorkItemsView({ scope, view, tweak, effective, workItems, labels
   // A work item opened from the calendar goes where a pressed link would: into the page's modal (D-069).
   const openPage = useGo();
   const [shown, setShown] = useState(SLICE);
+  // Folded groups, as grouping|key, so another grouping starts unfolded and coming back finds them as they were.
+  const [folded, setFolded] = useState<ReadonlySet<string>>(new Set());
   // The calendar shares out the height the page leaves below the toolbar, to the card's foot.
   const calendarRoom = useFillRoom<HTMLDivElement>(effective.layout === 'calendar');
   const { workspaceId } = scope;
@@ -83,6 +86,7 @@ export function WorkItemsView({ scope, view, tweak, effective, workItems, labels
       layout: next.layout && next.layout !== view.layout ? next.layout : undefined,
       sort: next.sort && !same(next.sort, view.sort) ? next.sort : undefined,
       columns: next.columns && !same(next.columns, view.columns) ? next.columns : undefined,
+      grouping: next.grouping && next.grouping !== (view.grouping ?? 'none') ? next.grouping : undefined,
     });
   };
   const filters: ListFilter[] = [
@@ -118,12 +122,14 @@ export function WorkItemsView({ scope, view, tweak, effective, workItems, labels
     onChange: (key, direction) => { setShown(SLICE); adjust({ sort: { key: key as ViewSort['key'], direction } }); } };
   const display: ListDisplay = {
     isChanged: effective.isTweaked,
+    grouping: effective.layout === 'list' ? { label: '그룹', options: GROUPINGS.filter(option => option.value !== 'project' || !scope.project).map(option => ({ ...option })),
+      value: effective.grouping, onChange: grouping => { setShown(SLICE); adjust({ grouping: grouping as Grouping }); } } : undefined,
     columns: effective.layout === 'list' ? { label: '표시할 속성', options: VIEW_COLUMNS.map(column => ({ value: column.value, label: column.label })), value: effective.columns,
       onChange: next => adjust({ columns: VIEW_COLUMNS.map(column => column.value).filter(column => next.includes(column)) as ViewColumn[] }) } : undefined,
     foot: tweak ? <>
       <Button label="초기화" variant="ghost" size="sm" onClick={() => { void setViewTweak(client, workspaceId, view.id, undefined); }} />
       {canEdit && <Button label={view.isPersonal ? '뷰에 저장' : '모두의 기본값으로 저장'} variant="secondary" size="sm"
-        onClick={() => { void updateView(client, view, { layout: effective.layout, sort: effective.sort, columns: effective.columns })
+        onClick={() => { void updateView(client, view, { layout: effective.layout, sort: effective.sort, columns: effective.columns, grouping: effective.grouping })
           .then(() => setViewTweak(client, workspaceId, view.id, undefined)).catch(failure => toast({ body: authError(failure) })); }} />}
     </> : undefined,
   };
@@ -143,8 +149,21 @@ export function WorkItemsView({ scope, view, tweak, effective, workItems, labels
     await refreshItems(client, workspaceId, item.projectId ?? '');
   };
   const isNarrowed = !!search.q || effective.isFiltered || !!effective.types || Object.values(view.filters).some(Boolean);
-  const visible = rows.slice(0, shown);
-  const summary = <ListSummary shown={visible.length} total={rows.length} step={SLICE} hasMore={shown < rows.length} onMore={() => setShown(shown + SLICE)} />;
+  // 리스트's rows gathered by the view's grouping (D-106); a project's statuses group by its columns, the home's by category.
+  const groups = useMemo(() => effective.layout !== 'list' ? [] : groupWorkItems(rows, effective.grouping, {
+    all: workItems, columns: scope.project ? scope.columns : undefined, types, labels, projects: scope.project ? undefined : scope.projects,
+  }), [effective.layout, rows, effective.grouping, workItems, scope.project, scope.columns, scope.projects, types, labels]);
+  const progress = useMemo(() => subtaskProgress(workItems), [workItems]);
+  const collapsed = useMemo(() => new Set([...folded].filter(each => each.startsWith(`${effective.grouping}|`)).map(each => each.slice(effective.grouping.length + 1))),
+    [folded, effective.grouping]);
+  const toggleGroup = (key: string) => setFolded(previous => {
+    const next = new Set(previous);
+    const entry = `${effective.grouping}|${key}`;
+    if (!next.delete(entry)) next.add(entry);
+    return next;
+  });
+  const limited = limitGroups(groups, shown, collapsed);
+  const summary = <ListSummary shown={limited.shown} total={rows.length} step={SLICE} hasMore={limited.hasMore} onMore={() => setShown(shown + SLICE)} />;
   const empty = (what: string, hint: string) => <PageState kind={isNarrowed ? 'search' : 'empty'} title={isNarrowed ? `조건에 맞는 ${subject(what)} 없습니다` : `아직 ${subject(what)} 없습니다`}
     description={isNarrowed ? '검색어나 필터를 바꿔 보세요.' : hint}
     actions={isNarrowed && (search.q || effective.isFiltered || effective.types) ? <Button label="조건 지우기" variant="secondary" onClick={() => go({ q: undefined, ...viewOwn, type: undefined })} /> : undefined} />;
@@ -157,9 +176,11 @@ export function WorkItemsView({ scope, view, tweak, effective, workItems, labels
           : [{ label: '작업', icon: 'board', onClick: () => onCreate() }]),
         { label: '일정', icon: 'calendar', onClick: () => onCreate(undefined, 'event') },
       ] }} />
-    {effective.layout === 'list' && (rows.length === 0 ? empty('업무', '첫 업무를 만들면 여기에 보입니다.') : isMobile
-      ? <><WorkItemRows workspaceId={workspaceId} rows={visible} search={search} columns={effective.columns} columnNames={columnNames} badges={badges} />{summary}</>
-      : <WorkItemTable workspaceId={workspaceId} rows={visible} search={search} columns={effective.columns} columnNames={columnNames} order={order} foot={summary} badges={badges} />)}
+    {effective.layout === 'list' && (rows.length === 0 ? empty('업무', '첫 업무를 만들면 여기에 보입니다.') : <>
+      <WorkItemList workspaceId={workspaceId} groups={limited.groups} search={search} columns={effective.columns} columnNames={columnNames} badges={badges}
+        progress={progress} isPhone={isMobile} collapsed={collapsed} onToggle={toggleGroup} />
+      {summary}
+    </>)}
     {effective.layout === 'board' && (withStatus.length === 0 && !scope.project ? empty('상태가 있는 업무', '업무에 상태를 정하면 칸반의 칸에 놓입니다.')
       : <BoardView scope={scope} items={withStatus} search={search} onCreate={onCreate} badges={badges} />)}
     {effective.layout === 'calendar' && <div ref={calendarRoom} className={styles.calendarRoom}>

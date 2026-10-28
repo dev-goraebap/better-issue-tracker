@@ -1755,6 +1755,8 @@ export interface components {
             layout?: "list" | "calendar" | "board" | "timeline" | "cards" | "history" | null;
             sort?: components["schemas"]["WorkItemViewSort"];
             columns?: ("status" | "priority" | "assignee" | "labels" | "due" | "updated" | "created")[] | null;
+            /** @enum {string|null} */
+            grouping?: "none" | "status" | "assignee" | "priority" | "type" | "label" | "project" | null;
         };
         WorkItemViewSort: {
             /** @enum {string} */
@@ -1873,6 +1875,11 @@ export interface components {
             filters?: components["schemas"]["WorkItemViewFilters"];
             sort: components["schemas"]["WorkItemViewSort"];
             columns: ("status" | "priority" | "assignee" | "labels" | "due" | "updated" | "created")[];
+            /**
+             * @description How the list's rows are grouped; omitted means none (D-106)
+             * @enum {string|null}
+             */
+            grouping?: "none" | "status" | "assignee" | "priority" | "type" | "label" | "project" | null;
         };
         WorkItemViewFilters: {
             /** @description Status categories: todo, doing, done, none */
@@ -2237,6 +2244,11 @@ export interface components {
             filters?: components["schemas"]["WorkItemViewFilters"];
             sort?: components["schemas"]["WorkItemViewSort"];
             columns?: ("status" | "priority" | "assignee" | "labels" | "due" | "updated" | "created")[];
+            /**
+             * @description How the list's rows are grouped (D-106)
+             * @enum {string}
+             */
+            grouping?: "none" | "status" | "assignee" | "priority" | "type" | "label" | "project";
         };
         UpdateProject: {
             /** Format: int64 */
@@ -2469,6 +2481,11 @@ export interface components {
             filters: components["schemas"]["WorkItemViewFilters"];
             sort: components["schemas"]["WorkItemViewSort"];
             columns: ("status" | "priority" | "assignee" | "labels" | "due" | "updated" | "created")[];
+            /**
+             * @description How the list's rows are grouped (D-106)
+             * @enum {string}
+             */
+            grouping: "none" | "status" | "assignee" | "priority" | "type" | "label" | "project";
             ownerId: string;
             isPersonal: boolean;
             /** @description Whether the caller may change or delete it (D-068) */
@@ -2489,6 +2506,8 @@ export interface components {
             layout?: "list" | "calendar" | "board" | "timeline" | "cards" | "history";
             sort?: components["schemas"]["WorkItemViewSort"];
             columns?: ("status" | "priority" | "assignee" | "labels" | "due" | "updated" | "created")[];
+            /** @enum {string} */
+            grouping?: "none" | "status" | "assignee" | "priority" | "type" | "label" | "project";
         };
         WorkItemViewOrder: {
             /** @description home, or a project id */
