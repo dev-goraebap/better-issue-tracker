@@ -17,6 +17,11 @@ import styles from './detail.module.css';
 
 type Patch = Omit<components['schemas']['UpdateWorkItem'], 'expectedVersion'>;
 
+const KIND_OPTIONS = [
+  { value: 'task', label: '작업', icon: <NavIcon name="board" /> },
+  { value: 'event', label: '일정', icon: <NavIcon name="calendar" /> },
+];
+
 /** Properties change directly beneath the title. Serialize writes so rapid multi-selection keeps every choice. */
 export function WorkItemProperties({ item, canWrite }: { item: WorkItem; canWrite: boolean }) {
   const { workspaceId: w, id } = item; const p = item.projectId ?? '';
@@ -49,6 +54,9 @@ export function WorkItemProperties({ item, canWrite }: { item: WorkItem; canWrit
     <span><NavIcon name={icon} />{label}</span><div className={styles.propertyValue}>{content}</div>
   </div>;
   return <section className={styles.inspectorSection} aria-label="세부 정보">
+    {/* 작업 or 일정 changes here since the edit page is gone (D-107); the server moves its fields over (D-092). */}
+    {canWrite && field('종류', 'board', <PropertyPicker label="종류" icon={isEvent ? 'calendar' : 'board'} options={KIND_OPTIONS} value={item.kind}
+      onChange={value => { if (value && value !== item.kind) patch({ kind: value as WorkItem['kind'] }); }} />)}
     {!isEvent && field('상태', 'status', canWrite
       ? <PropertyPicker label="상태" icon="status" options={p ? statusOptions(columns) : [
         { value: 'todo', label: '할 일', icon: <StatusBadge category="todo" isLabelHidden /> }, { value: 'doing', label: '진행 중', icon: <StatusBadge category="doing" isLabelHidden /> }, { value: 'done', label: '완료', icon: <StatusBadge category="done" isLabelHidden /> }, { value: NO_STATUS, label: '상태 없음' },

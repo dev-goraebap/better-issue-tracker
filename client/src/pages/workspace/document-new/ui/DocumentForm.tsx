@@ -11,7 +11,8 @@ import styles from './document-form.module.css';
 export type DocumentDraft = { title: string; body: string; labelIds: string[]; uploadIds?: string[] };
 
 /**
- * A document written on its own page (D-093, BIT-41), new or opened to edit, drawn as a work item's: a borderless title,
+ * A new document written on its own page (D-093, BIT-41; one already made is written on its own detail, D-107), drawn
+ * as a work item's: a borderless title,
  * the body in the Markdown editor (D-076, / for blocks), then where it goes and its labels as pills. 저장 (or Ctrl +
  * Enter) answers the draft to onSave, whose refusal (a change someone saved first, 409) is said under the form.
  */

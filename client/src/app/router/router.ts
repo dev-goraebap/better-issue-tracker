@@ -12,7 +12,6 @@ import { LoginPage } from '@/pages/entry/login';
 import { NotFoundPage } from '@/pages/entry/not-found';
 import { WorkspacesPage } from '@/pages/entry/workspaces';
 import { WorkItemPage, loadWorkItem } from '@/pages/project/work-item';
-import { WorkItemEditPage } from '@/pages/project/work-item-edit';
 import { ApiKeysPage } from '@/pages/settings/api-keys';
 import { AppearancePage } from '@/pages/settings/appearance';
 import { ProfilePage } from '@/pages/settings/profile';
@@ -21,7 +20,6 @@ import { SecurityPage } from '@/pages/settings/security';
 import { loadWorkspaceSettings, WorkspaceSettingsPage } from '@/pages/settings/workspace';
 import { DocumentsPage } from '@/pages/workspace/documents';
 import { DocumentPage } from '@/pages/workspace/document';
-import { DocumentEditPage } from '@/pages/workspace/document-edit';
 import { NewDocumentPage } from '@/pages/workspace/document-new';
 import { ProjectDocumentsPage } from '@/pages/project/documents';
 import { parseFolderSearch, parseNewDocumentSearch } from '@/entities/document';
@@ -118,37 +116,36 @@ const members = createRoute({ getParentRoute: () => scoped, path: '/members', co
   loader: ({ params }) => loadMembers(queryClient, params.workspaceId) });
 // 구성원 초대 is a page of rows, as 호호 HR's 사원 등록 (D-079).
 const membersInvite = createRoute({ getParentRoute: () => scoped, path: '/members/invite', component: InvitePage });
-// 문서함 and its documents (D-093): a document at /documents/<제목>-<id>, 새 문서 and its edit form at their own addresses.
+// 문서함 and its documents (D-093): a document at /documents/<제목>-<id>, 새 문서 at its own address.
 const documents = createRoute({ getParentRoute: () => scoped, path: '/documents', component: DocumentsPage, validateSearch: ownSearch(parseFolderSearch) });
 const documentNew = createRoute({ getParentRoute: () => scoped, path: '/documents/new', component: NewDocumentPage, validateSearch: ownSearch(parseNewDocumentSearch) });
 const documentDetail = createRoute({ getParentRoute: () => scoped, path: '/documents/$documentRef', component: DocumentPage });
-const documentEdit = createRoute({ getParentRoute: () => scoped, path: '/documents/$documentRef/edit', component: DocumentEditPage });
+// The edit pages are gone (D-107): a document is written on its own page, so an old /edit address opens it.
+const documentEdit = createRoute({ getParentRoute: () => scoped, path: '/documents/$documentRef/edit',
+  beforeLoad: ({ params }) => leadTo(`/workspaces/${params.workspaceId}/documents/${params.documentRef}`) });
 // A project's 문서 is 문서함's folder of it opened at once.
 const projectDocuments = createRoute({ getParentRoute: () => scoped, path: '/projects/$projectId/documents', component: ProjectDocumentsPage,
   validateSearch: ownSearch(parseFolderSearch), loader: ({ params }) => loadProject(params.workspaceId, params.projectId) });
 const projects = createRoute({ getParentRoute: () => scoped, path: '/projects', component: ProjectsPage, validateSearch: ownSearch(parseProjectsSearch),
   loaderDeps: ({ search }) => search, loader: ({ params, deps }) => loadProjects(queryClient, params.workspaceId, deps) });
 
-// A project is one page of its work items (D-066); a work item opens at its own address, its edit form under it.
+// A project is one page of its work items (D-066); a work item opens at its own address, written there (D-107).
 const projectItems = createRoute({ getParentRoute: () => scoped, path: '/projects/$projectId', component: WorkItemsPage, validateSearch: ownSearch(parseWorkItemSearch),
   loader: async ({ params }) => { await loadProject(params.workspaceId, params.projectId); await loadWorkItems(queryClient, params.workspaceId, params.projectId); } });
 const itemNew = createRoute({ getParentRoute: () => scoped, path: '/projects/$projectId/work-items/new', component: NewWorkItemPage, validateSearch: ownSearch(parseNewWorkItemSearch),
   loader: ({ params }) => loadProject(params.workspaceId, params.projectId) });
 const itemDetail = createRoute({ getParentRoute: () => scoped, path: '/projects/$projectId/work-items/$workItemId', component: WorkItemPage, validateSearch: ownSearch(parseWorkItemSearch),
   loader: async ({ params }) => { await loadProject(params.workspaceId, params.projectId); await loadWorkItem(queryClient, params.workspaceId, params.projectId, params.workItemId); } });
-const itemEdit = createRoute({ getParentRoute: () => scoped, path: '/projects/$projectId/work-items/$workItemId/edit', component: WorkItemEditPage,
-  loader: async ({ params }) => { await loadProject(params.workspaceId, params.projectId); await loadWorkItem(queryClient, params.workspaceId, params.projectId, params.workItemId); } });
+const itemEdit = createRoute({ getParentRoute: () => scoped, path: '/projects/$projectId/work-items/$workItemId/edit',
+  beforeLoad: ({ params }) => leadTo(`/workspaces/${params.workspaceId}/projects/${params.projectId}/work-items/${params.workItemId}`) });
 // A key such as BIT-42 (an agent's or a commit's reference) leads to its work item; /work-items/new above wins over it.
 const workspaceItem = createRoute({ getParentRoute: () => scoped, path: '/work-items/id/$workItemId', component: WorkItemPage, validateSearch: ownSearch(parseWorkItemSearch),
   loader: async ({ params }) => {
     const item = await routeRead(() => queryClient.fetchQuery(itemQuery(params.workspaceId, '', params.workItemId)));
     if (item.projectId) return leadTo(`/workspaces/${params.workspaceId}/projects/${item.projectId}/work-items/${item.id}`);
   } });
-const workspaceItemEdit = createRoute({ getParentRoute: () => scoped, path: '/work-items/id/$workItemId/edit', component: WorkItemEditPage,
-  loader: async ({ params }) => {
-    const item = await routeRead(() => queryClient.fetchQuery(itemQuery(params.workspaceId, '', params.workItemId)));
-    if (item.projectId) return leadTo(`/workspaces/${params.workspaceId}/projects/${item.projectId}/work-items/${item.id}/edit`);
-  } });
+const workspaceItemEdit = createRoute({ getParentRoute: () => scoped, path: '/work-items/id/$workItemId/edit',
+  beforeLoad: ({ params }) => leadTo(`/workspaces/${params.workspaceId}/work-items/id/${params.workItemId}`) });
 const itemReference = createRoute({ getParentRoute: () => scoped, path: '/work-items/$reference', loader: async ({ params }) => {
   const item = await routeRead(() => queryClient.fetchQuery(byRefQuery(params.workspaceId, params.reference)));
   return leadTo(item.projectId ? `/workspaces/${params.workspaceId}/projects/${item.projectId}/work-items/${item.id}` : `/workspaces/${params.workspaceId}/work-items/id/${item.id}`);
