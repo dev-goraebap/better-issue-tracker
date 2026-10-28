@@ -1,0 +1,16 @@
+/*
+ * The viewer fills the screen on the page's ground: a 48px bar on top (the name, then the zoom buttons and close), the rest
+ * the stage. What is shown starts fitted with room around it; a diagram's paper is the page's own surface.
+ */
+.viewer { inline-size: 100vw; max-inline-size: 100vw; block-size: 100dvh; max-block-size: 100dvh; margin: 0; padding: 0; border: 0; overflow: hidden;
+  display: flex; flex-direction: column; background: var(--color-background-body); color: var(--color-text-primary); }
+.viewer:not([open]) { display: none; }
+.viewer::backdrop { background: transparent; }
+.bar { display: flex; align-items: center; gap: 2px; flex-shrink: 0; block-size: 3rem; padding: 0 var(--spacing-3) 0 var(--spacing-4);
+  border-block-end: 1px solid var(--color-border-subtle); }
+.title { flex: 1; min-inline-size: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.875rem; font-weight: 500; }
+.stage { flex: 1; inline-size: 100% !important; block-size: 100% !important; cursor: grab; touch-action: none; }
+.stage:active { cursor: grabbing; }
+/* The content keeps its own size so the viewer can centre and fit it; a picture is held to the screen less the bar. */
+.content > :is(img, svg, div) { max-inline-size: 92vw; max-block-size: calc(100dvh - 6rem); user-select: none; }
+.content > img { display: block; object-fit: contain; border-radius: 6px; }

@@ -10,8 +10,12 @@ import { SlashMenu } from './SlashMenu';
 import { SlashStore } from './slash';
 import styles from './markdown.module.css';
 
-/** Markdown without the empty lines the editor keeps after the last block. */
-const tidy = (markdown: string) => markdown.replace(/\s+$/, '');
+/**
+ * Markdown without the empty lines the editor keeps after the last block, and with an alert's marker as GitHub writes it
+ * (BIT-95): the serializer escapes the brackets of [!NOTE], which GitHub and agents would read as plain text.
+ */
+const tidy = (markdown: string) => markdown.replace(/\s+$/, '')
+  .replace(/^((?:> ?)+)\\\[!(note|tip|important|warning|caution)\\\]/gim, '$1[!$2]');
 
 /**
  * Writing rich text that is kept as Markdown (D-076), as Linear's and Plane's editors write (Plane's is Tiptap, the

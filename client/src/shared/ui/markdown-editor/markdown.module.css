@@ -1,19 +1,21 @@
 /*
- * Rich text as Linear sets it (D-076): 15px body at 1.6, headings at 24/19/16px in 600, lists indented 24px with their
- * markers in the secondary ink, task boxes 16px that check in the accent, quotes on a 2px rule, inline code on a muted
- * chip, code blocks in the mono face on the muted ground, rules as hairlines, links underlined on hover only. The
- * editor and the reader share it, so text reads the same written or read.
+ * Rich text for reading (D-076, BIT-95): a 16px body at 1.7 with paragraphs 0.75em apart (GitHub's and Tailwind
+ * Typography's rhythm for Hangul and Latin alike), headings at 26/21/17px in 600 with more room above than below so each
+ * belongs to what follows, lists indented 24px with their markers in the secondary ink, task boxes 16px that check in
+ * the accent, quotes on a 2px rule, inline code on a muted chip, code blocks in the mono face on the muted ground, rules
+ * as hairlines, links underlined on hover only. The editor and the reader share it, so text reads the same written or
+ * read; a comment and a field set their own smaller size.
  */
 .editor { position: relative; --editor-min: 0; }
-.content :global(.ProseMirror) { min-block-size: var(--editor-min); outline: none; font-size: 0.9375rem; line-height: 1.6; color: var(--color-text-primary);
+.content :global(.ProseMirror) { min-block-size: var(--editor-min); outline: none; font-size: 1rem; line-height: 1.7; color: var(--color-text-primary);
   word-break: keep-all; overflow-wrap: anywhere; caret-color: var(--color-text-primary); }
-.content :global(.ProseMirror) > * + * { margin-block-start: 0.6em; }
+.content :global(.ProseMirror) > * + * { margin-block-start: 0.75em; }
 .content :global(.ProseMirror p) { margin: 0; }
-.content :global(.ProseMirror h1), .content :global(.ProseMirror h2), .content :global(.ProseMirror h3) { margin: 1.1em 0 0.2em; font-weight: 600; line-height: 1.3; letter-spacing: -0.01em; }
+.content :global(.ProseMirror h1), .content :global(.ProseMirror h2), .content :global(.ProseMirror h3) { margin: 1.5em 0 0.35em; font-weight: 600; line-height: 1.35; letter-spacing: -0.015em; }
 .content :global(.ProseMirror) > :is(h1, h2, h3):first-child { margin-block-start: 0; }
-.content :global(.ProseMirror h1) { font-size: 1.5rem; }
-.content :global(.ProseMirror h2) { font-size: 1.1875rem; }
-.content :global(.ProseMirror h3) { font-size: 1rem; }
+.content :global(.ProseMirror h1) { font-size: 1.625rem; }
+.content :global(.ProseMirror h2) { font-size: 1.3125rem; }
+.content :global(.ProseMirror h3) { font-size: 1.0625rem; }
 .content :global(.ProseMirror :is(ul, ol)) { margin: 0; padding-inline-start: 1.5rem; }
 /* The reset takes list markers away; text lists bring theirs back (dots, then rings, numbers). */
 .content :global(.ProseMirror ul:not([data-type="taskList"])) { list-style: disc; }
@@ -34,8 +36,8 @@
 .content :global(.ProseMirror li[data-checked="true"] > div) { color: var(--color-text-secondary); text-decoration: line-through; text-decoration-color: color-mix(in srgb, currentColor 50%, transparent); }
 .content :global(.ProseMirror blockquote) { margin-inline: 0; padding-inline-start: 0.875rem; border-inline-start: 2px solid var(--color-border-emphasized); color: var(--color-text-secondary); }
 .content :global(.ProseMirror code) { padding: 0.1em 0.35em; border-radius: 4px; background: var(--color-background-muted); font-family: var(--font-family-code); font-size: 0.85em; }
-.content :global(.ProseMirror pre) { margin-inline: 0; padding: 0.75rem 1rem; border-radius: var(--radius-element); background: var(--color-background-muted); overflow-x: auto;
-  font-family: var(--font-family-code); font-size: 0.8125rem; line-height: 1.55; }
+.content :global(.ProseMirror pre) { margin-inline: 0; padding: 0.875rem 1rem; border-radius: var(--radius-element); background: var(--color-background-muted); overflow-x: auto;
+  font-family: var(--font-family-code); font-size: 0.875rem; line-height: 1.6; }
 .content :global(.ProseMirror pre code) { padding: 0; background: none; font-size: inherit; }
 .content :global(.ProseMirror hr) { margin-block: 1em; border: 0; border-block-start: 1px solid var(--color-border); }
 .content :global(.ProseMirror a) { color: var(--color-text-primary); text-decoration: underline; text-decoration-color: color-mix(in srgb, currentColor 40%, transparent);
@@ -52,7 +54,96 @@
 .editor[data-touch] .content :global(.ProseMirror) { font-size: 1rem; }
 .view .content :global(.ProseMirror) { cursor: text; }
 .view .content :global(.ProseMirror a) { cursor: pointer; }
-.empty { margin: 0; font-size: 0.9375rem; color: var(--color-text-disabled); }
+.empty { margin: 0; font-size: 1rem; color: var(--color-text-disabled); }
+
+/*
+ * Alerts (BIT-95), as GitHub draws them: the quote on a 3px rule in its colour over a faint wash of it, its icon and
+ * title (참고·팁·중요·경고·주의) on top in the colour, the text in the primary ink. Read, the [!NOTE] marker is hidden;
+ * written, it stays as a quiet mono tag. The five colours are GitHub's for light and dark.
+ */
+.content :global(.ProseMirror blockquote[data-alert]) { --alert: light-dark(#0969da, #4493f8); padding: 0.625rem 1rem 0.75rem; border-inline-start-width: 3px;
+  border-inline-start-color: var(--alert); border-radius: 0 8px 8px 0; background: color-mix(in srgb, var(--alert) 7%, transparent); color: var(--color-text-primary); }
+.content :global(.ProseMirror blockquote[data-alert="tip"]) { --alert: light-dark(#1a7f37, #3fb950); }
+.content :global(.ProseMirror blockquote[data-alert="important"]) { --alert: light-dark(#8250df, #ab7df8); }
+.content :global(.ProseMirror blockquote[data-alert="warning"]) { --alert: light-dark(#9a6700, #d29922); }
+.content :global(.ProseMirror blockquote[data-alert="caution"]) { --alert: light-dark(#d1242f, #f85149); }
+.content :global(.ProseMirror blockquote[data-alert] > * + *) { margin-block-start: 0.5em; }
+.content :global(.bit-alert-title) { display: flex; align-items: center; gap: 0.4rem; margin-block-end: 0.25rem; color: var(--alert); font-size: 0.875rem; font-weight: 600;
+  line-height: 1.5; user-select: none; }
+.content :global(.bit-alert-title svg) { inline-size: 1rem; block-size: 1rem; flex-shrink: 0; }
+.content :global(.bit-alert-marker) { font-family: var(--font-family-code); font-size: 0.8em; color: var(--color-text-disabled); }
+.content :global(.bit-alert-marker-hidden), .content :global(.bit-alert-marker-line) { display: none; }
+
+/*
+ * Tables (BIT-95), as GitHub and Notion set them: a hairline box with 8px corners, a muted header row in 600, cells
+ * 8×12 in 14px with hairlines between rows and columns, a cell's text wrapping past 24rem. The box scrolls sideways
+ * when even its room is too narrow; in a detail (DetailLayout) a wide table also spreads past the text into the page's
+ * margins, centred on the text, as Claude's and Notion's pages do, and a phone's runs to the screen's edges.
+ */
+/*
+ * A table wider than its room scrolls sideways with a soft shadow on each side that still has more, the classic
+ * scroll-shadow trick (Lea Verou's): covers that travel with the content hide a shadow once its edge is reached.
+ */
+.content :global(.ProseMirror .tableWrapper) { overflow-x: auto; scrollbar-width: thin;
+  background:
+    linear-gradient(to right, var(--color-background-surface) 40%, transparent) left / 2.5rem 100% no-repeat local,
+    linear-gradient(to left, var(--color-background-surface) 40%, transparent) right / 2.5rem 100% no-repeat local,
+    radial-gradient(farthest-side at 0 50%, light-dark(rgb(0 0 0 / 0.16), rgb(0 0 0 / 0.7)), transparent) left / 1rem 100% no-repeat scroll,
+    radial-gradient(farthest-side at 100% 50%, light-dark(rgb(0 0 0 / 0.16), rgb(0 0 0 / 0.7)), transparent) right / 1rem 100% no-repeat scroll; }
+.content :global(.ProseMirror table) { border-collapse: separate; border-spacing: 0; inline-size: max-content; min-inline-size: 100%; margin: 0;
+  border: 1px solid var(--color-border); border-radius: 8px; font-size: 0.875rem; line-height: 1.55; }
+.content :global(.ProseMirror :is(th, td)) { padding: 0.5rem 0.75rem; vertical-align: top; text-align: start; border-block-end: 1px solid var(--color-border);
+  border-inline-end: 1px solid var(--color-border); }
+.content :global(.ProseMirror :is(th, td):last-child) { border-inline-end: 0; }
+.content :global(.ProseMirror tr:last-child > :is(th, td)) { border-block-end: 0; }
+.content :global(.ProseMirror th) { background: var(--color-background-muted); font-weight: 600; }
+.content :global(.ProseMirror tr:first-child > :first-child) { border-start-start-radius: 7px; }
+.content :global(.ProseMirror tr:first-child > :last-child) { border-start-end-radius: 7px; }
+.content :global(.ProseMirror :is(th, td) > p) { max-inline-size: 24rem; }
+.content :global(.ProseMirror :is(th, td)[data-align="center"]), .content :global(.ProseMirror :is(th, td)[style*="text-align: center"]) { text-align: center; }
+.content :global(.ProseMirror :is(th, td)[data-align="right"]), .content :global(.ProseMirror :is(th, td)[style*="text-align: right"]) { text-align: end; }
+/* A cell holding only [ ] or [x], read: the list's 16px box in place of the text, ticked in the accent for an x. */
+.content :global(.ProseMirror p.bit-cell-check) { font-size: 0; line-height: 0; }
+.content :global(.ProseMirror p.bit-cell-check)::before { content: ''; display: inline-block; inline-size: 1rem; block-size: 1rem; margin-block: 0.15rem;
+  box-sizing: border-box; border: 1.5px solid var(--color-border-emphasized); border-radius: 4px; vertical-align: middle; }
+.content :global(.ProseMirror p.bit-cell-check[data-checked="true"])::before { border-color: var(--color-accent); background: var(--color-accent) center / 0.75rem no-repeat
+  url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E"); }
+.content :global(.ProseMirror .selectedCell) { background: color-mix(in srgb, var(--color-accent) 12%, transparent); }
+@container detail (width >= 48rem) {
+  .content :global(.ProseMirror .tableWrapper) { position: relative; inline-size: max-content; min-inline-size: 100%; max-inline-size: calc(100cqi - 4rem);
+    inset-inline-start: 50%; translate: -50% 0; }
+}
+@container detail (width < 48rem) {
+  .content :global(.ProseMirror .tableWrapper) { margin-inline: -20px; padding-inline: 20px; }
+}
+
+/*
+ * A Mermaid diagram (BIT-95): drawn centred on the page's own paper with a hairline box, at its own width up to the
+ * column's, the theme's colours and type; a press on it or the button at its corner opens it over the whole screen.
+ * Written, the code shows above the drawing.
+ */
+.mermaidBlock { position: relative; }
+.mermaidCode { margin-block-end: 0.5rem !important; }
+.content :global(.ProseMirror pre[hidden]) { display: none; }
+.mermaid { position: relative; display: grid; place-items: center; min-block-size: 3rem; padding: 1rem; border: 1px solid var(--color-border-subtle); border-radius: 8px;
+  background: var(--color-background-surface); }
+.mermaidOpen { display: grid; place-items: center; inline-size: 100%; cursor: zoom-in; }
+.mermaidOpen :global(svg) { display: block; max-inline-size: 100%; block-size: auto; }
+.mermaidZoom { position: absolute; inset-block-start: 0.5rem; inset-inline-end: 0.5rem; display: grid; place-items: center; inline-size: 1.75rem; block-size: 1.75rem;
+  padding: 0; border: 1px solid var(--color-border-subtle); border-radius: 6px; background: var(--color-background-popover); color: var(--color-icon-secondary); cursor: pointer;
+  opacity: 0; transition: opacity var(--duration-fast, 120ms); }
+.mermaidZoom svg { inline-size: 0.875rem; block-size: 0.875rem; }
+.mermaid:hover .mermaidZoom, .mermaidZoom:focus-visible { opacity: 1; }
+.mermaidZoom:focus-visible { outline: var(--focus-outline-width) var(--focus-outline-style) var(--focus-outline-color); }
+@media (hover: none) { .mermaidZoom { opacity: 1; } }
+.mermaidError, .mermaidWait { margin: 0; font-size: 0.8125rem; color: var(--color-text-secondary); }
+.mermaidLarge { display: grid; place-items: center; padding: 1.5rem; border-radius: 10px; background: var(--color-background-surface); }
+/* Opened, the diagram is as large as the screen less the bar and the paper's margins, its shape kept. */
+.mermaidLarge :global(svg) { display: block; inline-size: min(88vw, calc((100dvh - 9rem) * var(--ratio, 2))); max-inline-size: none !important; block-size: auto; }
+
+/* A read picture opens larger: the whole picture is the button. */
+.imageOpen { display: block; padding: 0; border: 0; background: none; cursor: zoom-in; }
+.imageOpen:focus-visible { outline: var(--focus-outline-width) var(--focus-outline-style) var(--focus-outline-color); border-radius: 6px; }
 
 /* The selection menu and the phone's bar share their buttons: 28px squares, the icon 15px, pressed ones on a tint. */
 .bubble { display: flex; align-items: center; gap: 2px; padding: 3px; border: 1px solid var(--bit-float-border); border-radius: 10px; background: var(--color-background-popover);
