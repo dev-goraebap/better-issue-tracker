@@ -2,7 +2,7 @@ import { Fragment } from 'react';
 import { FolderLink, type Folder } from '@/entities/document';
 import styles from './folder.module.css';
 
-/** Where a folder is (BIT-41), in the row under the page's header: its part, then each folder down to it. */
+/** Where a folder is (BIT-41), in the row under a phone's header: its part, then each folder down to it (BIT-115). */
 export function FolderTrail({ workspaceId, projectId, rootLabel, path }: {
   workspaceId: string; projectId: string | null; rootLabel: string; path: readonly Folder[];
 }) {

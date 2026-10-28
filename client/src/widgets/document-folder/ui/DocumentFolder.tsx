@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { Button } from '@astryxdesign/core';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMediaQuery } from '@astryxdesign/core/hooks';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { authError } from '@/shared/api';
+import { MOBILE_QUERY } from '@/shared/config';
 import { CompactDialog, ConfirmDialog, ListSummary, ListToolbar, NavIcon, PageFrame, PageState, QueryMessage } from '@/shared/ui';
 import { labelsQuery } from '@/entities/label';
 import { canWrite as canWriteIn, workspaceQuery } from '@/entities/workspace';
@@ -13,8 +15,9 @@ import { FolderList } from './FolderList';
 import { FolderTrail } from './FolderTrail';
 
 /**
- * One folder of a part opened (D-093, BIT-41): a project's 문서, or 문서함's own folders. The way down to it leads the
- * page (the part, then each folder); its folders come first, then its documents, as a list. Someone who may write
+ * One folder of a part opened (D-093, BIT-41): a project's 문서, or 문서함's own folders. The way down to it is the
+ * header's trail on a desktop, where its tools sit beside 만들기 (BIT-115); a phone, whose header keeps only the step
+ * above, shows the whole way in a row under it. Its folders come first, then its documents, as a list. Someone who may write
  * makes a folder or a document here, and renames or
  * deletes an empty folder from its row. Project folders share the list and can be placed among its other rows.
  */
@@ -23,6 +26,7 @@ export function DocumentFolder({ workspaceId, projectId, folderId, title, rootLa
 }) {
   const client = useQueryClient();
   const navigate = useNavigate();
+  const isMobile = useMediaQuery(MOBILE_QUERY);
   const search = useSearch({ strict: false }) as FolderSearch;
   const go = (patch: Partial<FolderSearch>, replace = false) => {
     const next = { ...search, ...patch };
@@ -77,7 +81,7 @@ export function DocumentFolder({ workspaceId, projectId, folderId, title, rootLa
     { label: '새 폴더', icon: 'documents', onClick: () => setNaming({}) },
   ];
   return <PageFrame title={here?.name ?? title} icon="documents" chrome="header"
-    tabs={data && data.path.length > 0 ? <FolderTrail workspaceId={workspaceId} projectId={projectId} rootLabel={rootLabel} path={data.path} /> : undefined}>
+    tabs={isMobile && data && data.path.length > 0 ? <FolderTrail workspaceId={workspaceId} projectId={projectId} rootLabel={rootLabel} path={data.path} /> : undefined}>
     <ListToolbar search={{ label: '문서와 폴더 검색', placeholder: '이름으로 찾기', value: search.q, onChange: q => go({ q }, true) }}
       filters={[
         { key: 'kind', label: '유형', value: search.kind, options: [{ value: 'folder', label: '폴더' }, { value: 'document', label: '문서' }] },
