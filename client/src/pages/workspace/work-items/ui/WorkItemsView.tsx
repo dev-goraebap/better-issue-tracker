@@ -47,7 +47,7 @@ const same = <T,>(a: T, b: T) => JSON.stringify(a) === JSON.stringify(b);
 export function WorkItemsView({ scope, view, tweak, effective, workItems, labels, members, search, go, onCreate, onSaveAsView }: {
   scope: Scope; view: WorkItemView; tweak?: ViewTweak; effective: ReturnType<typeof effectiveView>; workItems: readonly WorkItem[];
   labels: readonly Label[]; members: readonly Member[]; search: WorkItemSearch; go: (patch: Partial<WorkItemSearch>, replace?: boolean) => void;
-  onCreate?: (status?: string, kind?: 'event', typeId?: string) => void; onSaveAsView: () => void;
+  onCreate?: (status?: string, kind?: 'event') => void; onSaveAsView: () => void;
 }) {
   const isMobile = useMediaQuery(MOBILE_QUERY);
   const client = useQueryClient();
@@ -77,7 +77,7 @@ export function WorkItemsView({ scope, view, tweak, effective, workItems, labels
   // Kept as one string so the map changes only when a column does (the query results are new arrays each render).
   const columnList = JSON.stringify([...scope.columns, ...allColumns.flatMap(result => result.data ?? [])].map(column => [column.id, column.name]));
   const columnNames = useMemo(() => new Map(JSON.parse(columnList) as [string, string][]), [columnList]);
-  // The workspace's types, for the 유형 filter and 만들기 ▾ (D-104).
+  // The workspace's types, for the 유형 filter (D-104).
   const types = useQuery(workItemTypesQuery(workspaceId)).data ?? [];
   // A member's adjustment that comes back to the view's own is no adjustment.
   const adjust = (patch: ViewTweak) => {
@@ -172,8 +172,8 @@ export function WorkItemsView({ scope, view, tweak, effective, workItems, labels
     <ListToolbar search={{ label: '업무 검색', placeholder: '제목이나 키로 찾기', value: search.q, onChange: q => { setShown(SLICE); go({ q }, true); } }}
       filters={filters} onFiltersChange={changeFilters} order={order} views={views} display={display} applied={applied}
       action={create && { label: '만들기', icon: 'plus', onClick: create, isCreate: true, choices: onCreate && [
-        ...(types.length ? types.map(type => ({ label: type.name, mark: <TypeMark type={type} />, onClick: () => onCreate(undefined, undefined, type.id) }))
-          : [{ label: '작업', icon: 'board', onClick: () => onCreate() }]),
+        // 작업 or 일정 (D-092, BIT-111): a task's type is chosen in its own form, which starts at the workspace's default type.
+        { label: '작업', icon: 'board', onClick: () => onCreate() },
         { label: '일정', icon: 'calendar', onClick: () => onCreate(undefined, 'event') },
       ] }} />
     {effective.layout === 'list' && (rows.length === 0 ? empty('업무', '첫 업무를 만들면 여기에 보입니다.') : <>
