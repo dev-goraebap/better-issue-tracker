@@ -50,7 +50,7 @@ export function ShellFrame({ pathname, sidebar, trail, mobileNav, mobileEnd, fol
     <section className={styles.shell} data-layout={layout} aria-label={PRODUCT_NAME}>
       {!isMobile && <div className={styles.sidebarRail}>{sidebar}{folded && <SidebarExpandHandle onExpand={onExpandSidebar} />}</div>}
       <VStack gap={0} className={styles.frame} data-bare={isPhoneBare || undefined} data-tabless={(isMobile && (isPhoneBare || !mobileNav)) || undefined}>
-        <div className={styles.panel}>
+        <div className={styles.panel} data-peek-host>
           <VStack gap={0} ref={scrollBox} className={styles.card} id="workspace-scroll" data-scroll-restoration-id="workspace-scroll">
             {<HStack as="nav" aria-label="현재 위치" gap={1} className={styles.topbar}>
               <span ref={setBack} className={styles.chromeBack} />

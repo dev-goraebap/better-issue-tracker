@@ -962,26 +962,21 @@ class WorkItemIntegrationTest {
                 .extracting(WorkItemViews.Item::id)
                 .containsExactly(event);
 
-        // A task that becomes an event leaves its column, keeping its days as an all-day event.
-        var dated = new WorkItemRequests.Update();
-        dated.setExpectedVersion(0L);
-        dated.setStartDate(java.time.LocalDate.of(2026, 11, 2));
-        workItemService.revise(owner, workspace, project, task, dated);
+        // A task never becomes an event (D-108): the change is refused and the task stays as it was.
         var toEvent = new WorkItemRequests.Update();
-        toEvent.setExpectedVersion(1L);
+        toEvent.setExpectedVersion(0L);
         toEvent.setKind(WorkItem.Kind.event);
-        workItemService.revise(owner, workspace, project, task, toEvent);
-        var changed = workItemQueryService.get(owner, workspace, project, task);
-        assertThat(changed.kind()).isEqualTo(WorkItem.Kind.event);
-        assertThat(changed.columnId()).isNull();
-        assertThat(changed.allDay()).isTrue();
-        assertThat(changed.startDate()).isEqualTo(java.time.LocalDate.of(2026, 11, 2));
-        assertThat(changed.people()).extracting(WorkItemViews.Person::id).containsExactly(member.userId());
-        assertThat(jdbcTemplate.queryForList(
-                        "SELECT payload FROM activity WHERE target_type='work_item' AND target_id=?",
-                        String.class,
-                        task))
-                .anySatisfy(payload -> assertThat(payload).contains("\"field\":\"kind\""));
+        assertThatThrownBy(() -> workItemService.revise(owner, workspace, project, task, toEvent))
+                .hasMessageContaining("작업과 일정은 서로 바꿀 수 없습니다");
+        var same = new WorkItemRequests.Update();
+        same.setExpectedVersion(0L);
+        same.setKind(WorkItem.Kind.task);
+        same.setTitle("Spec v2");
+        workItemService.revise(owner, workspace, project, task, same);
+        var kept = workItemQueryService.get(owner, workspace, project, task);
+        assertThat(kept.kind()).isEqualTo(WorkItem.Kind.task);
+        assertThat(kept.columnId()).isEqualTo(todo);
+        assertThat(kept.title()).isEqualTo("Spec v2");
     }
 
     @Test
@@ -1178,13 +1173,6 @@ class WorkItemIntegrationTest {
         assertThat(notices(member))
                 .extracting(NotificationViews.Notice::type)
                 .containsExactly(Notification.Type.rescheduled, Notification.Type.invited, Notification.Type.assigned);
-        // A task has no reminder, whatever is asked.
-        var toTask = new WorkItemRequests.Update();
-        toTask.setExpectedVersion(1L);
-        toTask.setKind(WorkItem.Kind.task);
-        workItemService.revise(owner, workspace, project, event, toTask);
-        assertThat(workItemQueryService.get(owner, workspace, project, event).reminderMinutes())
-                .isNull();
 
         assertThat(notificationService.unread(member, workspace)).isEqualTo(3);
         notificationService.read(member, workspace, notices(member).getLast().id());

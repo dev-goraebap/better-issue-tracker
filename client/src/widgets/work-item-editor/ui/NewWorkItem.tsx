@@ -164,7 +164,7 @@ ${next.body}`) : isUntouched ? '' : previous.body;
       {projectPill}
 
       <span className={styles.headEnd}>
-        <IconButton label="크게 보기" tooltip="크게 보기" variant="ghost" size="sm" icon={<NavIcon name="expand-page" />} onClick={() => void router.navigate({ href: panel.pageHref })} />
+        <IconButton label="크게 보기" tooltip="크게 보기" variant="ghost" size="sm" icon={<NavIcon name="expand-page" />} onClick={panel.onExpand} />
         <IconButton label="닫기" tooltip="닫기 (Esc)" variant="ghost" size="sm" icon={<NavIcon name="close" />} onClick={panel.onClose} />
       </span>
     </header>

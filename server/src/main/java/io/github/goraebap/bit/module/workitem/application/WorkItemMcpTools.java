@@ -164,7 +164,6 @@ class WorkItemMcpTools implements McpToolProvider {
                                 .choice("priority", "우선순위", List.of("low", "medium", "high", "urgent", "none"), false)
                                 .string("assignee", "담당자(참석자) 한 명으로 바꿈: me, 이메일, 이름, 또는 none", false)
                                 .strings("people", "담당자나 참석자 여럿 (이 목록으로 바뀝니다, []는 비움)", false)
-                                .choice("kind", "종류를 바꿈: task 또는 event", List.of("task", "event"), false)
                                 .string("type", "업무 유형 이름으로 바꿈. 예: 버그", false)
                                 .string(
                                         "parent",
@@ -381,7 +380,6 @@ class WorkItemMcpTools implements McpToolProvider {
         args.optionalString("title").ifPresent(request::setTitle);
         args.optionalString("description").ifPresent(request::setDescription);
         args.optionalString("priority").ifPresent(value -> request.setPriority(isNone(value) ? null : priority(value)));
-        args.optionalString("kind").map(this::kind).ifPresent(request::setKind);
         args.optionalString("type").ifPresent(name -> request.setTypeId(typeId(actor, at.workspaceId(), name)));
         args.optionalString("parent")
                 .ifPresent(ref -> request.setParentId(

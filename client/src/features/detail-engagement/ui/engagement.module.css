@@ -1,4 +1,5 @@
 .actions { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; min-block-size: 28px; }
+.actionHost { display: contents; }
 .iconButton { display: inline-grid; place-items: center; inline-size: 28px; block-size: 28px; padding: 5px; border: 0; border-radius: 5px; background: transparent; color: var(--color-text-secondary); cursor: pointer; }
 .iconButton:hover { color: var(--color-text-primary); background: var(--color-overlay-hover); }
 .iconButton svg { inline-size: 15px; block-size: 15px; }

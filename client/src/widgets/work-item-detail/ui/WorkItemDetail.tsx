@@ -15,7 +15,7 @@ import {
 } from '@/entities/work-item';
 import { branchName, codeLinksQuery, CodeLinkList, integrationsQuery } from '@/entities/repository';
 import { AttachmentBody, DetailEngagement, fileHref, useBodyFiles } from '@/features/detail-engagement';
-import { EditableTitle, InlineBody, LeaveGuard, SaveBar, SaveQuestions, useInlineEdit } from '@/features/inline-edit';
+import { EditableTitle, EditBar, InlineBody, LeaveGuard, ReadTitle, SaveQuestions, useInlineEdit } from '@/features/inline-edit';
 import { ParentRelationContext, TargetRelations } from '@/features/target-relations';
 import { refreshTimeline } from '../api/timeline';
 import { WorkItemActivity } from './WorkItemActivity';
@@ -23,8 +23,9 @@ import { WorkItemProperties } from './WorkItemProperties';
 import styles from './detail.module.css';
 
 /**
- * Shared desktop/mobile reading column with directly editable property chips. Its title and description are written in
- * place and saved together from the save bar (D-107): on a desktop whenever the member may write, on a phone after 고치기.
+ * Shared desktop/mobile reading column with directly editable property chips. Its title and description are read until
+ * the member asks to write them (D-109): a press hints how, two presses or 고치기 (the bar's, or a phone's header) start
+ * writing them in place, and the bar at the foot saves them together, cancels, or goes back to reading (D-107).
  */
 export function WorkItemDetail({ workspaceId, projectId, id, search }: { workspaceId: string; projectId: string; id: string; search: WorkItemSearch }) {
   const panel = usePanelSurface();
@@ -35,7 +36,8 @@ export function WorkItemDetail({ workspaceId, projectId, id, search }: { workspa
   const list = { to: '/workspaces/$workspaceId/projects/$projectId', params: { workspaceId, projectId }, search } as const;
   const [isDeleting, setDeleting] = useState(false);
   const [isStopping, setStopping] = useState(false);
-  const [isWritingOnPhone, setWritingOnPhone] = useState(false);
+  // Beside the reaction button, where the open editor's attachment button goes (BIT-104).
+  const [fileActionHost, setFileActionHost] = useState<HTMLSpanElement | null>(null);
   const result = useQuery(itemQuery(workspaceId, projectId, id));
   const hasRepository = (useQuery({ ...integrationsQuery(workspaceId, projectId), enabled: !!projectId }).data ?? []).length > 0;
   const links = useQuery({ ...codeLinksQuery(workspaceId, projectId, id), enabled: hasRepository }).data ?? [];
@@ -57,10 +59,10 @@ export function WorkItemDetail({ workspaceId, projectId, id, search }: { workspa
       await Promise.allSettled([refreshItems(client, workspaceId, projectId), refreshTimeline(client, workspaceId, 'work_item', id)]);
     },
     isRepeating: !!result.data?.recurrence,
-    onSaved: () => { files.reset(); setWritingOnPhone(false); },
+    onSaved: () => files.reset(),
   });
   const files = useBodyFiles(text.draft.body);
-  const isWriting = canWrite && (!isMobile || isWritingOnPhone);
+  const isWriting = canWrite && text.isEditing;
   const back = projectId ? <BackLink {...list} label="업무" /> : <BackLink to="/workspaces/$workspaceId" params={{ workspaceId }} label="워크스페이스" />;
   if (result.isPending || (result.error && !result.data && !isNotFound(result.error))) return <Surface isDetail title="업무" back={back} width="default">
     <QueryMessage pending={result.isPending} error={result.error} retry={() => { void result.refetch(); }} />
@@ -83,10 +85,9 @@ export function WorkItemDetail({ workspaceId, projectId, id, search }: { workspa
     void navigator.clipboard?.writeText(branch).then(() => toast({ body: `브랜치 이름을 복사했습니다: ${branch}` }), () => toast({ body: '복사하지 못했습니다' }));
   };
   return <Surface isDetail headerLabel={item.key} title={item.title} wrapsTitle back={back} width="full" actions={<>
-    {/* A phone reads by default; 고치기 opens the title and description to write, 다 고침 closes them when nothing waits. */}
-    {canWrite && isMobile && (isWritingOnPhone
-      ? <IconButton label="다 고침" tooltip="다 고침" variant="ghost" size={panel ? 'sm' : undefined} icon={<NavIcon name="check" />} isDisabled={text.isChanged} onClick={() => setWritingOnPhone(false)} />
-      : <IconButton label="고치기" tooltip="고치기" variant="ghost" size={panel ? 'sm' : undefined} icon={<NavIcon name="edit" />} onClick={() => setWritingOnPhone(true)} />)}
+    {/* A phone has no two presses to spare: 고치기 in its header starts writing; the bar at the foot ends it. */}
+    {canWrite && isMobile && !text.isEditing
+      && <IconButton label="고치기" tooltip="고치기" variant="ghost" size={panel ? 'sm' : undefined} icon={<NavIcon name="edit" />} onClick={() => text.edit()} />}
     <MoreMenu label="업무 메뉴" variant="ghost" size={panel ? 'sm' : undefined} placement="end" items={[
       { label: '링크 복사', icon: <NavIcon name="link" />, onClick: () => void navigator.clipboard?.writeText(`${window.location.origin}${workItemHref(workspaceId, item)}`) },
       { label: '브랜치 이름 복사', icon: <NavIcon name="branch" />, onClick: copyBranch },
@@ -97,17 +98,18 @@ export function WorkItemDetail({ workspaceId, projectId, id, search }: { workspa
       ] : []),
     ]} />
   </>}>
-    <DetailLayout title={isWriting ? <EditableTitle value={text.draft.title} label="업무 제목" onChange={text.setTitle} /> : item.title}
+    <DetailLayout title={isWriting ? <EditableTitle value={text.draft.title} label="업무 제목" onChange={text.setTitle} autoFocus={text.startAt === 'title'} />
+      : canWrite ? <ReadTitle onPress={text.hint} onOpen={() => text.edit('title')}>{item.title}</ReadTitle> : item.title}
       context={<ParentRelationContext workspaceId={workspaceId} id={id} canWrite={canWrite} />} properties={<>
       <WorkItemProperties key={id} item={item} canWrite={canWrite} />
     </>}>
         <section aria-label="설명" className={styles.description}>
-          <InlineBody canOpen={isWriting} isKept={text.isChanged || isWritingOnPhone} revision={text.revision}
-            read={<AttachmentBody target={{ workspaceId, type: 'work_item', id }} value={item.description ?? ''} empty={isWriting ? '설명을 덧붙이려면 누르세요' : '설명이 없습니다.'} />}
+          <InlineBody canOpen={canWrite} isEditing={isWriting} startAt={typeof text.startAt === 'number' ? text.startAt : undefined} onPress={text.hint} onOpen={text.edit}
+            read={<AttachmentBody target={{ workspaceId, type: 'work_item', id }} value={item.description ?? ''} empty={canWrite ? '설명을 덧붙이려면 두 번 누르세요' : '설명이 없습니다.'} />}
             write={startAt => <MarkdownEditor key={text.revision} startAt={startAt} attachmentUrl={fileId => fileHref({ workspaceId, type: 'work_item', id }, fileId, false)}
-              filePicker={files.picker} value={text.draft.body} onChange={text.setBody} label="설명" placeholder="설명을 덧붙이세요… ( / 로 블록)" />} />
+              filePicker={files.picker} filePickerPortal={fileActionHost} value={text.draft.body} onChange={text.setBody} label="설명" placeholder="설명을 덧붙이세요… ( / 로 블록)" />} />
         </section>
-        <DetailEngagement target={{ workspaceId, type: 'work_item', id }} canWrite={canWrite} />
+        <DetailEngagement target={{ workspaceId, type: 'work_item', id }} canWrite={canWrite} actionHost={setFileActionHost} />
         <TargetRelations workspaceId={workspaceId} projectId={projectId || undefined} type="work_item" id={id} title={item.title} canWrite={canWrite} typeId={item.type?.id} />
         {(hasRepository || links.length > 0) && <section aria-labelledby="detail-code">
           <SectionHeader id="detail-code" title="연결된 코드" actions={<SettingsAction label="브랜치 이름 복사" tooltip="브랜치 이름 복사" icon="branch" onClick={copyBranch} />} />
@@ -116,7 +118,8 @@ export function WorkItemDetail({ workspaceId, projectId, id, search }: { workspa
         </section>}
         <WorkItemActivity workspaceId={workspaceId} projectId={projectId} workItemId={id} canWrite={canWrite} canModerate={canManage(role)} />
     </DetailLayout>
-    {(text.isChanged || text.error) && <SaveBar isBusy={text.isBusy || files.isUploading} error={text.error} onUndo={text.undo} onSave={() => { void text.save(); }} />}
+    {canWrite && (text.isHinting || text.isEditing) && <EditBar isEditing={text.isEditing} isChanged={text.isChanged} isBusy={text.isBusy || files.isUploading} error={text.error}
+      onEdit={() => text.edit()} onView={text.view} onCancel={() => { text.cancel(); files.reset(); }} onSave={() => { void text.save(); }} />}
     <SaveQuestions isAskingScope={text.isAskingScope} hasConflict={!!text.conflict} isBusy={text.isBusy} onScope={scope => { void text.save(scope); }}
       onCancelScope={text.cancelScope} onTakeLatest={text.takeLatest} onKeepMine={() => { void text.keepMine(); }} />
     <LeaveGuard when={text.isChanged} />

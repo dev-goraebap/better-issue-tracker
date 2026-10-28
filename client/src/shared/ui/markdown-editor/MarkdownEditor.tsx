@@ -50,6 +50,10 @@ export function MarkdownEditor({ value, onChange, label, placeholder = '쓰기 �
   // The latest callbacks, read when the editor calls them (it is made once).
   const latest = useRef({ onChange, onSubmit, onBlur });
   useEffect(() => { latest.current = { onChange, onSubmit, onBlur }; });
+  // The text as given and as the editor writes it back. Loading re-writes Markdown its own way (a blank line after a
+  // heading, an escape), so while the document is still what was loaded it reports the text as given: opening a body
+  // to write changes nothing until something is written (BIT-108).
+  const given = useRef({ value, written: '' });
   const editor = useEditor({
     extensions: writingExtensions({ placeholder, store, attachmentUrl, onSubmit: onSubmit ? () => latest.current.onSubmit?.() : undefined }),
     content: value,
@@ -57,21 +61,30 @@ export function MarkdownEditor({ value, onChange, label, placeholder = '쓰기 �
     editable: !isDisabled,
     autofocus: autoFocus ? 'end' : false,
     editorProps: { attributes: { 'aria-label': label, 'aria-multiline': 'true', role: 'textbox', spellcheck: 'true' } },
-    onUpdate: ({ editor: current }) => latest.current.onChange(tidy(current.getMarkdown())),
+    onCreate: ({ editor: current }) => { given.current = { value, written: tidy(current.getMarkdown()) }; },
+    onUpdate: ({ editor: current }) => {
+      const markdown = tidy(current.getMarkdown());
+      latest.current.onChange(markdown === given.current.written ? given.current.value : markdown);
+    },
     onBlur: () => latest.current.onBlur?.(),
   });
   // A value from outside replaces the text while nobody is writing in it.
   useEffect(() => {
     if (!editor || editor.isFocused || tidy(editor.getMarkdown()) === tidy(value)) return;
     editor.commands.setContent(value, { contentType: 'markdown', emitUpdate: false });
+    given.current = { value, written: tidy(editor.getMarkdown()) };
   }, [editor, value]);
   useEffect(() => { editor?.setEditable(!isDisabled); }, [editor, isDisabled]);
   // Opened from the text as read: the caret goes where it was pressed. Both are drawn from the same Markdown, so a
   // position in the one is the same place in the other, however the two are laid out.
+  // A frame later, so the word the browser selects on a double press (D-109) does not stay selected.
   useEffect(() => {
-    if (!editor || startAt === undefined) return;
-    if (startAt < 0) { editor.commands.focus('end'); return; }
-    editor.chain().focus(undefined, { scrollIntoView: false }).setTextSelection(Math.min(startAt, editor.state.doc.content.size)).run();
+    if (!editor || startAt === undefined) return undefined;
+    const frame = requestAnimationFrame(() => {
+      if (startAt < 0) { editor.commands.focus('end'); return; }
+      editor.chain().focus(undefined, { scrollIntoView: false }).setTextSelection(Math.min(startAt, editor.state.doc.content.size)).run();
+    });
+    return () => cancelAnimationFrame(frame);
   }, [editor]);
   const attachmentAction = editor && !isDisabled && filePicker ? filePicker(file => {
     editor.chain().focus().insertContent([{ type: 'attachmentBlock', attrs: file }, { type: 'paragraph' }]).run();

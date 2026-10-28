@@ -33,14 +33,29 @@ export function hrefOf(path: string, search: Record<string, string | number | un
 
 /**
  * The panel a screen holds. open shows a page in it (replace swaps the page shown for another), back returns to the
- * page shown before in the panel, and close takes the panel away with every page it showed.
+ * page shown before in the panel, close takes the panel away with every page it showed, and expand leaves it for the
+ * page itself (크게 보기) in the panel's place, so back from that page is the screen.
  */
-export type PanelHost = { open: (href: string, replace?: boolean) => void; back: () => void; close: () => void };
+export type PanelHost = { open: (href: string, replace?: boolean) => void; back: () => void; close: () => void; expand: (href: string) => void };
 
 export const PanelHostContext = createContext<PanelHost | null>(null);
 
 /** A screen's panel as its address holds it: the page shown and how many history entries the panel pushed over it. */
 export type PanelPlace = { panel?: string; depth?: number };
+
+/**
+ * The mark an entry the panel pushed carries in the browser's history: how many entries it pushed over its screen.
+ * The address's depth alone is not proof: an address copied, typed or left from another visit carries a depth with no
+ * screen entry under it, and going back by it left the app's screen for whatever came before (BIT-103).
+ */
+export const PANEL_MARK = 'bitPanelDepth';
+
+/** The depth an entry's history state says the panel pushed (a masked move keeps it in its unmasked state too), or none. */
+export function markedDepth(state: unknown): number | undefined {
+  const own = state as { [PANEL_MARK]?: unknown; __tempLocation?: { state?: { [PANEL_MARK]?: unknown } } } | null | undefined;
+  const value = own?.[PANEL_MARK] ?? own?.__tempLocation?.state?.[PANEL_MARK];
+  return typeof value === 'number' && value > 0 ? value : undefined;
+}
 
 /**
  * How many history entries the panel pushed over its screen. A panel whose address carries no depth was opened

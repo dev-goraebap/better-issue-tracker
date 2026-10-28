@@ -34,10 +34,11 @@ type Editing = { mode: 'create' | 'edit'; initial: ViewDraft };
  *   (v; the scope's default when left out, which is where the trail's 홈 or project name leads).
  * - A new view takes the list's conditions as they stand; its card (ViewEditor) opens over the list, as Linear's.
  * - 새 업무 (the toolbar's action, a board lane's +, or the C key) opens at its own address in a modal near the top
- *   (NewWorkItem, D-070): …/work-items/new in a project, …/work-items/new in 전체, ?status= from a lane's +, ?type= from
- *   만들기 ▾'s type (D-104).
- * - A work item pressed in any layout opens in a modal over the page at its own address (a masked move, D-069): the list
- *   stays under it, back or Esc closes it, 크게 보기 goes to the work item's page. Reloaded, the address is the page.
+ *   (NewWorkItem, D-070): …/work-items/new in a project, …/work-items/new in 전체, ?status= from a lane's +, ?kind=event
+ *   from 만들기 ▾'s 일정 (D-092: 만들기 ▾ is 작업 or 일정; a task's type is chosen in its form, BIT-111).
+ * - A work item pressed in any layout opens at its own address (a masked move, D-069) in the panel at the right of the
+ *   page's card (BIT-103): the list stays under it, back, Esc or a press beside it closes it, 크게 보기 goes to the work
+ *   item's page. Reloaded, the address is the page.
  */
 export function WorkItemsPage() {
   const { workspaceId, projectId } = useParams({ strict: false }) as { workspaceId: string; projectId?: string };
@@ -77,14 +78,14 @@ export function WorkItemsPage() {
     Object.fromEntries(Object.entries({ ...search, ...patch }).filter(([, value]) => value !== undefined)) as WorkItemSearch, replace), [place, search]);
   // The scope's default view keeps the bare address, so the trail's link and the first chip are one place.
   const pick = (id: string) => { setEditing(null); place(id === views[0]!.id ? {} : { v: id }); };
-  // 새 업무 at its address: the project's, or 전체's; a board lane's + says where it starts, 만들기 ▾'s type what it is (D-104).
-  const openNew = (status?: string, kind?: 'event', typeId?: string) => {
+  // 새 업무 at its address: the project's, or 전체's; a board lane's + says where it starts, 만들기 ▾ whether it is an event.
+  const openNew = (status?: string, kind?: 'event') => {
     if (!canWrite) return;
     const path = projectId ? `/workspaces/${workspaceId}/projects/${projectId}/work-items/new` : `/workspaces/${workspaceId}/work-items/new`;
-    const query = new URLSearchParams(kind ? { kind } : { ...(status ? { status } : {}), ...(typeId ? { type: typeId } : {}) }).toString();
+    const query = new URLSearchParams(kind ? { kind } : status ? { status } : {}).toString();
     host.open(query ? `${path}?${query}` : path);
   };
-  // A work item's link pressed (a plain click) opens the modal instead of leaving the list.
+  // A work item's link pressed (a plain click) opens the panel instead of leaving the list.
   const peek = (event: MouseEvent) => {
     if (!isPlainClick(event) || event.defaultPrevented) return;
     const href = (event.target as HTMLElement).closest<HTMLAnchorElement>('a[href]')?.getAttribute('href');
@@ -131,7 +132,7 @@ export function WorkItemsPage() {
       </RequestBoundary>
     </div>
     {fullSearch.panel && <RoutedPanel label={NEW_PATH.test(panelPath) ? '새 업무' : '업무'} href={fullSearch.panel} depth={depth} host={host}
-      size={NEW_PATH.test(panelPath) ? 'form' : 'content'}><WorkItemPanel href={fullSearch.panel} /></RoutedPanel>}
+      size={NEW_PATH.test(panelPath) ? 'form' : 'content'} place={NEW_PATH.test(panelPath) ? 'modal' : 'peek'}><WorkItemPanel href={fullSearch.panel} /></RoutedPanel>}
     {isOrdering && <ViewOrderDialog workspaceId={workspaceId} scope={viewScope} scopeName={project.data?.name ?? '홈'} views={views} onClose={() => setOrdering(false)} />}
     {isRemoving && <ConfirmDialog title={`'${view.name}' 뷰를 지울까요?`} description={view.isPersonal ? '나만 보던 뷰가 사라집니다. 업무는 그대로 남습니다.' : '워크스페이스의 모두에게서 이 뷰가 사라집니다. 업무는 그대로 남습니다.'}
       confirmLabel="지우기" variant="destructive" onClose={() => setRemoving(false)}
