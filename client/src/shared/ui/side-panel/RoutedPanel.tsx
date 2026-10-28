@@ -17,7 +17,7 @@ export function RoutedPanel({ label, href, depth, host, size = 'content', place 
   label: string; href: string; depth: number; host: PanelHost; size?: 'content' | 'compact' | 'form'; place?: 'modal' | 'peek'; children: ReactNode;
 }) {
   const isMobile = useMediaQuery(MOBILE_QUERY);
-  return <SurfaceContext.Provider value={{ pageHref: href, onClose: host.close, onBack: depth > 1 ? host.back : undefined }}>
+  return <SurfaceContext.Provider value={{ pageHref: href, onClose: host.close, onBack: depth > 1 ? host.back : undefined, onExpand: () => host.expand(href) }}>
     {place === 'peek' && !isMobile
       ? <SidePeek label={label} isRouted onClose={host.close}>{children}</SidePeek>
       : <PanelDialog label={label} size={size} isRouted onClose={host.close}>{children}</PanelDialog>}

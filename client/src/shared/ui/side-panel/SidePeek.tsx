@@ -13,16 +13,19 @@ const storedWidth = () => {
 };
 /** The page's card the panel sits in (the app shell's data-peek-host), or the window when there is none. */
 const findHost = () => document.querySelector<HTMLElement>('[data-peek-host]') ?? document.body;
-/** At most half the card: the panel may be pulled to its middle and no further. */
-const widest = (host: HTMLElement) => Math.max(MIN_WIDTH, Math.round(host.clientWidth / 2));
+/**
+ * The panel may be pulled to the card's middle and no further, but on a narrow card it still opens at its starting
+ * width: half a small card is too narrow to read a work item in. It never outgrows the card.
+ */
+const widest = (host: HTMLElement) => Math.min(host.clientWidth, Math.max(START_WIDTH, Math.round(host.clientWidth / 2)));
 
 /**
  * A detail at the right of the page's card on a desktop (BIT-103): a rectangle the card's whole height, its head on the
  * card's header row, sharing the card's right corners. A clear layer over the rest of the card closes it when pressed,
  * so the list stays in sight. It opens 640px wide; the handle on its left edge (a drag, or ←/→ with it focused) widens
- * it as far as the card's middle and narrows it to 420px, and the width is kept in this browser. Escape closes it while
- * no dialog is open over it, and focus starts in it. isRouted marks a panel whose pages have their own addresses
- * (data-router-history).
+ * it as far as the card's middle (on a narrow card, still 640px) and narrows it to 420px, and the width is kept in
+ * this browser. Escape closes it while no dialog is open over it, and focus starts in it. isRouted marks a panel whose
+ * pages have their own addresses (data-router-history).
  */
 export function SidePeek({ label, isRouted, onClose, children }: { label: string; isRouted: boolean; onClose: () => void; children: ReactNode }) {
   const box = useRef<HTMLElement>(null);

@@ -1,5 +1,4 @@
 import { IconButton, Text } from '@astryxdesign/core';
-import { useRouter } from '@tanstack/react-router';
 import type { ReactNode } from 'react';
 import { FrameHead } from '../frame';
 import { NavIcon } from '../NavIcon';
@@ -20,7 +19,6 @@ export function Surface({ title, subtitle, actions, footer, back, width = 'narro
   children: ReactNode;
 }) {
   const panel = usePanelSurface();
-  const router = useRouter();
   if (!panel) return <PageFrame headerLabel={headerLabel} isDetail={isDetail} title={title} back={back} actions={actions} width={width} wrapsTitle={wrapsTitle}>
     {subtitle && <Text color="secondary">{subtitle}</Text>}
     {children}
@@ -29,7 +27,7 @@ export function Surface({ title, subtitle, actions, footer, back, width = 'narro
   return <div className={styles.panel}>
     <FrameHead title={headerLabel ?? title} subtitle={subtitle} wrapsTitle={wrapsTitle} onBack={panel.onBack} isFull onClose={panel.onClose}
       actions={<>{actions}<IconButton label="크게 보기" tooltip="크게 보기" variant="ghost" size="sm" icon={<NavIcon name="expand-page" />}
-        onClick={() => void router.navigate({ href: panel.pageHref })} /></>} />
+        onClick={panel.onExpand} /></>} />
     <div className={styles.body} data-detail-full={isDetail && width === 'full' || undefined}>{children}</div>
     {footer && <div className={styles.foot} data-action-row>{footer}</div>}
   </div>;
