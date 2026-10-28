@@ -98,6 +98,8 @@ class LabelIntegrationTest {
                 "work_item_person",
                 "work_item_label",
                 "work_item",
+                "work_item_type_parent",
+                "work_item_type",
                 "board_column",
                 "project_member",
                 "project_key",

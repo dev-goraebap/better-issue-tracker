@@ -86,6 +86,50 @@ class JooqLinkRepository implements LinkRepository {
     }
 
     @Override
+    public Optional<Link> findParentLink(String workspaceId, String childId) {
+        return dslContext
+                .selectFrom(LINK)
+                .where(subtasks(workspaceId))
+                .and(LINK.FROM_ID.eq(childId))
+                .orderBy(LINK.CREATED_AT, LINK.LINK_ID)
+                .limit(1)
+                .fetchOptional(this::link);
+    }
+
+    @Override
+    public java.util.Map<String, String> findParentIds(String workspaceId, java.util.Set<String> childIds) {
+        if (childIds.isEmpty()) return java.util.Map.of();
+        var parents = new java.util.HashMap<String, String>();
+        dslContext
+                .select(LINK.FROM_ID, LINK.TO_ID)
+                .from(LINK)
+                .where(subtasks(workspaceId))
+                .and(LINK.FROM_ID.in(childIds))
+                .orderBy(LINK.CREATED_AT, LINK.LINK_ID)
+                .forEach(r -> parents.putIfAbsent(r.value1(), r.value2()));
+        return java.util.Map.copyOf(parents);
+    }
+
+    @Override
+    public java.util.Set<String> findChildIds(String workspaceId, String parentId) {
+        return java.util.Set.copyOf(dslContext
+                .select(LINK.FROM_ID)
+                .from(LINK)
+                .where(subtasks(workspaceId))
+                .and(LINK.TO_ID.eq(parentId))
+                .fetch(LINK.FROM_ID));
+    }
+
+    /** Live subtask_of links of the workspace: from a work item to the work item it sits under. */
+    private static org.jooq.Condition subtasks(String workspaceId) {
+        return LINK.WORKSPACE_ID
+                .eq(workspaceId)
+                .and(LINK.RELATION.eq("subtask_of"))
+                .and(LINK.FROM_TYPE.eq(TargetType.work_item.name()))
+                .and(LINK.DELETED_AT.isNull());
+    }
+
+    @Override
     public boolean hasReplacement(String workspaceId, String id) {
         return dslContext.fetchExists(dslContext
                 .selectOne()

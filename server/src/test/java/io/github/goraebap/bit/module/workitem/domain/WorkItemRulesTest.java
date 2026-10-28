@@ -19,6 +19,7 @@ class WorkItemRulesTest {
                 project,
                 1,
                 WorkItem.Kind.task,
+                "typeTaskId",
                 new WorkItem.Details("Task", null, null, null, (String) null, null, null),
                 Set.of(),
                 null,

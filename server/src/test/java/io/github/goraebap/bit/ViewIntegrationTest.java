@@ -95,6 +95,8 @@ class ViewIntegrationTest {
                 "project",
                 "label",
                 "workspace_invitation",
+                "work_item_type_parent",
+                "work_item_type",
                 "workspace_member",
                 "workspace",
                 "iam_api_key",

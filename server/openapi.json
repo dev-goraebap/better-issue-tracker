@@ -81,6 +81,35 @@
         }
       }
     },
+    "/api/v1/workspaces/{workspaceId}/work-item-types/order" : {
+      "put" : {
+        "tags" : [ "work-item-type-controller" ],
+        "operationId" : "orderWorkItemTypes",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/OrderWorkItemTypes"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        }
+      }
+    },
     "/api/v1/workspaces/{workspaceId}/view-tweaks/{viewKey}" : {
       "put" : {
         "tags" : [ "view-controller" ],
@@ -912,6 +941,62 @@
         }
       }
     },
+    "/api/v1/workspaces/{workspaceId}/work-item-types" : {
+      "get" : {
+        "tags" : [ "work-item-type-controller" ],
+        "operationId" : "listWorkItemTypes",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/WorkItemType"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post" : {
+        "tags" : [ "work-item-type-controller" ],
+        "operationId" : "createWorkItemType",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CreateWorkItemType"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "description" : "업무 유형 생성"
+          }
+        }
+      }
+    },
     "/api/v1/workspaces/{workspaceId}/views" : {
       "get" : {
         "tags" : [ "view-controller" ],
@@ -1200,6 +1285,19 @@
             "items" : {
               "type" : "string",
               "description" : "Any of these labels (repeatable). Deleted labels match nothing"
+            }
+          }
+        }, {
+          "name" : "typeId",
+          "in" : "query",
+          "description" : "Any of these work item types (repeatable). Events have no type, so they drop out",
+          "required" : false,
+          "schema" : {
+            "type" : "array",
+            "description" : "Any of these work item types (repeatable). Events have no type, so they drop out",
+            "items" : {
+              "type" : "string",
+              "description" : "Any of these work item types (repeatable). Events have no type, so they drop out"
             }
           }
         }, {
@@ -3045,6 +3143,106 @@
         }
       }
     },
+    "/api/v1/workspaces/{workspaceId}/work-item-types/{typeId}" : {
+      "get" : {
+        "tags" : [ "work-item-type-controller" ],
+        "operationId" : "getWorkItemType",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "typeId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/WorkItemType"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete" : {
+        "tags" : [ "work-item-type-controller" ],
+        "operationId" : "deleteWorkItemType",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "typeId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "expectedVersion",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64",
+            "minimum" : 0
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        }
+      },
+      "patch" : {
+        "tags" : [ "work-item-type-controller" ],
+        "operationId" : "reviseWorkItemType",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "typeId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/UpdateWorkItemType"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        }
+      }
+    },
     "/api/v1/workspaces/{workspaceId}/views/{viewId}" : {
       "get" : {
         "tags" : [ "view-controller" ],
@@ -4106,6 +4304,19 @@
             }
           }
         }, {
+          "name" : "typeId",
+          "in" : "query",
+          "description" : "Any of these work item types (repeatable). Events have no type, so they drop out",
+          "required" : false,
+          "schema" : {
+            "type" : "array",
+            "description" : "Any of these work item types (repeatable). Events have no type, so they drop out",
+            "items" : {
+              "type" : "string",
+              "description" : "Any of these work item types (repeatable). Events have no type, so they drop out"
+            }
+          }
+        }, {
           "name" : "category",
           "in" : "query",
           "description" : "Any of todo, doing, done, or none for items without a status (repeatable)",
@@ -4543,6 +4754,19 @@
             }
           }
         }, {
+          "name" : "typeId",
+          "in" : "query",
+          "description" : "Any of these work item types (repeatable). Events have no type, so they drop out",
+          "required" : false,
+          "schema" : {
+            "type" : "array",
+            "description" : "Any of these work item types (repeatable). Events have no type, so they drop out",
+            "items" : {
+              "type" : "string",
+              "description" : "Any of these work item types (repeatable). Events have no type, so they drop out"
+            }
+          }
+        }, {
           "name" : "category",
           "in" : "query",
           "description" : "Any of todo, doing, done, or none for items without a status (repeatable)",
@@ -4873,6 +5097,19 @@
             "items" : {
               "type" : "string",
               "description" : "Any of these labels (repeatable). Deleted labels match nothing"
+            }
+          }
+        }, {
+          "name" : "typeId",
+          "in" : "query",
+          "description" : "Any of these work item types (repeatable). Events have no type, so they drop out",
+          "required" : false,
+          "schema" : {
+            "type" : "array",
+            "description" : "Any of these work item types (repeatable). Events have no type, so they drop out",
+            "items" : {
+              "type" : "string",
+              "description" : "Any of these work item types (repeatable). Events have no type, so they drop out"
             }
           }
         }, {
@@ -5718,6 +5955,35 @@
         },
         "required" : [ "expectedVersion" ]
       },
+      "OrderWorkItemTypes" : {
+        "type" : "object",
+        "properties" : {
+          "types" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/WorkItemTypeOrderItem"
+            },
+            "maxItems" : 1000,
+            "minItems" : 0
+          }
+        },
+        "required" : [ "types" ]
+      },
+      "WorkItemTypeOrderItem" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string",
+            "pattern" : "[A-Za-z][A-Za-z0-9]{9}"
+          },
+          "expectedVersion" : {
+            "type" : "integer",
+            "format" : "int64",
+            "minimum" : 0
+          }
+        },
+        "required" : [ "expectedVersion", "id" ]
+      },
       "PutWorkItemViewTweak" : {
         "type" : "object",
         "properties" : {
@@ -6029,6 +6295,46 @@
         },
         "required" : [ "expectedVersion" ]
       },
+      "CreateWorkItemType" : {
+        "type" : "object",
+        "properties" : {
+          "name" : {
+            "type" : "string",
+            "maxLength" : 32,
+            "minLength" : 0
+          },
+          "icon" : {
+            "type" : [ "string", "null" ],
+            "description" : "An icon name the screen draws, such as epic, story, tasks or bug",
+            "maxLength" : 32,
+            "minLength" : 0
+          },
+          "color" : {
+            "type" : "string",
+            "example" : "#3b82f6",
+            "pattern" : "#[0-9a-fA-F]{6}"
+          },
+          "parentRequired" : {
+            "type" : [ "boolean", "null" ],
+            "description" : "true: a work item of this type must sit under one of an allowed type"
+          },
+          "allowedParentTypeIds" : {
+            "type" : [ "array", "null" ],
+            "description" : "The types it may sit under; none makes it top-level",
+            "items" : {
+              "type" : "string",
+              "pattern" : "[A-Za-z][A-Za-z0-9]{9}"
+            },
+            "maxItems" : 100,
+            "minItems" : 0
+          },
+          "isDefault" : {
+            "type" : [ "boolean", "null" ],
+            "description" : "true makes it the type a task gets when none is named"
+          }
+        },
+        "required" : [ "color", "name" ]
+      },
       "CreateWorkItemView" : {
         "type" : "object",
         "properties" : {
@@ -6231,6 +6537,16 @@
             "maxItems" : 50,
             "minItems" : 0
           },
+          "typeId" : {
+            "type" : [ "string", "null" ],
+            "description" : "A task's type (D-104); omitted or null is the workspace's default. An event has none",
+            "pattern" : "[A-Za-z][A-Za-z0-9]{9}"
+          },
+          "parentId" : {
+            "type" : [ "string", "null" ],
+            "description" : "A work item of the workspace to make it a subtask of, in the same step; needed for a type that requires a parent",
+            "pattern" : "[A-Za-z][A-Za-z0-9]{9}"
+          },
           "uploadIds" : {
             "type" : "array",
             "items" : {
@@ -6255,6 +6571,11 @@
             "type" : "string",
             "maxLength" : 20000,
             "minLength" : 0
+          },
+          "typeId" : {
+            "type" : [ "string", "null" ],
+            "description" : "The subtask's type (D-104); null is the workspace's default. It must allow the parent's type",
+            "pattern" : "[A-Za-z][A-Za-z0-9]{9}"
           }
         },
         "required" : [ "title" ]
@@ -6961,6 +7282,60 @@
             },
             "maxItems" : 20,
             "minItems" : 0
+          },
+          "typeId" : {
+            "type" : [ "string", "null" ],
+            "description" : "A task's type (D-104); null is the workspace's default. Refused when its parent or children would break the type's rules",
+            "pattern" : "[A-Za-z][A-Za-z0-9]{9}"
+          },
+          "parentId" : {
+            "type" : [ "string", "null" ],
+            "description" : "The work item to sit under (subtask_of), replacing the one it has; null leaves it under none, which a type that requires a parent refuses",
+            "pattern" : "[A-Za-z][A-Za-z0-9]{9}"
+          }
+        },
+        "required" : [ "expectedVersion" ]
+      },
+      "UpdateWorkItemType" : {
+        "type" : "object",
+        "properties" : {
+          "expectedVersion" : {
+            "type" : "integer",
+            "format" : "int64",
+            "minimum" : 0
+          },
+          "name" : {
+            "type" : "string",
+            "maxLength" : 32,
+            "minLength" : 0
+          },
+          "icon" : {
+            "type" : [ "string", "null" ],
+            "description" : "null or blank clears it",
+            "maxLength" : 32,
+            "minLength" : 0
+          },
+          "color" : {
+            "type" : "string",
+            "pattern" : "#[0-9a-fA-F]{6}"
+          },
+          "parentRequired" : {
+            "type" : "boolean",
+            "description" : "Changing the rule is refused with WORK_ITEM_TYPE_RULE_CONFLICT while live work items of the type would break it"
+          },
+          "allowedParentTypeIds" : {
+            "type" : "array",
+            "description" : "The whole set of types it may sit under; [] makes it top-level",
+            "items" : {
+              "type" : "string",
+              "pattern" : "[A-Za-z][A-Za-z0-9]{9}"
+            },
+            "maxItems" : 100,
+            "minItems" : 0
+          },
+          "isDefault" : {
+            "type" : "boolean",
+            "description" : "true makes it the default; the default stops being one only when another becomes it"
           }
         },
         "required" : [ "expectedVersion" ]
@@ -7297,6 +7672,15 @@
             "type" : "string",
             "enum" : [ "task", "event" ]
           },
+          "type" : {
+            "type" : "null",
+            "$ref" : "#/components/schemas/WorkItemTypeRef",
+            "description" : "A task's type (D-104); null for an event"
+          },
+          "parentId" : {
+            "type" : [ "string", "null" ],
+            "description" : "The live work item it is a subtask of (subtask_of); null for none"
+          },
           "title" : {
             "type" : "string"
           },
@@ -7408,7 +7792,7 @@
             "type" : [ "string", "null" ]
           }
         },
-        "required" : [ "allDay", "archivedAt", "closedAt", "columnCategory", "columnId", "createdAt", "createdBy", "createdByAgent", "deletedAt", "description", "dueDate", "endsAt", "id", "key", "kind", "labels", "number", "occurrenceOn", "people", "position", "priority", "projectId", "recurrence", "reminderMinutes", "startDate", "startsAt", "title", "triggerType", "updatedAt", "updatedBy", "updatedByAgent", "version", "workspaceId" ]
+        "required" : [ "allDay", "archivedAt", "closedAt", "columnCategory", "columnId", "createdAt", "createdBy", "createdByAgent", "deletedAt", "description", "dueDate", "endsAt", "id", "key", "kind", "labels", "number", "occurrenceOn", "parentId", "people", "position", "priority", "projectId", "recurrence", "reminderMinutes", "startDate", "startsAt", "title", "triggerType", "type", "updatedAt", "updatedBy", "updatedByAgent", "version", "workspaceId" ]
       },
       "WorkItemLabel" : {
         "type" : "object",
@@ -7476,6 +7860,24 @@
         },
         "required" : [ "frequency", "id", "interval", "startsOn", "timeZone", "untilOn", "weekdays" ]
       },
+      "WorkItemTypeRef" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "icon" : {
+            "type" : [ "string", "null" ]
+          },
+          "color" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "color", "icon", "id", "name" ]
+      },
       "WorkItems" : {
         "type" : "object",
         "properties" : {
@@ -7490,6 +7892,64 @@
           }
         },
         "required" : [ "items", "nextCursor" ]
+      },
+      "WorkItemType" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string"
+          },
+          "workspaceId" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "icon" : {
+            "type" : [ "string", "null" ],
+            "description" : "An icon name the screen draws"
+          },
+          "color" : {
+            "type" : "string"
+          },
+          "position" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "isDefault" : {
+            "type" : "boolean",
+            "description" : "The type a task gets when none is named; exactly one per workspace"
+          },
+          "parentRequired" : {
+            "type" : "boolean",
+            "description" : "A work item of this type must sit under one of an allowed type"
+          },
+          "allowedParentTypeIds" : {
+            "type" : "array",
+            "description" : "The live types it may sit under, in display order; empty for a top-level type",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "workItemCount" : {
+            "type" : "integer",
+            "format" : "int64",
+            "description" : "Live work items of this type; a type in use cannot be deleted"
+          },
+          "version" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "createdAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "updatedAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        },
+        "required" : [ "allowedParentTypeIds", "color", "createdAt", "icon", "id", "isDefault", "name", "parentRequired", "position", "updatedAt", "version", "workItemCount", "workspaceId" ]
       },
       "WorkItemView" : {
         "type" : "object",

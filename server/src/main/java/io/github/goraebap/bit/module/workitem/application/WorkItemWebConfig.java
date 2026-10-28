@@ -22,4 +22,13 @@ class WorkItemWebConfig {
         registration.addUrlPatterns("/api/v1/workspaces/*");
         return registration;
     }
+
+    @Bean
+    FilterRegistrationBean<WorkItemTypeHttpAuthorizationFilter> workItemTypeAuthorization(
+            WorkItemTypeService workItemTypeService, SecurityFilterProperties properties) {
+        var registration = new FilterRegistrationBean<>(new WorkItemTypeHttpAuthorizationFilter(workItemTypeService));
+        registration.setOrder(properties.getOrder() + 3);
+        registration.addUrlPatterns("/api/v1/workspaces/*");
+        return registration;
+    }
 }

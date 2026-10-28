@@ -38,6 +38,8 @@ public class WorkItemService implements WorkItemFacade, ColumnWorkItemSpi {
     private final ApplicationEventPublisher applicationEventPublisher;
     private final Clock clock;
     private final io.github.goraebap.bit.module.file.FileFacade fileFacade;
+    private final WorkItemTypeService workItemTypeService;
+    private final io.github.goraebap.bit.module.link.LinkFacade linkFacade;
 
     @Override
     @Transactional(readOnly = true)
@@ -89,6 +91,8 @@ public class WorkItemService implements WorkItemFacade, ColumnWorkItemSpi {
                 workspaceId,
                 projectId,
                 request.kindOrTask(),
+                request.typeId(),
+                request.parentId(),
                 request.details(),
                 request.columnId(),
                 request.labels(),
@@ -139,7 +143,42 @@ public class WorkItemService implements WorkItemFacade, ColumnWorkItemSpi {
             Set<String> labelIds,
             Integer reminderMinutes) {
         return create(
-                actor, workspaceId, projectId, kind, details, requestedColumnId, labelIds, reminderMinutes, null, null);
+                actor, workspaceId, projectId, kind, null, null, details, requestedColumnId, labelIds, reminderMinutes);
+    }
+
+    /**
+     * As above, a task of a type (null: the workspace's default) and, when given, made the subtask of a parent in the
+     * same step (D-104), so a type that requires a parent can be made at all.
+     */
+    @Transactional
+    public String create(
+            CurrentUser actor,
+            String workspaceId,
+            String projectId,
+            WorkItem.Kind kind,
+            String typeId,
+            String parentId,
+            WorkItem.Details details,
+            String requestedColumnId,
+            Set<String> labelIds,
+            Integer reminderMinutes) {
+        String id = create(
+                actor,
+                workspaceId,
+                projectId,
+                kind,
+                typeId,
+                parentId,
+                details,
+                requestedColumnId,
+                labelIds,
+                reminderMinutes,
+                null,
+                null);
+        if (parentId != null)
+            linkFacade.connect(
+                    actor, workspaceId, TargetType.work_item, id, "subtask_of", TargetType.work_item, parentId);
+        return id;
     }
 
     /**
@@ -175,11 +214,25 @@ public class WorkItemService implements WorkItemFacade, ColumnWorkItemSpi {
                         .filter(column -> !column.finalColumn())
                         .map(ProjectFacade.ColumnRef::id)
                         .orElse(null);
+        // An occurrence is the type of the one before it, unless that type needs a parent it cannot get here.
+        String typeId = t.kind() != WorkItem.Kind.task
+                ? null
+                : workItemRepository.findOccurrencesAfter(rule.id(), LocalDate.MIN).stream()
+                        .reduce((first, second) -> second)
+                        .map(WorkItem::typeId)
+                        .flatMap(id -> java.util.Optional.ofNullable(workItemTypeService
+                                .findAllById(workspaceId, Set.of(id))
+                                .get(id)))
+                        .filter(type -> !type.deleted() && !type.parentRequired())
+                        .map(io.github.goraebap.bit.module.workitem.domain.WorkItemType::id)
+                        .orElse(null);
         return create(
                 actor,
                 workspaceId,
                 rule.projectId(),
                 t.kind(),
+                typeId,
+                null,
                 details,
                 columnId,
                 labelIds,
@@ -193,6 +246,8 @@ public class WorkItemService implements WorkItemFacade, ColumnWorkItemSpi {
             String workspaceId,
             String projectId,
             WorkItem.Kind kind,
+            String typeId,
+            String parentId,
             WorkItem.Details details,
             String requestedColumnId,
             Set<String> labelIds,
@@ -204,6 +259,9 @@ public class WorkItemService implements WorkItemFacade, ColumnWorkItemSpi {
         WorkItem.Details valid = shape(kind, details);
         people(actor, workspaceId, valid.peopleIds());
         labels(actor, workspaceId, labelIds);
+        if (kind == WorkItem.Kind.event && typeId != null) throw eventHasNoType();
+        var type = kind == WorkItem.Kind.task ? workItemTypeService.resolve(workspaceId, typeId) : null;
+        if (type != null) workItemTypeService.requireParent(workspaceId, type, parent(workspaceId, parentId), null);
         String columnId = kind == WorkItem.Kind.event ? null : requestedColumnId;
         var column = projectFacade.requireColumn(actor, workspaceId, projectId, columnId);
         long number = projectFacade.allocateWorkItemNumber(actor, workspaceId, projectId);
@@ -216,6 +274,7 @@ public class WorkItemService implements WorkItemFacade, ColumnWorkItemSpi {
                 projectId,
                 number,
                 kind,
+                type == null ? null : type.id(),
                 valid,
                 labelIds,
                 columnId,
@@ -261,6 +320,8 @@ public class WorkItemService implements WorkItemFacade, ColumnWorkItemSpi {
         if (!next.peopleIds().equals(d.peopleIds())) people(actor, workspaceId, next.peopleIds());
         var labelIds = request.hasLabelIds() ? request.labels() : w.labelIds();
         if (!labelIds.equals(w.labelIds())) labels(actor, workspaceId, labelIds);
+        String previousType = w.typeId();
+        String typeId = hierarchy(workspaceId, w, kind, request);
         long before = w.version();
         var previousKind = w.kind();
         var previousLabels = w.labelIds();
@@ -273,9 +334,11 @@ public class WorkItemService implements WorkItemFacade, ColumnWorkItemSpi {
                 throw io.github.goraebap.bit.shared.error.CommonErrorCode.COMMON_INVALID_REQUEST.raise();
         }
         fileFacade.attach(actor, request.getUploadIds(), io.github.goraebap.bit.module.file.FileOwner.WORK_ITEM, id);
-        w.revise(kind, next, labelIds, reminder, actor.userId(), agent(actor), clock.instant());
+        w.revise(kind, typeId, next, labelIds, reminder, actor.userId(), agent(actor), clock.instant());
+        if (w.version() != before) workItemRepository.save(w);
+        // The parent moves after the item is saved, so the link module's own rule check reads its new type.
+        if (request.hasParentId()) linkFacade.setParent(actor, workspaceId, id, request.getParentId());
         if (w.version() == before) return;
-        workItemRepository.save(w);
         if (previousColumn != null && w.columnId() == null) {
             // An item that became an event left the board: the column it left closes its gap.
             var old = projectFacade.requireColumn(actor, workspaceId, projectId, previousColumn);
@@ -287,6 +350,7 @@ public class WorkItemService implements WorkItemFacade, ColumnWorkItemSpi {
         }
         var changes = new ArrayList<FieldChange>();
         field(changes, "kind", text(previousKind), text(kind));
+        field(changes, "type", previousType, w.typeId());
         field(changes, "title", d.title(), next.title());
         // A description is written in place and saved as it is typed: the activity says it changed, not what it said.
         if (!Objects.equals(d.description(), next.description()))
@@ -582,6 +646,63 @@ public class WorkItemService implements WorkItemFacade, ColumnWorkItemSpi {
             item.move(columnId, finalColumn, i, actor.userId(), agent(actor), clock.instant());
             if (item.version() != before) workItemRepository.save(item);
         }
+    }
+
+    /**
+     * The type a revision leaves a work item with (D-104), refused when its parent or its children would break the
+     * rules: a task keeps its type unless one is given, an event has none, and an event becoming a task gets the given
+     * type or the default. Checked only when the type, the kind or the parent changes.
+     */
+    private String hierarchy(String workspaceId, WorkItem w, WorkItem.Kind kind, WorkItemRequests.Update request) {
+        if (kind == WorkItem.Kind.event && request.hasTypeId() && request.getTypeId() != null) throw eventHasNoType();
+        boolean retype = request.hasTypeId() || kind != w.kind();
+        if (!retype && !request.hasParentId()) return w.typeId();
+        if (request.hasParentId() && w.id().equals(request.getParentId()))
+            throw WorkItemErrorCode.WORK_ITEM_MOVE_INVALID.raise();
+        var type = kind == WorkItem.Kind.event
+                ? null
+                : request.hasTypeId() || w.typeId() == null
+                        ? workItemTypeService.resolve(workspaceId, request.hasTypeId() ? request.getTypeId() : null)
+                        : workItemTypeService
+                                .findAllById(workspaceId, Set.of(w.typeId()))
+                                .get(w.typeId());
+        String item = workItemRepository.reference(w);
+        if (type != null) {
+            String parentId = request.hasParentId()
+                    ? request.getParentId()
+                    : linkFacade.parents(workspaceId, Set.of(w.id())).get(w.id());
+            WorkItem parent = parentId == null
+                    ? null
+                    : request.hasParentId() ? parent(workspaceId, parentId) : current(workspaceId, parentId);
+            workItemTypeService.requireParent(workspaceId, type, parent, item);
+        }
+        if (retype && !Objects.equals(type == null ? null : type.id(), w.typeId()))
+            workItemTypeService.requireChildren(
+                    workspaceId,
+                    item,
+                    type,
+                    workItemRepository.findAllById(workspaceId, linkFacade.children(workspaceId, w.id())));
+        return type == null ? null : type.id();
+    }
+
+    /** A live parent to put a work item under; one that is missing or deleted is not found. */
+    private WorkItem parent(String workspaceId, String parentId) {
+        if (parentId == null) return null;
+        return workItemRepository.findAllById(workspaceId, Set.of(parentId)).stream()
+                .findFirst()
+                .orElseThrow(() -> WorkItemErrorCode.WORK_ITEM_NOT_FOUND.raise("상위 업무를 찾을 수 없습니다"));
+    }
+
+    /** The parent a work item already sits under, deleted or not, since its link stays (D-104). */
+    private WorkItem current(String workspaceId, String parentId) {
+        return workItemRepository.findAllById(workspaceId, Set.of(parentId)).stream()
+                .findFirst()
+                .or(() -> workItemRepository.findAnyById(workspaceId, parentId))
+                .orElse(null);
+    }
+
+    private static io.github.goraebap.bit.shared.error.BusinessException eventHasNoType() {
+        return WorkItemTypeErrorCode.WORK_ITEM_TYPE_INVALID.raise("일정에는 업무 유형이 없습니다. kind를 task로 주거나 typeId를 빼세요");
     }
 
     private static int index(List<WorkItem> items, String id) {

@@ -46,6 +46,7 @@ public class ActivityService {
                             "assignee",
                             "people",
                             "kind",
+                            "type",
                             "startDate",
                             "dueDate",
                             "startsAt",

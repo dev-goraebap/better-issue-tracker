@@ -81,6 +81,8 @@ class WorkspaceIntegrationTest {
                 "document",
                 "folder",
                 "workspace_invitation",
+                "work_item_type_parent",
+                "work_item_type",
                 "workspace_member",
                 "work_item_view_tweak",
                 "work_item_view",

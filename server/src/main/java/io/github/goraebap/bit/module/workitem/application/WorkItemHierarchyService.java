@@ -1,7 +1,5 @@
 package io.github.goraebap.bit.module.workitem.application;
 
-import io.github.goraebap.bit.module.link.LinkFacade;
-import io.github.goraebap.bit.module.link.TargetType;
 import io.github.goraebap.bit.module.project.ColumnCategory;
 import io.github.goraebap.bit.module.project.ProjectFacade;
 import io.github.goraebap.bit.module.workitem.domain.WorkItem;
@@ -16,11 +14,20 @@ import org.springframework.transaction.annotation.Transactional;
 public class WorkItemHierarchyService {
     private final WorkItemService items;
     private final ProjectFacade projects;
-    private final LinkFacade links;
 
+    /**
+     * A subtask in the parent's project, first to-do column, with its priority; of the type given (null: the
+     * workspace's default), which must allow the parent's (D-104).
+     */
     @Transactional
     public String createChild(
-            CurrentUser actor, String workspace, String project, String parent, String title, String description) {
+            CurrentUser actor,
+            String workspace,
+            String project,
+            String parent,
+            String title,
+            String description,
+            String typeId) {
         var source = items.get(actor, workspace, project, parent);
         items.requireAccess(actor, workspace, project, parent, true, false);
         String column = projects.boardColumns(actor, workspace, project).stream()
@@ -28,10 +35,13 @@ public class WorkItemHierarchyService {
                 .map(ProjectFacade.ColumnInfo::id)
                 .findFirst()
                 .orElse(null);
-        String child = items.create(
+        return items.create(
                 actor,
                 workspace,
                 project,
+                WorkItem.Kind.task,
+                typeId,
+                parent,
                 new WorkItem.Details(
                         title,
                         description,
@@ -41,8 +51,7 @@ public class WorkItemHierarchyService {
                         null,
                         null),
                 column,
-                Set.of());
-        links.connect(actor, workspace, TargetType.work_item, child, "subtask_of", TargetType.work_item, parent);
-        return child;
+                Set.of(),
+                null);
     }
 }

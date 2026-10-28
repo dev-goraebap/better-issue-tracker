@@ -86,6 +86,7 @@ class AuthSecurityConfig {
                         .permitAll()
                         .requestMatchers(
                                 "/api/v1/workspaces/*/labels/order",
+                                "/api/v1/workspaces/*/work-item-types/order",
                                 "/api/v1/workspaces/*/roles",
                                 "/api/v1/workspaces/*/roles/*")
                         .authenticated()
@@ -165,6 +166,8 @@ class AuthSecurityConfig {
                                 "/api/v1/workspaces/*/work-items/by-ref/*",
                                 "/api/v1/workspaces/*/labels",
                                 "/api/v1/workspaces/*/labels/*",
+                                "/api/v1/workspaces/*/work-item-types",
+                                "/api/v1/workspaces/*/work-item-types/*",
                                 "/api/v1/workspaces/*/views",
                                 "/api/v1/workspaces/*/views/*",
                                 "/api/v1/workspaces/*/view-tweaks",
@@ -177,19 +180,29 @@ class AuthSecurityConfig {
                                 "/api/v1/workspaces/*/work-items/by-ref/*",
                                 "/api/v1/workspaces/*/labels",
                                 "/api/v1/workspaces/*/labels/*",
+                                "/api/v1/workspaces/*/work-item-types",
+                                "/api/v1/workspaces/*/work-item-types/*",
                                 "/api/v1/workspaces/*/views",
                                 "/api/v1/workspaces/*/views/*",
                                 "/api/v1/workspaces/*/view-tweaks",
                                 "/api/v1/workspaces/*/view-orders")
                         .authenticated()
-                        .requestMatchers(HttpMethod.POST, "/api/v1/workspaces/*/labels", "/api/v1/workspaces/*/views")
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/api/v1/workspaces/*/labels",
+                                "/api/v1/workspaces/*/work-item-types",
+                                "/api/v1/workspaces/*/views")
                         .authenticated()
                         .requestMatchers(
-                                HttpMethod.PATCH, "/api/v1/workspaces/*/labels/*", "/api/v1/workspaces/*/views/*")
+                                HttpMethod.PATCH,
+                                "/api/v1/workspaces/*/labels/*",
+                                "/api/v1/workspaces/*/work-item-types/*",
+                                "/api/v1/workspaces/*/views/*")
                         .authenticated()
                         .requestMatchers(
                                 HttpMethod.DELETE,
                                 "/api/v1/workspaces/*/labels/*",
+                                "/api/v1/workspaces/*/work-item-types/*",
                                 "/api/v1/workspaces/*/views/*",
                                 "/api/v1/workspaces/*/view-tweaks/*")
                         .authenticated()

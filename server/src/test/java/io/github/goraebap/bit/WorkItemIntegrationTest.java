@@ -111,6 +111,8 @@ class WorkItemIntegrationTest {
                 "work_item_person",
                 "work_item_label",
                 "work_item",
+                "work_item_type_parent",
+                "work_item_type",
                 "recurrence",
                 "board_column",
                 "project_member",
@@ -138,6 +140,7 @@ class WorkItemIntegrationTest {
                 owner.userId(),
                 now,
                 owner.userId());
+        WorkItemTypeSeeds.seed(jdbcTemplate, workspace, owner.userId());
         membership(owner, "owner");
         project = projectService.create(owner, workspace, "Project", "BIT", null);
         var columns = projectService.columns(owner, workspace, project);
@@ -717,6 +720,7 @@ class WorkItemIntegrationTest {
                 owner.userId(),
                 now,
                 owner.userId());
+        WorkItemTypeSeeds.seed(jdbcTemplate, otherWorkspace, owner.userId());
         jdbcTemplate.update(
                 "INSERT INTO workspace_member(workspace_member_id,workspace_id,iam_user_id,role,joined_at) VALUES (?,?,?,?,?)",
                 Ids.newId(),

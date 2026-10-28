@@ -112,6 +112,8 @@ class TargetPersistenceIntegrationTest {
                 "work_item_person",
                 "work_item_label",
                 "work_item",
+                "work_item_type_parent",
+                "work_item_type",
                 "board_column",
                 "project_member",
                 "project_key",
@@ -161,6 +163,7 @@ class TargetPersistenceIntegrationTest {
                 user,
                 time,
                 user);
+        WorkItemTypeSeeds.seed(jdbc, workspace, user);
         jdbc.update(
                 "INSERT INTO workspace_member(workspace_member_id,workspace_id,iam_user_id,role,joined_at) VALUES(?,?,?,?,?)",
                 Ids.newId(),
@@ -385,6 +388,7 @@ class TargetPersistenceIntegrationTest {
                 actor.userId(),
                 time,
                 actor.userId());
+        WorkItemTypeSeeds.seed(jdbc, other.toString(), actor.userId());
         jdbc.update(
                 "INSERT INTO workspace_member(workspace_member_id,workspace_id,iam_user_id,role,joined_at) VALUES(?,?,?,?,?)",
                 Ids.newId(),

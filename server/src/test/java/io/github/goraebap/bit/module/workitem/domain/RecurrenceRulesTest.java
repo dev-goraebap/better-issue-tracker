@@ -65,6 +65,7 @@ class RecurrenceRulesTest {
                 "project",
                 1,
                 WorkItem.Kind.event,
+                null,
                 new WorkItem.Details(
                         "Standup", null, null, null, Set.of(), null, null, start, start.plusSeconds(900), false),
                 Set.of(),
@@ -87,6 +88,7 @@ class RecurrenceRulesTest {
                 "project",
                 1,
                 WorkItem.Kind.task,
+                "typeTaskId",
                 new WorkItem.Details(
                         "Report",
                         null,

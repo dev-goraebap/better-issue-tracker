@@ -18,6 +18,15 @@ public interface WorkItemRepository {
 
     long countAllById(String projectId, Set<String> ids);
 
+    /** Live work items of the workspace among the ids, in any project or none. */
+    List<WorkItem> findAllById(String workspaceId, Set<String> ids);
+
+    /** A work item of the workspace, deleted or not. */
+    Optional<WorkItem> findAnyById(String workspaceId, String id);
+
+    /** The keys (BIT-12) of the live work items among the ids. */
+    java.util.Map<String, String> findReferences(String workspaceId, Set<String> ids);
+
     Optional<WorkItem> findByNumber(String projectId, long number);
 
     List<WorkItem> findColumnItems(String projectId, String columnId, boolean includeDeleted);
@@ -64,6 +73,7 @@ public interface WorkItemRepository {
             boolean backlog,
             Set<String> columnIds,
             Set<String> labelIds,
+            Set<String> typeIds,
             Set<String> categories,
             boolean noCategory,
             Set<WorkItem.Priority> priorities,
@@ -82,6 +92,7 @@ public interface WorkItemRepository {
             kinds = Set.copyOf(kinds);
             columnIds = Set.copyOf(columnIds);
             labelIds = Set.copyOf(labelIds);
+            typeIds = Set.copyOf(typeIds);
             categories = Set.copyOf(categories);
             priorities = Set.copyOf(priorities);
             triggers = Set.copyOf(triggers);
@@ -97,6 +108,7 @@ public interface WorkItemRepository {
             String projectKey,
             long number,
             WorkItem.Kind kind,
+            String typeId,
             WorkItem.Details details,
             Set<String> labelIds,
             String columnId,

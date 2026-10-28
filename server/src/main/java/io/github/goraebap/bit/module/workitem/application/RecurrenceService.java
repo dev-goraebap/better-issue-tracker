@@ -123,6 +123,7 @@ public class RecurrenceService {
             if (request.hasTriggerType()) u.setTriggerType(request.getTriggerType());
             if (request.hasPeopleIds()) u.setPeopleIds(request.getPeopleIds());
             if (request.hasLabelIds()) u.setLabelIds(request.getLabelIds());
+            if (request.hasTypeId()) u.setTypeId(request.getTypeId());
             if (request.hasReminderMinutes()) u.setReminderMinutes(request.getReminderMinutes());
             if (shape) {
                 var on = next.on(later.occurrenceOn(), rule.zone());
