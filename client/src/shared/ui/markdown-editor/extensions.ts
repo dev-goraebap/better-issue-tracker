@@ -1,10 +1,14 @@
 import { Extension, InputRule, type AnyExtension } from '@tiptap/core';
 import { TaskItem, TaskList } from '@tiptap/extension-list';
+import { TableKit } from '@tiptap/extension-table';
 import { Placeholder } from '@tiptap/extensions';
 import { Markdown } from '@tiptap/markdown';
 import { Plugin } from '@tiptap/pm/state';
 import StarterKit from '@tiptap/starter-kit';
+import { Alerts } from './alerts';
 import { Attachment } from './attachment-extension';
+import { DiagramCodeBlock } from './code-block';
+import { TableChecks } from './table-checks';
 import { SlashCommand, type SlashStore } from './slash';
 
 /** Text that reads as Markdown when pasted: a heading, a list, a task, a quote, a fence, a rule, a table row, a link. */
@@ -75,7 +79,8 @@ const Task = TaskItem.configure({
 
 /**
  * The blocks and marks BIT writes, all of which Markdown keeps (D-076): paragraphs, three headings, bold, italic, strike,
- * inline code, links, the three kinds of list (a task list with its boxes), quotes, code blocks and rules. Underline
+ * inline code, links, the three kinds of list (a task list with its boxes), quotes, code blocks and rules, and tables
+ * (BIT-95). A quote opening with [!NOTE] and its kin reads as an alert, a ```mermaid block as its diagram. Underline
  * stays out, Markdown having none. Text comes in and goes out as Markdown, so the stored description stays readable to
  * agents and API clients.
  */
@@ -84,12 +89,27 @@ export function readingExtensions(attachmentUrl?: (id: string) => string): AnyEx
     StarterKit.configure({
       heading: { levels: [1, 2, 3] },
       underline: false,
+      codeBlock: false,
       link: { openOnClick: true, autolink: true, defaultProtocol: 'https', HTMLAttributes: { rel: 'noopener noreferrer nofollow', target: '_blank' } },
     }),
+    ...richBlocks(attachmentUrl),
+    Markdown.configure({ indentation: { style: 'space', size: 2 } }),
+  ];
+}
+
+/**
+ * The blocks reading and writing share past the starter kit: attachments, tasks, code (and diagrams), tables (with
+ * boxes in their cells), alerts.
+ */
+function richBlocks(attachmentUrl?: (id: string) => string): AnyExtension[] {
+  return [
     Attachment.configure({ attachmentUrl }),
     TaskList,
     Task,
-    Markdown.configure({ indentation: { style: 'space', size: 2 } }),
+    DiagramCodeBlock,
+    TableKit.configure({ table: { resizable: false, renderWrapper: true } }),
+    TableChecks,
+    Alerts,
   ];
 }
 
@@ -99,11 +119,10 @@ export function writingExtensions({ placeholder, store, onSubmit, attachmentUrl 
     StarterKit.configure({
       heading: { levels: [1, 2, 3] },
       underline: false,
+      codeBlock: false,
       link: { openOnClick: false, autolink: true, linkOnPaste: true, defaultProtocol: 'https', HTMLAttributes: { rel: 'noopener noreferrer nofollow', target: '_blank' } },
     }),
-    Attachment.configure({ attachmentUrl }),
-    TaskList,
-    Task,
+    ...richBlocks(attachmentUrl),
     Markdown.configure({ indentation: { style: 'space', size: 2 } }),
     Placeholder.configure({ placeholder, emptyNodeClass: 'is-empty', showOnlyCurrent: true }),
     MarkdownPaste,

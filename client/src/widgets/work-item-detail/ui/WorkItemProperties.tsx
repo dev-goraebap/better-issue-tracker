@@ -18,6 +18,11 @@ import styles from './detail.module.css';
 
 type Patch = Omit<components['schemas']['UpdateWorkItem'], 'expectedVersion'>;
 
+const KIND_OPTIONS = [
+  { value: 'task', label: '작업', icon: <NavIcon name="board" /> },
+  { value: 'event', label: '일정', icon: <NavIcon name="calendar" /> },
+];
+
 /**
  * Properties change directly beneath the title. Serialize writes so rapid multi-selection keeps every choice. A task's
  * type (D-104) changes here too; a type its parent or subtasks rule out is refused, and the toast says why.
@@ -54,6 +59,9 @@ export function WorkItemProperties({ item, canWrite }: { item: WorkItem; canWrit
     <span><NavIcon name={icon} />{label}</span><div className={styles.propertyValue}>{content}</div>
   </div>;
   return <section className={styles.inspectorSection} aria-label="세부 정보">
+    {/* 작업 or 일정 changes here since the edit page is gone (D-107); the server moves its fields over (D-092). */}
+    {canWrite && field('종류', 'board', <PropertyPicker label="종류" icon={isEvent ? 'calendar' : 'board'} options={KIND_OPTIONS} value={item.kind}
+      onChange={value => { if (value && value !== item.kind) patch({ kind: value as WorkItem['kind'] }); }} />)}
     {!isEvent && field('유형', 'tasks', canWrite
       ? <PropertyPicker label="유형" icon="tasks" options={typeOptions(types)} value={preview.typeId ?? item.type?.id} onChange={value => { if (value && value !== (preview.typeId ?? item.type?.id)) patch({ typeId: value as string }); }} />
       : item.type ? <span className={styles.typeValue}><TypeMark type={item.type} />{item.type.name}</span> : '없음')}

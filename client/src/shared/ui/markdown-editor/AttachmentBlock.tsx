@@ -2,11 +2,16 @@ import { useEffect, useState } from 'react';
 import { NodeViewWrapper, type NodeViewProps } from '@tiptap/react';
 import { NodeSelection } from '@tiptap/pm/state';
 import { NavIcon } from '../NavIcon';
+import { ZoomViewer } from '../zoom-viewer';
 import styles from './markdown.module.css';
 
-/** A movable document block, not a separate attachment tray. Only the owner's URL resolver can open its bytes. */
+/**
+ * A movable document block, not a separate attachment tray. Only the owner's URL resolver can open its bytes. Read, a
+ * picture opens over the whole screen to zoom in (BIT-95).
+ */
 export function AttachmentBlock({ node, editor, extension, getPos, selected }: NodeViewProps) {
   const [editable, setEditable] = useState(editor.isEditable);
+  const [isOpen, setOpen] = useState(false);
   useEffect(() => {
     const update = () => setEditable(editor.isEditable);
     editor.on('update', update);
@@ -34,7 +39,14 @@ export function AttachmentBlock({ node, editor, extension, getPos, selected }: N
       <button type="button" aria-label={`${node.attrs.filename} 아래로 이동`} onClick={() => move(1)}><NavIcon name="chevron-down" /></button>
     </div>}
     <div className={styles.blockContent} contentEditable={false}>
-      {node.attrs.image && (preview || href) && <img className={styles.attachmentImage} src={preview ?? href} alt={String(node.attrs.filename)} draggable={false} loading="lazy" />}
+      {node.attrs.image && (preview || href) && (editable
+        ? <img className={styles.attachmentImage} src={preview ?? href} alt={String(node.attrs.filename)} draggable={false} loading="lazy" />
+        : <button type="button" className={styles.imageOpen} aria-label={`${String(node.attrs.filename)} 크게 보기`} title="크게 보기" onClick={() => setOpen(true)}>
+          <img className={styles.attachmentImage} src={preview ?? href} alt={String(node.attrs.filename)} draggable={false} loading="lazy" />
+        </button>)}
+      {isOpen && (preview || href) && <ZoomViewer label={String(node.attrs.filename)} onClose={() => setOpen(false)}>
+        <img src={preview ?? href} alt={String(node.attrs.filename)} draggable={false} />
+      </ZoomViewer>}
       <a className={styles.attachmentLink} href={href} target="_blank" rel="noreferrer" onClick={event => { if (!href || editable) event.preventDefault(); }}>
         <NavIcon name={node.attrs.image ? 'image' : 'file'} /><span>{String(node.attrs.filename)}</span>{href && <NavIcon name="download" />}
       </a>

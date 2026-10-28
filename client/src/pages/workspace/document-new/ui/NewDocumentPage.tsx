@@ -5,7 +5,7 @@ import { authError } from '@/shared/api';
 import { BackLink } from '@/shared/ui';
 import { projectQuery } from '@/entities/project';
 import { contentsQuery, createDocument, documentHref, folderHref, refreshDocuments, type NewDocumentSearch } from '@/entities/document';
-import { DocumentForm, type DocumentDraft } from '@/widgets/document-editor';
+import { DocumentForm, type DocumentDraft } from './DocumentForm';
 
 /**
  * 새 문서, /workspaces/$workspaceId/documents/new?project=&folder= (BIT-41): a document written into the folder it was

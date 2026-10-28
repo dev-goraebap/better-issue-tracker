@@ -10,8 +10,12 @@ import { SlashMenu } from './SlashMenu';
 import { SlashStore } from './slash';
 import styles from './markdown.module.css';
 
-/** Markdown without the empty lines the editor keeps after the last block. */
-const tidy = (markdown: string) => markdown.replace(/\s+$/, '');
+/**
+ * Markdown without the empty lines the editor keeps after the last block, and with an alert's marker as GitHub writes it
+ * (BIT-95): the serializer escapes the brackets of [!NOTE], which GitHub and agents would read as plain text.
+ */
+const tidy = (markdown: string) => markdown.replace(/\s+$/, '')
+  .replace(/^((?:> ?)+)\\\[!(note|tip|important|warning|caution)\\\]/gim, '$1[!$2]');
 
 /**
  * Writing rich text that is kept as Markdown (D-076), as Linear's and Plane's editors write (Plane's is Tiptap, the
@@ -27,9 +31,11 @@ const tidy = (markdown: string) => markdown.replace(/\s+$/, '');
  * copy after a save) replaces the text only while the member is not writing in it. variant 'bare' is text on the page
  * with no box (a description); 'field' sits in a hairline box (a comment).
  */
-export function MarkdownEditor({ value, onChange, label, placeholder = '쓰기 시작하거나 / 로 블록을 고르세요…', variant = 'bare', autoFocus = false,
+export function MarkdownEditor({ value, onChange, label, placeholder = '쓰기 시작하거나 / 로 블록을 고르세요…', variant = 'bare', autoFocus = false, startAt,
   isDisabled = false, minHeight, onSubmit, onBlur, linkPicker, filePicker, filePickerPortal, attachmentUrl }: {
   value: string; onChange: (markdown: string) => void; label: string; placeholder?: string; variant?: 'bare' | 'field'; autoFocus?: boolean;
+  /** Where in the text the member pressed it as read (D-107), as a position in the same document: the caret starts there (-1: at the end). */
+  startAt?: number;
   filePicker?: (insert: (file: { id: string; filename: string; image: boolean; preview?: string }) => void) => ReactNode;
   /** A parent composer can host the attachment action in its footer. null waits for the host. */
   filePickerPortal?: HTMLElement | null;
@@ -60,19 +66,28 @@ export function MarkdownEditor({ value, onChange, label, placeholder = '쓰기 �
     editor.commands.setContent(value, { contentType: 'markdown', emitUpdate: false });
   }, [editor, value]);
   useEffect(() => { editor?.setEditable(!isDisabled); }, [editor, isDisabled]);
+  // Opened from the text as read: the caret goes where it was pressed. Both are drawn from the same Markdown, so a
+  // position in the one is the same place in the other, however the two are laid out.
+  useEffect(() => {
+    if (!editor || startAt === undefined) return;
+    if (startAt < 0) { editor.commands.focus('end'); return; }
+    editor.chain().focus(undefined, { scrollIntoView: false }).setTextSelection(Math.min(startAt, editor.state.doc.content.size)).run();
+  }, [editor]);
   const attachmentAction = editor && !isDisabled && filePicker ? filePicker(file => {
     editor.chain().focus().insertContent([{ type: 'attachmentBlock', attrs: file }, { type: 'paragraph' }]).run();
+  }) : null;
+  const linkAction = editor && !isDisabled && linkPicker ? linkPicker(link => {
+    const selection = editor.state.selection;
+    if (selection.empty) editor.chain().focus().insertContent({ type: 'text', text: link.title, marks: [{ type: 'link', attrs: { href: link.href } }] }).run();
+    else editor.chain().focus().setLink({ href: link.href }).run();
   }) : null;
   const isTouch = isMobile;
   return <div ref={box} className={styles.editor} data-variant={variant} data-touch={isTouch || undefined} style={minHeight ? { ['--editor-min' as string]: minHeight } : undefined}
     onFocus={() => setWriting(true)} onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setWriting(false); }}>
-    {editor && !isDisabled && linkPicker && <div className={styles.linkPicker}>{linkPicker(link => {
-      const selection = editor.state.selection;
-      if (selection.empty) editor.chain().focus().insertContent({ type: 'text', text: link.title, marks: [{ type: 'link', attrs: { href: link.href } }] }).run();
-      else editor.chain().focus().setLink({ href: link.href }).run();
-    })}</div>}
     <EditorContent editor={editor} className={styles.content} />
-    {filePickerPortal === undefined ? attachmentAction && <div className={styles.filePicker}>{attachmentAction}</div> : filePickerPortal && createPortal(attachmentAction, filePickerPortal)}
+    {/* The actions follow the text, so opening it to write moves none of it (D-107). */}
+    {filePickerPortal === undefined ? (attachmentAction || linkAction) && <div className={styles.filePicker}>{attachmentAction}{linkAction}</div>
+      : <>{filePickerPortal && createPortal(attachmentAction, filePickerPortal)}{linkAction && <div className={styles.filePicker}>{linkAction}</div>}</>}
     {editor && !isTouch && <SelectionMenu editor={editor} container={() => box.current ?? document.body} />}
     {editor && <SlashMenu store={store} />}
     {editor && isTouch && isWriting && !isDisabled && <EditorToolbar editor={editor} />}
