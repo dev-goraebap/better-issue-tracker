@@ -72,3 +72,20 @@ test('a parent\'s progress counts its subtasks and those done', () => {
   assert.deepEqual(progress.get('1'), { done: 1, total: 2 });
   assert.equal(progress.has('2'), false);
 });
+
+test('the tree lines know where a line runs on, where a row closes its parent\'s subtasks and where one goes down', () => {
+  const root = item('1');
+  const a = item('2', { parentId: '1' });
+  const a1 = item('3', { parentId: '2' });
+  const b = item('4', { parentId: '1' });
+  const b1 = item('5', { parentId: '4' });
+  const rows = [root, a, a1, b, b1];
+  const lines = nestLines(rows, new Map(rows.map(each => [each.id, each])));
+  assert.deepEqual(lines.map(line => [line.item.id, line.guides, line.isLast, line.hasChildren]), [
+    ['1', [], true, true],
+    ['2', [], false, true],
+    ['3', [true], true, false],
+    ['4', [], true, true],
+    ['5', [false], true, false],
+  ]);
+});

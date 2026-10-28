@@ -12,6 +12,7 @@ import { PeopleAvatars } from './PeopleAvatars';
 import { PriorityMark } from './PriorityMark';
 import { StatusBadge } from './StatusBadge';
 import { SubtaskProgress } from './SubtaskProgress';
+import { TreeLines } from './TreeLines';
 import { WorkItemLink } from './WorkItemLink';
 import styles from './work-item.module.css';
 
@@ -19,13 +20,15 @@ type Progress = ReadonlyMap<string, { done: number; total: number }>;
 
 /**
  * The work items as Linear's list (D-106), on a desktop and a phone alike: rows from edge to edge with no header row and
- * no sideways scroll, gathered under group headers when the view groups them, a subtask in under its parent.
+ * no sideways scroll, gathered under group headers when the view groups them, a subtask's whole row in under its parent
+ * with a line down from the parent's front turning into it (TreeLines), as Linear's sub-issues.
  *
  * - A desktop row leads with marks of fixed widths so they line up down the list: the priority, the key, the status and
- *   the type (D-104), a subtask's status and type set in after the key; then the title, how many of its subtasks are done, and its parent's name when the parent is not
+ *   the type (D-104); then the title, how many of its subtasks are done, and its parent's name when the parent is not
  *   above it. Its end holds only what the work item has: labels, pull requests (badges), due day, people, and the day it
  *   changed or was made.
- * - A phone row is a small card: the type and title over the key and the rest, the people at its end.
+ * - A phone row is a small card: the type and title over the key and the rest, the people at its end; a subtask is set
+ *   in 16px a level with no lines.
  *
  * The view's columns (표시할 속성) say which of the properties show; the key, type and title always do. A project's
  * list names each status by its column (columnNames), 전체 by its category.
@@ -49,6 +52,8 @@ export function WorkItemList({ workspaceId, groups, search, columns, columnNames
       {sub && <SubtaskProgress {...sub} />}
       {line.parent && <span className={styles.parentName} title={`상위 업무 ${line.parent.key} ${line.parent.title}`}><NavIcon name="branch" />{line.parent.title}</span>}
     </>;
+    // A phone's two-line card shows a subtask by its inset alone; lines only crowd it.
+    const tree = !isPhone && (line.depth > 0 || line.hasChildren) ? <TreeLines line={line} /> : undefined;
     const link = <WorkItemLink workspaceId={workspaceId} item={item} search={search} className={ITEM_ROW_LINK}>{item.title}</WorkItemLink>;
     if (isPhone) return <ItemRow key={`${group.key}:${item.id}`} depth={line.depth} isTitleSingleLine
       end={item.people.length > 0 ? <PeopleAvatars people={item.people} /> : undefined}
@@ -63,12 +68,10 @@ export function WorkItemList({ workspaceId, groups, search, columns, columnNames
         {shows('due') && item.dueDate && <ItemMeta label={`기한 ${dateText(item.dueDate)}`}><NavIcon name="calendar" />{dateText(item.dueDate)}</ItemMeta>}
         <ItemMeta label={`수정 ${dateText(item.updatedAt)}`}>{dateText(item.updatedAt)}</ItemMeta>
       </>} />;
-    // A desktop subtask keeps its priority and key in line with the rest and goes in after them.
-    return <ItemRow key={`${group.key}:${item.id}`}
+    return <ItemRow key={`${group.key}:${item.id}`} depth={line.depth} guide={tree}
       lead={<>
         {shows('priority') && <span className={styles.slot}>{item.priority ? <PriorityMark priority={item.priority} isLabelHidden /> : <NoPriority />}</span>}
         <span className={styles.key} style={{ inlineSize: keyWidth }}>{item.key}</span>
-        {line.depth > 0 && <span className={styles.indent} style={{ inlineSize: `${line.depth * 1.25}rem` }} aria-hidden="true" />}
         {shows('status') && <span className={styles.slot}>{status}</span>}
         <span className={styles.slot}>{item.type && <TypeMark type={item.type} />}</span>
       </>}

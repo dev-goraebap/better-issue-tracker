@@ -12,8 +12,13 @@ export const GROUPINGS: readonly { value: Grouping; label: string }[] = [
   { value: 'type', label: '유형' }, { value: 'label', label: '라벨' }, { value: 'project', label: '프로젝트' },
 ];
 
-/** One row of a group: the work item, how deep under a parent in the same group it sits, and its parent when that is elsewhere. */
-export type ListLine = { item: WorkItem; depth: number; parent?: { key: string; title: string } };
+/**
+ * One row of a group: the work item, how deep under a parent in the same group it sits, and its parent when that is
+ * elsewhere. The tree's lines (D-106) are drawn from the rest: guides says, for each level above the row's own, whether
+ * a line runs on down past it (that ancestor has a sibling still to come); isLast whether the row closes its parent's
+ * subtasks (└ rather than ├); hasChildren whether a line leaves it downward.
+ */
+export type ListLine = { item: WorkItem; depth: number; parent?: { key: string; title: string }; guides: boolean[]; isLast: boolean; hasChildren: boolean };
 /**
  * A group of rows under its header. count is the work items in it: one with two labels (or two people) is in both groups
  * and counted in each, so the counts may add up to more than the list holds.
@@ -101,16 +106,21 @@ export function nestLines(items: readonly WorkItem[], all: ReadonlyMap<string, W
   }
   const lines: ListLine[] = [];
   const placed = new Set<string>();
-  const place = (item: WorkItem, depth: number) => {
+  const place = (item: WorkItem, depth: number, guides: boolean[], isLast: boolean) => {
     if (placed.has(item.id)) return;
     placed.add(item.id);
     const parent = depth === 0 && item.parentId ? all.get(item.parentId) : undefined;
-    lines.push({ item, depth: Math.min(depth, MAX_DEPTH), ...(parent ? { parent: { key: parent.key, title: parent.title } } : {}) });
-    for (const child of children.get(item.id) ?? []) place(child, depth + 1);
+    const kids = (children.get(item.id) ?? []).filter(child => !placed.has(child.id));
+    const shown = Math.min(depth, MAX_DEPTH);
+    lines.push({ item, depth: shown, guides: guides.slice(0, Math.max(0, shown - 1)), isLast, hasChildren: kids.length > 0,
+      ...(parent ? { parent: { key: parent.key, title: parent.title } } : {}) });
+    // A child's guides are its parent's, and one more when the parent (not a top row) has a sibling still to come.
+    const below = depth >= 1 ? [...guides, !isLast] : [];
+    kids.forEach((child, index) => place(child, depth + 1, below, index === kids.length - 1));
   };
-  for (const item of tops) place(item, 0);
+  for (const item of tops) place(item, 0, [], true);
   // Work items whose parents only lead to one another have no top; the first of each loop stands as one.
-  for (const item of items) place(item, 0);
+  for (const item of items) place(item, 0, [], true);
   return lines;
 }
 

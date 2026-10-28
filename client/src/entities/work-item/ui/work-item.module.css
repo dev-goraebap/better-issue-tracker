@@ -37,6 +37,17 @@
 /* A card's people as overlapping pictures, each ringed in the card's own ground. */
 .stack { display: inline-flex; align-items: center; flex-shrink: 0; white-space: nowrap; }
 .stack > :not(:first-child):not(.more) { margin-inline-start: -0.375rem; box-shadow: 0 0 0 2px var(--color-background-surface, var(--color-background)); border-radius: 50%; }
-/* A desktop subtask's room after the key (D-106), a hairline down its right side under the parent's marks. */
-.indent { position: relative; align-self: stretch; flex-shrink: 0; }
-.indent::after { content: ""; position: absolute; inset-block: 0; inset-inline-end: 0.4375rem; border-inline-start: 1px solid var(--color-border-subtle); }
+/*
+ * A subtask's lines (D-106), as Linear's: from under its parent's first mark a line comes down and turns into the
+ * row's own front (└, or ├ when a sibling follows), lines run on past rows for ancestors with siblings still to come,
+ * and a parent sends a line down from under its mark. The steps match ItemRow's depth inset; a desktop's only.
+ */
+.tree { --tree-start: var(--spacing-6); --tree-step: 1.5rem; --tree-mark: 0.4375rem; --tree-mid: 50%; --tree-gap: 0.75rem;
+  --tree-color: color-mix(in srgb, var(--color-icon-secondary) 70%, transparent);
+  position: absolute; inset: 0; pointer-events: none; }
+.treeLine, .treeElbow, .treeStem { position: absolute; inset-inline-start: calc(var(--tree-start) + var(--level) * var(--tree-step) + var(--tree-mark));
+  border-inline-start: 1px solid var(--tree-color); }
+.treeLine { inset-block: 0; }
+.treeElbow { inset-block-start: 0; block-size: var(--tree-mid); inline-size: calc(var(--tree-step) - var(--tree-mark) - 0.3125rem); border-block-end: 1px solid var(--tree-color);
+  border-end-start-radius: 0.375rem; }
+.treeStem { inset-block: calc(var(--tree-mid) + var(--tree-gap)) 0; }
