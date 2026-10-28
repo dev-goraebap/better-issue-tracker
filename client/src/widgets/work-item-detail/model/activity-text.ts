@@ -39,7 +39,7 @@ export function activityPerson({ field, before, after }: TimelineEntry): string 
 
 /** The icon a line of activity shows on the timeline's rule, by what happened, as GitHub marks an issue's events (BIT-84). */
 export function activityIcon({ action, field }: TimelineEntry): string {
-  if (action === 'created') return 'plus';
+  if (action === 'created') return 'created';
   if (action === 'deleted') return 'delete';
   if (action === 'restored') return 'retry';
   switch (field) {

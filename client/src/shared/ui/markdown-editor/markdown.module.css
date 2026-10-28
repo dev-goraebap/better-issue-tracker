@@ -10,6 +10,11 @@
 .content :global(.ProseMirror) { min-block-size: var(--editor-min); outline: none; font-size: 1rem; line-height: 1.7; color: var(--color-text-primary);
   word-break: keep-all; overflow-wrap: anywhere; caret-color: var(--color-text-primary); }
 .content :global(.ProseMirror) > * + * { margin-block-start: 0.75em; }
+/*
+ * The design system's reset sizes every p at the app's 13px with a tight line and h4–h6 at its small steps (:where, so
+ * any rule wins); in written text they take the text's own size and line instead.
+ */
+.content :global(.ProseMirror :is(p, h4, h5, h6)) { font-size: inherit; line-height: inherit; }
 .content :global(.ProseMirror p) { margin: 0; }
 .content :global(.ProseMirror h1), .content :global(.ProseMirror h2), .content :global(.ProseMirror h3) { margin: 1.5em 0 0.35em; font-weight: 600; line-height: 1.35; letter-spacing: -0.015em; }
 .content :global(.ProseMirror) > :is(h1, h2, h3):first-child { margin-block-start: 0; }

@@ -1,7 +1,7 @@
 /*
  * Writing in place (D-107): the title is the heading's own type in a borderless box, so reading and writing look the
- * same; the save bar is a floating pill 20px above the foot of the screen, centred, in the popover's ground with a
- * hairline and a shadow, its words in 14px and the two buttons at its end.
+ * same; the bar (EditBar, D-109) is a floating pill 20px above the foot of the screen, centred, in the popover's ground
+ * with a hairline and a shadow, its words in 14px and its buttons at its end.
  */
 .title { display: block; inline-size: 100%; margin: 0; padding: 0; border: 0; outline: 0; resize: none; overflow: hidden; background: none; color: inherit;
   font: inherit; letter-spacing: inherit; line-height: inherit; word-break: keep-all; overflow-wrap: anywhere; }
@@ -11,10 +11,17 @@
 .saveBarInner { display: flex; align-items: center; gap: var(--spacing-2); max-inline-size: 40rem; inline-size: 100%; padding: var(--spacing-2) var(--spacing-2) var(--spacing-2) var(--spacing-4);
   border: 1px solid var(--bit-float-border, var(--color-border)); border-radius: 12px; background: var(--color-background-popover); box-shadow: var(--shadow-med);
   pointer-events: auto; }
-.saveText { flex: 1; min-inline-size: 0; margin: 0; font-size: 0.875rem; color: var(--color-text-primary); }
-/* The body as read, ready to be written: the text caret over its words says a press writes there. */
+.saveText { display: flex; align-items: center; flex: 1; min-inline-size: 0; margin: 0; font-size: 0.875rem; line-height: 1.4; color: var(--color-text-primary); }
+/* The pencil before the words, and the quieter note that something waits to be saved. */
+.saveMark { display: inline-flex; flex-shrink: 0; margin-inline-end: var(--spacing-2); color: var(--color-text-secondary); }
+.saveMark svg { inline-size: 1rem; block-size: 1rem; }
+.saveBarInner[data-editing] .saveMark { color: var(--color-accent); }
+.saveText strong { font-weight: 600; }
+.saveNote { color: var(--color-text-secondary); }
+/* The body as read, ready to be written: the text caret over its words says it can be written. */
 .body { min-inline-size: 0; }
 .body[data-openable] { cursor: text; }
+.readTitle { cursor: text; }
 .question { margin: 0; font-size: 0.875rem; line-height: 1.6; color: var(--color-text-secondary); }
 @keyframes rise { from { opacity: 0; translate: 0 0.75rem; } to { opacity: 1; translate: 0 0; } }
 /* In the right panel (BIT-103) the bar keeps to the panel, centred on it rather than on the window. */

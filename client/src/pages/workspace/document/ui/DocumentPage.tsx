@@ -12,7 +12,7 @@ import { canManage, canWrite as canWriteIn, workspaceQuery } from '@/entities/wo
 import { deleteDocument, documentIdOf, documentQuery, folderHref, refreshDocuments, updateDocument } from '@/entities/document';
 import { refreshRelations } from '@/entities/relation';
 import { AttachmentBody, DetailEngagement, fileHref, useBodyFiles } from '@/features/detail-engagement';
-import { EditableTitle, InlineBody, LeaveGuard, SaveBar, SaveQuestions, useInlineEdit } from '@/features/inline-edit';
+import { EditableTitle, EditBar, InlineBody, LeaveGuard, ReadTitle, SaveQuestions, useInlineEdit } from '@/features/inline-edit';
 import { DocumentProperties } from './DocumentProperties';
 import { refreshTimeline, WorkItemActivity } from '@/widgets/work-item-detail';
 import styles from './document.module.css';
@@ -20,9 +20,9 @@ import styles from './document.module.css';
 /**
  * A document, /workspaces/$workspaceId/documents/$documentRef (D-093, BIT-41): <제목>-<id>, the id opening it. Its
  * body, then its 활동 and comments (D-078); beside it the folder it is in, its labels, who made it, and the work items
- * with their commits under the body. Its title and body are written in place and saved together from the save bar
- * (D-107): on a desktop whenever the member may write, on a phone after 고치기. The menu copies its link or deletes it
- * (it can be restored).
+ * with their commits under the body. Its title and body are read until the member asks to write them (D-109: two
+ * presses, or 고치기), then written in place and saved together from the bar at the foot (D-107). The menu copies its
+ * link or deletes it (it can be restored).
  */
 export function DocumentPage() {
   const { workspaceId, documentRef } = useParams({ strict: false }) as { workspaceId: string; documentRef: string };
@@ -32,7 +32,8 @@ export function DocumentPage() {
   const toast = useToast();
   const isMobile = useMediaQuery(MOBILE_QUERY);
   const [isDeleting, setDeleting] = useState(false);
-  const [isWritingOnPhone, setWritingOnPhone] = useState(false);
+  // Beside the reaction button, where the open editor's attachment button goes (BIT-104).
+  const [fileActionHost, setFileActionHost] = useState<HTMLSpanElement | null>(null);
   const result = useQuery(documentQuery(workspaceId, id));
   const role = useQuery(workspaceQuery(workspaceId)).data;
   const canWrite = canWriteIn(role, 'WRITE_DOCUMENTS');
@@ -51,10 +52,10 @@ export function DocumentPage() {
       });
       await Promise.all([refreshRelations(client, workspaceId), refreshDocuments(client, workspaceId), refreshTimeline(client, workspaceId, 'document', id)]);
     },
-    onSaved: () => { files.reset(); setWritingOnPhone(false); },
+    onSaved: () => files.reset(),
   });
   const files = useBodyFiles(text.draft.body);
-  const isWriting = canWrite && (!isMobile || isWritingOnPhone);
+  const isWriting = canWrite && text.isEditing;
   const document = result.data;
   if (!document) return <PageFrame isDetail title="문서" width="default" back={<BackLink to="/workspaces/$workspaceId/documents" params={{ workspaceId }} label="문서함" />}>
     {result.error && isNotFound(result.error)
@@ -74,29 +75,29 @@ export function DocumentPage() {
     afterOverlayClose(() => void navigate({ href: folderHref(workspaceId, document.projectId, folder?.id), replace: true }));
   };
   return <PageFrame isDetail headerLabel="문서" title={document.title} wrapsTitle width="full" back={back} actions={<>
-    {canWrite && isMobile && (isWritingOnPhone
-      ? <IconButton label="다 고침" tooltip="다 고침" variant="ghost" icon={<NavIcon name="check" />} isDisabled={text.isChanged} onClick={() => setWritingOnPhone(false)} />
-      : <IconButton label="고치기" tooltip="고치기" variant="ghost" icon={<NavIcon name="edit" />} onClick={() => setWritingOnPhone(true)} />)}
+    {canWrite && isMobile && !text.isEditing && <IconButton label="고치기" tooltip="고치기" variant="ghost" icon={<NavIcon name="edit" />} onClick={() => text.edit()} />}
     <MoreMenu label="문서 메뉴" variant="ghost" placement="end" items={[
       { label: '링크 복사', icon: <NavIcon name="link" />, onClick: () => void navigator.clipboard?.writeText(window.location.href) },
       ...(canWrite ? [{ label: '삭제', icon: <NavIcon name="delete" />, onClick: () => setDeleting(true) }] : []),
     ]} />
   </>}>
-    <DetailLayout title={isWriting ? <EditableTitle value={text.draft.title} label="문서 제목" onChange={text.setTitle} /> : document.title}
+    <DetailLayout title={isWriting ? <EditableTitle value={text.draft.title} label="문서 제목" onChange={text.setTitle} autoFocus={text.startAt === 'title'} />
+      : canWrite ? <ReadTitle onPress={text.hint} onOpen={() => text.edit('title')}>{document.title}</ReadTitle> : document.title}
       properties={<DocumentProperties key={document.id} workspaceId={workspaceId} document={document} canWrite={canWrite} />}>
       <section aria-label="본문" className={styles.body}>
-        <InlineBody canOpen={isWriting} isKept={text.isChanged || isWritingOnPhone} revision={text.revision}
-          read={<AttachmentBody target={{ workspaceId, type: 'document', id: document.id }} value={document.body} empty={isWriting ? '본문을 쓰려면 누르세요' : '본문이 없습니다.'} />}
+        <InlineBody canOpen={canWrite} isEditing={isWriting} startAt={typeof text.startAt === 'number' ? text.startAt : undefined} onPress={text.hint} onOpen={text.edit}
+          read={<AttachmentBody target={{ workspaceId, type: 'document', id: document.id }} value={document.body} empty={canWrite ? '본문을 쓰려면 두 번 누르세요' : '본문이 없습니다.'} />}
           write={startAt => <MarkdownEditor key={text.revision} startAt={startAt} attachmentUrl={fileId => fileHref({ workspaceId, type: 'document', id: document.id }, fileId, false)}
-            filePicker={files.picker} linkPicker={insert => <DocumentLinkButton workspaceId={workspaceId} onInsert={insert} />} value={text.draft.body} onChange={text.setBody}
+            filePicker={files.picker} filePickerPortal={fileActionHost} linkPicker={insert => <DocumentLinkButton workspaceId={workspaceId} onInsert={insert} />} value={text.draft.body} onChange={text.setBody}
             label="본문" placeholder="쓰기 시작하세요… ( / 로 블록)" />} />
       </section>
-      <DetailEngagement target={{ workspaceId, type: 'document', id: document.id }} canWrite={canWrite} />
+      <DetailEngagement target={{ workspaceId, type: 'document', id: document.id }} canWrite={canWrite} actionHost={setFileActionHost} />
         <TargetRelations workspaceId={workspaceId} projectId={document.projectId} type="document" id={document.id} title={document.title} canWrite={canWrite} />
         <WorkItemActivity workspaceId={workspaceId} projectId={document.projectId} workItemId={document.id} targetType="document"
           canWrite={canWrite} canModerate={canManage(role)} />
     </DetailLayout>
-    {(text.isChanged || text.error) && <SaveBar isBusy={text.isBusy || files.isUploading} error={text.error} onUndo={text.undo} onSave={() => { void text.save(); }} />}
+    {canWrite && (text.isHinting || text.isEditing) && <EditBar isEditing={text.isEditing} isChanged={text.isChanged} isBusy={text.isBusy || files.isUploading} error={text.error}
+      onEdit={() => text.edit()} onView={text.view} onCancel={() => { text.cancel(); files.reset(); }} onSave={() => { void text.save(); }} />}
     <SaveQuestions isAskingScope={false} hasConflict={!!text.conflict} isBusy={text.isBusy} onScope={() => undefined} onCancelScope={text.cancelScope}
       onTakeLatest={text.takeLatest} onKeepMine={() => { void text.keepMine(); }} />
     <LeaveGuard when={text.isChanged} />

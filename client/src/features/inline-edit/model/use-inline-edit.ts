@@ -7,11 +7,18 @@ export type Written = { title: string; body: string };
 export type Latest = Written & { version: number };
 /** Of a repeating work item, which occurrences a change is for. */
 export type Scope = 'single' | 'following';
+/** Where writing starts: a place in the body (its document position, -1 its end), or the title. */
+export type StartAt = number | 'title';
+
+/** How long the hint a press gives stays at the foot of the screen. */
+const HINT_MS = 4000;
 
 /**
- * The title and body written in place on a detail (D-107, BIT-99), saved together from the save bar. The draft starts
+ * The title and body of a detail, read until the member asks to write them (D-109): a press on them hints how (two
+ * presses, or 고치기), and writing ends by saving, by 취소 dropping what changed, or by 보기로 전환 when nothing did.
+ * They are written in place (D-107, BIT-99) and saved together. The draft starts
  * as the server's copy and follows it while nothing is changed; once changed it stays the member's until saved or
- * undone. Saving reads the server's copy first: when its title and body are still what the member started from, the
+ * cancelled. Saving reads the server's copy first: when its title and body are still what the member started from, the
  * change goes over its latest version (a property changed meanwhile, which only raised the version, is no conflict);
  * when someone changed them, the member chooses between the latest words and their own (conflict). A repeating work
  * item asks first which occurrences the change is for.
@@ -30,9 +37,17 @@ export function useInlineEdit({ current, latest, send, isRepeating = false, onSa
   const [error, setError] = useState('');
   const [conflict, setConflict] = useState<{ latest: Latest; scope?: Scope } | null>(null);
   const [isAskingScope, setAskingScope] = useState(false);
-  // Counts the times the words were replaced from outside (undone, the latest taken, an agent's edit followed), so a
+  // Counts the times the words were replaced from outside (cancelled, the latest taken, an agent's edit followed), so a
   // body editor keyed by it starts over with them even while it has the focus.
   const [revision, setRevision] = useState(0);
+  const [isEditing, setEditing] = useState(false);
+  const [startAt, setStartAt] = useState<StartAt | undefined>(undefined);
+  const [isHinting, setHinting] = useState(false);
+  useEffect(() => {
+    if (!isHinting) return undefined;
+    const timer = window.setTimeout(() => setHinting(false), HINT_MS);
+    return () => window.clearTimeout(timer);
+  }, [isHinting]);
   const replace = (words: Written) => { setOpened(words); setDraft(words); setRevision(count => count + 1); };
   const isChanged = draft.title !== opened.title || draft.body !== opened.body;
   // Nothing changed: the draft follows the server's copy (a save, an agent's edit, a reload).
@@ -49,7 +64,7 @@ export function useInlineEdit({ current, latest, send, isRepeating = false, onSa
     await send(changesFrom(base), version, scope);
     // As the server keeps them: the title and body without the spaces around them.
     const saved = { title: draft.title.trim(), body: draft.body.trim() };
-    setOpened(saved); setDraft(saved); setConflict(null); setError('');
+    setOpened(saved); setDraft(saved); setConflict(null); setError(''); setEditing(false);
     onSaved?.();
   };
   const save = useCallback(async (scope?: Scope) => {
@@ -66,12 +81,18 @@ export function useInlineEdit({ current, latest, send, isRepeating = false, onSa
   }, [isChanged, isBusy, draft, opened, isRepeating, latest]);
 
   return {
-    draft, isChanged, isBusy, error, conflict, isAskingScope, revision,
+    draft, isChanged, isBusy, error, conflict, isAskingScope, revision, isEditing, startAt, isHinting,
+    /** A press on the words as read: the hint at the foot says how to write them. */
+    hint: () => { if (!isEditing) setHinting(true); },
+    /** Starts writing, the caret where asked (in the body at a place, or in the title). */
+    edit: (at?: StartAt) => { setStartAt(at); setHinting(false); setEditing(true); },
+    /** 보기로 전환: back to reading, when nothing waits to be saved. */
+    view: () => { if (!isChanged) { setEditing(false); setError(''); } },
+    /** 취소: what changed is dropped and the words are read again. */
+    cancel: () => { replace(opened); setError(''); setEditing(false); },
     setTitle: (title: string) => setDraft(previous => ({ ...previous, title })),
     setBody: (body: string) => setDraft(previous => ({ ...previous, body })),
     save,
-    /** 되돌리기: back to the copy the member started from. */
-    undo: () => { replace(opened); setError(''); },
     cancelScope: () => setAskingScope(false),
     /** The latest words win: the member's draft is dropped for them. */
     takeLatest: () => { if (!conflict) return; const { title, body } = conflict.latest; replace({ title, body }); setConflict(null); },

@@ -1,6 +1,6 @@
 import {
   SmilePlus, Image, ArrowDownWideNarrow, ArrowLeft, ArrowLeftRight, ArrowRight, ArrowUpNarrowWide, ArrowUpDown, Bell, BookOpen, CalendarDays, Check, CheckCheck,
-  ChevronDown, ChevronLeft, ChevronRight, ChevronsUpDown, CircleCheck, CircleDot, Clock, Copy, Ellipsis, File, FileText, Filter, Flag, Folder, GitBranch, GripVertical, Hash, House,
+  ChevronDown, ChevronLeft, ChevronRight, ChevronsUpDown, CircleCheck, CircleDot, CirclePlus, Clock, Copy, Ellipsis, File, FileText, Filter, Flag, Folder, GitBranch, GripVertical, Hash, House,
   Inbox, KanbanSquare, LayoutGrid, LayoutList, Link, ListFilter, ListTodo, Lock, LogOut, Mail, Maximize2, MessageSquare, Milestone, PanelLeft, Paperclip,
   SquarePen, Plus, RefreshCw, Repeat, Rows3, Scale, Search, Settings, Shield, SlidersHorizontal, Sparkles, Table2, Tag, Trash2, User, Users, Workflow, X,
   ArrowUp, Bold, Bot, Bug, LayoutTemplate, Download, ExternalLink, GitCommitHorizontal, GitMerge, GitPullRequest, GitPullRequestClosed, GitPullRequestDraft, Unplug, Webhook, Code, Heading1, Heading2, Heading3, Italic, List, ListChecks, ListOrdered, Minus, Redo2, SquareCode, Strikethrough, TextQuote, Type, Undo2, Unlink,
@@ -41,6 +41,7 @@ const icons: Record<string, LucideIcon> = {
   grip: GripVertical,
   'list-filter': ListFilter,
   plus: Plus,
+  created: CirclePlus,
   'expand-page': Maximize2,
   retry: RefreshCw,
   repeat: Repeat,
