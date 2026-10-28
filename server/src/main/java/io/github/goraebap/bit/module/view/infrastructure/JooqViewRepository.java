@@ -105,6 +105,7 @@ class JooqViewRepository implements ViewRepository {
                     var layout = tweak.path("layout");
                     var sort = tweak.path("sort");
                     var columns = tweak.path("columns");
+                    var grouping = tweak.path("grouping");
                     return new ViewTweak(
                             r.getWorkspaceId(),
                             r.getIamUserId(),
@@ -118,6 +119,7 @@ class JooqViewRepository implements ViewRepository {
                                             WorkItemView.Direction.valueOf(
                                                     sort.path("direction").stringValue())),
                             columns.isMissingNode() ? null : jsonMapper.convertValue(columns, COLUMNS),
+                            grouping.isMissingNode() ? null : WorkItemView.Grouping.valueOf(grouping.stringValue()),
                             r.getUpdatedAt());
                 });
     }
@@ -134,6 +136,7 @@ class JooqViewRepository implements ViewRepository {
                             "direction", tweak.sort().direction().name()));
         if (tweak.columns() != null)
             body.put("columns", tweak.columns().stream().map(Enum::name).toList());
+        if (tweak.grouping() != null) body.put("grouping", tweak.grouping().name());
         String json = jsonMapper.writeValueAsString(body);
         dslContext
                 .insertInto(WORK_ITEM_VIEW_TWEAK)
@@ -188,6 +191,7 @@ class JooqViewRepository implements ViewRepository {
         r.setSortDirection(d.sort().direction().name());
         r.setColumns(jsonMapper.writeValueAsString(
                 d.columns().stream().map(Enum::name).toList()));
+        r.setGrouping(d.grouping().name());
         r.setPosition(view.position());
         r.setVersion(view.version());
         AuditRecords.write(r, view.audit());
@@ -205,7 +209,8 @@ class JooqViewRepository implements ViewRepository {
                 new WorkItemView.Sort(
                         WorkItemView.SortKey.valueOf(r.get(WORK_ITEM_VIEW.SORT_KEY)),
                         WorkItemView.Direction.valueOf(r.get(WORK_ITEM_VIEW.SORT_DIRECTION))),
-                jsonMapper.readValue(r.get(WORK_ITEM_VIEW.COLUMNS), COLUMNS));
+                jsonMapper.readValue(r.get(WORK_ITEM_VIEW.COLUMNS), COLUMNS),
+                WorkItemView.Grouping.valueOf(r.get(WORK_ITEM_VIEW.GROUPING)));
         return WorkItemView.fromPersistence(
                 r.get(WORK_ITEM_VIEW.WORK_ITEM_VIEW_ID),
                 r.get(WORK_ITEM_VIEW.WORKSPACE_ID),

@@ -71,7 +71,7 @@ erDiagram
 | `workspace_member` | `workspace_member_id`, `workspace_id`, `iam_user_id`, `role varchar(16)`, `joined_at` | `ux_workspace_member_workspace_id_iam_user_id`, `ck_workspace_member_role` (owner, admin, member, viewer) |
 | `workspace_invitation` | `workspace_invitation_id`, `workspace_id`, `email`, `role`, `token_hash`, `status varchar(16)`, `expires_at`, `invited_by`, `created_at` | `ck_..._status` (pending, accepted, revoked, expired) |
 | `label` | `label_id`, `workspace_id`, `name varchar(32)`, `color varchar(7)`, `is_system boolean`, `system_key varchar(32)?`, `version bigint`, 감사 | `ux_label_workspace_id_name` (workspace_id, lower(name), deleted_at IS NULL), `ux_label_workspace_id_system_key` (system_key IS NOT NULL) |
-| `work_item_view` | `work_item_view_id`, `workspace_id`, `owner_id`, `is_personal boolean`, `name varchar(64)`, `description varchar(200)?`, `icon varchar(32)`, `color varchar(7)`, `layout varchar(16)`, `filters text`(JSON 객체), `sort_key varchar(16)`, `sort_direction varchar(4)`, `columns text`(JSON 배열), `position real`, `version bigint`, 감사 | `ix_work_item_view_workspace_id_position`, `ck_..._layout` (list, calendar, board, timeline, cards, history), `ck_..._sort_key` (updated, created, priority, title) |
+| `work_item_view` | `work_item_view_id`, `workspace_id`, `owner_id`, `is_personal boolean`, `name varchar(64)`, `description varchar(200)?`, `icon varchar(32)`, `color varchar(7)`, `layout varchar(16)`, `filters text`(JSON 객체), `sort_key varchar(16)`, `sort_direction varchar(4)`, `columns text`(JSON 배열), `grouping varchar(16)`(기본 `none`), `position real`, `version bigint`, 감사 | `ix_work_item_view_workspace_id_position`, `ck_..._layout` (list, calendar, board, timeline, cards, history), `ck_..._sort_key` (updated, created, priority, title), `ck_..._grouping` (none, status, assignee, priority, type, label, project) |
 | `work_item_view_tweak` | (`workspace_id`, `iam_user_id`, `view_key varchar(40)`) 기본 키, `tweak text`(JSON 객체), `updated_at` | `ix_work_item_view_tweak_workspace_id_view_key` |
 | `work_item_view_order` | (`workspace_id`, `scope varchar(40)`) 기본 키, `view_keys text`(JSON 배열), `updated_at`, `updated_by`, `updated_by_agent?` | `ck_..._view_keys` (8,000자 이하 JSON 배열) |
 
@@ -161,9 +161,9 @@ erDiagram
 
 ### T-006 실제 V6 계약 (`V6__issue_views.sql`)
 
-- `work_item_view`: 뷰(D-066·D-068). `is_personal=0`이면 워크스페이스 모두에게, 1이면 `owner_id`에게만 보인다. `filters`는 status·priority·assignee·label 키만 쓰는 JSON 객체(4,000자 이하, 값은 화면이 정하는 쉼표 문자열이라 서버는 키와 길이만 검사), `columns`는 표시 속성 JSON 배열(500자 이하)이다. JSON CHECK는 `json_valid`가 거짓이면 `json_type`을 부르지 않도록 CASE로 쓴다(깨진 JSON이 오류가 아니라 제약 위반이 되게).
+- `work_item_view`: 뷰(D-066·D-068). `is_personal=0`이면 워크스페이스 모두에게, 1이면 `owner_id`에게만 보인다. `filters`는 status·priority·assignee·label 키만 쓰는 JSON 객체(4,000자 이하, 값은 화면이 정하는 쉼표 문자열이라 서버는 키와 길이만 검사), `columns`는 표시 속성 JSON 배열(500자 이하)이다. `grouping`은 목록 행의 그룹 기준이다(D-106, V28). `project`는 홈에서만 쓰고 프로젝트 안에서는 화면이 `none`으로 본다(서버는 범위를 검사하지 않는다). JSON CHECK는 `json_valid`가 거짓이면 `json_type`을 부르지 않도록 CASE로 쓴다(깨진 JSON이 오류가 아니라 제약 위반이 되게).
 - 기본 뷰 '전체 업무'는 저장하지 않는다. V6은 기존 워크스페이스마다 백로그·진행 보드·캘린더·결정기록 공용 뷰 넷을 position 0~3으로 넣는다(주인은 워크스페이스의 `created_by`). 새 워크스페이스는 생성 트랜잭션 안에서 같은 넷을 받는다.
-- `work_item_view_tweak`: 사람별 조정(보기 방식·정렬·표시 속성). `view_key`는 뷰 ID(소문자 표준 표기)나 `all`이라 FK가 없다. 뷰를 지우면 그 뷰의 조정 행을 모두 지운다. 남의 개인 뷰가 된 뷰의 조정은 행은 남기고 조회에서 뺀다.
+- `work_item_view_tweak`: 사람별 조정(보기 방식·정렬·표시 속성·그룹 기준). `tweak` JSON의 키는 `layout`·`sort`·`columns`·`grouping`이고, 빠진 키는 뷰를 따른다. `view_key`는 뷰 ID(소문자 표준 표기)나 `all`이라 FK가 없다. 뷰를 지우면 그 뷰의 조정 행을 모두 지운다. 남의 개인 뷰가 된 뷰의 조정은 행은 남기고 조회에서 뺀다.
 
 ### V12 범위별 뷰 순서 (`V12__issue_view_order.sql`, D-088)
 

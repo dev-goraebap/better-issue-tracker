@@ -67,7 +67,7 @@ public class ViewService implements ViewFacade {
         // A view that became someone else's personal view or was deleted keeps no visible tweak.
         return viewRepository.findTweaks(workspaceId, actor.userId()).stream()
                 .filter(t -> keys.contains(t.viewKey()))
-                .map(t -> new ViewViews.Tweak(t.viewKey(), t.layout(), sort(t.sort()), t.columns()))
+                .map(t -> new ViewViews.Tweak(t.viewKey(), t.layout(), sort(t.sort()), t.columns(), t.grouping()))
                 .toList();
     }
 
@@ -120,7 +120,8 @@ public class ViewService implements ViewFacade {
                 request.layout(),
                 request.filters(),
                 request.sort(),
-                request.columns());
+                request.columns(),
+                request.grouping());
         var view = WorkItemView.create(
                 workspaceId,
                 actor.userId(),
@@ -139,7 +140,8 @@ public class ViewService implements ViewFacade {
         var view = visible(rights, workspaceId, viewId);
         if (!rights.edits(view)) throw CommonErrorCode.AUTH_FORBIDDEN.raise();
         version(view, request.getExpectedVersion());
-        if (request.hasIsPersonal() && request.getIsPersonal() == null) throw ViewErrorCode.VIEW_INVALID.raise();
+        if (request.hasIsPersonal() && request.getIsPersonal() == null
+                || request.hasGrouping() && request.getGrouping() == null) throw ViewErrorCode.VIEW_INVALID.raise();
         boolean personal = request.hasIsPersonal() ? request.getIsPersonal() : view.personal();
         if (personal != view.personal() && (!view.ownerId().equals(actor.userId()) || !personal && !rights.writer()))
             throw CommonErrorCode.AUTH_FORBIDDEN.raise();
@@ -152,7 +154,8 @@ public class ViewService implements ViewFacade {
                 request.hasLayout() ? request.getLayout() : d.layout(),
                 request.hasFilters() ? request.getFilters() : d.filters(),
                 request.hasSort() ? request.getSort() : sort(d.sort()),
-                request.hasColumns() ? request.getColumns() : d.columns());
+                request.hasColumns() ? request.getColumns() : d.columns(),
+                request.hasGrouping() ? request.getGrouping() : d.grouping());
         long before = view.version();
         view.revise(next, personal, actor.userId(), agent(actor), clock.instant());
         if (view.version() != before) viewRepository.save(view);
@@ -176,7 +179,14 @@ public class ViewService implements ViewFacade {
         var sort = request.sort() == null ? null : domainSort(request.sort());
         String key = key(viewKey);
         var tweak = new ViewTweak(
-                workspaceId, actor.userId(), key, request.layout(), sort, request.columns(), clock.instant());
+                workspaceId,
+                actor.userId(),
+                key,
+                request.layout(),
+                sort,
+                request.columns(),
+                request.grouping(),
+                clock.instant());
         if (tweak.isEmpty()) viewRepository.deleteTweak(workspaceId, actor.userId(), key);
         else viewRepository.saveTweak(tweak);
     }
@@ -244,7 +254,8 @@ public class ViewService implements ViewFacade {
             WorkItemView.Layout layout,
             Map<String, String> filters,
             ViewViews.Sort sort,
-            List<WorkItemView.Column> columns) {
+            List<WorkItemView.Column> columns,
+            WorkItemView.Grouping grouping) {
         var domainSort = sort == null ? null : domainSort(sort);
         var problem =
                 WorkItemView.Definition.check(name, description, icon, color, layout, filters, domainSort, columns);
@@ -254,7 +265,8 @@ public class ViewService implements ViewFacade {
                 case COLUMNS -> ViewErrorCode.VIEW_COLUMNS_INVALID.raise();
                 case DEFINITION -> ViewErrorCode.VIEW_INVALID.raise();
             };
-        return WorkItemView.Definition.of(name, description, icon, color, layout, filters, domainSort, columns);
+        return WorkItemView.Definition.of(
+                name, description, icon, color, layout, filters, domainSort, columns, grouping);
     }
 
     private static WorkItemView.Sort domainSort(ViewViews.Sort sort) {
@@ -285,6 +297,7 @@ public class ViewService implements ViewFacade {
                 new ViewViews.Filters(f.get("status"), f.get("priority"), f.get("assignee"), f.get("label")),
                 sort(d.sort()),
                 d.columns(),
+                d.grouping(),
                 view.ownerId(),
                 view.personal(),
                 rights.edits(view),

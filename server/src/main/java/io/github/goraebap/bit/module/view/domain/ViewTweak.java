@@ -4,7 +4,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
 
-/** A member's own layout, order and columns over a view; any part left null follows the view. */
+/** A member's own layout, order, columns and grouping over a view; any part left null follows the view. */
 public record ViewTweak(
         String workspaceId,
         String userId,
@@ -12,6 +12,7 @@ public record ViewTweak(
         WorkItemView.Layout layout,
         WorkItemView.Sort sort,
         List<WorkItemView.Column> columns,
+        WorkItemView.Grouping grouping,
         Instant updatedAt) {
     public ViewTweak {
         Objects.requireNonNull(workspaceId, "workspaceId");
@@ -27,6 +28,6 @@ public record ViewTweak(
     }
 
     public boolean isEmpty() {
-        return layout == null && sort == null && columns == null;
+        return layout == null && sort == null && columns == null && grouping == null;
     }
 }

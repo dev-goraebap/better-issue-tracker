@@ -36,6 +36,17 @@ public final class WorkItemView {
         history
     }
 
+    /** How a list's rows are grouped (D-106); project groups only on the home and is none inside a project. */
+    public enum Grouping {
+        none,
+        status,
+        assignee,
+        priority,
+        type,
+        label,
+        project
+    }
+
     public enum SortKey {
         updated,
         created,
@@ -80,10 +91,12 @@ public final class WorkItemView {
             Layout layout,
             Map<String, String> filters,
             Sort sort,
-            List<Column> columns) {
+            List<Column> columns,
+            Grouping grouping) {
         public Definition {
             filters = Map.copyOf(filters);
             columns = List.copyOf(columns);
+            grouping = grouping == null ? Grouping.none : grouping;
         }
 
         /** The first invalid part of a draft, so callers can name it before {@link #of} refuses it. */
@@ -125,7 +138,8 @@ public final class WorkItemView {
                 Layout layout,
                 Map<String, String> filters,
                 Sort sort,
-                List<Column> columns) {
+                List<Column> columns,
+                Grouping grouping) {
             if (check(name, description, icon, color, layout, filters, sort, columns)
                     .isPresent()) throw new IllegalArgumentException("Invalid view definition");
             String about = description == null || description.isBlank() ? null : description.strip();
@@ -137,7 +151,8 @@ public final class WorkItemView {
                     layout,
                     cleanFilters(filters),
                     sort,
-                    columns);
+                    columns,
+                    grouping);
         }
 
         /** The filters in {@link #FILTER_KEYS} order, for storage and responses. */
@@ -209,9 +224,12 @@ public final class WorkItemView {
                         Layout.list,
                         Map.of("status", "none"),
                         new Sort(SortKey.priority, Direction.asc),
-                        usual),
-                Definition.of("진행 보드", null, "board", "#f2c94c", Layout.board, Map.of(), usualSort, usual),
-                Definition.of("캘린더", null, "calendar", "#4cb782", Layout.calendar, Map.of(), usualSort, usual),
+                        usual,
+                        Grouping.none),
+                Definition.of(
+                        "진행 보드", null, "board", "#f2c94c", Layout.board, Map.of(), usualSort, usual, Grouping.none),
+                Definition.of(
+                        "캘린더", null, "calendar", "#4cb782", Layout.calendar, Map.of(), usualSort, usual, Grouping.none),
                 Definition.of(
                         "결정기록",
                         null,
@@ -220,7 +238,8 @@ public final class WorkItemView {
                         Layout.history,
                         Map.of("label", "system"),
                         usualSort,
-                        List.of(Column.assignee, Column.labels, Column.updated)));
+                        List.of(Column.assignee, Column.labels, Column.updated),
+                        Grouping.none));
         return java.util.stream.IntStream.range(0, definitions.size())
                 .mapToObj(i -> create(workspaceId, ownerId, false, definitions.get(i), i, agent, now))
                 .toList();
