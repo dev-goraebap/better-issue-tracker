@@ -13,18 +13,20 @@ import { useBodyFiles } from '@/features/detail-engagement';
 import { labelsQuery } from '@/entities/label';
 import { columnsQuery, ProjectMark, projectsQuery, type BoardColumn, type Project } from '@/entities/project';
 import { useMembers } from '@/entities/workspace';
+import { typeOptions, workItemTypesQuery } from '@/entities/work-item-type';
 import {
   createItem, eventFields, WORK_ITEM_TEMPLATES, workItemHref, labelOptions, NO_REMINDER, NO_STATUS, reminderOptions, peopleOptions, priorityOptions, refreshItems, repeatBody, repeatItem,
   statusOptions, templateLabel,
   type Priority,
 } from '@/entities/work-item';
+import { ParentPicker, type ParentChoice } from './ParentPicker';
 import styles from './create-work-item.module.css';
 
 const mark = (project: Project) => <ProjectMark project={project} size="xs" />;
 
 type Draft = {
   projectId?: string; title: string; body: string; templateId?: string; status?: string; priority: Priority; people: string[]; labelIds: string[]; dueDate?: string;
-  time: EventTime; repeat?: Repeat; reminder?: number;
+  time: EventTime; repeat?: Repeat; reminder?: number; typeId?: string; parent?: ParentChoice;
 };
 
 /** What 새 작업 and 새 일정 are called (D-092). */
@@ -52,9 +54,12 @@ function startColumn(columns: readonly BoardColumn[], status?: string): string {
  * was) and adds its label when the workspace has one; 템플릿 없음 takes its untouched text and its label back out.
  * Ctrl/⌘+Enter makes it; with 계속 만들기 on it stays and starts a fresh title keeping the properties, else it closes (the
  * modal) or opens the work item made (the page). A toast names what was made, with 보기 to its page.
+ * A task has a type (D-104): 만들기 ▾'s pick (typeId, ?type=) or the workspace's default, changed by its 유형 pill. A
+ * type that may sit under others adds 상위 업무, the work items of those types; a type that must is not made until one
+ * is chosen, which the form says. A parent the new type may not sit under drops out.
  */
-export function NewWorkItem({ workspaceId, projectId, status, kind = 'task' }: {
-  workspaceId: string; projectId?: string; status?: string; kind?: 'task' | 'event';
+export function NewWorkItem({ workspaceId, projectId, status, kind = 'task', typeId }: {
+  workspaceId: string; projectId?: string; status?: string; kind?: 'task' | 'event'; typeId?: string;
 }) {
   const name = NAMES[kind];
   const isEvent = kind === 'event';
@@ -66,6 +71,7 @@ export function NewWorkItem({ workspaceId, projectId, status, kind = 'task' }: {
   const projects = useInfiniteQuery(projectsQuery(workspaceId)).data?.pages.flatMap(page => page.items) ?? [];
   const labels = useQuery(labelsQuery(workspaceId)).data ?? [];
   const members = useMembers(workspaceId).items;
+  const types = useQuery(workItemTypesQuery(workspaceId)).data ?? [];
   const titleBox = useRef<HTMLInputElement>(null);
   const [draft, setDraft] = useState<Draft>({ projectId, title: '', body: '', priority: 'medium', people: [], labelIds: [], time: { allDay: false }, reminder: 10 });
   const files = useBodyFiles(draft.body);
@@ -78,15 +84,21 @@ export function NewWorkItem({ workspaceId, projectId, status, kind = 'task' }: {
   const columns = useQuery({ ...columnsQuery(workspaceId, target?.id ?? ''), enabled: !!target }).data ?? [];
   // The status stays where the member put it; until then, where the address said to start, in the project picked.
   const shownStatus = draft.status && (draft.status === NO_STATUS || columns.some(column => column.id === draft.status)) ? draft.status : startColumn(columns, status);
+  // The type picked, else the address's, else the workspace's default; its parent only while the type may sit under it.
+  const type = types.find(each => each.id === (draft.typeId ?? typeId)) ?? types.find(each => each.isDefault);
+  const parentTypes = type?.allowedParentTypeIds ?? [];
+  const parent = draft.parent && parentTypes.includes(draft.parent.type?.id ?? '') ? draft.parent : undefined;
+  const isParentMissing = !isEvent && !!type?.parentRequired && !parent;
   const canCreate = !!draft.title.trim() && !!target && !isBusy && !files.isUploading;
   const create = async () => {
     if (!canCreate || !target) return;
+    if (isParentMissing) { setError(`'${type!.name}' 유형은 상위 업무 밑에만 만들 수 있습니다. 상위 업무를 골라 주세요.`); return; }
     setBusy(true); setError('');
     try {
       const common = { title: draft.title.trim(), description: draft.body.trim() || null, uploadIds: files.uploadIds, peopleIds: draft.people, labelIds: draft.labelIds };
       const id = await createItem(workspaceId, target.id, isEvent
         ? { ...common, kind: 'event', ...eventFields(draft.time), columnId: null, reminderMinutes: draft.time.allDay ? null : draft.reminder ?? null }
-        : { ...common, kind: 'task', priority: draft.priority, dueDate: draft.dueDate ?? null, columnId: shownStatus === NO_STATUS ? null : shownStatus });
+        : { ...common, kind: 'task', priority: draft.priority, dueDate: draft.dueDate ?? null, columnId: shownStatus === NO_STATUS ? null : shownStatus, typeId: type?.id ?? null, parentId: parent?.id ?? null });
       // A repeating one is made first and then repeats from its own day (D-092), its later occurrences made by the server.
       if (draft.repeat) await repeatItem(workspaceId, target.id, id, repeatBody(draft.repeat, 0));
       await refreshItems(client, workspaceId, target.id);
@@ -131,7 +143,12 @@ ${next.body}`) : isUntouched ? '' : previous.body;
       ? <><EventTimePicker value={draft.time} onChange={time => set({ time })} />
         {!draft.time.allDay && <PropertyPicker label="알림" icon="bell" options={reminderOptions} value={draft.reminder === undefined ? undefined : String(draft.reminder)}
           onChange={value => set({ reminder: value === undefined || value === NO_REMINDER ? undefined : Number(value) })} />}</>
-      : <PropertyPicker label="상태" icon="status" options={statusOptions(columns)} value={shownStatus} onChange={value => set({ status: (value as string | undefined) ?? NO_STATUS })} />}
+      : <>
+        <PropertyPicker label="유형" icon="tasks" options={typeOptions(types)} value={type?.id} onChange={value => { if (value) { set({ typeId: value as string }); setError(''); } }} />
+        {parentTypes.length > 0 && <ParentPicker workspaceId={workspaceId} typeIds={parentTypes} value={parent} isRequired={!!type?.parentRequired}
+          onChange={picked => { set({ parent: picked }); setError(''); }} />}
+        <PropertyPicker label="상태" icon="status" options={statusOptions(columns)} value={shownStatus} onChange={value => set({ status: (value as string | undefined) ?? NO_STATUS })} />
+      </>}
     {!isEvent && <PropertyPicker label="우선순위" icon="priority" options={priorityOptions} value={draft.priority} onChange={value => set({ priority: (value as Priority | undefined) ?? 'medium' })} />}
     <PropertyPicker label={isEvent ? '참석자' : '담당자'} icon="person" options={peopleOptions(members)} value={draft.people} isMultiple
       onChange={value => set({ people: (value as string[] | undefined) ?? [] })} />

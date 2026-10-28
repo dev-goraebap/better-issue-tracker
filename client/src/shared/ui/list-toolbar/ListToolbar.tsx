@@ -77,10 +77,11 @@ export type ListFilterValues = Record<string, string | undefined>;
 export type ListSearch = { label: string; placeholder: string; value?: string; onChange: (value: string | undefined) => void };
 /**
  * A list's main action; isCreate marks one that makes something new. With choices it is a menu of what to make
- * (만들기 ▾: 작업, 일정, D-092) on a desktop, and onClick the first of them where a menu does not fit (a phone's +, a key).
+ * (만들기 ▾: each work item type, then 일정, D-092, D-104) on a desktop, and onClick the first of them where a menu does not
+ * fit (a phone's +, a key). A choice's mark is a NavIcon name (icon) or the caller's own drawing (mark, a type's).
  */
 export type ListAction = { label: string; icon?: string; onClick: () => void; isCreate?: boolean; choices?: ListActionChoice[] };
-export type ListActionChoice = { label: string; icon?: string; onClick: () => void };
+export type ListActionChoice = { label: string; icon?: string; mark?: ReactNode; onClick: () => void };
 /** A list's orders as one choice each (최신순, 오래된순), for a page without the header chrome. */
 export type ListOrder = { value: string; options: ListOption[]; onChange: (value: string) => void };
 /** The ways a list can be seen (리스트, 캘린더, 칸반), each its name and NavIcon, the one in view, and where a pick goes. */

@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { authError, sessionQueryOptions } from '@/shared/api';
 import { ConfirmDialog, QueryMessage, SectionHeader, Timeline } from '@/shared/ui';
 import { labelsQuery } from '@/entities/label';
+import { workItemTypesQuery } from '@/entities/work-item-type';
 import { columnsQuery } from '@/entities/project';
 import { PRIORITIES } from '@/entities/work-item';
 import { useMembers } from '@/entities/workspace';
@@ -32,14 +33,16 @@ export function WorkItemActivity({ workspaceId, projectId, workItemId, canWrite,
   const members = useMembers(workspaceId).items;
   const columns = useQuery({ ...columnsQuery(workspaceId, projectId ?? ''), enabled: !!projectId }).data;
   const labels = useQuery(labelsQuery(workspaceId)).data;
+  const types = useQuery(workItemTypesQuery(workspaceId)).data;
   const [deleting, setDeleting] = useState<TimelineEntry | null>(null);
   const names = useMemo<ActivityNames>(() => ({
     people: new Map(members.map(member => [member.userId, member.name])),
     columns: new Map((columns ?? []).map(column => [column.id, column.name])),
     labels: new Map((labels ?? []).map(label => [label.id, label.name])),
+    types: new Map((types ?? []).map(type => [type.id, type.name])),
     priorities: PRIORITIES,
     noun: targetType === 'document' ? '문서' : '업무',
-  }), [members, columns, labels, targetType]);
+  }), [members, columns, labels, types, targetType]);
   const lines = useMemo(() => foldTimeline(timeline.data ?? []), [timeline.data]);
   const refresh = () => refreshTimeline(client, workspaceId, targetType, workItemId);
   /** Runs one change to a comment; a refusal (someone changed it first, 409) says so and shows the latest. */

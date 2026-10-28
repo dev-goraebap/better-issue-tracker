@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { activityText, foldTimeline, type ActivityNames } from '../src/widgets/work-item-detail/model/activity-text';
+import { activityIcon, activityText, foldTimeline, type ActivityNames } from '../src/widgets/work-item-detail/model/activity-text';
 import type { TimelineEntry } from '../src/widgets/work-item-detail/api/timeline';
 
 const names: ActivityNames = {
@@ -8,6 +8,7 @@ const names: ActivityNames = {
   columns: new Map([['c1', '할 일'], ['c2', '진행 중'], ['c3', '완료']]),
   labels: new Map([['l1', '버그'], ['l2', '결정기록']]),
   priorities: { low: '낮음', medium: '보통', high: '높음', urgent: '긴급' },
+  types: new Map([['t1', '작업'], ['t2', '버그'], ['t3', '스토리']]),
 };
 const entry = (patch: Partial<TimelineEntry>): TimelineEntry => ({
   kind: 'activity', id: 'a', at: '2026-10-25T01:00:00Z', actorId: 'u1', actorName: '김하늘', actorAgent: null, body: null, version: 0, editedAt: null,
@@ -29,6 +30,13 @@ test('activity reads as a sentence with the particle its last word takes', () =>
   assert.equal(activityText(entry({ field: 'assignee', after: 'u1' }), names), '스스로 맡았습니다');
   assert.equal(activityText(entry({ field: 'dueDate', after: '2026-11-03' }), names), '기한을 11월 3일로 정했습니다');
   assert.equal(activityText(entry({ field: 'column', before: 'c1', after: 'gone' }), names), '상태를 할 일에서 이전 상태로 옮겼습니다');
+});
+
+test('a type change names both types with the particle the new one takes (D-104)', () => {
+  assert.equal(activityText(entry({ field: 'type', before: 't1', after: 't2' }), names), "유형을 '작업'에서 '버그'로 바꿨습니다");
+  assert.equal(activityText(entry({ field: 'type', before: 't2', after: 't3' }), names), "유형을 '버그'에서 '스토리'로 바꿨습니다");
+  assert.equal(activityText(entry({ field: 'type', before: 'gone', after: 't1' }), names), "유형을 '지워진 유형'에서 '작업'으로 바꿨습니다");
+  assert.equal(activityIcon(entry({ field: 'type', before: 't1', after: 't2' })), 'tasks');
 });
 
 test('workspace status history retains its readable category after project removal', () => {

@@ -4,6 +4,8 @@
 .inspectorField > span:first-child { display: none; }
 .propertyValue { min-inline-size: 0; max-inline-size: 100%; font-size: 13px; }
 .propertyValue > span { max-inline-size: 100%; min-inline-size: 0; }
+/* A type read only (D-104): its mark before its name. */
+.typeValue { display: inline-flex; align-items: center; gap: 6px; }
 .propertyValue button { max-inline-size: 100%; min-block-size: 28px; border-radius: 999px; white-space: nowrap; font-size: 13px; }
 .propertyValue button[aria-haspopup] { background: var(--color-background-muted); box-shadow: inset 0 0 0 1px var(--bit-chip-ring); }
 .propertyValue button:hover { background: var(--color-overlay-hover); }

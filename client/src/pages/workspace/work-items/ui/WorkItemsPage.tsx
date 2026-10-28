@@ -34,7 +34,8 @@ type Editing = { mode: 'create' | 'edit'; initial: ViewDraft };
  *   (v; the scope's default when left out, which is where the trail's 홈 or project name leads).
  * - A new view takes the list's conditions as they stand; its card (ViewEditor) opens over the list, as Linear's.
  * - 새 업무 (the toolbar's action, a board lane's +, or the C key) opens at its own address in a modal near the top
- *   (NewWorkItem, D-070): …/work-items/new in a project, …/work-items/new in 전체, ?status= from a lane's +.
+ *   (NewWorkItem, D-070): …/work-items/new in a project, …/work-items/new in 전체, ?status= from a lane's +, ?type= from
+ *   만들기 ▾'s type (D-104).
  * - A work item pressed in any layout opens in a modal over the page at its own address (a masked move, D-069): the list
  *   stays under it, back or Esc closes it, 크게 보기 goes to the work item's page. Reloaded, the address is the page.
  */
@@ -76,11 +77,12 @@ export function WorkItemsPage() {
     Object.fromEntries(Object.entries({ ...search, ...patch }).filter(([, value]) => value !== undefined)) as WorkItemSearch, replace), [place, search]);
   // The scope's default view keeps the bare address, so the trail's link and the first chip are one place.
   const pick = (id: string) => { setEditing(null); place(id === views[0]!.id ? {} : { v: id }); };
-  // 새 업무 at its address: the project's, or 전체's; a board lane's + says where it starts.
-  const openNew = (status?: string, kind?: 'event') => {
+  // 새 업무 at its address: the project's, or 전체's; a board lane's + says where it starts, 만들기 ▾'s type what it is (D-104).
+  const openNew = (status?: string, kind?: 'event', typeId?: string) => {
     if (!canWrite) return;
     const path = projectId ? `/workspaces/${workspaceId}/projects/${projectId}/work-items/new` : `/workspaces/${workspaceId}/work-items/new`;
-    host.open(kind ? `${path}?kind=${kind}` : status ? `${path}?status=${status}` : path);
+    const query = new URLSearchParams(kind ? { kind } : { ...(status ? { status } : {}), ...(typeId ? { type: typeId } : {}) }).toString();
+    host.open(query ? `${path}?${query}` : path);
   };
   // A work item's link pressed (a plain click) opens the modal instead of leaving the list.
   const peek = (event: MouseEvent) => {

@@ -11,7 +11,9 @@ export const relationsQuery = (w: string, type: RelationType, id: string) => que
 });
 export const connectTargets = (w: string, body: components['schemas']['Connect']) => command('POST', `${base(w)}/relations`, body);
 export const unlinkTargets = (w: string, id: string) => command('DELETE', `${base(w)}/relations/${encodeURIComponent(id)}`);
-export const createChild = (w: string, p: string, id: string, title: string) => createAt(`${base(w)}/projects/${encodeURIComponent(p)}/work-items/${encodeURIComponent(id)}/children`, { title });
+/** Makes a subtask under a work item, of a type that may sit there (D-104); none is the workspace's default. */
+export const createChild = (w: string, p: string, id: string, title: string, typeId?: string) =>
+  createAt(`${base(w)}/projects/${encodeURIComponent(p)}/work-items/${encodeURIComponent(id)}/children`, { title, ...(typeId ? { typeId } : {}) });
 export const refreshRelations = (client: QueryClient, w: string) => Promise.allSettled([
   client.invalidateQueries({ queryKey: ['workspace', w, 'relations'] }),
   client.invalidateQueries({ queryKey: ['workspace', w, 'timeline'] }),

@@ -21,6 +21,7 @@ export const WORKSPACE_SETTINGS_MENU: readonly MenuEntry[] = [
   { path: '/general', label: '일반', icon: 'settings' },
   { path: '/roles', label: '역할', icon: 'shield' },
   { path: '/labels', label: '라벨', icon: 'label' },
+  { path: '/types', label: '업무 유형', icon: 'tasks' },
 ];
 export const PROJECT_SETTINGS_MENU: readonly MenuEntry[] = [
   { path: '/general', label: '일반', icon: 'settings' },

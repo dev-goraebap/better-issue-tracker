@@ -36,6 +36,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workspaces/{workspaceId}/work-item-types/order": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["orderWorkItemTypes"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/workspaces/{workspaceId}/view-tweaks/{viewKey}": {
         parameters: {
             query?: never;
@@ -351,6 +367,22 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["archive_1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{workspaceId}/work-item-types": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listWorkItemTypes"];
+        put?: never;
+        post: operations["createWorkItemType"];
         delete?: never;
         options?: never;
         head?: never;
@@ -952,6 +984,22 @@ export interface paths {
         options?: never;
         head?: never;
         patch: operations["revise_1"];
+        trace?: never;
+    };
+    "/api/v1/workspaces/{workspaceId}/work-item-types/{typeId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getWorkItemType"];
+        put?: never;
+        post?: never;
+        delete: operations["deleteWorkItemType"];
+        options?: never;
+        head?: never;
+        patch: operations["reviseWorkItemType"];
         trace?: never;
     };
     "/api/v1/workspaces/{workspaceId}/views/{viewId}": {
@@ -1694,6 +1742,14 @@ export interface components {
             expectedVersion: number;
             projectId?: string;
         };
+        OrderWorkItemTypes: {
+            types: components["schemas"]["WorkItemTypeOrderItem"][];
+        };
+        WorkItemTypeOrderItem: {
+            id: string;
+            /** Format: int64 */
+            expectedVersion: number;
+        };
         PutWorkItemViewTweak: {
             /** @enum {string|null} */
             layout?: "list" | "calendar" | "board" | "timeline" | "cards" | "history" | null;
@@ -1792,6 +1848,19 @@ export interface components {
             /** Format: int64 */
             expectedVersion: number;
         };
+        CreateWorkItemType: {
+            name: string;
+            /** @description An icon name the screen draws, such as epic, story, tasks or bug */
+            icon?: string | null;
+            /** @example #3b82f6 */
+            color: string;
+            /** @description true: a work item of this type must sit under one of an allowed type */
+            parentRequired?: boolean | null;
+            /** @description The types it may sit under; none makes it top-level */
+            allowedParentTypeIds?: string[] | null;
+            /** @description true makes it the type a task gets when none is named */
+            isDefault?: boolean | null;
+        };
         CreateWorkItemView: {
             name: string;
             description?: string | null;
@@ -1869,11 +1938,17 @@ export interface components {
             reminderMinutes?: number | null;
             /** @description Workspace labels to attach; omitted or null attaches none */
             labelIds?: string[] | null;
+            /** @description A task's type (D-104); omitted or null is the workspace's default. An event has none */
+            typeId?: string | null;
+            /** @description A work item of the workspace to make it a subtask of, in the same step; needed for a type that requires a parent */
+            parentId?: string | null;
             uploadIds?: string[];
         };
         Child: {
             title: string;
             description?: string;
+            /** @description The subtask's type (D-104); null is the workspace's default. It must allow the parent's type */
+            typeId?: string | null;
         };
         MoveWorkItem: {
             /** Format: int64 */
@@ -2128,6 +2203,24 @@ export interface components {
             labelIds?: string[] | null;
             /** @description Omitted: people are kept. Present: the whole set is replaced */
             peopleIds?: string[] | null;
+            /** @description A task's type (D-104); null is the workspace's default. Refused when its parent or children would break the type's rules */
+            typeId?: string | null;
+            /** @description The work item to sit under (subtask_of), replacing the one it has; null leaves it under none, which a type that requires a parent refuses */
+            parentId?: string | null;
+        };
+        UpdateWorkItemType: {
+            /** Format: int64 */
+            expectedVersion: number;
+            name?: string;
+            /** @description null or blank clears it */
+            icon?: string | null;
+            color?: string;
+            /** @description Changing the rule is refused with WORK_ITEM_TYPE_RULE_CONFLICT while live work items of the type would break it */
+            parentRequired?: boolean;
+            /** @description The whole set of types it may sit under; [] makes it top-level */
+            allowedParentTypeIds?: string[];
+            /** @description true makes it the default; the default stops being one only when another becomes it */
+            isDefault?: boolean;
         };
         UpdateWorkItemView: {
             /** Format: int64 */
@@ -2243,6 +2336,10 @@ export interface components {
             key: string;
             /** @enum {string} */
             kind: "task" | "event";
+            /** @description A task's type (D-104); null for an event */
+            type: components["schemas"]["WorkItemTypeRef"];
+            /** @description The live work item it is a subtask of (subtask_of); null for none */
+            parentId: string | null;
             title: string;
             description: string | null;
             columnId: string | null;
@@ -2323,9 +2420,42 @@ export interface components {
             untilOn: string | null;
             timeZone: string;
         };
+        WorkItemTypeRef: {
+            id: string;
+            name: string;
+            icon: string | null;
+            color: string;
+        };
         WorkItems: {
             items: components["schemas"]["WorkItem"][];
             nextCursor: string | null;
+        };
+        WorkItemType: {
+            id: string;
+            workspaceId: string;
+            name: string;
+            /** @description An icon name the screen draws */
+            icon: string | null;
+            color: string;
+            /** Format: int32 */
+            position: number;
+            /** @description The type a task gets when none is named; exactly one per workspace */
+            isDefault: boolean;
+            /** @description A work item of this type must sit under one of an allowed type */
+            parentRequired: boolean;
+            /** @description The live types it may sit under, in display order; empty for a top-level type */
+            allowedParentTypeIds: string[];
+            /**
+             * Format: int64
+             * @description Live work items of this type; a type in use cannot be deleted
+             */
+            workItemCount: number;
+            /** Format: int64 */
+            version: number;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
         };
         WorkItemView: {
             id: string;
@@ -2830,6 +2960,30 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["ProjectChange"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    orderWorkItemTypes: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OrderWorkItemTypes"];
             };
         };
         responses: {
@@ -3462,6 +3616,52 @@ export interface operations {
             };
         };
     };
+    listWorkItemTypes: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkItemType"][];
+                };
+            };
+        };
+    };
+    createWorkItemType: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateWorkItemType"];
+            };
+        };
+        responses: {
+            /** @description 업무 유형 생성 */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     list: {
         parameters: {
             query?: never;
@@ -3621,6 +3821,8 @@ export interface operations {
                 kind?: string[];
                 /** @description Any of these labels (repeatable). Deleted labels match nothing */
                 labelId?: string[];
+                /** @description Any of these work item types (repeatable). Events have no type, so they drop out */
+                typeId?: string[];
                 /** @description Any of todo, doing, done, or none for items without a status (repeatable) */
                 category?: string[];
                 /** @description true: has a start or due date. false: has neither */
@@ -4854,6 +5056,77 @@ export interface operations {
             };
         };
     };
+    getWorkItemType: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+                typeId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkItemType"];
+                };
+            };
+        };
+    };
+    deleteWorkItemType: {
+        parameters: {
+            query: {
+                expectedVersion: number;
+            };
+            header?: never;
+            path: {
+                workspaceId: string;
+                typeId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    reviseWorkItemType: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+                typeId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateWorkItemType"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     get_2: {
         parameters: {
             query?: never;
@@ -5576,6 +5849,8 @@ export interface operations {
                 kind?: string[];
                 /** @description Any of these labels (repeatable). Deleted labels match nothing */
                 labelId?: string[];
+                /** @description Any of these work item types (repeatable). Events have no type, so they drop out */
+                typeId?: string[];
                 /** @description Any of todo, doing, done, or none for items without a status (repeatable) */
                 category?: string[];
                 /** @description true: has a start or due date. false: has neither */
@@ -5768,6 +6043,8 @@ export interface operations {
                 kind?: string[];
                 /** @description Any of these labels (repeatable). Deleted labels match nothing */
                 labelId?: string[];
+                /** @description Any of these work item types (repeatable). Events have no type, so they drop out */
+                typeId?: string[];
                 /** @description Any of todo, doing, done, or none for items without a status (repeatable) */
                 category?: string[];
                 /** @description true: has a start or due date. false: has neither */
@@ -5911,6 +6188,8 @@ export interface operations {
                 kind?: string[];
                 /** @description Any of these labels (repeatable). Deleted labels match nothing */
                 labelId?: string[];
+                /** @description Any of these work item types (repeatable). Events have no type, so they drop out */
+                typeId?: string[];
                 /** @description Any of todo, doing, done, or none for items without a status (repeatable) */
                 category?: string[];
                 /** @description true: has a start or due date. false: has neither */

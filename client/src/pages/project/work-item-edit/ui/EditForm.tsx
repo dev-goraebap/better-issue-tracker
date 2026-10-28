@@ -11,6 +11,7 @@ import { useBodyFiles, fileHref } from '@/features/detail-engagement';
 import { labelsQuery } from '@/entities/label';
 import { columnsQuery } from '@/entities/project';
 import { useMembers } from '@/entities/workspace';
+import { typeOptions, workItemTypesQuery } from '@/entities/work-item-type';
 import {
   eventFields, eventTimeOf, itemQuery, labelOptions, moveItem, NO_REMINDER, NO_STATUS, reminderOptions, peopleOptions, priorityOptions, refreshItems, repeatBody, repeatItem, repeatOf,
   statusOptions, stopRepeating, updateItem, type WorkItem, type Priority,
@@ -19,7 +20,7 @@ import styles from './edit-form.module.css';
 
 type Draft = {
   title: string; body: string; kind: Kind; status: string; priority?: Priority; people: string[]; startDate?: string; dueDate?: string; labelIds: string[];
-  time: EventTime; repeat?: Repeat; reminder?: number;
+  time: EventTime; repeat?: Repeat; reminder?: number; typeId?: string;
 };
 type Kind = WorkItem['kind'];
 type Scope = 'single' | 'following';
@@ -36,7 +37,8 @@ const sameRepeat = (a?: Repeat, b?: Repeat) => a === b || (!!a && !!b && a.frequ
 
 /**
  * The edit page's form, drawn as 새 업무's page (NewWorkItem): a borderless title and description, then the properties as a
- * row of pills under a hairline (상태, 우선순위, 담당자, 시작일, 기한, 라벨). The work item's detail only reads (BIT-22), so
+ * row of pills under a hairline (유형, 상태, 우선순위, 담당자, 시작일, 기한, 라벨; a task's type is D-104's, which the
+ * server refuses when the work item's parent or subtasks rule it out). The work item's detail only reads (BIT-22), so
  * this is where all of it changes. The draft is the member's until saved, whatever is read again meanwhile; 저장 (or
  * Ctrl + Enter) sends only what changed, over the version it opened with, so a save someone made since is a conflict
  * (409) said under the form, never overwritten. A new status is a move (its own request), made after the rest.
@@ -50,12 +52,13 @@ export function EditForm({ item, back }: { item: WorkItem; back: ReactNode }) {
   const { workspaceId, id } = item; const projectId = item.projectId ?? '';
   const columns = useQuery({ ...columnsQuery(workspaceId, projectId), enabled: !!projectId }).data ?? [];
   const labels = useQuery(labelsQuery(workspaceId)).data ?? [];
+  const types = useQuery(workItemTypesQuery(workspaceId)).data ?? [];
   const members = useMembers(workspaceId).items;
   const [opened] = useState<Draft>(() => ({
     title: item.title, body: item.description ?? '', kind: item.kind, status: item.columnId ?? NO_STATUS, priority: item.priority ?? undefined,
     people: item.people.map(person => person.id), startDate: item.startDate ?? undefined, dueDate: item.dueDate ?? undefined,
     labelIds: item.labels.map(label => label.id), time: eventTimeOf(item), repeat: repeatOf(item),
-    reminder: item.reminderMinutes ?? undefined,
+    reminder: item.reminderMinutes ?? undefined, typeId: item.type?.id,
   }));
   const [draft, setDraft] = useState(opened);
   const files = useBodyFiles(draft.body);
@@ -76,6 +79,8 @@ export function EditForm({ item, back }: { item: WorkItem; back: ReactNode }) {
       ...(draft.body !== opened.body ? { description: draft.body.trim() || null } : {}),
       ...(draft.priority !== opened.priority ? { priority: draft.priority ?? null } : {}),
       ...(draft.kind !== opened.kind ? { kind: draft.kind } : {}),
+      // An event has no type; a task sends a type it changed to.
+      ...(!isEvent && draft.typeId && draft.typeId !== opened.typeId ? { typeId: draft.typeId } : {}),
       ...(!sameSet(draft.people, opened.people) ? { peopleIds: draft.people } : {}),
       // An event sends its time whole, as the kind takes it (D-092); a task its days.
       ...(isEvent && (draft.kind !== opened.kind || !sameTime(draft.time, opened.time)) ? eventFields(draft.time) : {}),
@@ -120,6 +125,8 @@ export function EditForm({ item, back }: { item: WorkItem; back: ReactNode }) {
         placeholder="설명을 덧붙이세요… ( / 로 블록)" />
       <div className={styles.pills} role="group" aria-label="속성">
         <PropertyPicker label="종류" icon="board" options={KIND_OPTIONS} value={draft.kind} onChange={value => set({ kind: (value as Kind | undefined) ?? draft.kind })} />
+        {!isEvent && <PropertyPicker label="유형" icon="tasks" options={typeOptions(types)} value={draft.typeId ?? types.find(type => type.isDefault)?.id}
+          onChange={value => { if (value) set({ typeId: value as string }); }} />}
         {!isEvent && projectId && <PropertyPicker label="상태" icon="status" options={statusOptions(columns)} value={draft.status} onChange={value => set({ status: (value as string | undefined) ?? NO_STATUS })} />}
         {!isEvent && <PropertyPicker label="우선순위" icon="priority" options={priorityOptions} value={draft.priority} onChange={value => set({ priority: value as Priority | undefined })} />}
         <PropertyPicker label={isEvent ? '참석자' : '담당자'} icon="person" options={peopleOptions(members)} value={draft.people} isMultiple

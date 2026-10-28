@@ -76,7 +76,7 @@ export function WorkItemDetail({ workspaceId, projectId, id, search }: { workspa
           <AttachmentBody target={{ workspaceId, type: 'work_item', id }} value={item.description ?? ''} empty="설명이 없습니다." />
         </section>
         <DetailEngagement target={{ workspaceId, type: 'work_item', id }} canWrite={canWrite} />
-        <TargetRelations workspaceId={workspaceId} projectId={projectId || undefined} type="work_item" id={id} title={item.title} canWrite={canWrite} />
+        <TargetRelations workspaceId={workspaceId} projectId={projectId || undefined} type="work_item" id={id} title={item.title} canWrite={canWrite} typeId={item.type?.id} />
         {(hasRepository || links.length > 0) && <section aria-labelledby="detail-code">
           <SectionHeader id="detail-code" title="연결된 코드" actions={<SettingsAction label="브랜치 이름 복사" tooltip="브랜치 이름 복사" icon="branch" onClick={copyBranch} />} />
           {links.length > 0 ? <CodeLinkList links={links} />

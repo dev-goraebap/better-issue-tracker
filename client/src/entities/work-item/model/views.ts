@@ -113,8 +113,11 @@ export async function setViewOrder(client: QueryClient, workspaceId: string, sco
   finally { await client.invalidateQueries({ queryKey: key }); }
 }
 
-/** The address's conditions over a view: a filter the address names (or '-' for none) stands over the view's own. */
-export type ViewSearch = { q?: string; status?: string; priority?: string; assignee?: string; label?: string };
+/**
+ * The address's conditions over a view: a filter the address names (or '-' for none) stands over the view's own. The
+ * work item types (type, D-104) are the address's alone: a view's stored filters have no type, so it is never saved.
+ */
+export type ViewSearch = { q?: string; status?: string; priority?: string; assignee?: string; label?: string; type?: string };
 export const FILTER_KEYS = ['status', 'priority', 'assignee', 'label'] as const;
 export const NO_FILTER = '-';
 
@@ -127,23 +130,25 @@ export function effectiveView(view: WorkItemView, tweak: ViewTweak | undefined, 
     if (value) filters[key] = value;
   }
   const isFiltered = FILTER_KEYS.some(key => (filters[key] ?? '') !== (view.filters[key] ?? ''));
-  return { filters, isFiltered, layout: tweak?.layout ?? view.layout, sort: tweak?.sort ?? view.sort, columns: tweak?.columns ?? view.columns, isTweaked: !!tweak };
+  return { filters, isFiltered, types: search.type, layout: tweak?.layout ?? view.layout, sort: tweak?.sort ?? view.sort, columns: tweak?.columns ?? view.columns, isTweaked: !!tweak };
 }
 
 const valuesOf = (value?: string) => (value ? value.split(',').filter(Boolean) : []);
 
-/** The work items a view's filters and the search words keep, in its order. */
-export function filterWorkItems(workItems: readonly WorkItem[], filters: ViewFilters, sort: ViewSort, words?: string): WorkItem[] {
+/** The work items a view's filters, the address's types (a comma list of ids; events have none) and the search words keep, in its order. */
+export function filterWorkItems(workItems: readonly WorkItem[], filters: ViewFilters, sort: ViewSort, words?: string, types?: string): WorkItem[] {
   const text = words?.toLowerCase();
   const statuses = valuesOf(filters.status);
   const assignees = valuesOf(filters.assignee);
   const labels = valuesOf(filters.label);
+  const typeIds = valuesOf(types);
   const sign = sort.direction === 'asc' ? 1 : -1;
   return workItems
     .filter(workItem => !text || workItem.title.toLowerCase().includes(text) || workItem.key.toLowerCase().includes(text))
     .filter(workItem => statuses.length === 0 || statuses.includes(categoryOf(workItem)))
     .filter(workItem => !filters.priority || workItem.priority === filters.priority)
     .filter(workItem => assignees.length === 0 || workItem.people.some(person => assignees.includes(person.id)))
+    .filter(workItem => typeIds.length === 0 || (!!workItem.type && typeIds.includes(workItem.type.id)))
     .filter(workItem => labels.length === 0 || workItem.labels.some(label => labels.includes(label.id) || (label.system && labels.includes(SYSTEM_LABEL))))
     .sort((a, b) => {
       if (sort.key === 'title') return sign * a.title.localeCompare(b.title, 'ko');

@@ -76,3 +76,5 @@
 .childTitle input { flex: 1; min-inline-size: 0; border: 0; background: transparent; color: var(--color-text-primary); font: inherit; font-size: 14px; outline-offset: 4px; }
 .childFoot { display: flex; align-items: center; gap: 6px; }
 .childFoot > span { margin-inline-end: auto; color: var(--color-text-secondary); font-size: 12px; }
+/* The subtask's type pill (D-104) before what it starts as. */
+.childMeta { display: inline-flex; align-items: center; gap: 8px; }

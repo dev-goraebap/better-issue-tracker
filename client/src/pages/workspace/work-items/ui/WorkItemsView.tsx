@@ -11,6 +11,7 @@ import type { Label } from '@/entities/label';
 import { columnsQuery } from '@/entities/project';
 import type { Member } from '@/entities/workspace';
 import { PullBadge, pullBadgesQuery } from '@/entities/repository';
+import { TypeMark, workItemTypesQuery } from '@/entities/work-item-type';
 import {
   CATEGORY_LABELS, FILTER_KEYS, filterWorkItems, WorkItemRows, WorkItemTable, NO_FILTER, PRIORITIES, refreshItems, setViewTweak, SYSTEM_LABEL, updateItem,
   updateView, VIEW_COLUMNS, VIEW_LAYOUTS, VIEW_SORT_KEYS, type effectiveView, type WorkItemSearch, type WorkItemView, type ViewColumn, type ViewLayout, type ViewSort, type ViewTweak,
@@ -33,8 +34,9 @@ const same = <T,>(a: T, b: T) => JSON.stringify(a) === JSON.stringify(b);
  * PATTERN · 뷰 (D-066, D-068). The work items of the scope (전체 or a project) as the view in sight shows them: its filters
  * (and those the address changed over them), in its layout, order and columns, or the member's own adjustments to them.
  *
- * - The toolbar's 필터 narrows by status (its category, or 상태 없음), priority, assignee and label; a filter changed
- *   from the view's own puts 되돌리기 and 저장 at the filters row's end. 저장 writes the filters into the view when the
+ * - The toolbar's 필터 narrows by status (its category, or 상태 없음), priority, assignee, label and type (D-104); a filter
+ *   changed from the view's own puts 되돌리기 and 저장 at the filters row's end. A view stores no type, so the type
+ *   filter stays the address's: 저장 keeps it there and 되돌리기 takes it off. 저장 writes the filters into the view when the
  *   member may change it, and otherwise (전체 업무, a view of someone else's) makes a new view from them (onSaveAsView).
  * - 표시 picks the layout, the order and the columns shown; they stay the member's own (setViewTweak) until 초기화 drops
  *   them or '모두의 기본값으로 저장' writes them into the view for everyone.
@@ -44,7 +46,7 @@ const same = <T,>(a: T, b: T) => JSON.stringify(a) === JSON.stringify(b);
 export function WorkItemsView({ scope, view, tweak, effective, workItems, labels, members, search, go, onCreate, onSaveAsView }: {
   scope: Scope; view: WorkItemView; tweak?: ViewTweak; effective: ReturnType<typeof effectiveView>; workItems: readonly WorkItem[];
   labels: readonly Label[]; members: readonly Member[]; search: WorkItemSearch; go: (patch: Partial<WorkItemSearch>, replace?: boolean) => void;
-  onCreate?: (status?: string, kind?: 'event') => void; onSaveAsView: () => void;
+  onCreate?: (status?: string, kind?: 'event', typeId?: string) => void; onSaveAsView: () => void;
 }) {
   const isMobile = useMediaQuery(MOBILE_QUERY);
   const client = useQueryClient();
@@ -56,7 +58,7 @@ export function WorkItemsView({ scope, view, tweak, effective, workItems, labels
   const calendarRoom = useFillRoom<HTMLDivElement>(effective.layout === 'calendar');
   const { workspaceId } = scope;
   const canEdit = view.canEdit;
-  const rows = useMemo(() => filterWorkItems(workItems, effective.filters, effective.sort, search.q), [workItems, effective.filters, effective.sort, search.q]);
+  const rows = useMemo(() => filterWorkItems(workItems, effective.filters, effective.sort, search.q, effective.types), [workItems, effective.filters, effective.sort, search.q, effective.types]);
   // The pull requests of the work items on screen, for their badges, when the server keeps repository integrations (D-087).
   const hasRepositories = useQuery(capabilitiesQueryOptions).data?.gitIntegration ?? false;
   const badgeIds = rows.slice(0, 500).map(row => row.id);
@@ -72,6 +74,8 @@ export function WorkItemsView({ scope, view, tweak, effective, workItems, labels
   // Kept as one string so the map changes only when a column does (the query results are new arrays each render).
   const columnList = JSON.stringify([...scope.columns, ...allColumns.flatMap(result => result.data ?? [])].map(column => [column.id, column.name]));
   const columnNames = useMemo(() => new Map(JSON.parse(columnList) as [string, string][]), [columnList]);
+  // The workspace's types, for the 유형 filter and 만들기 ▾ (D-104).
+  const types = useQuery(workItemTypesQuery(workspaceId)).data ?? [];
   // A member's adjustment that comes back to the view's own is no adjustment.
   const adjust = (patch: ViewTweak) => {
     const next = { ...tweak, ...patch };
@@ -88,6 +92,7 @@ export function WorkItemsView({ scope, view, tweak, effective, workItems, labels
       options: members.map(member => ({ value: member.userId, label: member.name, icon: <DefaultAvatar seed={member.userId} name={member.name} size={20} /> })) },
     { key: 'label', label: '라벨', icon: 'label', value: effective.filters.label, isMultiple: true, isSearchable: true,
       options: labels.map(label => ({ value: label.system ? SYSTEM_LABEL : label.id, label: label.name, icon: <span className={styles.labelDot} style={{ background: label.color }} /> })) },
+    { key: 'type', label: '유형', icon: 'tasks', value: effective.types, isMultiple: true, options: types.map(type => ({ value: type.id, label: type.name, icon: <TypeMark type={type} /> })) },
   ];
   // The address keeps only a filter that differs from the view's own ('-' for one taken off).
   const changeFilters = (values: Record<string, string | undefined>) => {
@@ -98,13 +103,15 @@ export function WorkItemsView({ scope, view, tweak, effective, workItems, labels
       const value = values[key];
       patch[key] = ((value ?? '') === (view.filters[key] ?? '') ? undefined : value ?? NO_FILTER) as never;
     }
+    if ('type' in values) patch.type = values.type || undefined;
     go(patch);
   };
-  const revert = () => go(Object.fromEntries(FILTER_KEYS.map(key => [key, undefined])));
+  const viewOwn = Object.fromEntries(FILTER_KEYS.map(key => [key, undefined]));
+  const revert = () => go({ ...viewOwn, type: undefined });
   const saveFilters = () => {
     if (!canEdit) { onSaveAsView(); return; }
     void updateView(client, view, { filters: effective.filters }).catch(failure => toast({ body: authError(failure) }));
-    revert();
+    go(viewOwn);
   };
   const views: ListViews = { label: '보기 방식', value: effective.layout, options: [...VIEW_LAYOUTS], onChange: layout => adjust({ layout: layout as ViewLayout }) };
   const order: ListSort = { keys: VIEW_SORT_KEYS, key: effective.sort.key, direction: effective.sort.direction, usual: view.sort,
@@ -120,9 +127,9 @@ export function WorkItemsView({ scope, view, tweak, effective, workItems, labels
           .then(() => setViewTweak(client, workspaceId, view.id, undefined)).catch(failure => toast({ body: authError(failure) })); }} />}
     </> : undefined,
   };
-  const applied = effective.isFiltered ? <>
+  const applied = effective.isFiltered || effective.types ? <>
     <Button label="되돌리기" variant="ghost" size="sm" onClick={revert} />
-    <Button label={canEdit ? '저장' : '뷰로 저장'} variant="secondary" size="sm" onClick={saveFilters} />
+    {effective.isFiltered && <Button label={canEdit ? '저장' : '뷰로 저장'} variant="secondary" size="sm" onClick={saveFilters} />}
   </> : undefined;
   const create = onCreate && (() => onCreate());
   // A bar carried across the calendar moves the work item's start and due day together; a timed event its times.
@@ -135,18 +142,19 @@ export function WorkItemsView({ scope, view, tweak, effective, workItems, labels
     } catch (failure) { toast({ body: authError(failure) }); }
     await refreshItems(client, workspaceId, item.projectId ?? '');
   };
-  const isNarrowed = !!search.q || effective.isFiltered || Object.values(view.filters).some(Boolean);
+  const isNarrowed = !!search.q || effective.isFiltered || !!effective.types || Object.values(view.filters).some(Boolean);
   const visible = rows.slice(0, shown);
   const summary = <ListSummary shown={visible.length} total={rows.length} step={SLICE} hasMore={shown < rows.length} onMore={() => setShown(shown + SLICE)} />;
   const empty = (what: string, hint: string) => <PageState kind={isNarrowed ? 'search' : 'empty'} title={isNarrowed ? `조건에 맞는 ${subject(what)} 없습니다` : `아직 ${subject(what)} 없습니다`}
     description={isNarrowed ? '검색어나 필터를 바꿔 보세요.' : hint}
-    actions={isNarrowed && (search.q || effective.isFiltered) ? <Button label="조건 지우기" variant="secondary" onClick={() => go({ q: undefined, ...Object.fromEntries(FILTER_KEYS.map(key => [key, undefined])) })} /> : undefined} />;
+    actions={isNarrowed && (search.q || effective.isFiltered || effective.types) ? <Button label="조건 지우기" variant="secondary" onClick={() => go({ q: undefined, ...viewOwn, type: undefined })} /> : undefined} />;
   const withStatus = rows.filter(row => row.columnCategory);
   return <>
     <ListToolbar search={{ label: '업무 검색', placeholder: '제목이나 키로 찾기', value: search.q, onChange: q => { setShown(SLICE); go({ q }, true); } }}
       filters={filters} onFiltersChange={changeFilters} order={order} views={views} display={display} applied={applied}
       action={create && { label: '만들기', icon: 'plus', onClick: create, isCreate: true, choices: onCreate && [
-        { label: '작업', icon: 'board', onClick: () => onCreate() },
+        ...(types.length ? types.map(type => ({ label: type.name, mark: <TypeMark type={type} />, onClick: () => onCreate(undefined, undefined, type.id) }))
+          : [{ label: '작업', icon: 'board', onClick: () => onCreate() }]),
         { label: '일정', icon: 'calendar', onClick: () => onCreate(undefined, 'event') },
       ] }} />
     {effective.layout === 'list' && (rows.length === 0 ? empty('업무', '첫 업무를 만들면 여기에 보입니다.') : isMobile

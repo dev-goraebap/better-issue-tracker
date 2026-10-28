@@ -15,6 +15,8 @@
 .more { color: var(--color-text-disabled); }
 .title { margin: 0; font-size: 0.8125rem; font-weight: 600; line-height: 1.45; color: var(--color-text-primary); word-break: keep-all; overflow-wrap: anywhere; }
 .key { margin-inline-end: var(--spacing-1-5, 0.375rem); font-weight: 450; font-variant-numeric: tabular-nums; color: var(--color-text-secondary); }
+/* A task's type mark between the key and the title. */
+.type { margin-inline-end: var(--spacing-1-5, 0.375rem); }
 .summary { margin: 0; font-size: 0.8125rem; line-height: 1.6; color: var(--color-text-secondary); display: -webkit-box; -webkit-line-clamp: 8; -webkit-box-orient: vertical; overflow: hidden; }
 .foot { display: flex; align-items: center; gap: var(--spacing-3); margin-block-start: var(--spacing-1); font-size: 0.75rem; color: var(--color-text-secondary); }
 .date { margin-inline-start: auto; font-variant-numeric: tabular-nums; }

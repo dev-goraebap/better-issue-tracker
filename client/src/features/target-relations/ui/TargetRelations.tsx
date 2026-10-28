@@ -9,8 +9,10 @@ import { RelationPicker } from './RelationPicker';
 import { ChildComposer } from './ChildComposer';
 import styles from './relations.module.css';
 
-export function TargetRelations({ workspaceId, projectId, type, id, title, canWrite }: {
+export function TargetRelations({ workspaceId, projectId, type, id, title, canWrite, typeId }: {
   workspaceId: string; projectId?: string | null; type: RelationType; id: string; title: string; canWrite: boolean;
+  /** A work item's own type (D-104), which decides the types its subtasks may be. */
+  typeId?: string | null;
 }) {
   const client = useQueryClient();
   const result = useQuery(relationsQuery(workspaceId, type, id));
@@ -57,7 +59,7 @@ export function TargetRelations({ workspaceId, projectId, type, id, title, canWr
     {type === 'work_item' && children.length > 0 && <RelationSection workspaceId={workspaceId} title="하위 작업" items={children} hint=""
       progress={{ done: children.filter(item => item.category === 'done').length, total: children.length }} busy={busy} onRemove={canWrite ? setRemoving : undefined}
       actions={canWrite && projectId ? action('하위 작업 추가', () => setCreating(true)) : undefined} />}
-    {creating && projectId && <ChildComposer workspaceId={workspaceId} projectId={projectId} parentId={id} onSaved={refresh} onClose={() => setCreating(false)} />}
+    {creating && projectId && <ChildComposer workspaceId={workspaceId} projectId={projectId} parentId={id} parentTypeId={typeId ?? null} onSaved={refresh} onClose={() => setCreating(false)} />}
     {(type === 'document' ? workLinks.length > 0 : outwardDocs.length > 0) && <RelationSection workspaceId={workspaceId} title={type === 'document' ? '연결된 업무' : '연결 자료'}
       items={type === 'document' ? workLinks : outwardDocs} hint="" onRemove={canWrite ? setRemoving : undefined} busy={busy}
       actions={canWrite ? action(type === 'document' ? '업무 연결' : '문서 연결', () => setPicker(type === 'document' ? 'work_item' : 'document')) : undefined} />}

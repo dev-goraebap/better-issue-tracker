@@ -106,6 +106,15 @@ export function authError(error: unknown): string {
     WORK_ITEM_ASSIGNEE_NOT_MEMBER: '현재 워크스페이스 멤버만 새 담당자로 지정할 수 있습니다.',
     WORK_ITEM_DATE_RANGE_INVALID: '시작일은 마감일보다 늦을 수 없습니다.',
     WORK_ITEM_MOVE_INVALID: '이동할 위치가 달라졌습니다. 목록을 새로 읽고 다시 이동해 주세요.',
+    WORK_ITEM_PARENT_REQUIRED: '이 유형의 업무는 상위 업무 아래에 있어야 합니다. 상위 업무를 함께 골라 주세요.',
+    WORK_ITEM_PARENT_NOT_ALLOWED: '이 유형의 업무는 그 업무 아래에 둘 수 없습니다. 유형이나 상위 업무를 바꿔 주세요.',
+    WORK_ITEM_TYPE_NOT_FOUND: '업무 유형을 찾을 수 없습니다. 목록을 새로 읽어 주세요.',
+    WORK_ITEM_TYPE_NAME_CONFLICT: '같은 이름의 업무 유형이 있습니다. 다른 이름을 입력해 주세요.',
+    WORK_ITEM_TYPE_VERSION_CONFLICT: '다른 변경이 있습니다. 업무 유형을 새로 읽은 뒤 다시 시도해 주세요.',
+    WORK_ITEM_TYPE_INVALID: '이 워크스페이스의 업무 유형만 쓸 수 있습니다.',
+    WORK_ITEM_TYPE_RULE_INVALID: '상위가 필요한 유형은 상위가 될 수 있는 유형을 하나 이상 골라야 합니다.',
+    WORK_ITEM_TYPE_IN_USE: '업무가 쓰고 있거나 기본인 유형은 지울 수 없습니다.',
+    WORK_ITEM_TYPE_RULE_CONFLICT: '지금 있는 업무가 바뀐 규칙에 맞지 않습니다. 그 업무들의 상위나 유형을 먼저 바꿔 주세요.',
     COMMON_CONFLICT: '이미 사용 중인 값이거나 현재 상태에서는 처리할 수 없습니다.',
     WORKSPACE_SLUG_CONFLICT: '이미 사용한 고정 주소입니다. 다른 slug를 입력하세요.',
     WORKSPACE_MEMBER_EXISTS: '이미 참여 중인 멤버입니다.',
@@ -120,7 +129,9 @@ export function authError(error: unknown): string {
   };
   // A repository host's refusal (D-087) and a file's (D-090) are written for people: the reason, such as a token without
   // access or a photo that does not decode, is shown.
-  if ((error.code.startsWith('INTEGRATION_') || error.code.startsWith('FILE_')) && error.detail) return error.detail;
+  // A work item type rule's refusal (D-104) names the types, items and counts involved and how to fix it.
+  if ((error.code.startsWith('INTEGRATION_') || error.code.startsWith('FILE_')
+    || error.code.startsWith('WORK_ITEM_PARENT_') || error.code.startsWith('WORK_ITEM_TYPE_')) && error.detail) return error.detail;
   return messages[error.code] ?? error.message;
 }
 

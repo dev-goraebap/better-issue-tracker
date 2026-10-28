@@ -2,9 +2,11 @@ import { beforeText, dateText } from '@/shared/lib/date-text';
 import { object, toward } from '@/shared/lib/korean-particle';
 import type { TimelineEntry } from '../api/timeline';
 
-/** The names an activity's values are read with: people, the project's columns, the workspace's labels, the priorities. */
+/** The names an activity's values are read with: people, the project's columns, the workspace's labels and work item types, the priorities. */
 export type ActivityNames = {
   people: ReadonlyMap<string, string>; columns: ReadonlyMap<string, string>; labels: ReadonlyMap<string, string>; priorities: Readonly<Record<string, string>>;
+  /** The workspace's work item types (D-104), by id. */
+  types?: ReadonlyMap<string, string>;
   /** What the timeline is of: 업무 (the default) or 문서 (D-093). */
   noun?: '업무' | '문서';
 };
@@ -51,6 +53,7 @@ export function activityIcon({ action, field }: TimelineEntry): string {
     case 'reminder': return 'bell';
     case 'column': return 'status';
     case 'labels': return 'label';
+    case 'type': return 'tasks';
     case 'project': return 'board';
     case 'attachments': return 'attach';
     case 'relations': return 'link';
@@ -108,6 +111,10 @@ export function activityText(entry: TimelineEntry, names: ActivityNames): string
       const named = (labels: string[]) => object(labels.at(-1) ?? '', listOf(labels));
       if (added.length && removed.length) return `라벨 ${named(added)} 달고 ${named(removed)} 뗐습니다`;
       return added.length ? `라벨 ${named(added)} 달았습니다` : `라벨 ${named(removed)} 뗐습니다`;
+    }
+    case 'type': {
+      const name = (id: string | null) => (id ? names.types?.get(id) ?? '지워진 유형' : '유형 없음');
+      return `유형을 '${name(before)}'에서 ${toward(name(after), `'${name(after)}'`)} 바꿨습니다`;
     }
     case 'project': return after ? '프로젝트를 변경했습니다' : '프로젝트 연결을 해제했습니다';
     case 'attachments': return after === 'added' ? '파일을 첨부했습니다' : '첨부 파일을 삭제했습니다';
