@@ -30,8 +30,12 @@ function title(kind: string) {
   return head;
 }
 
-/** The decorations that turn one quote into an alert, or none when its first line is no alert's marker. */
-function decorate(quote: ProseNode, pos: number, editable: boolean): Decoration[] {
+/**
+ * The decorations that turn one quote into an alert, or none when its first line is no alert's marker. showsMarker is
+ * true while the caret is in this quote of an editor: only then the marker shows, so text written reads as read
+ * (BIT-99) and still lets the marker be changed.
+ */
+function decorate(quote: ProseNode, pos: number, showsMarker: boolean): Decoration[] {
   const line = quote.firstChild;
   const first = line?.firstChild;
   if (!line?.isTextblock || !first?.isText) return [];
@@ -47,10 +51,10 @@ function decorate(quote: ProseNode, pos: number, editable: boolean): Decoration[
   return [
     Decoration.node(pos, pos + quote.nodeSize, { 'data-alert': kind }),
     Decoration.widget(pos + 1, () => title(kind), { side: -1, ignoreSelection: true, key: `alert-${kind}` }),
-    // Read, the marker goes; written, it stays in a quiet mono so it can still be changed.
-    markerOnly && !editable
+    // Read (or written elsewhere), the marker goes; with the caret in the quote it shows in a quiet mono to be changed.
+    markerOnly && !showsMarker
       ? Decoration.node(pos + 1, pos + 1 + line.nodeSize, { class: 'bit-alert-marker-line' })
-      : Decoration.inline(start, end, { class: editable ? 'bit-alert-marker' : 'bit-alert-marker bit-alert-marker-hidden' }),
+      : Decoration.inline(start, end, { class: showsMarker ? 'bit-alert-marker' : 'bit-alert-marker bit-alert-marker-hidden' }),
   ];
 }
 
@@ -67,8 +71,9 @@ export const Alerts = Extension.create({
       props: {
         decorations: state => {
           const found: Decoration[] = [];
+          const { from, to } = state.selection;
           state.doc.descendants((node, pos) => {
-            if (node.type.name === 'blockquote') found.push(...decorate(node, pos, editor.isEditable));
+            if (node.type.name === 'blockquote') found.push(...decorate(node, pos, editor.isEditable && from > pos && to < pos + node.nodeSize));
             return node.isBlock;
           });
           return DecorationSet.create(state.doc, found);

@@ -18,6 +18,14 @@ function colorOf(place: Element, token: string) {
 let count = 0;
 
 /**
+ * Diagrams already drawn, by their code and the look they were drawn in: the editor that opens over the text as read
+ * (BIT-99) shows the same drawing at once, so nothing below it moves while it would be drawn again.
+ */
+const drawnBefore = new Map<string, string>();
+export const drawnDiagram = (key: string) => drawnBefore.get(key);
+export const keepDiagram = (key: string, svg: string) => { drawnBefore.set(key, svg); if (drawnBefore.size > 50) drawnBefore.delete(drawnBefore.keys().next().value!); };
+
+/**
  * A Mermaid diagram as SVG markup in the page's own colours and type (BIT-95), read from where it will be shown so the
  * light and dark modes and the colour themes each draw it in theirs. Mermaid itself loads only the first time a
  * diagram is drawn. A diagram Mermaid cannot read rejects with its message.
