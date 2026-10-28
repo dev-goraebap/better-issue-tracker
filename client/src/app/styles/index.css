@@ -167,8 +167,10 @@ body { font-family: 'Pretendard Variable', Pretendard, system-ui, sans-serif; }
 :is(.astryx-text-input, .astryx-text-area, .astryx-typeahead, .astryx-number-input) :is(input, textarea) { --color-text-secondary: var(--color-text-disabled); }
 .astryx-field-label { --font-weight-medium: 500; --color-text-secondary: var(--bit-field-label); }
 .astryx-field:has(> .astryx-field-label) { row-gap: var(--bit-field-label-gap); }
-button.astryx-button.bit-create-action.bit-create-action { border-radius: 4px; }
-/* A page's own labelled buttons at 12px/500; desktop creation gets the small corners and glow of D-095. */
+/*
+ * A page's own labelled buttons at 12px/500; desktop creation in a page's header gets the small corners and glow of
+ * D-095. A form's or dialog's create button stays a pill like the buttons beside it (BIT-113).
+ */
 [data-page-action] button:not([aria-label]) { font-size: 0.75rem; font-weight: 500; }
 [data-page-action] button[data-variant="primary"]:not([aria-label]) { box-shadow: 0 0.5px 1px 1px light-dark(rgb(0 0 0 / 0.06), rgb(0 0 0 / 0.3)); }
 @media (min-width: 64rem) {
