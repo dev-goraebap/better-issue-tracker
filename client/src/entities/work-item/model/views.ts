@@ -6,13 +6,14 @@ import type { WorkItem } from '../api/work-item';
 import {
   createView, deleteTweak, deleteView, patchView, putTweak, putViewOrder, tweaksQuery, viewOrdersQuery, viewsQuery, type ServerTweak, type ServerView, type ServerViewOrder,
 } from '../api/view';
+import type { Grouping } from './grouping';
 import { categoryOf, PRIORITY_RANK, SYSTEM_LABEL } from './work-item';
 import { orderViews } from './view-order';
 
 /**
  * The views over a workspace's work items (D-066, D-068), as Linear's, in three layers kept on the server: a shared view
  * everyone sees, a personal view only its maker sees ('나만 보기'), and each member's own adjustments to a view (its
- * layout, order and columns), which '초기화' drops and '모두의 기본값으로 저장' writes into the view. '전체 업무' is built
+ * layout, order, columns and grouping), which '초기화' drops and '모두의 기본값으로 저장' writes into the view. '전체 업무' is built
  * in here, not stored: every work item, a list, never renamed or removed, though a member may still adjust it. Filters are
  * scope-free so one view reads the same in 전체 and in a project: status by category (todo, doing, done, none), labels
  * by id or SYSTEM_LABEL, assignees by user id. Whether the member may change a view is the server's (canEdit).
@@ -24,8 +25,8 @@ export type ViewColumn = ServerView['columns'][number];
 export type WorkItemView = Omit<ServerView, 'description' | 'version' | 'position' | 'createdAt' | 'updatedAt'> & {
   description?: string; version?: number; isBuiltIn?: boolean;
 };
-/** A member's own adjustments to a view. */
-export type ViewTweak = { layout?: ViewLayout; sort?: ViewSort; columns?: ViewColumn[] };
+/** A member's own adjustments to a view: its layout, order, columns and grouping (D-106). */
+export type ViewTweak = { layout?: ViewLayout; sort?: ViewSort; columns?: ViewColumn[]; grouping?: Grouping };
 
 export const ALL_VIEW = 'all';
 /** The home's scope in the views' orders; a project's is its id (D-088). */
@@ -50,7 +51,7 @@ export const VIEW_ICONS = MARK_ICONS;
 /** 전체 업무, the one view every workspace has and nobody stores. */
 const allView = (workspaceId: string): WorkItemView => ({
   id: ALL_VIEW, workspaceId, name: '전체 업무', icon: 'list', color: '#95959f', layout: 'list', filters: {}, sort: { key: 'updated', direction: 'desc' },
-  columns: ['status', 'priority', 'assignee', 'labels', 'updated'], ownerId: '', isPersonal: false, canEdit: false, isBuiltIn: true,
+  columns: ['status', 'priority', 'assignee', 'labels', 'updated'], grouping: 'none', ownerId: '', isPersonal: false, canEdit: false, isBuiltIn: true,
 });
 const fromServer = ({ description, position: _position, createdAt: _createdAt, updatedAt: _updatedAt, ...view }: ServerView): WorkItemView =>
   ({ ...view, description: description ?? undefined });
@@ -65,10 +66,11 @@ export function useViews(workspaceId: string, scope: string): WorkItemView[] {
 /** The member's adjustments to a view, if any. */
 export function useViewTweak(workspaceId: string, viewId: string): ViewTweak | undefined {
   const tweak = useQuery(tweaksQuery(workspaceId)).data?.find(each => each.viewKey === viewId);
-  return useMemo(() => (tweak && (tweak.layout || tweak.sort || tweak.columns) ? { layout: tweak.layout, sort: tweak.sort, columns: tweak.columns } : undefined), [tweak]);
+  return useMemo(() => (tweak && (tweak.layout || tweak.sort || tweak.columns || tweak.grouping)
+    ? { layout: tweak.layout, sort: tweak.sort, columns: tweak.columns, grouping: tweak.grouping ?? undefined } : undefined), [tweak]);
 }
 
-type ViewDraft = Pick<WorkItemView, 'name' | 'icon' | 'color' | 'isPersonal' | 'layout' | 'filters' | 'sort' | 'columns'> & { description?: string };
+type ViewDraft = Pick<WorkItemView, 'name' | 'icon' | 'color' | 'isPersonal' | 'layout' | 'filters' | 'sort' | 'columns'> & { description?: string; grouping?: Grouping };
 const refreshViews = (client: QueryClient, w: string) => client.invalidateQueries({ queryKey: ['workspace', w, 'views'] });
 
 /** Makes a view and answers its id. */
@@ -98,7 +100,7 @@ export async function setViewTweak(client: QueryClient, workspaceId: string, vie
   client.setQueryData<ServerTweak[]>(key, previous => [...(previous ?? []).filter(each => each.viewKey !== viewKey), ...(isEmpty ? [] : [{ viewKey, ...tweak }])]);
   try {
     if (isEmpty) await deleteTweak(workspaceId, viewKey);
-    else await putTweak(workspaceId, viewKey, { layout: tweak.layout ?? null, sort: tweak.sort, columns: tweak.columns ?? null });
+    else await putTweak(workspaceId, viewKey, { layout: tweak.layout ?? null, sort: tweak.sort, columns: tweak.columns ?? null, grouping: tweak.grouping ?? null });
   } finally { await client.invalidateQueries({ queryKey: key }); }
 }
 
@@ -121,7 +123,7 @@ export type ViewSearch = { q?: string; status?: string; priority?: string; assig
 export const FILTER_KEYS = ['status', 'priority', 'assignee', 'label'] as const;
 export const NO_FILTER = '-';
 
-/** What a view shows for this member and this address: its filters, layout, order and columns, and what was changed. */
+/** What a view shows for this member and this address: its filters, layout, order, columns and grouping, and what was changed. */
 export function effectiveView(view: WorkItemView, tweak: ViewTweak | undefined, search: ViewSearch) {
   const filters: ViewFilters = {};
   for (const key of FILTER_KEYS) {
@@ -130,7 +132,8 @@ export function effectiveView(view: WorkItemView, tweak: ViewTweak | undefined, 
     if (value) filters[key] = value;
   }
   const isFiltered = FILTER_KEYS.some(key => (filters[key] ?? '') !== (view.filters[key] ?? ''));
-  return { filters, isFiltered, types: search.type, layout: tweak?.layout ?? view.layout, sort: tweak?.sort ?? view.sort, columns: tweak?.columns ?? view.columns, isTweaked: !!tweak };
+  return { filters, isFiltered, types: search.type, layout: tweak?.layout ?? view.layout, sort: tweak?.sort ?? view.sort, columns: tweak?.columns ?? view.columns,
+    grouping: tweak?.grouping ?? view.grouping ?? 'none', isTweaked: !!tweak };
 }
 
 const valuesOf = (value?: string) => (value ? value.split(',').filter(Boolean) : []);

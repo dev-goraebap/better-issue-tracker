@@ -124,6 +124,7 @@ class ViewIntegrationTest {
                 .isEqualTo(new ViewViews.Sort(WorkItemView.SortKey.priority, WorkItemView.Direction.asc));
         assertThat(backlog.ownerId()).isEqualTo(owner.userId());
         assertThat(backlog.isPersonal()).isFalse();
+        assertThat(views.stream().map(ViewViews.View::grouping)).containsOnly(WorkItemView.Grouping.none);
         var decisions = views.getLast();
         assertThat(decisions.layout()).isEqualTo(WorkItemView.Layout.history);
         assertThat(decisions.filters().label()).isEqualTo("system");
@@ -205,7 +206,8 @@ class ViewIntegrationTest {
                 WorkItemView.Layout.list,
                 Map.of(),
                 new ViewViews.Sort(WorkItemView.SortKey.title, WorkItemView.Direction.asc),
-                List.of(WorkItemView.Column.due, WorkItemView.Column.due));
+                List.of(WorkItemView.Column.due, WorkItemView.Column.due),
+                null);
         assertThat(code(() -> viewService.create(member, workspace, twice))).isEqualTo("VIEW_COLUMNS_INVALID");
         var noSort = new ViewRequests.Create(
                 "No sort",
@@ -216,7 +218,8 @@ class ViewIntegrationTest {
                 WorkItemView.Layout.list,
                 Map.of(),
                 new ViewViews.Sort(null, WorkItemView.Direction.asc),
-                USUAL);
+                USUAL,
+                null);
         assertThat(code(() -> viewService.create(member, workspace, noSort))).isEqualTo("VIEW_INVALID");
 
         var filters = new java.util.HashMap<String, String>();
@@ -371,6 +374,89 @@ class ViewIntegrationTest {
     }
 
     @Test
+    void aViewKeepsItsGroupingAndEachMemberMayGroupItTheirOwnWay() throws Exception {
+        String plain = viewService.create(member, workspace, create("Plain", false, Map.of()));
+        assertThat(viewService.get(member, workspace, plain).grouping()).isEqualTo(WorkItemView.Grouping.none);
+        var byProject = new ViewRequests.Create(
+                "By project",
+                null,
+                "list",
+                "#5e6ad2",
+                false,
+                WorkItemView.Layout.list,
+                Map.of(),
+                new ViewViews.Sort(WorkItemView.SortKey.updated, WorkItemView.Direction.desc),
+                USUAL,
+                WorkItemView.Grouping.project);
+        String grouped = viewService.create(member, workspace, byProject);
+        assertThat(viewService.get(member, workspace, grouped).grouping()).isEqualTo(WorkItemView.Grouping.project);
+
+        // A patch without grouping keeps it; one with grouping changes it; a null one is refused.
+        viewService.revise(member, workspace, grouped, rename(0, "Renamed"));
+        assertThat(viewService.get(member, workspace, grouped).grouping()).isEqualTo(WorkItemView.Grouping.project);
+        var regroup = new ViewRequests.Update();
+        regroup.setExpectedVersion(1L);
+        regroup.setGrouping(WorkItemView.Grouping.assignee);
+        viewService.revise(member, workspace, grouped, regroup);
+        var read = viewService.get(member, workspace, grouped);
+        assertThat(read.grouping()).isEqualTo(WorkItemView.Grouping.assignee);
+        assertThat(read.version()).isEqualTo(2);
+        var cleared = new ViewRequests.Update();
+        cleared.setExpectedVersion(2L);
+        cleared.setGrouping(null);
+        assertThat(code(() -> viewService.revise(member, workspace, grouped, cleared)))
+                .isEqualTo("VIEW_INVALID");
+
+        // A member's own grouping follows the view while null, and a tweak of only grouping is kept.
+        viewService.putTweak(
+                other, workspace, grouped, new ViewRequests.PutTweak(null, null, null, WorkItemView.Grouping.label));
+        assertThat(viewService.tweaks(other, workspace))
+                .containsExactly(new ViewViews.Tweak(grouped, null, null, null, WorkItemView.Grouping.label));
+        viewService.putTweak(
+                other, workspace, grouped, new ViewRequests.PutTweak(WorkItemView.Layout.board, null, null, null));
+        assertThat(viewService.tweaks(other, workspace))
+                .containsExactly(new ViewViews.Tweak(grouped, WorkItemView.Layout.board, null, null, null));
+        viewService.putTweak(other, workspace, grouped, new ViewRequests.PutTweak(null, null, null, null));
+        assertThat(viewService.tweaks(other, workspace)).isEmpty();
+
+        String base = "/api/v1/workspaces/" + workspace;
+        try (var client = login(member)) {
+            String body = "{\"name\":\"Http\",\"icon\":\"rows\",\"color\":\"#5e6ad2\",\"isPersonal\":true,"
+                    + "\"layout\":\"list\",\"sort\":{\"key\":\"title\",\"direction\":\"asc\"},"
+                    + "\"columns\":[\"status\"]";
+            var none = http(client, "POST", base + "/views", body + "}");
+            expect(none, 201);
+            String noneAt = none.headers().firstValue("location").orElseThrow();
+            assertThat(JSON.readTree(http(client, "GET", noneAt, null).body())
+                            .path("grouping")
+                            .stringValue())
+                    .isEqualTo("none");
+            var byStatus = http(client, "POST", base + "/views", body + ",\"grouping\":\"status\"}");
+            expect(byStatus, 201);
+            String statusAt = byStatus.headers().firstValue("location").orElseThrow();
+            assertThat(JSON.readTree(http(client, "GET", statusAt, null).body())
+                            .path("grouping")
+                            .stringValue())
+                    .isEqualTo("status");
+            expect(http(client, "POST", base + "/views", body + ",\"grouping\":\"owner\"}"), 400);
+            expect(http(client, "PATCH", statusAt, "{\"expectedVersion\":0,\"grouping\":\"owner\"}"), 400);
+            expect(http(client, "PATCH", statusAt, "{\"expectedVersion\":0,\"grouping\":null}"), 400);
+            expect(http(client, "PATCH", statusAt, "{\"expectedVersion\":0,\"grouping\":\"priority\"}"), 204);
+            assertThat(JSON.readTree(http(client, "GET", statusAt, null).body())
+                            .path("grouping")
+                            .stringValue())
+                    .isEqualTo("priority");
+            expect(http(client, "PUT", base + "/view-tweaks/all", "{\"grouping\":\"owner\"}"), 400);
+            expect(http(client, "PUT", base + "/view-tweaks/all", "{\"grouping\":\"type\"}"), 204);
+            assertThat(http(client, "GET", base + "/view-tweaks", null).body())
+                    .isEqualTo("[{\"viewKey\":\"all\",\"grouping\":\"type\"}]");
+        }
+        assertThat(jdbcTemplate.queryForObject(
+                        "SELECT tweak FROM work_item_view_tweak WHERE view_key='all'", String.class))
+                .isEqualTo("{\"grouping\":\"type\"}");
+    }
+
+    @Test
     void theHomeAndEachProjectKeepTheirOwnViewOrderThatOnlyAdminsChange() throws Exception {
         var ids = viewService.list(owner, workspace).stream()
                 .map(ViewViews.View::id)
@@ -434,7 +520,8 @@ class ViewIntegrationTest {
                 WorkItemView.Layout.list,
                 filters,
                 new ViewViews.Sort(WorkItemView.SortKey.updated, WorkItemView.Direction.desc),
-                USUAL);
+                USUAL,
+                null);
     }
 
     private static ViewRequests.Update rename(long version, String name) {
@@ -446,7 +533,7 @@ class ViewIntegrationTest {
 
     private static ViewRequests.PutTweak tweak(
             WorkItemView.Layout layout, ViewViews.Sort sort, List<WorkItemView.Column> columns) {
-        return new ViewRequests.PutTweak(layout, sort, columns);
+        return new ViewRequests.PutTweak(layout, sort, columns, null);
     }
 
     private static String code(ThrowingCallable call) {

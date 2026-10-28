@@ -17,7 +17,7 @@ export { DateField } from './date-field';
 export { PageBackShownContext, PageChromeContext, type PageChromeTargets } from './page-chrome';
 export { SHEET_ROW_LINK, SheetTable, type SheetColumn } from './sheet-table';
 export type { ListSort, SortDirection, SortKey } from './sort-menu';
-export { ITEM_ROW_LINK, ItemList, ItemMeta, ItemRow } from './item-list';
+export { ITEM_ROW_LINK, ItemGroup, ItemList, ItemMeta, ItemRow } from './item-list';
 export { PageFoot } from './page-foot';
 export { CompactDialog, ConfirmDialog, FrameBody, FrameFoot, FrameHead } from './frame';
 export { ListMore } from './ListMore';

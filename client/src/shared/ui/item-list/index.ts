@@ -1,3 +1,4 @@
+export { ItemGroup } from './ItemGroup';
 export { ItemList } from './ItemList';
 export { ItemRow } from './ItemRow';
 export { ItemMeta } from './ItemMeta';

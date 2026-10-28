@@ -40,6 +40,7 @@ public final class ViewViews {
                 "filters",
                 "sort",
                 "columns",
+                "grouping",
                 "ownerId",
                 "isPersonal",
                 "canEdit",
@@ -59,6 +60,10 @@ public final class ViewViews {
             Filters filters,
             Sort sort,
             List<WorkItemView.Column> columns,
+
+            @Schema(description = "How the list's rows are grouped (D-106)")
+            WorkItemView.Grouping grouping,
+
             String ownerId,
             boolean isPersonal,
 
@@ -102,7 +107,8 @@ public final class ViewViews {
 
             WorkItemView.Layout layout,
             Sort sort,
-            List<WorkItemView.Column> columns) {
+            List<WorkItemView.Column> columns,
+            WorkItemView.Grouping grouping) {
         public Tweak {
             columns = columns == null ? null : List.copyOf(columns);
         }

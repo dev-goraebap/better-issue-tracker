@@ -6001,6 +6001,10 @@
               "type" : "string",
               "enum" : [ "status", "priority", "assignee", "labels", "due", "updated", "created" ]
             }
+          },
+          "grouping" : {
+            "type" : [ "string", "null" ],
+            "enum" : [ "none", "status", "assignee", "priority", "type", "label", "project", null ]
           }
         }
       },
@@ -6378,6 +6382,11 @@
               "type" : "string",
               "enum" : [ "status", "priority", "assignee", "labels", "due", "updated", "created" ]
             }
+          },
+          "grouping" : {
+            "type" : [ "string", "null" ],
+            "description" : "How the list's rows are grouped; omitted means none (D-106)",
+            "enum" : [ "none", "status", "assignee", "priority", "type", "label", "project", null ]
           }
         },
         "required" : [ "color", "columns", "icon", "layout", "name", "sort" ]
@@ -7389,6 +7398,11 @@
               "type" : "string",
               "enum" : [ "status", "priority", "assignee", "labels", "due", "updated", "created" ]
             }
+          },
+          "grouping" : {
+            "type" : "string",
+            "description" : "How the list's rows are grouped (D-106)",
+            "enum" : [ "none", "status", "assignee", "priority", "type", "label", "project" ]
           }
         },
         "required" : [ "expectedVersion" ]
@@ -7989,6 +8003,11 @@
               "enum" : [ "status", "priority", "assignee", "labels", "due", "updated", "created" ]
             }
           },
+          "grouping" : {
+            "type" : "string",
+            "description" : "How the list's rows are grouped (D-106)",
+            "enum" : [ "none", "status", "assignee", "priority", "type", "label", "project" ]
+          },
           "ownerId" : {
             "type" : "string"
           },
@@ -8016,7 +8035,7 @@
             "format" : "date-time"
           }
         },
-        "required" : [ "canEdit", "color", "columns", "createdAt", "description", "filters", "icon", "id", "isPersonal", "layout", "name", "ownerId", "position", "sort", "updatedAt", "version", "workspaceId" ]
+        "required" : [ "canEdit", "color", "columns", "createdAt", "description", "filters", "grouping", "icon", "id", "isPersonal", "layout", "name", "ownerId", "position", "sort", "updatedAt", "version", "workspaceId" ]
       },
       "WorkItemViewTweak" : {
         "type" : "object",
@@ -8038,6 +8057,10 @@
               "type" : "string",
               "enum" : [ "status", "priority", "assignee", "labels", "due", "updated", "created" ]
             }
+          },
+          "grouping" : {
+            "type" : "string",
+            "enum" : [ "none", "status", "assignee", "priority", "type", "label", "project" ]
           }
         },
         "required" : [ "viewKey" ]

@@ -38,7 +38,10 @@ public final class ViewRequests {
             Map<String, String> filters,
 
             @NotNull ViewViews.Sort sort,
-            @NotNull List<WorkItemView.Column> columns) {
+            @NotNull List<WorkItemView.Column> columns,
+
+            @Schema(description = "How the list's rows are grouped; omitted means none (D-106)", nullable = true)
+            WorkItemView.Grouping grouping) {
         public Create {
             filters = Map.copyOf(present(filters));
             columns = columns == null ? null : Collections.unmodifiableList(new ArrayList<>(columns));
@@ -55,7 +58,10 @@ public final class ViewRequests {
         return present;
     }
 
-    /** Changes only the fields present. description and filters may be null to clear them; the others may not. */
+    /**
+     * Changes only the fields present. description and filters may be null to clear them; the others, grouping
+     * included, may not.
+     */
     @Schema(name = "UpdateWorkItemView")
     public static final class Update {
         @NotNull @Min(0) private Long expectedVersion;
@@ -73,8 +79,9 @@ public final class ViewRequests {
         private Map<String, String> filters;
         private ViewViews.Sort sort;
         private List<WorkItemView.Column> columns;
+        private WorkItemView.Grouping grouping;
         private boolean hasName, hasDescription, hasIcon, hasColor, hasIsPersonal, hasLayout;
-        private boolean hasFilters, hasSort, hasColumns;
+        private boolean hasFilters, hasSort, hasColumns, hasGrouping;
 
         public Long getExpectedVersion() {
             return expectedVersion;
@@ -168,6 +175,16 @@ public final class ViewRequests {
             hasColumns = true;
         }
 
+        @Schema(description = "How the list's rows are grouped (D-106)")
+        public WorkItemView.Grouping getGrouping() {
+            return grouping;
+        }
+
+        public void setGrouping(WorkItemView.Grouping value) {
+            grouping = value;
+            hasGrouping = true;
+        }
+
         public boolean hasName() {
             return hasName;
         }
@@ -204,6 +221,10 @@ public final class ViewRequests {
             return hasColumns;
         }
 
+        public boolean hasGrouping() {
+            return hasGrouping;
+        }
+
         @JsonAnySetter
         public void unknown(String key, Object value) {
             throw new IllegalArgumentException("Unsupported view field");
@@ -225,7 +246,8 @@ public final class ViewRequests {
     public record PutTweak(
             @Schema(nullable = true) WorkItemView.Layout layout,
             @Schema(nullable = true) ViewViews.Sort sort,
-            @Schema(nullable = true) List<WorkItemView.Column> columns) {
+            @Schema(nullable = true) List<WorkItemView.Column> columns,
+            @Schema(nullable = true) WorkItemView.Grouping grouping) {
         public PutTweak {
             columns = columns == null ? null : Collections.unmodifiableList(new ArrayList<>(columns));
         }
