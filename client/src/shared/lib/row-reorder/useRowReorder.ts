@@ -154,7 +154,8 @@ export function useRowReorder(rows: readonly Row[], noun: RowNoun, ghostClass: s
     copy.style.inlineSize = `${rect.width}px`;
     copy.style.transformOrigin = `${at.x - rect.left}px ${at.y - rect.top}px`;
     copy.style.transform = `translate(${rect.left}px, ${rect.top}px)`;
-    document.body.append(copy);
+    // Inside an open modal the copy goes in the modal: the modal is in the top layer, over anything on the body (BIT-122).
+    (row.closest<HTMLElement>('dialog[open]') ?? document.body).append(copy);
     // Lifting is a transition from where the row lay: shown at rest first, then raised and tilted.
     requestAnimationFrame(() => requestAnimationFrame(() => { if (ghost.current?.element === copy && !copy.dataset.settling) copy.dataset.lifted = ''; }));
     ghost.current = { element: copy, dx: at.x - rect.left, dy: at.y - rect.top, height: rect.height };

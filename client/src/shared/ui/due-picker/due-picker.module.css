@@ -29,3 +29,16 @@
 @media (width < 64rem) {
   .duePill { block-size: 2rem; padding-inline: var(--spacing-2) var(--spacing-3); font-size: 0.8125rem; }
 }
+/*
+ * A due day in a list (DueChip, BIT-124): 20px, its calendar and words in the tone of how near it is (late red, today
+ * orange, ahead in the primary ink with the orange calendar the pill has, done quiet throughout).
+ */
+.dueChip { display: inline-flex; align-items: center; gap: 0.25rem; block-size: 1.25rem; padding: 0 0.4375rem 0 0.3125rem; border-radius: var(--radius-full);
+  background: var(--color-background-muted); box-shadow: inset 0 0 0 1px var(--bit-chip-ring); font-size: 0.75rem; font-weight: 500; line-height: 1;
+  color: var(--color-text-primary); white-space: nowrap; }
+.dueChip svg { inline-size: 0.8125rem; block-size: 0.8125rem; color: #f2994a; }
+.dueChip[data-tone="late"] { color: #eb5757; background: color-mix(in srgb, #eb5757 12%, var(--color-background-muted)); box-shadow: inset 0 0 0 1px color-mix(in srgb, #eb5757 35%, transparent); }
+.dueChip[data-tone="late"] svg { color: #eb5757; }
+.dueChip[data-tone="today"] { color: #f2994a; background: color-mix(in srgb, #f2994a 12%, var(--color-background-muted)); box-shadow: inset 0 0 0 1px color-mix(in srgb, #f2994a 35%, transparent); }
+.dueChip[data-tone="done"] { color: var(--color-text-secondary); }
+.dueChip[data-tone="done"] svg { color: var(--color-icon-secondary); }
