@@ -1,0 +1,39 @@
+name: 개선 제안
+description: BIT를 쓰며 불편했던 점이나 있었으면 하는 것 (화면, 서버·API, MCP 도구, 스킬, 설치·배포)
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        API 키·토큰·비밀번호, 개인정보, 회사 업무 내용은 적지 마세요.
+  - type: dropdown
+    id: area
+    attributes:
+      label: 어디에서
+      options:
+        - 화면
+        - 서버·API
+        - MCP 도구
+        - better-issue-tracker 스킬
+        - 설치·배포
+        - 그 밖
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: 지금 불편한 점
+      description: 무엇을 하려다 어디서 막혔는지 적어 주세요.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: 제안
+      description: 어떻게 되면 좋을지 적어 주세요. 참고한 도구(Linear, Jira 등)가 있으면 함께 적어 주세요.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: 지금 쓰는 우회 방법

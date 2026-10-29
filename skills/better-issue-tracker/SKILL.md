@@ -1,6 +1,6 @@
 ---
 name: better-issue-tracker
-description: BIT(better-issue-tracker)를 업무 트래커로 쓰는 프로젝트에서 MCP 도구로 업무와 결정기록을 남기며 일하는 방법. 연결된 MCP 서버에 get_work_item_context·create_work_item·add_comment 같은 도구가 있고, 코드나 문서를 바꾸는 요청을 받았을 때, 작업 중 버그나 다른 문제를 찾았을 때, 앞으로 따를 방식을 정했을 때, "업무 만들어줘", "BIT에 남겨줘", "결정기록 남겨줘", "ORM-14 처리해줘", "하위 업무로 나눠줘", "에픽 만들어줘"라고 할 때 쓴다.
+description: BIT(better-issue-tracker)를 업무 트래커로 쓰는 프로젝트에서 MCP 도구로 업무와 결정기록을 남기며 일하는 방법. 연결된 MCP 서버에 get_work_item_context·create_work_item·add_comment 같은 도구가 있고, 코드나 문서를 바꾸는 요청을 받았을 때, 작업 중 버그나 다른 문제를 찾았을 때, 앞으로 따를 방식을 정했을 때, "업무 만들어줘", "BIT에 남겨줘", "결정기록 남겨줘", "ORM-14 처리해줘", "하위 업무로 나눠줘", "에픽 만들어줘"라고 할 때, BIT 자체의 버그를 만났거나 "BIT에 제보해줘", "BIT 개선 제안 올려줘"라고 할 때 쓴다.
 ---
 
 # BIT로 일하기
@@ -185,13 +185,13 @@ BIT 프로젝트는 GitHub, GitLab, Gitea 저장소와 연결될 수 있다. 연
 | `whoami` | 연결, 계정, 워크스페이스 확인 |
 | `list_projects` | 프로젝트 키와 보드 칸 이름 확인 |
 | `list_members` | 담당자로 지정할 사람 확인 |
-| `list_labels` | 쓸 수 있는 라벨 확인(`결정기록`은 시스템 라벨) |
+| `list_labels` | 쓸 수 있는 라벨 확인(`결정기록`은 기본 라벨이라 워크스페이스가 지웠을 수 있다) |
 | `list_work_item_types` | 업무 유형과 유형별 상위 규칙 확인(유형이 있는 서버) |
 | `list_work_items` | 업무·결정기록 찾기(`query`, `label`, `include_closed`, `assignee`, 유형이 있으면 `type`) |
 | `get_work_item_context` | 업무 하나를 설명, 댓글, 활동까지 읽기 |
 | `create_work_item` | 업무·결정기록 만들기. `assignee`·`start_date`·`due_date`·`priority`·`labels`는 2절의 속성 정하기대로, 유형이 있으면 `type`. 일정은 `kind: "event"`와 `starts_at`·`ends_at`(예: `2026-10-28T10:00+09:00`), 사람이 여럿이면 `people`. 반복은 `repeat: "weekly"`(와 `repeat_on`, `repeat_until`), 일정 알림은 `remind_before`(분) |
 | `create_subtask` | 상위 업무(`parent`) 밑에 하위 업무 만들기. 상위의 프로젝트·우선순위를 따르고 미배정·시작 전으로 생긴다. 유형이 있으면 `type` |
-| `update_work_item` | 제목, 설명, 라벨, 사람, 날짜·시각, 종류, 유형(`type`), 상위(`parent`) 고치기(준 값만 바뀜). 값을 지우려면 `none`. 반복 업무의 이후 회차까지 고치려면 `scope: "following"`, 반복을 끝내려면 `repeat: "none"` |
+| `update_work_item` | 제목, 설명, 라벨, 사람, 날짜·시각, 유형(`type`), 상위(`parent`) 고치기(준 값만 바뀜). 작업과 일정은 서로 바꿀 수 없다(새로 만든다). 값을 지우려면 `none`. 반복 업무의 이후 회차까지 고치려면 `scope: "following"`, 반복을 끝내려면 `repeat: "none"` |
 | `move_work_item` | 칸(할 일, 진행 중, 완료 등) 옮기기, 보관 |
 | `set_work_item_project` | 업무를 다른 프로젝트로 옮기거나 `none`으로 프로젝트에서 빼기(참조 번호는 그대로) |
 | `add_comment` | 진행, 결과, 막힌 점 남기기 |
@@ -209,3 +209,20 @@ BIT 프로젝트는 GitHub, GitLab, Gitea 저장소와 연결될 수 있다. 연
 문서 도구가 목록에 없으면 문서가 없는 서버다(D-093 전). 그때 긴 글은 업무 설명에 쓴다.
 
 도구 이름이 이 표와 다르거나 `Unknown tool` 오류가 나면, 서버가 업데이트됐는데 연결이 옛 도구 목록을 들고 있는 것이다. 사용자에게 MCP 서버를 다시 연결하거나 새 세션을 열어 달라고 한다. 0.8 이후에 나와 이름을 issue로 바꿨던 서버(D-084~D-091 사이)는 업무 도구 이름이 `get_issue_context`, `list_issues`, `create_issue`, `update_issue`, `move_issue`이다. 연결된 서버의 도구 목록에 있는 이름을 쓴다.
+
+## 8. BIT에 제보하기
+
+BIT는 공개 저장소 [dev-goraebap/better-issue-tracker](https://github.com/dev-goraebap/better-issue-tracker)에서 버그와 개선 제안을 받는다. 화면, 서버·API, MCP 도구, 이 스킬, 설치·배포 모두 대상이다. 사용자 프로젝트의 업무는 BIT 업무로 남기고(2절), BIT 자체의 문제만 여기에 올린다.
+
+| 때 | 예 |
+| :--- | :--- |
+| BIT가 기대와 다르게 동작한다 | 도구가 500을 돌려준다, 도구 설명대로 불렀는데 거절된다, 화면과 MCP가 다른 값을 보인다 |
+| 이 스킬대로 했는데 결과가 틀린다 | 스킬이 가리킨 도구나 인자가 없다, 스킬을 따랐더니 업무가 빠지거나 잘못 나뉜다 |
+| 사용자가 제보나 제안을 부탁한다 | "BIT에 제보해줘", "이거 BIT 개선 제안으로 올려줘" |
+
+1. **이미 있는지 찾는다.** `gh issue list --repo dev-goraebap/better-issue-tracker --search "<핵심 낱말>" --state all`. 같은 것이 있으면 새로 만들지 않고 사용자에게 그 이슈를 알린다.
+2. **초안을 쓴다.** 저장소의 이슈 양식을 따른다. 버그는 어디에서·BIT 버전(화면 왼쪽 아래)·에이전트·한 일·기대한 결과·실제 결과, 개선은 어디에서·지금 불편한 점·제안을 적는다.
+3. **빼고 쓴다.** 공개 저장소다. API 키·토큰·비밀번호, 사람 이름·이메일, 사용자 프로젝트의 업무 제목·본문, 사내 서버 주소는 적지 않는다. 재현에 필요하면 바꿔 쓴 예로 적는다.
+4. **사용자에게 보이고 승인받는다.** 초안 전체를 보여 주고, 올려도 되는지 묻는다. 승인 없이는 올리지 않는다.
+5. **올린다.** `gh issue create --repo dev-goraebap/better-issue-tracker --label bug`(개선은 `enhancement`) `--title "<제목>" --body-file <초안 파일>`. `gh`가 없거나 로그인되어 있지 않으면 https://github.com/dev-goraebap/better-issue-tracker/issues/new/choose 와 초안을 사용자에게 건넨다.
+6. **남긴다.** 이 일을 하던 BIT 업무가 있으면 이슈 주소를 댓글로 남긴다.
