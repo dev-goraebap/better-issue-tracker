@@ -80,3 +80,11 @@ BIT_IMAGE=bit:dev AUTH_ALLOWED_ORIGINS=https://bit.example.com docker compose -f
 ```
 
 검증 결과와 후속 범위는 `docs/tasks/T-001-bootstrap.md`, `docs/tasks/T-002-authentication.md`를 참고합니다.
+
+## 제보와 제안
+
+버그나 개선 제안은 [이슈](https://github.com/dev-goraebap/better-issue-tracker/issues/new/choose)로 올려 주세요. 화면, 서버·API, MCP 도구, `better-issue-tracker` 스킬, 설치·배포 모두 받습니다.
+
+## 라이선스
+
+[MIT](LICENSE)
