@@ -22,10 +22,16 @@ const SOLAR = {
   download: 'download-minimalistic', external: 'arrow-right-up', unplug: 'plug-circle',
 };
 
+// The icons the mark picker offers first after the app's own (D-086), drawn at once rather than with the whole set, as
+// `s:` and the name the marks keep them by.
+const MARKS = ['rocket', 'star', 'heart', 'target', 'lightbulb', 'bug', 'code', 'palette', 'case', 'global', 'bolt', 'bell', 'book', 'box',
+  'buildings', 'chart-2', 'card', 'database', 'gift', 'square-academic-cap', 'smartphone', 'cup-star', 'bot', 'brain', 'cloud', 'cup-hot',
+  'compass', 'fire', 'leaf', 'map', 'music-note', 'widget-2', 'notes'];
+
 const STYLE = 'linear';
 
 const { icons } = JSON.parse(await readFile(new URL('../node_modules/@iconify-json/solar/icons.json', import.meta.url), 'utf8'));
-const lines = Object.entries(SOLAR).map(([name, solar]) => {
+const lines = [...Object.entries(SOLAR), ...MARKS.map(solar => [`s:${solar}`, solar])].map(([name, solar]) => {
   const icon = icons[`${solar}-${STYLE}`];
   if (!icon) throw new Error(`Solar has no ${solar}-${STYLE} for ${name}`);
   return `  ${JSON.stringify(name)}: ${JSON.stringify(icon.body)},`;

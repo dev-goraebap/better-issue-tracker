@@ -4,6 +4,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { SOLAR_ICONS } from './solar-icons';
+import { SolarIcon } from './SolarIcon';
 
 // The icon set is Solar's Linear style (BIT-132, D-112), made from scripts/generate-icons.mjs; names follow SandboxHr's so its
 // shared parts keep their calls. What Solar lacks is lucide's: the editor's toolbar whole, so its marks match one another,
@@ -38,6 +39,5 @@ const lucide: Record<string, LucideIcon> = {
 export function NavIcon({ name, size = 'text' }: { name: string; size?: 'text' | 'navigation' | 'standalone' }) {
   const Icon = lucide[name];
   if (Icon) return <Icon className="bit-nav-icon" data-icon-size={size} size={16} strokeWidth={1.75} aria-hidden="true" focusable="false" />;
-  return <svg className="bit-nav-icon" data-icon-set="solar" data-icon-size={size} width={16} height={16} viewBox="0 0 24 24" aria-hidden="true" focusable="false"
-    dangerouslySetInnerHTML={{ __html: SOLAR_ICONS[name] ?? SOLAR_ICONS.file ?? '' }} />;
+  return <SolarIcon body={SOLAR_ICONS[name] ?? SOLAR_ICONS.file ?? ''} size={size} />;
 }

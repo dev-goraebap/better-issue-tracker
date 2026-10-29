@@ -834,7 +834,7 @@
 
 ## D-112. 화면 아이콘은 Solar의 Linear 세트로 그린다 (2026-10-29)
 - **BIT 결정기록**: BIT-133. 적용 업무 BIT-132. 화면 아이콘을 lucide로 그리던 것을 대체한다.
-- **무엇을**: NavIcon이 그리는 화면 아이콘은 Solar(480 Design, CC BY 4.0)의 Linear 스타일이다. `client/scripts/generate-icons.mjs`(`npm run icons:generate`)가 `@iconify-json/solar`에서 앱이 이름으로 부르는 아이콘만 `shared/ui/solar-icons.ts`로 뽑는다. Solar에 없는 것은 lucide로 그린다: 편집기 도구막대 전체(제목 1·2·3이 없어 도구막대 안에서 섞이지 않게)와 병합·웹훅·초안 PR·닫힌 PR. 출처와 라이선스는 `client/public/licenses/solar-icons.txt`에 둔다. 사용자가 고르는 마크(아이콘 선택기, D-086)는 아직 lucide다.
+- **무엇을**: NavIcon이 그리는 화면 아이콘은 Solar(480 Design, CC BY 4.0)의 Linear 스타일이다. `client/scripts/generate-icons.mjs`(`npm run icons:generate`)가 `@iconify-json/solar`에서 앱이 이름으로 부르는 아이콘만 `shared/ui/solar-icons.ts`로 뽑는다. Solar에 없는 것은 lucide로 그린다: 편집기 도구막대 전체(제목 1·2·3이 없어 도구막대 안에서 섞이지 않게)와 병합·웹훅·초안 PR·닫힌 PR. 출처와 라이선스는 `client/public/licenses/solar-icons.txt`에 둔다. 프로젝트·뷰 마크(아이콘 선택기, D-086)도 Solar Linear 전체(1,460여 개, 빌드 때 `virtual:solar-set`으로 뽑아 처음 열 때 받는 덩어리)에서 고르고 `s:이름`으로 저장한다. 전에 lucide 이름으로 저장한 마크는 자주 쓰던 것이면 해당 Solar·앱 아이콘으로, 나머지는 lucide로 그린다.
 - **왜**: 사용자가 더 고급스러운 아이콘을 원했고, 여덟 세트를 같은 열두 아이콘으로 나란히 그려 본 뒤 Solar를 골랐다. Linear는 선(stroke)으로 그려 나중에 CSS로 굵기를 조절할 수 있다.
 - **기각**: Solar LineDuotone(실제 화면에서 사용자가 기각), Solar Broken(16px에서 끊김이 거의 안 보이거나 깨진 듯 보임), Solar Outline(모양은 같지만 채운 도형이라 굵기 조절 불가), Phosphor(MIT, 권장안이었으나 사용자가 Solar를 고름), Central Icons(유료, 비공개 레지스트리 키가 필요해 공개 저장소에서 외부 기여자가 빌드 불가).
 
