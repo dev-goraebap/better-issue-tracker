@@ -5,7 +5,7 @@ import {
 } from 'lucide-react';
 import { SOLAR_ICONS } from './solar-icons';
 
-// The icon set is Solar's Linear style (BIT-132), made from scripts/generate-icons.mjs; names follow SandboxHr's so its
+// The icon set is Solar's Linear style (BIT-132, D-112), made from scripts/generate-icons.mjs; names follow SandboxHr's so its
 // shared parts keep their calls. What Solar lacks is lucide's: the editor's toolbar whole, so its marks match one another,
 // and the merge, webhook and draft and closed pull request marks.
 const lucide: Record<string, LucideIcon> = {
