@@ -102,7 +102,10 @@
 .trail { display: flex; align-items: center; min-inline-size: 0; overflow: hidden; }
 .detailTitle { flex: 1; min-inline-size: 0; overflow: hidden; }
 .detailTitle:empty { display: none; }
-.topbar:has(.detailTitle:not(:empty)) .trail { display: none; }
+/* A detail on a desktop keeps the way back, then the whole trail down to it in place of its own name (BIT-127); a phone,
+   too narrow for the trail, keeps the way back and the detail's name. */
+@media (width >= 64rem) { .detailTitle { display: none; } }
+@media (width < 64rem) { .topbar:has(.detailTitle:not(:empty)) .trail { display: none; } }
 
 .sidebarRail { position: relative; display: flex; flex-shrink: 0; min-block-size: 0; }
 .expandHandle { position: absolute; z-index: 5; inset-block: 0; inset-inline-end: -4px; inline-size: 8px; padding: 0; border: 0; background: transparent; cursor: col-resize; touch-action: none; }
