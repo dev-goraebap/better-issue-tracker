@@ -88,3 +88,5 @@ BIT_IMAGE=bit:dev AUTH_ALLOWED_ORIGINS=https://bit.example.com docker compose -f
 ## 라이선스
 
 [MIT](LICENSE)
+
+함께 들어 있는 남의 자료(화면 아이콘 Solar, 불러오기 애니메이션)의 출처와 라이선스는 [client/public/licenses](client/public/licenses)에 있습니다.

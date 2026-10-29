@@ -13,7 +13,8 @@
     "test": "node --import tsx --test tests/*.test.ts",
     "check": "npm run lint:components && npm run lint:fsd && npm test && npm run build",
     "astryx": "node node_modules/@astryxdesign/cli/clients/cli/bin/astryx.mjs",
-    "brand:generate": "node scripts/generate-brand.mjs"
+    "brand:generate": "node scripts/generate-brand.mjs",
+    "icons:generate": "node scripts/generate-icons.mjs"
   },
   "dependencies": {
     "@astryxdesign/core": "0.5.2",
@@ -43,6 +44,7 @@
   "devDependencies": {
     "@astryxdesign/cli": "0.5.2",
     "@feature-sliced/steiger-plugin": "0.7.0",
+    "@iconify-json/solar": "1.2.13",
     "@types/node": "22.20.1",
     "@types/react": "19.2.0",
     "@types/react-dom": "19.2.0",
