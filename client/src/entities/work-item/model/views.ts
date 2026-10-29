@@ -141,7 +141,8 @@ const valuesOf = (value?: string) => (value ? value.split(',').filter(Boolean) :
 /** The work items a view's filters, the address's types (a comma list of ids; events have none) and the search words keep, in its order. */
 export function filterWorkItems(workItems: readonly WorkItem[], filters: ViewFilters, sort: ViewSort, words?: string, types?: string): WorkItem[] {
   const text = words?.toLowerCase();
-  const statuses = valuesOf(filters.status);
+  // none is what the backlog was called before it was a status of its own (D-111).
+  const statuses = valuesOf(filters.status).map(status => (status === 'none' ? 'backlog' : status));
   const assignees = valuesOf(filters.assignee);
   const labels = valuesOf(filters.label);
   const typeIds = valuesOf(types);

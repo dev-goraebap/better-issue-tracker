@@ -35,7 +35,8 @@ public final class ProjectRequests {
 
             @Schema(
                     nullable = true,
-                    description = "Omitted: done for a final column, doing otherwise. A final column must be done")
+                    description =
+                            "Omitted: done for a final column, doing otherwise. A final column is done or canceled, and a canceled column is final")
             ColumnCategory category) {}
 
     @Schema(name = "UpdateBoardColumn")
@@ -100,7 +101,7 @@ public final class ProjectRequests {
 
         @Schema(
                 description =
-                        "Omitted: kept, except done when the column becomes final and doing when it stops being final")
+                        "Omitted: kept, except done when the column becomes final (canceled stays canceled) and doing when it stops being final")
         public ColumnCategory getCategory() {
             return category;
         }

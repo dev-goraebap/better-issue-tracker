@@ -9,8 +9,8 @@ import { columnsQuery } from '@/entities/project';
 import { useMembers } from '@/entities/workspace';
 import { TypeMark, typeOptions, workItemTypesQuery } from '@/entities/work-item-type';
 import {
-  eventFields, eventTimeOf, eventWhen, itemQuery, labelOptions, LabelTokens, moveItem, NO_REMINDER, NO_STATUS, peopleOptions, PersonCell,
-  priorityOptions, PriorityMark, refreshItems, reminderOptions, reminderText, repeatBody, repeatItem, repeatOf, statusOptions, StatusBadge, setWorkspaceStatus, stopRepeating, updateItem, type WorkItem,
+  CATEGORIES, CATEGORY_LABELS, eventFields, eventTimeOf, eventWhen, itemQuery, labelOptions, LabelTokens, moveItem, NO_REMINDER, peopleOptions, PersonCell,
+  priorityOptions, PriorityMark, refreshItems, reminderOptions, reminderText, repeatBody, repeatItem, repeatOf, statusOptions, StatusBadge, statusSteps, setWorkspaceStatus, stopRepeating, updateItem, type WorkItem,
 } from '@/entities/work-item';
 import { refreshTimeline } from '../api/timeline';
 import { WorkItemProject } from './WorkItemProject';
@@ -60,13 +60,16 @@ export function WorkItemProperties({ item, canWrite }: { item: WorkItem; canWrit
       ? <PropertyPicker label="유형" icon="tasks" options={typeOptions(types)} value={preview.typeId ?? item.type?.id} onChange={value => { if (value && value !== (preview.typeId ?? item.type?.id)) patch({ typeId: value as string }); }} />
       : item.type ? <span className={styles.typeValue}><TypeMark type={item.type} />{item.type.name}</span> : '없음')}
     {!isEvent && field('상태', 'status', canWrite
-      ? <PropertyPicker label="상태" icon="status" options={p ? statusOptions(columns) : [
-        { value: 'todo', label: '할 일', icon: <StatusBadge category="todo" isLabelHidden /> }, { value: 'doing', label: '진행 중', icon: <StatusBadge category="doing" isLabelHidden /> }, { value: 'done', label: '완료', icon: <StatusBadge category="done" isLabelHidden /> }, { value: NO_STATUS, label: '상태 없음' },
-      ]} value={p ? shown.columnId ?? NO_STATUS : preview.columnId ?? item.columnCategory ?? NO_STATUS} onChange={value => {
-        const columnId = value === NO_STATUS || value === undefined ? null : String(value);
+      // A task always has a status (D-111): a project's columns, or without a project the five categories themselves.
+      ? <PropertyPicker label="상태" icon="status" options={p ? statusOptions(columns)
+        : CATEGORIES.map(category => ({ value: category, label: CATEGORY_LABELS[category], icon: <StatusBadge category={category} isLabelHidden /> }))}
+      value={p ? shown.columnId ?? undefined : preview.columnId ?? item.columnCategory ?? 'backlog'} onChange={value => {
+        if (value === undefined) return;
+        const columnId = String(value);
         if (!p) { enqueue(version => setWorkspaceStatus(w, id, columnId, version), { columnId }); return; }
         enqueue(version => moveItem(w, p, id, { expectedVersion: version, targetColumnId: columnId }), { columnId });
-      }} /> : item.columnCategory ? <StatusBadge category={item.columnCategory} name={columns.find(column => column.id === item.columnId)?.name} /> : '상태 없음')}
+      }} /> : item.columnCategory ? <StatusBadge category={item.columnCategory} name={columns.find(column => column.id === item.columnId)?.name}
+        step={item.columnId ? statusSteps(columns).get(item.columnId) : undefined} /> : '상태 없음')}
     {!isEvent && field('우선순위', 'priority', canWrite
       ? <PropertyPicker label="우선순위" icon="priority" options={priorityOptions} value={shown.priority ?? undefined} onChange={value => patch({ priority: value as WorkItem['priority'] ?? null })} />
       : item.priority ? <PriorityMark priority={item.priority} /> : '없음')}

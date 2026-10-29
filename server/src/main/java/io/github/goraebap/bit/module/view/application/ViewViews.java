@@ -13,7 +13,7 @@ public final class ViewViews {
     @Schema(name = "WorkItemViewFilters")
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public record Filters(
-            @Schema(description = "Status categories: todo, doing, done, none")
+            @Schema(description = "Status categories: backlog, todo, doing, done, canceled")
             String status,
 
             String priority,

@@ -222,7 +222,7 @@ public final class WorkItemView {
                         "rows",
                         "#95959f",
                         Layout.list,
-                        Map.of("status", "none"),
+                        Map.of("status", "backlog"),
                         new Sort(SortKey.priority, Direction.asc),
                         usual,
                         Grouping.none),

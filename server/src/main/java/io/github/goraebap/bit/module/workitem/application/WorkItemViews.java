@@ -123,7 +123,10 @@ public final class WorkItemViews {
             @Schema(nullable = true) String description,
             @Schema(nullable = true) String columnId,
 
-            @Schema(nullable = true, description = "Category of the column; null in the backlog")
+            @Schema(
+                    nullable = true,
+                    description =
+                            "Category of the column, or the status of a task without a project; null only for an event")
             ColumnCategory columnCategory,
 
             @Schema(description = "Live labels, system labels first and then by name")

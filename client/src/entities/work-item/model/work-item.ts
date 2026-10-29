@@ -4,10 +4,15 @@ import type { ColumnCategory, WorkItem } from '../api/work-item';
 
 /** A work item is a work item (D-066): no fixed types, only the properties it has and its labels. */
 export type Priority = NonNullable<WorkItem['priority']>;
-/** Where a work item stands across projects: its column's category, or none (no status, D-066). */
+/**
+ * Where a work item stands across projects: its column's category (D-111), in order 백로그, 할 일, 진행 중, 완료, 취소. A
+ * task always has one; none is an event's, which has no status.
+ */
 export type StatusCategory = ColumnCategory | 'none';
-export const CATEGORY_LABELS: Record<StatusCategory, string> = { todo: '할 일', doing: '진행 중', done: '완료', none: '상태 없음' };
-export const CATEGORIES: readonly ColumnCategory[] = ['todo', 'doing', 'done'];
+export const CATEGORY_LABELS: Record<StatusCategory, string> = { backlog: '백로그', todo: '할 일', doing: '진행 중', done: '완료', canceled: '취소', none: '상태 없음' };
+export const CATEGORIES: readonly ColumnCategory[] = ['backlog', 'todo', 'doing', 'done', 'canceled'];
+/** Whether a category closes the work: done or canceled (D-111). */
+export const isClosedCategory = (category: StatusCategory) => category === 'done' || category === 'canceled';
 export const PRIORITY_RANK: Record<Priority, number> = { urgent: 0, high: 1, medium: 2, low: 3 };
 /** A label filter's value for the workspace's system label (결정기록), whatever its id in a workspace. */
 export const SYSTEM_LABEL = 'system';
@@ -87,4 +92,18 @@ export function eventFields(time: EventTime) {
   if (time.allDay || !time.start) return { startDate: time.day, dueDate: time.day, startsAt: null, endsAt: null, allDay: true };
   const moment = (at?: string) => (at ? new Date(`${time.day}T${at}`).toISOString() : null);
   return { startDate: null, dueDate: null, startsAt: moment(time.start), endsAt: moment(time.end), allDay: false };
+}
+
+/** Where a column stands among its project's columns of the same category: the second of two 진행 중 is the second step. */
+export type StatusStep = { rank: number; of: number };
+/**
+ * Each column's step within its category (D-111), so two columns of one category draw apart: a later 진행 중 column's ring
+ * is fuller, and a closing column after the first 취소 draws a pause rather than a cross. One project's columns at a time.
+ */
+export function statusSteps(columns: readonly { id: string; category: string; position: number }[]): Map<string, StatusStep> {
+  const sorted = [...columns].sort((a, b) => a.position - b.position);
+  return new Map(sorted.map(column => {
+    const same = sorted.filter(each => each.category === column.category);
+    return [column.id, { rank: same.indexOf(column), of: same.length }];
+  }));
 }

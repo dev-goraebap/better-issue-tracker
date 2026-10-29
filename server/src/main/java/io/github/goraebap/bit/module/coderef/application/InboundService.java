@@ -273,12 +273,12 @@ public class InboundService {
             case "closed" -> mirrored.forEach(id -> move(scene, id, RuleEvent.issue_closed, event.sender()));
             case "reopened" ->
                 mirrored.forEach(id -> {
-                    if (category(
-                                    scene,
-                                    workItemFacade
-                                            .get(scene.actor, scene.workspaceId, scene.projectId, id)
-                                            .columnId())
-                            == ColumnCategory.done)
+                    var category = category(
+                            scene,
+                            workItemFacade
+                                    .get(scene.actor, scene.workspaceId, scene.projectId, id)
+                                    .columnId());
+                    if (category != null && category.closes())
                         to(scene, id, Hosts.column(RuleEvent.issue_opened, scene.rules, scene.columns));
                 });
             case "edited" -> {
@@ -370,8 +370,9 @@ public class InboundService {
     }
 
     /**
-     * Moves an issue by an event's rule, forward only: a branch starts work on an issue not started, an opened request
-     * moves it on unless it is further already, a merge or a close finishes it unless it is done.
+     * Moves an issue by an event's rule, forward only: a branch starts work on an issue not started (in the backlog or
+     * to do), an opened request moves it on unless it is further already, a merge or a close finishes it unless it is
+     * closed already (done or canceled, D-111).
      */
     private void move(Scene scene, String workItemId, RuleEvent event, String sender) {
         var target = Hosts.column(event, scene.rules, scene.columns);
@@ -381,9 +382,10 @@ public class InboundService {
         boolean ahead = index(scene, target.get()) > index(scene, workItem.columnId());
         boolean moves =
                 switch (event) {
-                    case branch_push -> category == null || category == ColumnCategory.todo;
-                    case pr_opened -> category != ColumnCategory.done && (category == null || ahead);
-                    case pr_merged, issue_closed -> category != ColumnCategory.done;
+                    case branch_push ->
+                        category == null || category == ColumnCategory.backlog || category == ColumnCategory.todo;
+                    case pr_opened -> (category == null || !category.closes()) && (category == null || ahead);
+                    case pr_merged, issue_closed -> category == null || !category.closes();
                     case issue_opened -> true;
                 };
         if (!moves) return;

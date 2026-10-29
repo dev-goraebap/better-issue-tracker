@@ -7,6 +7,7 @@ import io.github.goraebap.bit.module.link.TimelineFacade;
 import io.github.goraebap.bit.module.mcp.McpArguments;
 import io.github.goraebap.bit.module.mcp.McpTool;
 import io.github.goraebap.bit.module.mcp.McpToolProvider;
+import io.github.goraebap.bit.module.project.ColumnCategory;
 import io.github.goraebap.bit.module.project.ProjectFacade;
 import io.github.goraebap.bit.module.workitem.WorkItemFacade;
 import io.github.goraebap.bit.module.workitem.domain.Recurrence;
@@ -37,7 +38,7 @@ import org.springframework.stereotype.Component;
 class WorkItemMcpTools implements McpToolProvider {
     private static final String WORKSPACE = "워크스페이스 이름이나 슬러그. 속한 워크스페이스가 하나면 생략합니다.";
     private static final String STATUS =
-            "칸 이름(예: 진행 중), 분류(todo·doing·done), 또는 backlog(상태 없음). 프로젝트마다 칸이 다르니 list_projects로 확인합니다.";
+            "칸 이름(예: 진행 중) 또는 분류(backlog·todo·doing·done·canceled, 그 분류의 첫 칸). 프로젝트마다 칸이 다르니 list_projects로 확인합니다.";
     private static final String REMIND = "일정 알림: 시작 몇 분 전에 참석자에게 알릴지(예: 10, 60, 1440). none이면 알리지 않음. 작업에는 쓰지 않습니다.";
     private static final String REPEAT_EVERY = "반복 간격: 2면 격주·격월 (기본 1)";
     private static final String REPEAT_ON = "매주 반복할 요일들: mon, tue, wed, thu, fri, sat, sun (생략하면 그 업무의 요일)";
@@ -99,7 +100,11 @@ class WorkItemMcpTools implements McpToolProvider {
                         McpTool.input()
                                 .string("project", "프로젝트 키. 예: ORM", false)
                                 .string("query", "제목에서 찾을 말", false)
-                                .choice("category", "상태 분류로 거르기", List.of("todo", "doing", "done", "none"), false)
+                                .choice(
+                                        "category",
+                                        "상태 분류로 거르기 (none은 backlog와 같음)",
+                                        List.of("backlog", "todo", "doing", "done", "canceled", "none"),
+                                        false)
                                 .string("assignee", "담당자나 참석자: me, 이메일, 또는 이름", false)
                                 .choice("kind", "종류로 거르기: task(작업), event(일정)", List.of("task", "event"), false)
                                 .string("label", "라벨 이름. 예: 결정기록", false)
@@ -197,7 +202,7 @@ class WorkItemMcpTools implements McpToolProvider {
                 new McpTool(
                         "move_work_item",
                         "업무 상태 옮기기",
-                        "업무를 다른 칸으로 옮기거나(완료 칸이면 완료로 기록) 보관·보관 해제합니다.",
+                        "업무를 다른 칸으로 옮기거나(완료·취소 칸이면 닫힌 것으로 기록) 보관·보관 해제합니다.",
                         McpTool.input()
                                 .string("ref", "업무 참조. 예: ORM-14", true)
                                 .string("status", STATUS, false)
@@ -487,11 +492,14 @@ class WorkItemMcpTools implements McpToolProvider {
             if (at.projectId() == null) {
                 String category =
                         switch (status.get().strip().toLowerCase(Locale.ROOT)) {
+                            case "backlog", "백로그", "none", "상태 없음" -> "backlog";
                             case "todo", "할 일" -> "todo";
                             case "doing", "진행 중" -> "doing";
                             case "done", "완료" -> "done";
-                            case "none", "backlog", "상태 없음" -> null;
-                            default -> throw new IllegalArgumentException("프로젝트 없는 작업의 상태는 todo, doing, done, none입니다");
+                            case "canceled", "취소" -> "canceled";
+                            default ->
+                                throw new IllegalArgumentException(
+                                        "프로젝트 없는 작업의 상태는 backlog, todo, doing, done, canceled입니다");
                         };
                 workItemService.changeWorkspaceStatus(actor, at.workspaceId(), at.id(), category, item.version());
             } else {
@@ -552,10 +560,11 @@ class WorkItemMcpTools implements McpToolProvider {
         return at.projectId() == null ? List.of() : projectFacade.boardColumns(actor, at.workspaceId(), at.projectId());
     }
 
-    /** A column by its name, else the first of a category, or backlog for none. */
+    /** A column by its name, else the first of a category; none and 상태 없음 are read as backlog (D-111). */
     private static String column(List<ProjectFacade.ColumnInfo> columns, String status) {
-        String wanted = status.strip();
-        if (Set.of("backlog", "none", "상태 없음").contains(wanted.toLowerCase(Locale.ROOT))) return null;
+        String wanted = Set.of("none", "상태 없음").contains(status.strip().toLowerCase(Locale.ROOT))
+                ? ColumnCategory.backlog.name()
+                : status.strip();
         return columns.stream()
                 .filter(c -> c.name().equalsIgnoreCase(wanted))
                 .findFirst()
@@ -564,8 +573,7 @@ class WorkItemMcpTools implements McpToolProvider {
                         .findFirst())
                 .map(ProjectFacade.ColumnInfo::id)
                 .orElseThrow(() -> new IllegalArgumentException("'" + wanted + "' 칸이 없습니다. 이 프로젝트의 칸: "
-                        + columns.stream().map(ProjectFacade.ColumnInfo::name).collect(Collectors.joining(", "))
-                        + ", backlog"));
+                        + columns.stream().map(ProjectFacade.ColumnInfo::name).collect(Collectors.joining(", "))));
     }
 
     /** A member by me, their email or their name. */
@@ -649,6 +657,7 @@ class WorkItemMcpTools implements McpToolProvider {
                         item.projectId() == null && item.columnCategory() != null
                                 ? item.columnCategory().name()
                                 : item.columnId() == null ? "상태 없음" : null);
+        // Only an event has no status (D-111).
         if (column != null) view.put("status", column);
         view.put(
                 "category",

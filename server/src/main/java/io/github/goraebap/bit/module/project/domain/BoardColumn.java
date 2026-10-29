@@ -113,9 +113,14 @@ public final class BoardColumn {
         return value.strip();
     }
 
-    /** A final column always counts as done; the other columns may use any category. */
+    /**
+     * A final column is done or canceled, and a canceled column is always final (D-111); the other columns may use any
+     * other category (a done column that does not close the work, say).
+     */
     public static boolean allows(boolean finalColumn, ColumnCategory category) {
-        return category != null && (!finalColumn || category == ColumnCategory.done);
+        if (category == null) return false;
+        if (category == ColumnCategory.canceled) return finalColumn;
+        return !finalColumn || category == ColumnCategory.done;
     }
 
     private static ColumnCategory validCategory(boolean finalColumn, ColumnCategory category) {

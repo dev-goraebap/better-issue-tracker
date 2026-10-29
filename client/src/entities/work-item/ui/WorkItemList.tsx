@@ -5,7 +5,7 @@ import { TypeMark } from '@/entities/work-item-type/@x/work-item';
 import type { ListLine, WorkItemGroup } from '../model/grouping';
 import type { WorkItemSearch } from '../model/search';
 import type { ViewColumn } from '../model/views';
-import { categoryOf } from '../model/work-item';
+import { categoryOf, isClosedCategory, type StatusStep } from '../model/work-item';
 import { GroupMark } from './GroupMark';
 import { LabelTokens } from './LabelTokens';
 import { NoPriority } from './NoPriority';
@@ -33,11 +33,13 @@ type Progress = ReadonlyMap<string, { done: number; total: number }>;
  *   over the key and the rest, the people at its end; a subtask is set in 16px a level with no lines.
  *
  * The view's columns (표시할 속성) say which of the properties show; the key, type and title always do. A project's
- * list names each status by its column (columnNames), 전체 by its category.
+ * list names each status by its column (columnNames) and draws it at its step within its category (columnSteps), 전체 by
+ * its category.
  */
-export function WorkItemList({ workspaceId, groups, search, columns, columnNames, badges, progress, isPhone, collapsed, onToggle }: {
+export function WorkItemList({ workspaceId, groups, search, columns, columnNames, columnSteps, badges, progress, isPhone, collapsed, onToggle }: {
   workspaceId: string; groups: readonly WorkItemGroup[]; search: WorkItemSearch; columns: readonly ViewColumn[];
   columnNames?: ReadonlyMap<string, string>;
+  columnSteps?: ReadonlyMap<string, StatusStep>;
   /** What another part of the app adds to a work item (its pull requests, D-087), by work item id. */
   badges?: ReadonlyMap<string, ReactNode>;
   /** Each parent's subtasks and how many are done, by work item id. */
@@ -48,7 +50,8 @@ export function WorkItemList({ workspaceId, groups, search, columns, columnNames
   const keyWidth = `${Math.max(4, ...groups.flatMap(group => group.lines.map(line => line.item.key.length)))}ch`;
   const row = (group: WorkItemGroup, line: ListLine) => {
     const { item } = line;
-    const status = item.columnCategory ? <StatusBadge category={item.columnCategory} name={item.columnId ? columnNames?.get(item.columnId) : undefined} isLabelHidden={!isPhone} /> : null;
+    const status = item.columnCategory ? <StatusBadge category={item.columnCategory} name={item.columnId ? columnNames?.get(item.columnId) : undefined}
+      step={item.columnId ? columnSteps?.get(item.columnId) : undefined} isLabelHidden={!isPhone} /> : null;
     const sub = progress?.get(item.id);
     const after = <>
       {sub && <SubtaskProgress {...sub} />}
@@ -57,7 +60,7 @@ export function WorkItemList({ workspaceId, groups, search, columns, columnNames
     // A phone's two-line card shows a subtask by its inset alone; lines only crowd it.
     const tree = !isPhone && (line.depth > 0 || line.hasChildren) ? <TreeLines line={line} /> : undefined;
     // Its day tells how near (DueChip); the days it changed and was made say how long ago, each by its own icon (BIT-124).
-    const isDone = categoryOf(item) === 'done';
+    const isDone = isClosedCategory(categoryOf(item));
     const updated = <ItemMeta width="5.75rem" align="end" label={`수정 ${dateText(item.updatedAt)}`} title={`수정 ${momentText(item.updatedAt)}`}>
       <NavIcon name="edit" />{agoText(item.updatedAt)}
     </ItemMeta>;
@@ -95,7 +98,7 @@ export function WorkItemList({ workspaceId, groups, search, columns, columnNames
       </>} />;
   };
   return <ItemList label="업무 목록">{groups.flatMap(group => [
-    ...(group.grouping === 'none' ? [] : [<ItemGroup key={`group:${group.key}`} label={group.label} mark={<GroupMark group={group} />} count={group.count}
+    ...(group.grouping === 'none' ? [] : [<ItemGroup key={`group:${group.key}`} label={group.label} mark={<GroupMark group={group} steps={columnSteps} />} count={group.count}
       isOpen={!collapsed.has(group.key)} onToggle={() => onToggle(group.key)} />]),
     ...group.lines.map(line => row(group, line)),
   ])}</ItemList>;

@@ -99,7 +99,7 @@ export function activityText(entry: TimelineEntry, names: ActivityNames): string
     case 'startDate': return after ? `시작일을 ${toward(dateText(after))} 정했습니다` : '시작일을 지웠습니다';
     case 'dueDate': return after ? `기한을 ${toward(dateText(after))} 정했습니다` : '기한을 지웠습니다';
     case 'column': {
-      const name = (id: string | null) => (id ? names.columns.get(id) ?? ({ todo: '할 일', doing: '진행 중', done: '완료' } as Record<string, string>)[id] ?? '이전 상태' : '상태 없음');
+      const name = (id: string | null) => (id ? names.columns.get(id) ?? ({ backlog: '백로그', todo: '할 일', doing: '진행 중', done: '완료', canceled: '취소' } as Record<string, string>)[id] ?? '이전 상태' : '상태 없음');
       return `상태를 ${name(before)}에서 ${toward(name(after))} 옮겼습니다`;
     }
     case 'labels': {

@@ -45,7 +45,7 @@ export type GroupContext = {
 /** How deep a subtask may be drawn; deeper ones line up at this depth. */
 export const MAX_DEPTH = 4;
 const NONE = '-';
-const CATEGORY_ORDER: StatusCategory[] = ['todo', 'doing', 'done', 'none'];
+const CATEGORY_ORDER: StatusCategory[] = ['backlog', 'todo', 'doing', 'done', 'canceled', 'none'];
 const PRIORITY_ORDER: Priority[] = ['urgent', 'high', 'medium', 'low'];
 const NONE_LABEL: Record<Exclude<Grouping, 'none'>, string> = {
   status: '상태 없음', assignee: '미배정', priority: '우선순위 없음', type: '유형 없음', label: '라벨 없음', project: '프로젝트 없음',
@@ -143,11 +143,12 @@ export function groupWorkItems(rows: readonly WorkItem[], grouping: Grouping, co
     .map(({ items, ...slot }) => ({ ...slot, grouping: effective, count: items.length, sample: items[0], lines: nestLines(items, all) }));
 }
 
-/** A parent's subtasks and how many of them are done, for the progress after its title. */
+/** A parent's subtasks and how many of them are done, for the progress after its title; a canceled one counts in neither (D-111). */
 export function subtaskProgress(all: readonly WorkItem[]): Map<string, { done: number; total: number }> {
   const progress = new Map<string, { done: number; total: number }>();
   for (const item of all) {
     if (!item.parentId) continue;
+    if (categoryOf(item) === 'canceled') continue;
     const entry = progress.get(item.parentId) ?? { done: 0, total: 0 };
     entry.total += 1;
     if (categoryOf(item) === 'done') entry.done += 1;

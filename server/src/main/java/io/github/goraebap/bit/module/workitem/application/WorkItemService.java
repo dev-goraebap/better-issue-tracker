@@ -4,6 +4,7 @@ import io.github.goraebap.bit.module.label.LabelFacade;
 import io.github.goraebap.bit.module.link.TargetChangedEvent;
 import io.github.goraebap.bit.module.link.TargetChangedEvent.FieldChange;
 import io.github.goraebap.bit.module.link.TargetType;
+import io.github.goraebap.bit.module.project.ColumnCategory;
 import io.github.goraebap.bit.module.project.ColumnWorkItemSpi;
 import io.github.goraebap.bit.module.project.ProjectFacade;
 import io.github.goraebap.bit.module.workitem.WorkItemFacade;
@@ -262,7 +263,14 @@ public class WorkItemService implements WorkItemFacade, ColumnWorkItemSpi {
         if (kind == WorkItem.Kind.event && typeId != null) throw eventHasNoType();
         var type = kind == WorkItem.Kind.task ? workItemTypeService.resolve(workspaceId, typeId) : null;
         if (type != null) workItemTypeService.requireParent(workspaceId, type, parent(workspaceId, parentId), null);
-        String columnId = kind == WorkItem.Kind.event ? null : requestedColumnId;
+        // A task always has a status (D-111): with none named it starts in the backlog column.
+        String columnId = kind == WorkItem.Kind.event
+                ? null
+                : requestedColumnId != null
+                        ? requestedColumnId
+                        : projectFacade
+                                .backlogColumn(actor, workspaceId, projectId)
+                                .id();
         var column = projectFacade.requireColumn(actor, workspaceId, projectId, columnId);
         long number = projectFacade.allocateWorkItemNumber(actor, workspaceId, projectId);
         double position = workItemRepository.findColumnItems(projectId, columnId, false).stream()
@@ -369,7 +377,23 @@ public class WorkItemService implements WorkItemFacade, ColumnWorkItemSpi {
             String afterItemId) {
         var w = access(actor, workspaceId, projectId, id, true, false);
         version(w, expectedVersion);
-        var target = projectFacade.requireColumn(actor, workspaceId, projectId, targetColumnId);
+        // Moved to no column, a task goes to the backlog column (D-111).
+        var target = targetColumnId == null && w.kind() == WorkItem.Kind.task
+                ? projectFacade.backlogColumn(actor, workspaceId, projectId)
+                : projectFacade.requireColumn(actor, workspaceId, projectId, targetColumnId);
+        move(actor, workspaceId, projectId, w, target, beforeItemId, afterItemId);
+    }
+
+    private void move(
+            CurrentUser actor,
+            String workspaceId,
+            String projectId,
+            WorkItem w,
+            ProjectFacade.ColumnRef target,
+            String beforeItemId,
+            String afterItemId) {
+        String id = w.id();
+        String targetColumnId = target.id();
         if (id.equals(beforeItemId) || id.equals(afterItemId)) throw WorkItemErrorCode.WORK_ITEM_MOVE_INVALID.raise();
         if (Objects.equals(w.columnId(), targetColumnId) && beforeItemId == null && afterItemId == null) return;
         String previous = w.columnId();
@@ -434,7 +458,10 @@ public class WorkItemService implements WorkItemFacade, ColumnWorkItemSpi {
             return;
         }
         var existing = projectFacade.findColumn(actor, workspaceId, projectId, w.columnId());
-        var column = existing.orElse(new ProjectFacade.ColumnRef(null, false, null));
+        // A task whose column has gone comes back to the backlog column; an event has no column (D-111).
+        var column = existing.orElseGet(() -> w.kind() == WorkItem.Kind.task
+                ? projectFacade.backlogColumn(actor, workspaceId, projectId)
+                : new ProjectFacade.ColumnRef(null, false, null));
         w.restore(existing.isPresent(), actor.userId(), agent(actor), clock.instant());
         w.move(column.id(), column.finalColumn(), w.position(), actor.userId(), agent(actor), clock.instant());
         workItemRepository.save(w);
@@ -589,19 +616,20 @@ public class WorkItemService implements WorkItemFacade, ColumnWorkItemSpi {
                         .map(ProjectFacade.ColumnRef::category)
                         .map(Enum::name)
                         .orElse(null);
+        // A task keeps its status across the move (D-111): the first column of its category in the new project, else
+        // its backlog column; out of a project its category becomes its own status (backlog when it had none).
+        if (item.kind() == WorkItem.Kind.task && category == null) category = ColumnCategory.backlog.name();
         String columnId = null;
-        boolean closed = "done".equals(category);
+        boolean closed = category != null && ColumnCategory.valueOf(category).closes();
         if (nextProject != null && item.kind() == WorkItem.Kind.task) {
-            var choices = projectFacade.boardColumns(actor, workspaceId, nextProject);
-            var target = choices.stream()
-                    .filter(column -> column.category() != null
-                            && column.category().name().equals(category))
+            String wanted = category;
+            var target = projectFacade.boardColumns(actor, workspaceId, nextProject).stream()
+                    .filter(column -> column.category().name().equals(wanted))
                     .findFirst()
-                    .orElse(null);
-            if (target != null) {
-                columnId = target.id();
-                closed = target.finalColumn();
-            } else closed = false;
+                    .map(column -> new ProjectFacade.ColumnRef(column.id(), column.finalColumn(), column.category()))
+                    .orElseGet(() -> projectFacade.backlogColumn(actor, workspaceId, nextProject));
+            columnId = target.id();
+            closed = target.finalColumn();
         }
         String previous = item.projectId();
         item.relocate(

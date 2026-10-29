@@ -5,7 +5,7 @@ import { authError } from '@/shared/api';
 import { rowReorderStyles as rows, useRowReorder } from '@/shared/lib/row-reorder';
 import { CompactDialog, FormMessage, NavIcon, QueryMessage, Select, SettingsAction, SettingsCard, SettingsHead, SettingsRow, StatusToken } from '@/shared/ui';
 import { columnsQuery, deleteColumn, projectQuery, refreshProjects, reorderColumns, type BoardColumn, type Project } from '@/entities/project';
-import { CATEGORY_LABELS, StatusBadge } from '@/entities/work-item';
+import { CATEGORY_LABELS, StatusBadge, statusSteps } from '@/entities/work-item';
 import { ColumnDialog } from './ColumnDialog';
 import styles from './project-settings.module.css';
 
@@ -16,7 +16,7 @@ const COLUMN = { word: '상태', object: '상태를', topic: '상태는' };
  * 워크플로: the project's board columns in order, each its category's mark, name and category, the one that finishes work
  * marked (D-049: at least one, and never the last column removed). A column is put in its place by its grip
  * (useRowReorder: carried by mouse or finger, or Alt + ↑ / ↓). 상태 추가 and 고치기 open the same short dialog; 삭제 asks
- * where the column's work items go (another column, or 상태 없음).
+ * where the column's work items go (another column, or the backlog column, D-111).
  */
 export function BoardSettings({ project, canManage }: { project: Project; canManage: boolean }) {
   const client = useQueryClient();
@@ -54,7 +54,7 @@ export function BoardSettings({ project, canManage }: { project: Project; canMan
           {shown.map(column => <div key={column.id} className={rows.row} role="listitem" {...reorder.rowProps(column.id)}>
             <SettingsRow lead={<span className={styles.lead}>
               {editable && <button type="button" className={rows.grip} {...reorder.gripProps(column)}><NavIcon name="grip" /></button>}
-              <StatusBadge category={column.category} isLabelHidden />
+              <StatusBadge category={column.category} step={statusSteps(shown).get(column.id)} isLabelHidden />
             </span>}
             label={<>{column.name}{column.isFinal && <> <StatusToken label="완료 상태" color="green" /></>}</>} description={CATEGORY_LABELS[column.category]}>
               {editable && <span className={styles.rowActions}>
@@ -75,7 +75,7 @@ export function BoardSettings({ project, canManage }: { project: Project; canMan
     <CompactDialog isOpen={!!removing} title={`'${removing?.name ?? ''}' 상태를 지울까요?`} width={520} isBusy={isBusy} onClose={() => { if (!isBusy) setRemoving(null); }}
       footer={<><Button label="취소" variant="ghost" onClick={() => setRemoving(null)} isDisabled={isBusy} /><Button label="옮기고 지우기" variant="destructive" isLoading={isBusy} onClick={() => { void remove(); }} /></>}>
       <Select label="이 상태의 업무를 옮길 곳" value={moveTo} onChange={value => setMoveTo(value ?? BACKLOG)}
-        options={[{ value: BACKLOG, label: '상태 없음' }, ...list.filter(column => column.id !== removing?.id).map(column => ({ value: column.id, label: column.name }))]} />
+        options={[{ value: BACKLOG, label: '백로그 칸' }, ...list.filter(column => column.id !== removing?.id).map(column => ({ value: column.id, label: column.name }))]} />
     </CompactDialog>
   </VStack>;
 }

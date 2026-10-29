@@ -3,7 +3,7 @@ import { IconButton, useToast } from '@astryxdesign/core';
 import { useQueryClient } from '@tanstack/react-query';
 import { authError } from '@/shared/api';
 import { NavIcon, useFillRoom } from '@/shared/ui';
-import { CATEGORIES, CATEGORY_LABELS, WorkItemLink, moveItem, PeopleAvatars, PriorityMark, refreshItems, StatusBadge, type ColumnCategory, type WorkItemSearch, type WorkItem } from '@/entities/work-item';
+import { CATEGORIES, CATEGORY_LABELS, WorkItemLink, moveItem, PeopleAvatars, PriorityMark, refreshItems, StatusBadge, statusSteps, type ColumnCategory, type WorkItemSearch, type WorkItem } from '@/entities/work-item';
 import { TypeMark } from '@/entities/work-item-type';
 import type { Scope } from '../model/scope';
 import { useBoardMove } from './useBoardMove';
@@ -30,6 +30,7 @@ export function BoardView({ scope, items, search, onCreate, badges }: {
     ? [...scope.columns].sort((a, b) => a.position - b.position).map(column => ({ key: column.id, name: column.name, category: column.category, columnId: column.id,
       cards: items.filter(item => item.columnId === column.id).sort(byPosition) }))
     : CATEGORIES.map(category => ({ key: category, name: CATEGORY_LABELS[category], category, cards: items.filter(item => item.columnCategory === category).sort(byPosition) }));
+  const steps = statusSteps(scope.project ? scope.columns : []);
   const canMove = !!scope.project && scope.canWrite;
   const room = useFillRoom<HTMLDivElement>(true);
   const move = useBoardMove(lanes, canMove, styles.ghost, async (item, place) => {
@@ -43,7 +44,7 @@ export function BoardView({ scope, items, search, onCreate, badges }: {
       {move.shown.map(lane => <section key={lane.key} className={styles.column} role="listitem" aria-label={`${lane.name} ${lane.cards.length}개`}
         data-lane={lane.key} data-over={move.carry?.spot.lane === lane.key || undefined}>
         <header className={styles.columnHead}>
-          <span className={styles.columnName}><StatusBadge category={lane.category} name={lane.name} /></span><span className={styles.columnCount}>{lane.cards.length}</span>
+          <span className={styles.columnName}><StatusBadge category={lane.category} name={lane.name} step={lane.columnId ? steps.get(lane.columnId) : undefined} /></span><span className={styles.columnCount}>{lane.cards.length}</span>
           {onCreate && <span className={styles.columnAdd}><IconButton label={`${lane.name}에 업무 추가`} icon={<NavIcon name="plus" />} variant="ghost" size="sm" onClick={() => onCreate(lane.key)} /></span>}
         </header>
         <ul className={styles.cards} data-lane-scroll="">{lane.cards.map(item => <li key={item.id}>

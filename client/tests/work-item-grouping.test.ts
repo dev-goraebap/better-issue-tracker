@@ -73,6 +73,12 @@ test('a parent\'s progress counts its subtasks and those done', () => {
   assert.equal(progress.has('2'), false);
 });
 
+test('a canceled subtask counts as neither done nor still to do (D-111)', () => {
+  const progress = subtaskProgress([item('1'), item('2', { parentId: '1', columnCategory: 'done' }), item('3', { parentId: '1', columnCategory: 'canceled' }),
+    item('4', { parentId: '1', columnCategory: 'backlog' })]);
+  assert.deepEqual(progress.get('1'), { done: 1, total: 2 });
+});
+
 test('the tree lines know where a line runs on, where a row closes its parent\'s subtasks and where one goes down', () => {
   const root = item('1');
   const a = item('2', { parentId: '1' });

@@ -116,6 +116,10 @@ public final class WorkItem {
     private String workspaceId;
     private String publicRef;
     private String workspaceStatus;
+    /** The statuses a task without a project may have, and those that close it (D-111). */
+    private static final Set<String> STATUSES = Set.of("backlog", "todo", "doing", "done", "canceled");
+
+    private static final Set<String> CLOSING = Set.of("done", "canceled");
     private final long number;
     private Kind kind;
     private Details details;
@@ -270,14 +274,13 @@ public final class WorkItem {
         touch(actor, agent, now);
     }
 
+    /** A task without a project keeps its own status (D-111): one of the five categories, closed when done or canceled. */
     public void setWorkspaceStatus(String category, String actor, String agent, Instant now) {
-        if (projectId != null
-                || kind != Kind.task
-                || category != null && !Set.of("todo", "doing", "done").contains(category))
+        if (projectId != null || kind != Kind.task || !STATUSES.contains(category))
             throw new IllegalArgumentException("Invalid workspace status");
         if (Objects.equals(workspaceStatus, category)) return;
         workspaceStatus = category;
-        closedAt = "done".equals(category) ? (closedAt == null ? now : closedAt) : null;
+        closedAt = CLOSING.contains(category) ? (closedAt == null ? now : closedAt) : null;
         touch(actor, agent, now);
     }
 

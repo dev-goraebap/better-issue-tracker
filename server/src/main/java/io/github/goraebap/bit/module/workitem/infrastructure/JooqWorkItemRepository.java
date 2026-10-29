@@ -9,6 +9,7 @@ import static io.github.goraebap.bit.jooq.tables.WorkItem.WORK_ITEM;
 import static io.github.goraebap.bit.jooq.tables.WorkItemLabel.WORK_ITEM_LABEL;
 import static io.github.goraebap.bit.jooq.tables.WorkItemPerson.WORK_ITEM_PERSON;
 
+import io.github.goraebap.bit.module.project.ColumnCategory;
 import io.github.goraebap.bit.module.workitem.domain.WorkItem;
 import io.github.goraebap.bit.module.workitem.domain.WorkItemRepository;
 import io.github.goraebap.bit.shared.domain.Ids;
@@ -408,7 +409,7 @@ class JooqWorkItemRepository implements WorkItemRepository {
         if (!q.kinds().isEmpty())
             where = where.and(
                     WORK_ITEM.KIND.in(q.kinds().stream().map(Enum::name).toList()));
-        if (q.backlog()) where = where.and(backlog());
+        if (q.backlog()) where = where.and(inBacklog());
         else if (q.columnId() != null) where = where.and(WORK_ITEM.BOARD_COLUMN_ID.eq(q.columnId()));
         if (!q.columnIds().isEmpty()) where = where.and(WORK_ITEM.BOARD_COLUMN_ID.in(q.columnIds()));
         if (!q.categories().isEmpty() || q.noCategory()) {
@@ -416,7 +417,7 @@ class JooqWorkItemRepository implements WorkItemRepository {
                     ? DSL.falseCondition()
                     : DSL.coalesce(WORK_ITEM.WORKSPACE_STATUS, BOARD_COLUMN.CATEGORY)
                             .in(q.categories());
-            if (q.noCategory()) category = category.or(backlog());
+            if (q.noCategory()) category = category.or(inBacklog());
             where = where.and(category);
         }
         if (!q.labelIds().isEmpty())
@@ -481,6 +482,19 @@ class JooqWorkItemRepository implements WorkItemRepository {
                 .and(WORK_ITEM.KIND.eq(WorkItem.Kind.task.name()))
                 .groupBy(WORK_ITEM.BOARD_COLUMN_ID)
                 .fetch(r -> new ColumnCount(r.get(WORK_ITEM.BOARD_COLUMN_ID), r.get(count)));
+    }
+
+    /**
+     * Tasks in the backlog as a list reads them, its board column joined (D-111): those in a backlog column or with
+     * backlog as their own status, and any task still without a status. An event has no status and is not in it.
+     */
+    private static Condition inBacklog() {
+        return backlog()
+                .or(WORK_ITEM
+                        .KIND
+                        .eq(WorkItem.Kind.task.name())
+                        .and(DSL.coalesce(WORK_ITEM.WORKSPACE_STATUS, BOARD_COLUMN.CATEGORY)
+                                .eq(ColumnCategory.backlog.name())));
     }
 
     /** Tasks without a status (D-092): an event has no column either, but it is not waiting in the backlog. */

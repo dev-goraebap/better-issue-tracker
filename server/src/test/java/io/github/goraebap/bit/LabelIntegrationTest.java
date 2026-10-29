@@ -9,6 +9,7 @@ import io.github.goraebap.bit.module.label.application.LabelViews;
 import io.github.goraebap.bit.module.project.ColumnCategory;
 import io.github.goraebap.bit.module.project.application.ProjectRequests;
 import io.github.goraebap.bit.module.project.application.ProjectService;
+import io.github.goraebap.bit.module.project.domain.BoardColumn;
 import io.github.goraebap.bit.module.workitem.application.WorkItemQueryService;
 import io.github.goraebap.bit.module.workitem.application.WorkItemRequests;
 import io.github.goraebap.bit.module.workitem.application.WorkItemService;
@@ -321,7 +322,8 @@ class LabelIntegrationTest {
             var read = JSON.readTree(http(client, "GET", path, null).body());
             assertThat(read.path("labels").get(0).path("name").asText()).isEqualTo("결정기록");
             assertThat(read.path("labels").size()).isEqualTo(2);
-            assertThat(read.path("columnCategory").isNull()).isTrue();
+            // Made with no column, a task starts in the backlog (D-111).
+            assertThat(read.path("columnCategory").asText()).isEqualTo("backlog");
             expect(http(client, "PATCH", path, "{\"expectedVersion\":0,\"labelIds\":null}", null), 204);
             assertThat(JSON.readTree(http(client, "GET", path, null).body())
                             .path("labels")
@@ -344,15 +346,11 @@ class LabelIntegrationTest {
         String bug = labelService.create(owner, workspace, "bug", "#cc0000");
         var day = LocalDate.of(2026, 11, 10);
         String todo = workItemService.create(
-                owner, workspace, p1, details("Todo one"), c1.getFirst().id(), Set.of(bug));
+                owner, workspace, p1, details("Todo one"), first(c1, ColumnCategory.todo), Set.of(bug));
         String doing = workItemService.create(
-                owner,
-                workspace,
-                p2,
-                dated("Doing two", day, day.plusDays(5)),
-                c2.get(1).id());
+                owner, workspace, p2, dated("Doing two", day, day.plusDays(5)), first(c2, ColumnCategory.doing));
         String done = workItemService.create(
-                owner, workspace, p2, dated("Done two", null, day), c2.getLast().id());
+                owner, workspace, p2, dated("Done two", null, day), first(c2, ColumnCategory.done));
         String backlog = workItemService.create(
                 owner, workspace, p1, dated("Backlog one", day.plusDays(20), null), null, Set.of(bug));
         workItemService.create(owner, workspace, archivedProject, details("Hidden archived"), null);
@@ -380,7 +378,7 @@ class LabelIntegrationTest {
         byCategory.setCategory(List.of("finished"));
         assertThat(code(() -> ids(byCategory))).isEqualTo("COMMON_INVALID_REQUEST");
         var byColumn = new WorkItemRequests.WorkspaceListRequest();
-        byColumn.setColumnId(List.of(c1.getFirst().id(), c2.getLast().id()));
+        byColumn.setColumnId(List.of(first(c1, ColumnCategory.todo), first(c2, ColumnCategory.done)));
         assertThat(ids(byColumn)).containsExactlyInAnyOrder(todo, done);
         var dates = new WorkItemRequests.WorkspaceListRequest();
         dates.setHasDates(true);
@@ -446,9 +444,21 @@ class LabelIntegrationTest {
         String project = projectService.create(owner, workspace, "Board", "BRD", null);
         var columns = projectService.columns(owner, workspace, project);
         assertThat(columns.stream().map(c -> c.category()))
-                .containsExactly(ColumnCategory.todo, ColumnCategory.doing, ColumnCategory.doing, ColumnCategory.done);
+                .containsExactly(
+                        ColumnCategory.backlog,
+                        ColumnCategory.todo,
+                        ColumnCategory.doing,
+                        ColumnCategory.doing,
+                        ColumnCategory.done,
+                        ColumnCategory.canceled);
+        assertThat(columns.stream().filter(c -> c.finalColumn()).map(c -> c.category()))
+                .containsExactly(ColumnCategory.done, ColumnCategory.canceled);
         assertThat(code(() -> projectService.addColumn(
                         owner, workspace, project, 0, "Shipped", null, true, ColumnCategory.todo)))
+                .isEqualTo("PROJECT_COLUMN_CATEGORY_INVALID");
+        // A canceled column always closes (D-111).
+        assertThat(code(() -> projectService.addColumn(
+                        owner, workspace, project, 0, "Dropped", null, false, ColumnCategory.canceled)))
                 .isEqualTo("PROJECT_COLUMN_CATEGORY_INVALID");
         String shipped = projectService.addColumn(owner, workspace, project, 0, "Shipped", null, true, null);
         String waiting = projectService.addColumn(owner, workspace, project, 1, "Waiting", null, false, null);
@@ -484,6 +494,14 @@ class LabelIntegrationTest {
         String item = workItemService.create(owner, workspace, project, details("Moved"), waiting);
         assertThat(workItemQueryService.get(owner, workspace, project, item).columnCategory())
                 .isEqualTo(ColumnCategory.todo);
+    }
+
+    private static String first(List<BoardColumn> columns, ColumnCategory category) {
+        return columns.stream()
+                .filter(c -> c.category() == category)
+                .findFirst()
+                .orElseThrow()
+                .id();
     }
 
     private ColumnCategory category(String project, String column) {
