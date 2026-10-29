@@ -1,0 +1,53 @@
+name: 버그 제보
+description: BIT가 기대와 다르게 동작할 때 (화면, 서버·API, MCP 도구, 스킬, 설치·배포)
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        API 키·토큰·비밀번호, 개인정보, 회사 업무 내용은 적지 마세요. 업무 제목·본문이 필요하면 바꿔 쓴 예로 적어 주세요.
+  - type: dropdown
+    id: area
+    attributes:
+      label: 어디에서
+      options:
+        - 화면
+        - 서버·API
+        - MCP 도구
+        - better-issue-tracker 스킬
+        - 설치·배포
+        - 잘 모르겠음
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: BIT 버전
+      description: 화면 왼쪽 아래에 보입니다. 예) 0.17.1
+    validations:
+      required: true
+  - type: input
+    id: agent
+    attributes:
+      label: 에이전트(MCP·스킬일 때)
+      description: 예) Claude Code 2.1, Codex
+  - type: textarea
+    id: steps
+    attributes:
+      label: 한 일
+      description: 다시 해 볼 수 있게 순서대로 적어 주세요. MCP라면 부른 도구와 인자를 적어 주세요.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: 기대한 결과
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: 실제 결과
+      description: 오류 문구, 화면 캡처, 서버 로그의 해당 줄을 붙여 주세요.
+    validations:
+      required: true
