@@ -1,10 +1,11 @@
 import type { ReactNode } from 'react';
-import { ITEM_ROW_LINK, ItemGroup, ItemList, ItemMeta, ItemRow, NavIcon } from '@/shared/ui';
-import { dateText } from '@/shared/lib/date-text';
+import { DueChip, ITEM_ROW_LINK, ITEM_TITLE_LINK, ItemGroup, ItemList, ItemMeta, ItemRow, NavIcon } from '@/shared/ui';
+import { agoText, dateText, momentText } from '@/shared/lib/date-text';
 import { TypeMark } from '@/entities/work-item-type/@x/work-item';
 import type { ListLine, WorkItemGroup } from '../model/grouping';
 import type { WorkItemSearch } from '../model/search';
 import type { ViewColumn } from '../model/views';
+import { categoryOf } from '../model/work-item';
 import { GroupMark } from './GroupMark';
 import { LabelTokens } from './LabelTokens';
 import { NoPriority } from './NoPriority';
@@ -25,10 +26,11 @@ type Progress = ReadonlyMap<string, { done: number; total: number }>;
  *
  * - A desktop row leads with marks of fixed widths so they line up down the list: the priority, the key, the status and
  *   the type (D-104); then the title, how many of its subtasks are done, and its parent's name when the parent is not
- *   above it. Its end holds only what the work item has: labels, pull requests (badges), due day, people, and the day it
- *   changed or was made.
- * - A phone row is a small card: the type and title over the key and the rest, the people at its end; a subtask is set
- *   in 16px a level with no lines.
+ *   above it. Its end holds only what the work item has: labels, pull requests (badges), due day (a chip saying how near
+ *   it is), people, and how long ago it changed or was made (each by its own icon, BIT-124). Only the title opens the work item, underlined under the pointer (BIT-123); the row shows its
+ *   hover band and leaves its marks free for their own uses.
+ * - A phone row is a small card that opens from anywhere on it (a thumb has no hover to aim with): the type and title
+ *   over the key and the rest, the people at its end; a subtask is set in 16px a level with no lines.
  *
  * The view's columns (표시할 속성) say which of the properties show; the key, type and title always do. A project's
  * list names each status by its column (columnNames), 전체 by its category.
@@ -54,7 +56,12 @@ export function WorkItemList({ workspaceId, groups, search, columns, columnNames
     </>;
     // A phone's two-line card shows a subtask by its inset alone; lines only crowd it.
     const tree = !isPhone && (line.depth > 0 || line.hasChildren) ? <TreeLines line={line} /> : undefined;
-    const link = <WorkItemLink workspaceId={workspaceId} item={item} search={search} className={ITEM_ROW_LINK}>{item.title}</WorkItemLink>;
+    // Its day tells how near (DueChip); the days it changed and was made say how long ago, each by its own icon (BIT-124).
+    const isDone = categoryOf(item) === 'done';
+    const updated = <ItemMeta width="5.75rem" align="end" label={`수정 ${dateText(item.updatedAt)}`} title={`수정 ${momentText(item.updatedAt)}`}>
+      <NavIcon name="edit" />{agoText(item.updatedAt)}
+    </ItemMeta>;
+    const link = <WorkItemLink workspaceId={workspaceId} item={item} search={search} className={isPhone ? ITEM_ROW_LINK : ITEM_TITLE_LINK}>{item.title}</WorkItemLink>;
     if (isPhone) return <ItemRow key={`${group.key}:${item.id}`} depth={line.depth} isTitleSingleLine
       end={item.people.length > 0 ? <PeopleAvatars people={item.people} /> : undefined}
       title={<>{item.type && <span className={styles.typeLead}><TypeMark type={item.type} /></span>}{link}</>}
@@ -65,8 +72,8 @@ export function WorkItemList({ workspaceId, groups, search, columns, columnNames
         {shows('status') && status && <ItemMeta>{status}</ItemMeta>}
         {shows('priority') && item.priority && <ItemMeta><PriorityMark priority={item.priority} /></ItemMeta>}
         {shows('labels') && item.labels.length > 0 && <ItemMeta><LabelTokens labels={item.labels.slice(0, 2)} /></ItemMeta>}
-        {shows('due') && item.dueDate && <ItemMeta label={`기한 ${dateText(item.dueDate)}`}><NavIcon name="calendar" />{dateText(item.dueDate)}</ItemMeta>}
-        <ItemMeta label={`수정 ${dateText(item.updatedAt)}`}>{dateText(item.updatedAt)}</ItemMeta>
+        {shows('due') && item.dueDate && <ItemMeta label={`기한 ${dateText(item.dueDate)}`}><DueChip day={item.dueDate} isDone={isDone} /></ItemMeta>}
+        {updated}
       </>} />;
     return <ItemRow key={`${group.key}:${item.id}`} depth={line.depth} guide={tree}
       lead={<>
@@ -79,10 +86,12 @@ export function WorkItemList({ workspaceId, groups, search, columns, columnNames
       meta={<>
         {shows('labels') && item.labels.length > 0 && <ItemMeta><LabelTokens labels={item.labels.slice(0, 3)} /></ItemMeta>}
         {badges?.get(item.id) && <ItemMeta>{badges.get(item.id)}</ItemMeta>}
-        {shows('due') && item.dueDate && <ItemMeta label={`기한 ${dateText(item.dueDate)}`}><NavIcon name="calendar" />{dateText(item.dueDate)}</ItemMeta>}
+        {shows('due') && item.dueDate && <ItemMeta label={`기한 ${dateText(item.dueDate)}`}><DueChip day={item.dueDate} isDone={isDone} /></ItemMeta>}
         {shows('assignee') && item.people.length > 0 && <ItemMeta><PeopleAvatars people={item.people} /></ItemMeta>}
-        {shows('updated') && <ItemMeta width="4.5rem" align="end" label={`수정 ${dateText(item.updatedAt)}`}>{dateText(item.updatedAt)}</ItemMeta>}
-        {shows('created') && <ItemMeta width="4.5rem" align="end" label={`만든 날 ${dateText(item.createdAt)}`}>{dateText(item.createdAt)}</ItemMeta>}
+        {shows('updated') && updated}
+        {shows('created') && <ItemMeta width="5.75rem" align="end" label={`만든 날 ${dateText(item.createdAt)}`} title={`만든 날 ${momentText(item.createdAt)}`}>
+          <NavIcon name="created" />{agoText(item.createdAt)}
+        </ItemMeta>}
       </>} />;
   };
   return <ItemList label="업무 목록">{groups.flatMap(group => [

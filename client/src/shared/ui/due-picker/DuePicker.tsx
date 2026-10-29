@@ -5,17 +5,9 @@ import { MOBILE_QUERY } from '@/shared/config';
 import { object } from '@/shared/lib/korean-particle';
 import { FrameBody, FrameHead } from '../frame';
 import { NavIcon } from '../NavIcon';
+import { daysFrom, pad, plus, short, todayOf, weekday } from './days';
 import styles from './due-picker.module.css';
 
-const DAY = 86_400_000;
-const pad = (value: number) => String(value).padStart(2, '0');
-/** Today in the member's own time zone. */
-const todayOf = () => { const now = new Date(); return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`; };
-const at = (day: string) => Date.parse(`${day}T00:00:00Z`);
-const plus = (today: string, days: number) => new Date(at(today) + days * DAY).toISOString().slice(0, 10);
-const weekday = (day: string) => new Date(at(day)).getUTCDay();
-const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
-const short = (day: string) => `${Number(day.slice(5, 7))}월 ${Number(day.slice(8))}일 (${WEEKDAYS[weekday(day)]})`;
 const presetsOf = (today: string) => [
   { label: '오늘', day: today },
   { label: '내일', day: plus(today, 1) },
@@ -45,7 +37,7 @@ function parseDay(words: string, today: string): string | undefined {
 
 /** How far off a day is, as Linear's pill says it: 오늘, 내일, 5일 뒤, 2일 지남. */
 const offText = (day: string, today: string) => {
-  const days = Math.round((at(day) - at(today)) / DAY);
+  const days = daysFrom(today, day);
   return days === 0 ? '오늘' : days === 1 ? '내일' : days > 0 ? `${days}일 뒤` : `${-days}일 지남`;
 };
 

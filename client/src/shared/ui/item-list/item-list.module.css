@@ -44,6 +44,10 @@
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .row :is(button:not(.rowLink), a:not(.rowLink), [role="button"], [tabindex="0"]) { position: relative; z-index: 2; }
 .row:has(.rowLink) { cursor: pointer; }
+/* A title that alone opens its row (BIT-123): the row keeps its hover band, the title takes an underline under the pointer. */
+.titleLink { color: inherit; text-decoration-line: none; text-decoration-thickness: 1px; text-underline-offset: 0.2em; }
+.titleLink:hover { text-decoration-line: underline; }
+.titleLink:focus-visible { border-radius: 2px; outline: var(--focus-outline-width) var(--focus-outline-style) var(--focus-outline-color); outline-offset: 2px; }
 /*
  * A phone reads each row as a small card (BIT, D-058): its own inset (20px), the lead (a person's picture, a mark) beside
  * two lines, the title (up to two lines) over the properties, about 72px a row and taller for a long title. Properties
