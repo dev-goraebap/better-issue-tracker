@@ -34,12 +34,12 @@ const NAMES = { task: { noun: '작업', title: '새 작업' }, event: { noun: '�
 
 /**
  * Where a new work item starts in a project: the column a board lane's + named, the first column of the category 전체's lane
- * named, none for 상태 없음 (D-066), else the project's first 할 일 column.
+ * named (none, as an older address says, is the backlog, D-111), else the project's first 할 일 column.
  */
 function startColumn(columns: readonly BoardColumn[], status?: string): string {
-  if (status === NO_STATUS) return NO_STATUS;
+  const wanted = status === NO_STATUS ? 'backlog' : status ?? 'todo';
   const sorted = [...columns].sort((a, b) => a.position - b.position);
-  return sorted.find(column => column.id === status)?.id ?? sorted.find(column => column.category === (status ?? 'todo'))?.id ?? sorted[0]?.id ?? NO_STATUS;
+  return sorted.find(column => column.id === wanted)?.id ?? sorted.find(column => column.category === wanted)?.id ?? sorted[0]?.id ?? NO_STATUS;
 }
 
 /**

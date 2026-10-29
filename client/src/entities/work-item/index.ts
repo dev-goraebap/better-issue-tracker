@@ -4,7 +4,7 @@ export {
 export type { WorkItem, ItemLabel, ColumnCategory, TaskFilters } from './api/work-item';
 export { PRIORITIES } from './model/labels';
 export {
-  CATEGORIES, CATEGORY_LABELS, categoryOf, eventFields, eventTimeOf, eventWhen, localDay, localTime, reminderText, repeatBody, repeatOf, workItemHref, PRIORITY_RANK, spanOf, SYSTEM_LABEL, type Priority, type StatusCategory,
+  CATEGORIES, CATEGORY_LABELS, categoryOf, isClosedCategory, eventFields, eventTimeOf, eventWhen, localDay, localTime, reminderText, repeatBody, repeatOf, workItemHref, PRIORITY_RANK, spanOf, statusSteps, SYSTEM_LABEL, type Priority, type StatusCategory, type StatusStep,
 } from './model/work-item';
 export { WORK_ITEM_TEMPLATES, templateLabel, type WorkItemTemplate } from './model/templates';
 export { parseWorkItemSearch, parseNewWorkItemSearch, type WorkItemSearch, type NewWorkItemSearch } from './model/search';

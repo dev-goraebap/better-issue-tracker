@@ -84,7 +84,7 @@ export function SidebarProjects({ workspaceId, projects, currentId, currentSecti
     // No link of its own, so the whole row opens and closes it with the chevron beside the name, as in the settings menu.
     const item = <SideNavItem key={project.id} label={project.name} icon={mark(project)}
       collapsible={{ isCollapsed: !isOpen, onCollapsedChange: isCollapsed => toggle(project.id, !isCollapsed) }}>
-      <SideNavItem label="업무" href={link} icon={<NavIcon name="tasks" />} isSelected={currentId === project.id && currentSection === 'work-items'} onClick={onGo(link)} />
+      <SideNavItem label="업무" href={link} icon={<NavIcon name="work-items" />} isSelected={currentId === project.id && currentSection === 'work-items'} onClick={onGo(link)} />
       <SideNavItem label="문서" href={documents} icon={<NavIcon name="document" />} isSelected={currentId === project.id && currentSection === 'documents'} onClick={onGo(documents)} />
     </SideNavItem>;
     if (!canReorder) return item;

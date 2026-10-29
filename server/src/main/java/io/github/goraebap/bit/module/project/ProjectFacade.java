@@ -23,6 +23,9 @@ public interface ProjectFacade {
 
     Optional<ColumnRef> findColumn(CurrentUser actor, String workspaceId, String projectId, String columnId);
 
+    /** Where a task goes when no status is named (D-111): the project's first backlog column, else its first open one. */
+    ColumnRef backlogColumn(CurrentUser actor, String workspaceId, String projectId);
+
     /** The project's board columns in order, with their names: where a work item can be moved. */
     java.util.List<ColumnInfo> boardColumns(CurrentUser actor, String workspaceId, String projectId);
 
@@ -30,6 +33,6 @@ public interface ProjectFacade {
 
     record ProjectRef(String id, String workspaceId, String key, long version, boolean archived) {}
 
-    /** A null id is the backlog, which has no category. */
+    /** A null id is no column, which only an event has (D-111). */
     record ColumnRef(String id, boolean finalColumn, ColumnCategory category) {}
 }

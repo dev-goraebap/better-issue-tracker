@@ -108,8 +108,9 @@ class Hosts {
         var doing = columns.stream()
                 .filter(c -> c.category() == ColumnCategory.doing)
                 .toList();
+        // Finishing is done, never canceled (D-111): the first closing done column, else the first done one.
         var done = columns.stream()
-                .filter(ProjectFacade.ColumnInfo::finalColumn)
+                .filter(c -> c.finalColumn() && c.category() == ColumnCategory.done)
                 .findFirst()
                 .or(() -> columns.stream()
                         .filter(c -> c.category() == ColumnCategory.done)

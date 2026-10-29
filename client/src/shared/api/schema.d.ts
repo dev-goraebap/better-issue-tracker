@@ -1735,7 +1735,7 @@ export interface components {
         WorkspaceStatus: {
             /** Format: int64 */
             expectedVersion: number;
-            category?: string;
+            category: string;
         };
         ProjectChange: {
             /** Format: int64 */
@@ -1882,7 +1882,7 @@ export interface components {
             grouping?: "none" | "status" | "assignee" | "priority" | "type" | "label" | "project" | null;
         };
         WorkItemViewFilters: {
-            /** @description Status categories: todo, doing, done, none */
+            /** @description Status categories: backlog, todo, doing, done, canceled */
             status?: string;
             priority?: string;
             /** @description User ids */
@@ -2021,10 +2021,10 @@ export interface components {
             color?: string | null;
             isFinal?: boolean;
             /**
-             * @description Omitted: done for a final column, doing otherwise. A final column must be done
+             * @description Omitted: done for a final column, doing otherwise. A final column is done or canceled, and a canceled column is final
              * @enum {string|null}
              */
-            category?: "todo" | "doing" | "done" | null;
+            category?: "backlog" | "todo" | "doing" | "done" | "canceled" | null;
         };
         ReorderBoardColumns: {
             /** Format: int64 */
@@ -2298,10 +2298,10 @@ export interface components {
             color?: string | null;
             isFinal?: boolean;
             /**
-             * @description Omitted: kept, except done when the column becomes final and doing when it stops being final
+             * @description Omitted: kept, except done when the column becomes final (canceled stays canceled) and doing when it stops being final
              * @enum {string}
              */
-            category?: "todo" | "doing" | "done";
+            category?: "backlog" | "todo" | "doing" | "done" | "canceled";
         };
         UpdateLabel: {
             /** Format: int64 */
@@ -2356,10 +2356,10 @@ export interface components {
             description: string | null;
             columnId: string | null;
             /**
-             * @description Category of the column; null in the backlog
+             * @description Category of the column, or the status of a task without a project; null only for an event
              * @enum {string|null}
              */
-            columnCategory: "todo" | "doing" | "done" | null;
+            columnCategory: "backlog" | "todo" | "doing" | "done" | "canceled" | null;
             /** @description Live labels, system labels first and then by name */
             labels: components["schemas"]["WorkItemLabel"][];
             /** Format: double */
@@ -2631,7 +2631,7 @@ export interface components {
             position: number;
             isFinal: boolean;
             /** @enum {string} */
-            category: "todo" | "doing" | "done";
+            category: "backlog" | "todo" | "doing" | "done" | "canceled";
             /** Format: int64 */
             version: number;
         };
@@ -3832,7 +3832,7 @@ export interface operations {
     list_3: {
         parameters: {
             query?: {
-                /** @description A column id of the project, or backlog */
+                /** @description A column id of the project, or backlog for its backlog column */
                 column?: string;
                 /** @description Items this member does or attends */
                 personId?: string | null;
@@ -3842,7 +3842,7 @@ export interface operations {
                 labelId?: string[];
                 /** @description Any of these work item types (repeatable). Events have no type, so they drop out */
                 typeId?: string[];
-                /** @description Any of todo, doing, done, or none for items without a status (repeatable) */
+                /** @description Any of backlog, todo, doing, done or canceled (repeatable); none is read as backlog (D-111) */
                 category?: string[];
                 /** @description true: has a start or due date. false: has neither */
                 hasDates?: boolean | null;
@@ -5860,7 +5860,7 @@ export interface operations {
             query?: {
                 /** @description Any of these projects (repeatable). Archived and deleted projects are always left out */
                 projectId?: string[];
-                /** @description Any of these columns (repeatable); use category=none for items without a status */
+                /** @description Any of these columns (repeatable); use category=backlog for the backlog */
                 columnId?: string[];
                 /** @description Items this member does or attends */
                 personId?: string | null;
@@ -5870,7 +5870,7 @@ export interface operations {
                 labelId?: string[];
                 /** @description Any of these work item types (repeatable). Events have no type, so they drop out */
                 typeId?: string[];
-                /** @description Any of todo, doing, done, or none for items without a status (repeatable) */
+                /** @description Any of backlog, todo, doing, done or canceled (repeatable); none is read as backlog (D-111) */
                 category?: string[];
                 /** @description true: has a start or due date. false: has neither */
                 hasDates?: boolean | null;
@@ -6054,7 +6054,7 @@ export interface operations {
     counts: {
         parameters: {
             query?: {
-                /** @description A column id of the project, or backlog */
+                /** @description A column id of the project, or backlog for its backlog column */
                 column?: string;
                 /** @description Items this member does or attends */
                 personId?: string | null;
@@ -6064,7 +6064,7 @@ export interface operations {
                 labelId?: string[];
                 /** @description Any of these work item types (repeatable). Events have no type, so they drop out */
                 typeId?: string[];
-                /** @description Any of todo, doing, done, or none for items without a status (repeatable) */
+                /** @description Any of backlog, todo, doing, done or canceled (repeatable); none is read as backlog (D-111) */
                 category?: string[];
                 /** @description true: has a start or due date. false: has neither */
                 hasDates?: boolean | null;
@@ -6199,7 +6199,7 @@ export interface operations {
     mine: {
         parameters: {
             query?: {
-                /** @description A column id of the project, or backlog */
+                /** @description A column id of the project, or backlog for its backlog column */
                 column?: string;
                 /** @description Items this member does or attends */
                 personId?: string | null;
@@ -6209,7 +6209,7 @@ export interface operations {
                 labelId?: string[];
                 /** @description Any of these work item types (repeatable). Events have no type, so they drop out */
                 typeId?: string[];
-                /** @description Any of todo, doing, done, or none for items without a status (repeatable) */
+                /** @description Any of backlog, todo, doing, done or canceled (repeatable); none is read as backlog (D-111) */
                 category?: string[];
                 /** @description true: has a start or due date. false: has neither */
                 hasDates?: boolean | null;

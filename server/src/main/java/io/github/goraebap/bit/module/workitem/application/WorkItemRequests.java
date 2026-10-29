@@ -530,7 +530,9 @@ public final class WorkItemRequests {
             typeId = value == null ? List.of() : List.copyOf(value);
         }
 
-        @Schema(description = "Any of todo, doing, done, or none for items without a status (repeatable)")
+        @Schema(
+                description =
+                        "Any of backlog, todo, doing, done or canceled (repeatable); none is read as backlog (D-111)")
         public List<String> getCategory() {
             return List.copyOf(category);
         }
@@ -650,7 +652,7 @@ public final class WorkItemRequests {
     public static final class ListRequest extends Filters {
         private String column;
 
-        @Schema(description = "A column id of the project, or backlog")
+        @Schema(description = "A column id of the project, or backlog for its backlog column")
         public String getColumn() {
             return column;
         }
@@ -673,7 +675,7 @@ public final class WorkItemRequests {
             projectId = value == null ? List.of() : List.copyOf(value);
         }
 
-        @Schema(description = "Any of these columns (repeatable); use category=none for items without a status")
+        @Schema(description = "Any of these columns (repeatable); use category=backlog for the backlog")
         public List<String> getColumnId() {
             return List.copyOf(columnId);
         }

@@ -39,7 +39,7 @@ class WorkItemController {
     public record WorkspaceStatus(
             @jakarta.validation.constraints.NotNull @Min(0) Long expectedVersion,
 
-            @jakarta.validation.constraints.Pattern(regexp = "todo|doing|done") String category) {}
+            @jakarta.validation.constraints.NotNull @jakarta.validation.constraints.Pattern(regexp = "backlog|todo|doing|done|canceled") String category) {}
 
     @PutMapping("/work-items/id/{workItemId}/project")
     ResponseEntity<Void> changeProject(

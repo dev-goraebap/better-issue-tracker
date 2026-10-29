@@ -1246,11 +1246,11 @@
         }, {
           "name" : "column",
           "in" : "query",
-          "description" : "A column id of the project, or backlog",
+          "description" : "A column id of the project, or backlog for its backlog column",
           "required" : false,
           "schema" : {
             "type" : "string",
-            "description" : "A column id of the project, or backlog"
+            "description" : "A column id of the project, or backlog for its backlog column"
           }
         }, {
           "name" : "personId",
@@ -1303,14 +1303,14 @@
         }, {
           "name" : "category",
           "in" : "query",
-          "description" : "Any of todo, doing, done, or none for items without a status (repeatable)",
+          "description" : "Any of backlog, todo, doing, done or canceled (repeatable); none is read as backlog (D-111)",
           "required" : false,
           "schema" : {
             "type" : "array",
-            "description" : "Any of todo, doing, done, or none for items without a status (repeatable)",
+            "description" : "Any of backlog, todo, doing, done or canceled (repeatable); none is read as backlog (D-111)",
             "items" : {
               "type" : "string",
-              "description" : "Any of todo, doing, done, or none for items without a status (repeatable)"
+              "description" : "Any of backlog, todo, doing, done or canceled (repeatable); none is read as backlog (D-111)"
             }
           }
         }, {
@@ -4258,14 +4258,14 @@
         }, {
           "name" : "columnId",
           "in" : "query",
-          "description" : "Any of these columns (repeatable); use category=none for items without a status",
+          "description" : "Any of these columns (repeatable); use category=backlog for the backlog",
           "required" : false,
           "schema" : {
             "type" : "array",
-            "description" : "Any of these columns (repeatable); use category=none for items without a status",
+            "description" : "Any of these columns (repeatable); use category=backlog for the backlog",
             "items" : {
               "type" : "string",
-              "description" : "Any of these columns (repeatable); use category=none for items without a status"
+              "description" : "Any of these columns (repeatable); use category=backlog for the backlog"
             }
           }
         }, {
@@ -4319,14 +4319,14 @@
         }, {
           "name" : "category",
           "in" : "query",
-          "description" : "Any of todo, doing, done, or none for items without a status (repeatable)",
+          "description" : "Any of backlog, todo, doing, done or canceled (repeatable); none is read as backlog (D-111)",
           "required" : false,
           "schema" : {
             "type" : "array",
-            "description" : "Any of todo, doing, done, or none for items without a status (repeatable)",
+            "description" : "Any of backlog, todo, doing, done or canceled (repeatable); none is read as backlog (D-111)",
             "items" : {
               "type" : "string",
-              "description" : "Any of todo, doing, done, or none for items without a status (repeatable)"
+              "description" : "Any of backlog, todo, doing, done or canceled (repeatable); none is read as backlog (D-111)"
             }
           }
         }, {
@@ -4712,11 +4712,11 @@
         }, {
           "name" : "column",
           "in" : "query",
-          "description" : "A column id of the project, or backlog",
+          "description" : "A column id of the project, or backlog for its backlog column",
           "required" : false,
           "schema" : {
             "type" : "string",
-            "description" : "A column id of the project, or backlog"
+            "description" : "A column id of the project, or backlog for its backlog column"
           }
         }, {
           "name" : "personId",
@@ -4769,14 +4769,14 @@
         }, {
           "name" : "category",
           "in" : "query",
-          "description" : "Any of todo, doing, done, or none for items without a status (repeatable)",
+          "description" : "Any of backlog, todo, doing, done or canceled (repeatable); none is read as backlog (D-111)",
           "required" : false,
           "schema" : {
             "type" : "array",
-            "description" : "Any of todo, doing, done, or none for items without a status (repeatable)",
+            "description" : "Any of backlog, todo, doing, done or canceled (repeatable); none is read as backlog (D-111)",
             "items" : {
               "type" : "string",
-              "description" : "Any of todo, doing, done, or none for items without a status (repeatable)"
+              "description" : "Any of backlog, todo, doing, done or canceled (repeatable); none is read as backlog (D-111)"
             }
           }
         }, {
@@ -5058,11 +5058,11 @@
         }, {
           "name" : "column",
           "in" : "query",
-          "description" : "A column id of the project, or backlog",
+          "description" : "A column id of the project, or backlog for its backlog column",
           "required" : false,
           "schema" : {
             "type" : "string",
-            "description" : "A column id of the project, or backlog"
+            "description" : "A column id of the project, or backlog for its backlog column"
           }
         }, {
           "name" : "personId",
@@ -5115,14 +5115,14 @@
         }, {
           "name" : "category",
           "in" : "query",
-          "description" : "Any of todo, doing, done, or none for items without a status (repeatable)",
+          "description" : "Any of backlog, todo, doing, done or canceled (repeatable); none is read as backlog (D-111)",
           "required" : false,
           "schema" : {
             "type" : "array",
-            "description" : "Any of todo, doing, done, or none for items without a status (repeatable)",
+            "description" : "Any of backlog, todo, doing, done or canceled (repeatable); none is read as backlog (D-111)",
             "items" : {
               "type" : "string",
-              "description" : "Any of todo, doing, done, or none for items without a status (repeatable)"
+              "description" : "Any of backlog, todo, doing, done or canceled (repeatable); none is read as backlog (D-111)"
             }
           }
         }, {
@@ -5935,10 +5935,10 @@
           },
           "category" : {
             "type" : "string",
-            "pattern" : "todo|doing|done"
+            "pattern" : "backlog|todo|doing|done|canceled"
           }
         },
-        "required" : [ "expectedVersion" ]
+        "required" : [ "category", "expectedVersion" ]
       },
       "ProjectChange" : {
         "type" : "object",
@@ -6396,7 +6396,7 @@
         "properties" : {
           "status" : {
             "type" : "string",
-            "description" : "Status categories: todo, doing, done, none"
+            "description" : "Status categories: backlog, todo, doing, done, canceled"
           },
           "priority" : {
             "type" : "string"
@@ -6755,8 +6755,8 @@
           },
           "category" : {
             "type" : [ "string", "null" ],
-            "description" : "Omitted: done for a final column, doing otherwise. A final column must be done",
-            "enum" : [ "todo", "doing", "done", null ]
+            "description" : "Omitted: done for a final column, doing otherwise. A final column is done or canceled, and a canceled column is final",
+            "enum" : [ "backlog", "todo", "doing", "done", "canceled", null ]
           }
         },
         "required" : [ "expectedVersion", "name" ]
@@ -7541,8 +7541,8 @@
           },
           "category" : {
             "type" : "string",
-            "description" : "Omitted: kept, except done when the column becomes final and doing when it stops being final",
-            "enum" : [ "todo", "doing", "done" ]
+            "description" : "Omitted: kept, except done when the column becomes final (canceled stays canceled) and doing when it stops being final",
+            "enum" : [ "backlog", "todo", "doing", "done", "canceled" ]
           }
         },
         "required" : [ "expectedVersion" ]
@@ -7706,8 +7706,8 @@
           },
           "columnCategory" : {
             "type" : [ "string", "null" ],
-            "description" : "Category of the column; null in the backlog",
-            "enum" : [ "todo", "doing", "done", null ]
+            "description" : "Category of the column, or the status of a task without a project; null only for an event",
+            "enum" : [ "backlog", "todo", "doing", "done", "canceled", null ]
           },
           "labels" : {
             "type" : "array",
@@ -8375,7 +8375,7 @@
           },
           "category" : {
             "type" : "string",
-            "enum" : [ "todo", "doing", "done" ]
+            "enum" : [ "backlog", "todo", "doing", "done", "canceled" ]
           },
           "version" : {
             "type" : "integer",

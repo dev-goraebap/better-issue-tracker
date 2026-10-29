@@ -91,6 +91,7 @@ class WorkItemIntegrationTest {
     private String project;
     private String todo;
     private String done;
+    private String backlog;
     private CurrentUser owner;
 
     @DynamicPropertySource
@@ -144,8 +145,17 @@ class WorkItemIntegrationTest {
         membership(owner, "owner");
         project = projectService.create(owner, workspace, "Project", "BIT", null);
         var columns = projectService.columns(owner, workspace, project);
-        todo = columns.getFirst().id();
-        done = columns.getLast().id();
+        todo = columns.stream()
+                .filter(c -> c.category() == io.github.goraebap.bit.module.project.ColumnCategory.todo)
+                .findFirst()
+                .orElseThrow()
+                .id();
+        done = columns.stream()
+                .filter(c -> c.category() == io.github.goraebap.bit.module.project.ColumnCategory.done)
+                .findFirst()
+                .orElseThrow()
+                .id();
+        backlog = columns.getFirst().id();
     }
 
     @Test
@@ -447,7 +457,8 @@ class WorkItemIntegrationTest {
                 .isNotNull();
         workItemService.restore(owner, workspace, project, deleted, 1);
         var restored = workItemQueryService.get(owner, workspace, project, deleted);
-        assertThat(restored.columnId()).isNull();
+        // A task always has a status (D-111): its column gone, it comes back to the backlog column.
+        assertThat(restored.columnId()).isEqualTo(backlog);
         assertThat(restored.closedAt()).isNull();
         assertThatThrownBy(() -> projectService.deleteColumn(owner, workspace, project, done, 0, null))
                 .hasMessageContaining("완료 컬럼");
@@ -825,7 +836,7 @@ class WorkItemIntegrationTest {
                         Integer.class))
                 .isZero();
         assertThat(workItemQueryService.get(owner, workspace, project, id).columnId())
-                .isIn(null, done);
+                .isIn(backlog, done);
     }
 
     @Test

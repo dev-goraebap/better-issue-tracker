@@ -13,9 +13,9 @@ import type { Member } from '@/entities/workspace';
 import { PullBadge, pullBadgesQuery } from '@/entities/repository';
 import { TypeMark, workItemTypesQuery } from '@/entities/work-item-type';
 import {
-  CATEGORY_LABELS, FILTER_KEYS, filterWorkItems, GROUPINGS, groupWorkItems, limitGroups, NO_FILTER, PRIORITIES, refreshItems, setViewTweak, subtaskProgress, SYSTEM_LABEL,
+  CATEGORIES, CATEGORY_LABELS, FILTER_KEYS, filterWorkItems, GROUPINGS, groupWorkItems, limitGroups, NO_FILTER, PRIORITIES, refreshItems, setViewTweak, statusSteps, subtaskProgress, SYSTEM_LABEL,
   updateItem, updateView, VIEW_COLUMNS, VIEW_LAYOUTS, VIEW_SORT_KEYS, WorkItemList, type effectiveView, type Grouping, type WorkItemSearch, type WorkItemView, type ViewColumn,
-  type ViewLayout, type ViewSort, type ViewTweak, type WorkItem,
+  type StatusStep, type ViewLayout, type ViewSort, type ViewTweak, type WorkItem,
 } from '@/entities/work-item';
 import { currentDay, shiftDay } from '../model/dates';
 import type { Scope } from '../model/scope';
@@ -77,6 +77,9 @@ export function WorkItemsView({ scope, view, tweak, effective, workItems, labels
   // Kept as one string so the map changes only when a column does (the query results are new arrays each render).
   const columnList = JSON.stringify([...scope.columns, ...allColumns.flatMap(result => result.data ?? [])].map(column => [column.id, column.name]));
   const columnNames = useMemo(() => new Map(JSON.parse(columnList) as [string, string][]), [columnList]);
+  // Each column's step within its project's category, so a second 진행 중 or 취소 column draws apart (D-111).
+  const stepList = JSON.stringify([scope.columns, ...allColumns.map(result => result.data ?? [])].flatMap(columns => [...statusSteps(columns)]));
+  const columnSteps = useMemo(() => new Map(JSON.parse(stepList) as [string, StatusStep][]), [stepList]);
   // The workspace's types, for the 유형 filter (D-104).
   const types = useQuery(workItemTypesQuery(workspaceId)).data ?? [];
   // A member's adjustment that comes back to the view's own is no adjustment.
@@ -90,7 +93,7 @@ export function WorkItemsView({ scope, view, tweak, effective, workItems, labels
     });
   };
   const filters: ListFilter[] = [
-    { key: 'status', label: '상태', icon: 'status', value: effective.filters.status, isMultiple: true, options: Object.entries(CATEGORY_LABELS).map(([value, label]) => ({ value, label })) },
+    { key: 'status', label: '상태', icon: 'status', value: effective.filters.status, isMultiple: true, options: CATEGORIES.map(value => ({ value, label: CATEGORY_LABELS[value] })) },
     { key: 'priority', label: '우선순위', icon: 'priority', value: effective.filters.priority, options: Object.entries(PRIORITIES).map(([value, label]) => ({ value, label })) },
     { key: 'assignee', label: '사람', icon: 'person', value: effective.filters.assignee, isMultiple: true, isSearchable: true,
       options: members.map(member => ({ value: member.userId, label: member.name, icon: <DefaultAvatar seed={member.userId} name={member.name} size={20} /> })) },
@@ -177,11 +180,11 @@ export function WorkItemsView({ scope, view, tweak, effective, workItems, labels
         { label: '일정', icon: 'calendar', onClick: () => onCreate(undefined, 'event') },
       ] }} />
     {effective.layout === 'list' && (rows.length === 0 ? empty('업무', '첫 업무를 만들면 여기에 보입니다.') : <>
-      <WorkItemList workspaceId={workspaceId} groups={limited.groups} search={search} columns={effective.columns} columnNames={columnNames} badges={badges}
+      <WorkItemList workspaceId={workspaceId} groups={limited.groups} search={search} columns={effective.columns} columnNames={columnNames} columnSteps={columnSteps} badges={badges}
         progress={progress} isPhone={isMobile} collapsed={collapsed} onToggle={toggleGroup} />
       {summary}
     </>)}
-    {effective.layout === 'board' && (withStatus.length === 0 && !scope.project ? empty('상태가 있는 업무', '업무에 상태를 정하면 칸반의 칸에 놓입니다.')
+    {effective.layout === 'board' && (withStatus.length === 0 && !scope.project ? empty('작업', '작업을 만들면 상태에 따라 칸반의 칸에 놓입니다.')
       : <BoardView scope={scope} items={withStatus} search={search} onCreate={onCreate} badges={badges} />)}
     {effective.layout === 'calendar' && <div ref={calendarRoom} className={styles.calendarRoom}>
       <div className={styles.calendarBar}><CalendarBar day={search.date ?? currentDay()} onPlace={date => go({ date: date === currentDay() ? undefined : date })} /></div>

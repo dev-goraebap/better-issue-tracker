@@ -244,7 +244,9 @@ public class WorkItemQueryService {
         var priorities = values(request.getPriority(), WorkItem.Priority.class);
         var triggers = values(request.getTriggerType(), WorkItem.TriggerType.class);
         var categories = new HashSet<>(split(request.getCategory()));
+        // 'none' is what the backlog was called before it was a status of its own (D-111).
         boolean noCategory = categories.remove(NO_CATEGORY);
+        if (noCategory) categories.add(ColumnCategory.backlog.name());
         var categoryNames = values(List.copyOf(categories), ColumnCategory.class).stream()
                 .map(Enum::name)
                 .collect(Collectors.toUnmodifiableSet());

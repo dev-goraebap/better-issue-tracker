@@ -1,85 +1,15 @@
 import {
-  SmilePlus, Image, ArrowDownWideNarrow, ArrowLeft, ArrowLeftRight, ArrowRight, ArrowUpNarrowWide, ArrowUpDown, Bell, BookOpen, CalendarDays, Check, CheckCheck,
-  ChevronDown, ChevronLeft, ChevronRight, ChevronsUpDown, CircleCheck, CircleDot, CirclePlus, Clock, Copy, Ellipsis, File, FileText, Filter, Flag, Folder, GitBranch, GripVertical, Hash, House,
-  Inbox, KanbanSquare, LayoutGrid, LayoutList, Link, ListFilter, ListTodo, Lock, LogOut, Mail, Maximize2, MessageSquare, Milestone, PanelLeft, Paperclip,
-  SquarePen, Plus, RefreshCw, Repeat, Rows3, Scale, Search, Settings, Shield, SlidersHorizontal, Sparkles, Table2, Tag, Trash2, User, Users, Workflow, X,
-  ArrowUp, Bold, Bot, Bug, LayoutTemplate, Download, ExternalLink, GitCommitHorizontal, GitMerge, GitPullRequest, GitPullRequestClosed, GitPullRequestDraft, Unplug, Webhook, Code, Heading1, Heading2, Heading3, Italic, List, ListChecks, ListOrdered, Minus, Redo2, SquareCode, Strikethrough, TextQuote, Type, Undo2, Unlink,
-  BookMarked, Lightbulb, Rocket, Target, Wrench, Zap,
+  Code, GitMerge, GitPullRequestClosed, GitPullRequestDraft, Heading1, Heading2, Heading3, Bold, Italic, List, ListChecks, ListOrdered, Minus,
+  Redo2, SquareCode, Strikethrough, TextQuote, Type, Undo2, Unlink, Webhook,
   type LucideIcon,
 } from 'lucide-react';
+import { SOLAR_ICONS } from './solar-icons';
+import { SolarIcon } from './SolarIcon';
 
-// The icon set is lucide's (D-044); names follow SandboxHr's so its shared parts keep their calls.
-const icons: Record<string, LucideIcon> = {
-  home: House,
-  system: Bot,
-  calendar: CalendarDays,
-  inbox: Inbox,
-  tasks: ListTodo,
-  members: Users,
-  people: Users,
-  person: User,
-  documents: Folder,
-  document: FileText,
-  file: File,
-  more: Ellipsis,
-  sidebar: PanelLeft,
-  close: X,
-  settings: Settings,
-  switcher: ArrowLeftRight,
-  back: ArrowLeft,
-  forward: ChevronRight,
-  previous: ChevronLeft,
-  logout: LogOut,
-  next: ArrowRight,
-  check: Check,
-  done: CheckCheck,
-  'chevron-down': ChevronDown,
-  'chevrons-up-down': ChevronsUpDown,
-  // 필터 and 표시 as Linear draws them: lines narrowing down, and sliders.
-  filter: ListFilter,
-  display: SlidersHorizontal,
-  grip: GripVertical,
-  'list-filter': ListFilter,
-  plus: Plus,
-  created: CirclePlus,
-  'expand-page': Maximize2,
-  retry: RefreshCw,
-  repeat: Repeat,
-  search: Search,
-  sort: ArrowUpDown,
-  'sort-asc': ArrowUpNarrowWide,
-  'sort-desc': ArrowDownWideNarrow,
-  bell: Bell,
-  status: CircleDot,
-  closed: CircleCheck,
-  clock: Clock,
-  priority: Flag,
-  label: Tag,
-  tag: Tag,
-  link: Link,
-  copy: Copy,
-  edit: SquarePen,
-  delete: Trash2,
-  attach: Paperclip,
-  reaction: SmilePlus,
-  image: Image,
-  comment: MessageSquare,
-  mail: Mail,
-  lock: Lock,
-  shield: Shield,
-  board: KanbanSquare,
-  list: LayoutList,
-  table: Table2,
-  rows: Rows3,
-  grid: LayoutGrid,
-  decision: Scale,
-  session: BookOpen,
-  milestone: Milestone,
-  branch: GitBranch,
-  workflow: Workflow,
-  key: Hash,
-  agent: Sparkles,
-  'filter-funnel': Filter,
+// The icon set is Solar's Linear style (BIT-132, D-112), made from scripts/generate-icons.mjs; names follow SandboxHr's so its
+// shared parts keep their calls. What Solar lacks is lucide's: the editor's toolbar whole, so its marks match one another,
+// and the merge, webhook and draft and closed pull request marks.
+const lucide: Record<string, LucideIcon> = {
   // The editor's blocks and marks (markdown-editor).
   type: Type,
   'heading-1': Heading1,
@@ -98,31 +28,16 @@ const icons: Record<string, LucideIcon> = {
   undo: Undo2,
   redo: Redo2,
   unlink: Unlink,
-  send: ArrowUp,
-  // Work item templates (D-077).
-  bug: Bug,
-  template: LayoutTemplate,
-  // Work item types (D-104): the defaults' marks (에픽, 스토리; 작업 is tasks, 버그 bug) and a few more to pick from.
-  epic: Zap,
-  story: BookMarked,
-  idea: Lightbulb,
-  target: Target,
-  rocket: Rocket,
-  wrench: Wrench,
   // Repository integrations (D-087).
-  'pull-request': GitPullRequest,
   'pull-request-draft': GitPullRequestDraft,
   'pull-request-closed': GitPullRequestClosed,
   merge: GitMerge,
-  commit: GitCommitHorizontal,
   webhook: Webhook,
-  download: Download,
-  external: ExternalLink,
-  unplug: Unplug,
 };
 
 /** A menu or action icon by name; an unknown name draws a plain file rather than nothing. */
 export function NavIcon({ name, size = 'text' }: { name: string; size?: 'text' | 'navigation' | 'standalone' }) {
-  const Icon = icons[name] ?? File;
-  return <Icon className="bit-nav-icon" data-icon-size={size} size={16} strokeWidth={1.75} aria-hidden="true" focusable="false" />;
+  const Icon = lucide[name];
+  if (Icon) return <Icon className="bit-nav-icon" data-icon-size={size} size={16} strokeWidth={1.75} aria-hidden="true" focusable="false" />;
+  return <SolarIcon body={SOLAR_ICONS[name] ?? SOLAR_ICONS.file ?? ''} size={size} />;
 }

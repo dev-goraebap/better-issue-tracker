@@ -187,11 +187,12 @@ class ProjectPersistenceIntegrationTest {
         var created = projectRepository.findById(workspace, id, false).orElseThrow();
         assertThat(created.audit().createdBy()).isEqualTo(actor.userId());
         assertThat(created.audit().createdAt()).isNotNull();
-        assertThat(projectService.columns(actor, workspace, id)).hasSize(4);
+        // 백로그·할 일·진행 중·검토 중·완료·취소, the last two closing (D-111).
+        assertThat(projectService.columns(actor, workspace, id)).hasSize(6);
         assertThat(projectService.columns(actor, workspace, id).stream()
                         .filter(c -> c.finalColumn())
                         .count())
-                .isEqualTo(1);
+                .isEqualTo(2);
         assertThat(created.icon()).isNull();
         projectService.revise(actor, workspace, id, 0, null, false, "NEW", true, null, false);
         assertThat(projectService.findByKey(actor, workspace, "BIT").id()).isEqualTo(id);

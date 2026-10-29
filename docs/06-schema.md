@@ -94,12 +94,12 @@ erDiagram
 | `project` | `project_id`, `workspace_id`, `name varchar(64)`, `icon varchar(32)?`, `color varchar(7)?`(V7, 둘 다 없으면 키 첫 글자), `description text?`, `position integer`, `last_work_item_number bigint`, `last_decision_number bigint`, `last_session_number bigint`, `archived_at?`, `version bigint`, 감사 | `ix_project_workspace_id` |
 | `project_member` | `project_member_id`, `project_id`, `workspace_id`, `iam_user_id`, `created_at`, `created_by` (V8, D-075: 소속 표시일 뿐 권한을 주지 않는다) | `ux_project_member_project_id_iam_user_id`, `ix_project_member_workspace_id_iam_user_id` |
 | `project_key` | `project_key_id`, `project_id`, `workspace_id`, `key varchar(10)`, `is_current boolean`, `created_at` | `ux_project_key_workspace_id_key` (모든 행), `ux_project_key_project_id_current` (is_current = 1), `ck_project_key_key` (대문자·숫자, 2~10자) |
-| `board_column` | `board_column_id`, `project_id`, `name varchar(32)`, `position integer`, `color varchar(7)?`, `is_final boolean`, `category varchar(8)`, `version bigint`, 감사 | `ix_board_column_project_id_position`, `ck_..._category` (todo, doing, done) |
+| `board_column` | `board_column_id`, `project_id`, `name varchar(32)`, `position integer`, `color varchar(7)?`, `is_final boolean`, `category varchar(8)`, `version bigint`, 감사 | `ix_board_column_project_id_position`, `ck_..._category` (backlog, todo, doing, done, canceled), `ck_..._category_final` (닫는 칸은 done·canceled, canceled는 늘 닫음) |
 
 - **프로젝트 키(D-011)**: 현재 키와 옛 키(별칭)를 한 테이블에 둔다. 워크스페이스 안에서 `key`가 모든 행에 걸쳐 고유하므로, 별칭으로 쓰인 키를 다른 프로젝트가 가져가는 것을 DB가 막는다. 키를 바꾸면 기존 행의 `is_current`를 0으로 내리고 새 행을 넣는다.
 - **번호**: 업무·결정·세션 번호는 프로젝트별로 1부터 증가한다. 새 번호는 `last_*_number`를 증가시켜 받는다(쓰기 잠금 안에서 처리, SQLite `BEGIN IMMEDIATE`).
-- **보드 컬럼**: 프로젝트를 만들 때 할 일(todo) / 진행 중(doing) / 검토 중(doing) / 완료(`is_final`, done) 4개를 넣는다 (Kaneo 기본값).
-- **상태 분류(T-006)**: `category`는 프로젝트마다 다른 컬럼을 전체 칸반에서 묶는 기준이다. 완료 컬럼(`is_final`)은 언제나 done이고, 나머지 컬럼은 셋 중 아무것이나 된다. 백로그(`board_column_id` NULL)는 분류가 없다.
+- **보드 컬럼**: 프로젝트를 만들 때 백로그(backlog) / 할 일(todo) / 진행 중(doing) / 검토 중(doing) / 완료(`is_final`, done) / 취소(`is_final`, canceled) 6개를 넣는다 (D-111).
+- **상태 분류(T-006, D-111)**: `category`는 프로젝트마다 다른 컬럼을 전체 칸반에서 묶는 기준이다. 닫는 컬럼(`is_final`)은 done이나 canceled이고 canceled 컬럼은 늘 닫는다. 나머지 컬럼은 backlog·todo·doing·done 중 하나다. 백로그도 칸(backlog 분류)이다.
 
 ## 4. workitem — 업무
 
@@ -112,8 +112,8 @@ erDiagram
 | `work_item_type` | `work_item_type_id`, `workspace_id`, `name varchar(32)`, `icon varchar(32)?`, `color varchar(7)`, `position integer`, `is_default boolean`, `parent_required boolean`, `version bigint`, 감사 | `ux_work_item_type_workspace_id_name` (workspace_id, lower(name), deleted_at IS NULL), `ux_work_item_type_workspace_id_default` (is_default=1), `ix_work_item_type_workspace_id_position` |
 | `work_item_type_parent` | `work_item_type_parent_id`, `work_item_type_id`, `parent_work_item_type_id`, `created_at`, `created_by`, `created_by_agent?` | `ux_work_item_type_parent_type_parent`, `ix_work_item_type_parent_parent_work_item_type_id` |
 
-- **상태는 컬럼 하나로**: `board_column_id`가 NULL이면 백로그다. Kaneo처럼 상태 문자열과 컬럼 ID를 함께 두지 않는다 (D-009).
-- **`closed_at`**: `is_final` 컬럼으로 옮길 때 채우고, 다른 컬럼으로 나오면 비운다. 결정의 "이행 2/3" 계산(D-012)이 이 값을 센다.
+- **상태는 컬럼 하나로**: 프로젝트의 작업은 늘 컬럼에 있다(`ck_work_item_task_status`, D-111). 칸 없는 행은 일정뿐이다. Kaneo처럼 상태 문자열과 컬럼 ID를 함께 두지 않는다 (D-009).
+- **`closed_at`**: `is_final` 컬럼(완료·취소)으로 옮길 때 채우고, 다른 컬럼으로 나오면 비운다. 결정의 "이행 2/3" 계산(D-012)이 이 값을 센다.
 - **업무 키**는 저장하지 않고 `project_key`(현재 키) + `number`로 만든다. 웹훅 파싱은 현재 키와 별칭을 모두 찾는다.
 - **업무끼리의 관계**(blocks, subtask 등)는 `link`에 둔다 (D-014).
 - 1차에 넣지 않는 Kaneo 기능: 시간 기록(`time_entry`), 사용자 정의 필드, 상태 자동 이동 규칙(`workflow_rule`).
@@ -249,7 +249,7 @@ erDiagram
 | 항목 | 정한 것 | 근거 |
 |---|---|---|
 | 프로젝트 키와 별칭 | 테이블 하나(`project_key`)에 `is_current`로 구분 | 별칭 포함 고유를 DB가 지킴. D-011의 "별칭 테이블"을 구현한 형태 |
-| 백로그 | `board_column_id` NULL | 상태를 한 곳에만 두기 (D-009) |
+| 백로그 | backlog 분류의 컬럼(V29 전에는 `board_column_id` NULL) | 상태를 한 곳에만 두기 (D-009, D-111) |
 | 결정·세션 번호 | 프로젝트별 증가, `D-007`/`S-003` 표시 | 업무 번호와 같은 방식 |
 | 관리 문서용 열 | 1차부터 만들고 비워 둠 | D-019 |
 | 열린 버전 한 칸 | 부분 고유 인덱스 | D-013 |
@@ -279,7 +279,7 @@ V25는 `reaction`(reaction_id, workspace_id, target_type, target_id, emoji, user
 
 ## V26 프로젝트 선택 사항 (D-103 / BIT-78)
 
-`work_item.workspace_id`가 작업의 필수 소유 범위이며 `project_id`는 nullable이다. 이동·해제 시 `public_ref`에 기존 참조를 고정하고, 프로젝트 없는 작업은 `workspace_status`(todo/doing/done/null)를 사용한다. 프로젝트 번호 고유 인덱스는 참조가 고정되지 않은 행에 적용하고, 고정 참조는 워크스페이스 안에서 유일하다. 기존 업무·라벨·사람·코드 링크를 보존하여 테이블을 재구성한다. 삭제·워크스페이스 권한·버전 검사는 기존과 같다.
+`work_item.workspace_id`가 작업의 필수 소유 범위이며 `project_id`는 nullable이다. 이동·해제 시 `public_ref`에 기존 참조를 고정하고, 프로젝트 없는 작업은 `workspace_status`(V29부터 backlog/todo/doing/done/canceled, 작업은 늘 값이 있음)를 사용한다. 프로젝트 번호 고유 인덱스는 참조가 고정되지 않은 행에 적용하고, 고정 참조는 워크스페이스 안에서 유일하다. 기존 업무·라벨·사람·코드 링크를 보존하여 테이블을 재구성한다. 삭제·워크스페이스 권한·버전 검사는 기존과 같다.
 
 
 ## V27 업무 유형 (D-104 / BIT-89)

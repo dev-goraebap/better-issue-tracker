@@ -119,7 +119,7 @@ class ViewIntegrationTest {
         assertThat(backlog.icon()).isEqualTo("rows");
         assertThat(backlog.color()).isEqualTo("#95959f");
         assertThat(backlog.layout()).isEqualTo(WorkItemView.Layout.list);
-        assertThat(backlog.filters().status()).isEqualTo("none");
+        assertThat(backlog.filters().status()).isEqualTo("backlog");
         assertThat(backlog.sort())
                 .isEqualTo(new ViewViews.Sort(WorkItemView.SortKey.priority, WorkItemView.Direction.asc));
         assertThat(backlog.ownerId()).isEqualTo(owner.userId());
@@ -331,7 +331,7 @@ class ViewIntegrationTest {
             assertThat(list.size()).isEqualTo(4);
             var first = list.get(0);
             assertThat(first.path("name").stringValue()).isEqualTo("백로그");
-            assertThat(first.path("filters").toString()).isEqualTo("{\"status\":\"none\"}");
+            assertThat(first.path("filters").toString()).isEqualTo("{\"status\":\"backlog\"}");
             assertThat(list.get(1).path("filters").toString()).isEqualTo("{}");
             assertThat(first.path("sort").toString()).isEqualTo("{\"key\":\"priority\",\"direction\":\"asc\"}");
             assertThat(first.path("isPersonal").booleanValue()).isFalse();

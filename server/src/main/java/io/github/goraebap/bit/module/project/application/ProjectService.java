@@ -106,6 +106,14 @@ public class ProjectService implements ProjectFacade {
 
     @Override
     @Transactional(readOnly = true)
+    public ColumnRef backlogColumn(CurrentUser actor, String workspaceId, String projectId) {
+        access(actor, workspaceId, projectId, false, false);
+        var c = backlogColumn(projectRepository.findColumns(projectId), null);
+        return new ColumnRef(c.id(), c.finalColumn(), c.category());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public List<ColumnInfo> boardColumns(CurrentUser actor, String workspaceId, String projectId) {
         access(actor, workspaceId, projectId, false, false);
         return projectRepository.findColumns(projectId).stream()
@@ -145,15 +153,22 @@ public class ProjectService implements ProjectFacade {
         projectRepository.switchKey(workspaceId, p.id(), normalized, clock.instant());
         // The member who makes a project belongs to it (D-075).
         projectRepository.addMember(workspaceId, p.id(), actor.userId(), actor.userId(), clock.instant());
-        var names = List.of("할 일", "진행 중", "검토 중", "완료");
-        var categories = List.of(ColumnCategory.todo, ColumnCategory.doing, ColumnCategory.doing, ColumnCategory.done);
+        // A project starts with the five categories in order, 진행 중 and 검토 중 both doing (D-111).
+        var names = List.of("백로그", "할 일", "진행 중", "검토 중", "완료", "취소");
+        var categories = List.of(
+                ColumnCategory.backlog,
+                ColumnCategory.todo,
+                ColumnCategory.doing,
+                ColumnCategory.doing,
+                ColumnCategory.done,
+                ColumnCategory.canceled);
         for (int i = 0; i < names.size(); i++) {
             projectRepository.save(BoardColumn.create(
                     p.id(),
                     names.get(i),
                     null,
                     i,
-                    i == 3,
+                    categories.get(i).closes(),
                     categories.get(i),
                     actor.userId(),
                     agent(actor),
@@ -375,7 +390,9 @@ public class ProjectService implements ProjectFacade {
         var c = column(projectId, columnId);
         version(c.version(), version);
         var resolved = category(finalColumn, category, c);
-        if (c.finalColumn() && !finalColumn) assertAnotherFinal(projectId, columnId);
+        boolean wasClosingDone = c.finalColumn() && c.category() == ColumnCategory.done;
+        if (wasClosingDone && !(finalColumn && resolved == ColumnCategory.done))
+            assertAnotherFinal(projectId, columnId);
         boolean changed = c.finalColumn() != finalColumn;
         c.configure(name, color, finalColumn, resolved, actor.userId(), agent(actor), clock.instant());
         projectRepository.save(c);
@@ -397,18 +414,15 @@ public class ProjectService implements ProjectFacade {
         version(c.version(), version);
         if (projectRepository.findColumns(projectId).size() == 1)
             throw ProjectErrorCode.PROJECT_COLUMN_REQUIRED.raise();
-        if (c.finalColumn()) assertAnotherFinal(projectId, columnId);
+        if (c.finalColumn() && c.category() == ColumnCategory.done) assertAnotherFinal(projectId, columnId);
         if (columnId.equals(targetColumnId)) throw ProjectErrorCode.PROJECT_COLUMN_TARGET_INVALID.raise();
-        var target = targetColumnId == null ? null : column(projectId, targetColumnId);
+        // A task always has a status (D-111): with no target named its work items go to the backlog column.
+        var target = targetColumnId == null
+                ? backlogColumn(projectRepository.findColumns(projectId), columnId)
+                : column(projectId, targetColumnId);
         columnWorkItemSpiProvider
                 .getObject()
-                .transfer(
-                        actor,
-                        workspaceId,
-                        projectId,
-                        columnId,
-                        targetColumnId,
-                        target != null && target.finalColumn());
+                .transfer(actor, workspaceId, projectId, columnId, target.id(), target.finalColumn());
         c.delete(actor.userId(), agent(actor), clock.instant());
         projectRepository.save(c);
         touch(p, actor);
@@ -492,14 +506,35 @@ public class ProjectService implements ProjectFacade {
                 throw ProjectErrorCode.PROJECT_COLUMN_CATEGORY_INVALID.raise();
             return requested;
         }
-        if (finalColumn) return ColumnCategory.done;
+        if (finalColumn)
+            return current != null && current.category() == ColumnCategory.canceled
+                    ? ColumnCategory.canceled
+                    : ColumnCategory.done;
         if (current == null || current.finalColumn()) return ColumnCategory.doing;
         return current.category();
     }
 
+    /**
+     * The column a task goes to when no status is named (D-111): the first backlog column, else the first column that
+     * does not close, else the first column; never the one left out (a column being deleted).
+     */
+    static BoardColumn backlogColumn(List<BoardColumn> columns, String leftOut) {
+        var others = columns.stream()
+                .filter(c -> !c.id().equals(leftOut))
+                .sorted(java.util.Comparator.comparingInt(BoardColumn::position))
+                .toList();
+        return others.stream()
+                .filter(c -> c.category() == ColumnCategory.backlog)
+                .findFirst()
+                .or(() -> others.stream().filter(c -> !c.finalColumn()).findFirst())
+                .or(() -> others.stream().findFirst())
+                .orElseThrow(ProjectErrorCode.PROJECT_COLUMN_REQUIRED::raise);
+    }
+
+    /** A project keeps a closing done column, where finished work and merges go (D-072, D-111); a canceled one is not enough. */
     private void assertAnotherFinal(String projectId, String columnId) {
         if (projectRepository.findColumns(projectId).stream()
-                .noneMatch(c -> c.finalColumn() && !c.id().equals(columnId)))
+                .noneMatch(c -> c.finalColumn() && c.category() == ColumnCategory.done && !c.id().equals(columnId)))
             throw ProjectErrorCode.PROJECT_FINAL_COLUMN_REQUIRED.raise();
     }
 

@@ -57,7 +57,7 @@ export function TargetRelations({ workspaceId, projectId, type, id, title, canWr
       ]} />}
     </div>}
     {type === 'work_item' && children.length > 0 && <RelationSection workspaceId={workspaceId} title="하위 작업" items={children} hint=""
-      progress={{ done: children.filter(item => item.category === 'done').length, total: children.length }} busy={busy} onRemove={canWrite ? setRemoving : undefined}
+      progress={{ done: children.filter(item => item.category === 'done').length, total: children.filter(item => item.category !== 'canceled').length }} busy={busy} onRemove={canWrite ? setRemoving : undefined}
       actions={canWrite && projectId ? action('하위 작업 추가', () => setCreating(true)) : undefined} />}
     {creating && projectId && <ChildComposer workspaceId={workspaceId} projectId={projectId} parentId={id} parentTypeId={typeId ?? null} onSaved={refresh} onClose={() => setCreating(false)} />}
     {(type === 'document' ? workLinks.length > 0 : outwardDocs.length > 0) && <RelationSection workspaceId={workspaceId} title={type === 'document' ? '연결된 업무' : '연결 자료'}
