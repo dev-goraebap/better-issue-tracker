@@ -30,3 +30,4 @@ jobs:
           cache-dependency-path: client/package-lock.json
       - run: npm ci
       - run: npm run check
+      - run: node ../scripts/check-bit-skill.mjs
