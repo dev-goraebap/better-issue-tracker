@@ -10,8 +10,6 @@
 .title[data-wraps] { white-space: normal; word-break: keep-all; overflow-wrap: anywhere; }
 .actions { display: flex; align-items: center; gap: var(--spacing-1); }
 .close { display: inline-flex; }
-/* A head's buttons take a superellipse's corners, as the header row's do (BIT-112). */
-.head :global(button) { corner-shape: squircle; }
 /* In the panel at the card's right (BIT-103) the head is the card's header row: its height, its inline start, its type. */
 :global([data-peek]) .head { flex-shrink: 0; box-sizing: border-box; block-size: var(--workspace-topbar-height, 2.75rem); padding-block: 0; padding-inline: var(--spacing-6) var(--spacing-3); }
 :global([data-peek]) .head .title { font-size: 0.8125rem; font-weight: 500; }

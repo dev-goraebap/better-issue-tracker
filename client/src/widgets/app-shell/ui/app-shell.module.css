@@ -37,10 +37,6 @@
 /* The rows a page hands the shell (tabs, conditions) stick under the header row; its foot row sticks to the card's bottom. */
 .chromeRows { position: sticky; inset-block-start: var(--workspace-topbar-height); z-index: 2; flex-shrink: 0; background: var(--color-background-surface); }
 .chromeRows:empty { display: none; }
-/* The buttons on the header row and the rows under it (tabs, tools, actions) take a superellipse's corners (BIT-112)
-   where the browser draws them: a round one becomes a squircle, a pill a squircle's capsule. Menus opened from them keep
-   their own corners. */
-:is(.topbar, .chromeRows) :global(button):not(:global(:is([role="menu"], [role="listbox"], [role="dialog"]) *)) { corner-shape: squircle; }
 .content { inline-size: 100%; flex-shrink: 0; flex-grow: 1; min-inline-size: 0; animation: reveal 180ms ease-out both; }
 .footSlot { position: sticky; inset-block-end: 0; z-index: 2; flex-shrink: 0; }
 .footSlot:empty { display: none; }
