@@ -180,9 +180,10 @@ body { font-family: 'Pretendard Variable', Pretendard, system-ui, sans-serif; }
     font-weight: 600;
     box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.12), 0 4px 14px -6px color-mix(in srgb, var(--color-accent) 70%, transparent);
   }
-  /* A superellipse at 8px reads about as small as the 4px round corner, with the header's squircle curve (BIT-112). */
+  /* Only the page's create button takes a superellipse (BIT-112, BIT-135); the tabs stay pills and the tools circles. At
+     10px the squircle's curve shows on a 24px button where 8px read as an ordinary rounded corner. */
   @supports (corner-shape: squircle) {
-    [data-page-action] button.astryx-button.bit-create-action.bit-create-action { border-radius: 8px; corner-shape: squircle; }
+    [data-page-action] button.astryx-button.bit-create-action.bit-create-action { border-radius: 10px; corner-shape: squircle; }
   }
   [data-page-action] button.astryx-button.bit-create-action.bit-create-action:disabled { box-shadow: none; }
   [data-page-action] .bit-create-action .bit-nav-icon { inline-size: 0.875rem; block-size: 0.875rem; }
