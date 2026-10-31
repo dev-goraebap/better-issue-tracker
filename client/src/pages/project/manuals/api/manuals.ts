@@ -17,7 +17,7 @@ export async function storeManual(workspaceId: string, projectId: string | undef
   for (const [id, source] of Object.entries(manual.assets)) {
     if (!source.startsWith('data:') || !pages.some(page => page.body.includes(`attachment:${id}`))) continue;
     const blob = await (await fetch(source)).blob();
-    const ext = blob.type.includes('svg') ? 'svg' : blob.type.includes('png') ? 'png' : blob.type.includes('webp') ? 'webp' : 'jpg';
+    const ext = blob.type.includes('svg') ? 'svg' : blob.type.includes('png') ? 'png' : blob.type.includes('webp') ? 'webp' : blob.type.includes('gif') ? 'gif' : 'jpg';
     const ticket = await command<components['schemas']['UploadTicket']>('POST', '/api/v1/files/uploads', { filename: `${id}.${ext}`, size: blob.size });
     const sent = await fetch(ticket.url, { method: ticket.method, headers: ticket.headers, body: blob });
     if (!sent.ok) throw new Error('이미지 원본을 올리지 못했습니다. 초안은 유지됩니다.');

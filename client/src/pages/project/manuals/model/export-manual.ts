@@ -23,7 +23,7 @@ export async function downloadPage(page: ManualPageData, assets: Record<string, 
   for (const id of ids) {
     const source = assets[id]; if (!source) throw new Error('이미지를 찾을 수 없어 내보내지 못했습니다.');
     const response = await fetch(source); if (!response.ok) throw new Error('이미지 원본을 읽지 못했습니다.');
-    const mime = response.headers.get('Content-Type') ?? ''; const extension = mime.includes('svg') ? 'svg' : mime.includes('png') ? 'png' : mime.includes('webp') ? 'webp' : 'jpg';
+    const mime = response.headers.get('Content-Type') ?? ''; const extension = mime.includes('svg') ? 'svg' : mime.includes('png') ? 'png' : mime.includes('webp') ? 'webp' : mime.includes('gif') ? 'gif' : 'jpg';
     const name = `images/${id}.${extension}`; files.push({ name, bytes: new Uint8Array(await response.arrayBuffer()) }); markdown = markdown.replaceAll(`(attachment:${id})`, `(${name})`);
   }
   const filename = `${safeFilename(page.title)}.md`;

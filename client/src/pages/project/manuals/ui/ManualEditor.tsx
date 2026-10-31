@@ -19,7 +19,7 @@ export function ManualEditor({ manual, page, onSave, onClose }: { manual: Manual
       <div className={styles.editModes}><button type="button" aria-pressed={!source && !preview} onClick={() => { setSource(false); setPreview(false); }}>본문 편집</button><button type="button" aria-pressed={source && !preview} onClick={() => { setSource(true); setPreview(false); }}>Markdown</button><button type="button" aria-pressed={preview} onClick={() => setPreview(true)}>미리보기</button></div>
       <div className={styles.prose}>{preview ? <MarkdownView value={draft.body} attachmentUrl={id => assets[id] ?? ''} /> : source ? <textarea className={styles.source} aria-label="Markdown 원문" value={draft.body} onChange={event => setDraft({ ...draft, body: event.target.value })} />
         : <MarkdownEditor value={draft.body} onChange={body => setDraft({ ...draft, body })} label="매뉴얼 본문" minHeight="360px" attachmentUrl={id => assets[id] ?? ''} />}</div>
-      <label className={styles.upload}>이미지 추가<input type="file" accept="image/png,image/jpeg,image/webp" onChange={event => {
+      <label className={styles.upload}>이미지 추가<input type="file" accept="image/png,image/jpeg,image/webp,image/gif" onChange={event => {
         const file = event.target.files?.[0]; if (!file) return;
         if (file.size > 20 * 1024 * 1024) { setError('이미지는 20MB까지 추가할 수 있습니다. 원본 그대로 저장합니다.'); return; }
         const reader = new FileReader(); reader.onload = () => { const id = newId(); setAssets({ ...assets, [id]: String(reader.result) }); setDraft(current => ({ ...current, body: `${current.body}\n\n![${file.name.replace(/[\[\]\\]/g, '')}](attachment:${id})` })); setError(''); }; reader.readAsDataURL(file);

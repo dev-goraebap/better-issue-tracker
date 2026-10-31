@@ -15,3 +15,10 @@ test('portable manual rejects missing images and external asset URLs', () => {
   assert.throws(() => readManualPackage(bundle({ ...withImage, assets: { Image00001: 'https://example.test/tracking.png' } })));
   assert.equal(Object.keys(readManualPackage(bundle({ ...withImage, assets: { Image00001: 'data:image/png;base64,aGVsbG8=' } })).assets).length, 1);
 });
+
+
+test('portable manual keeps original GIF image data instead of requiring JPEG conversion', () => {
+  const source = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+  const portable = { ...manual, pages: [{ ...manual.pages[0], body: '![동작](attachment:Image00001)' }], assets: { Image00001: source } };
+  assert.equal(readManualPackage(bundle(portable)).assets.Image00001, source);
+});
