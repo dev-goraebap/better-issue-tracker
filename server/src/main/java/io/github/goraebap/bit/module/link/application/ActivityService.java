@@ -56,7 +56,8 @@ public class ActivityService {
                             "labels",
                             "column",
                             "archived"),
-            TargetType.document, Set.of("title", "body", "labels", "place", "relations", "project", "attachments"));
+            TargetType.document,
+                    Set.of("title", "body", "labels", "place", "relations", "project", "attachments", "page"));
     private final ActivityRepository activityRepository;
     private final JsonMapper jsonMapper;
 

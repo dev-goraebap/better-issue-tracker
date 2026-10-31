@@ -25,9 +25,6 @@ public final class Link {
                             fromType == TargetType.decision && toType == TargetType.session_record
                                     || fromType == TargetType.work_item && toType == TargetType.decision;
                         case "implements" -> fromType == TargetType.code_ref && toType == TargetType.work_item;
-                        case "revises", "based_on" ->
-                            (fromType == TargetType.work_item || fromType == TargetType.decision)
-                                    && toType == TargetType.artifact;
                         case "supersedes" -> fromType == TargetType.decision && toType == TargetType.decision;
                         case "blocks", "subtask_of" -> workPair;
                         case "references", "mentions" ->

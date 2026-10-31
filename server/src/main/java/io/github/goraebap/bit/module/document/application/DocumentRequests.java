@@ -42,7 +42,7 @@ public final class DocumentRequests {
             @Size(max = Document.BODY_MAX) @Schema(nullable = true, description = "Markdown; omitted or null is empty")
             String body,
 
-            @Size(max = DocumentService.MAX_LABELS) @Schema(nullable = true)
+            @Size(max = Parts.MAX_LABELS) @Schema(nullable = true)
             List<@NotNull String> labelIds,
 
             @Size(max = 20) List<@NotNull @jakarta.validation.constraints.Pattern(regexp = "[A-Za-z][A-Za-z0-9]{9}") String>
@@ -77,7 +77,7 @@ public final class DocumentRequests {
 
         @Size(max = Document.BODY_MAX) private String body;
 
-        @Size(max = DocumentService.MAX_LABELS) private List<@NotNull String> labelIds;
+        @Size(max = Parts.MAX_LABELS) private List<@NotNull String> labelIds;
 
         private boolean hasTitle, hasBody, hasLabelIds;
 

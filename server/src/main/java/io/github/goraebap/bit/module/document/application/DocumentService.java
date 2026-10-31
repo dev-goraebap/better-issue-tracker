@@ -1,11 +1,10 @@
 package io.github.goraebap.bit.module.document.application;
 
 import io.github.goraebap.bit.module.document.domain.Document;
+import io.github.goraebap.bit.module.document.domain.DocumentKind;
 import io.github.goraebap.bit.module.document.domain.DocumentRepository;
 import io.github.goraebap.bit.module.document.domain.FolderRepository;
-import io.github.goraebap.bit.module.label.LabelFacade;
 import io.github.goraebap.bit.module.link.LinkFacade;
-import io.github.goraebap.bit.module.link.TargetChangedEvent;
 import io.github.goraebap.bit.module.link.TargetChangedEvent.FieldChange;
 import io.github.goraebap.bit.module.link.TargetFacade;
 import io.github.goraebap.bit.module.link.TargetNotFoundException;
@@ -24,7 +23,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,16 +33,15 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 public class DocumentService {
-    static final int MAX_LABELS = 50;
     private final DocumentRepository documentRepository;
     private final FolderRepository folderRepository;
     private final DocumentQuery documentQuery;
+    private final PageQuery pageQuery;
     private final DocumentOrderService documentOrderService;
     private final Parts parts;
-    private final LabelFacade labelFacade;
     private final LinkFacade linkFacade;
     private final TargetFacade targetFacade;
-    private final ApplicationEventPublisher applicationEventPublisher;
+    private final DocumentActivity documentActivity;
     private final Clock clock;
     private final io.github.goraebap.bit.module.file.FileFacade fileFacade;
 
@@ -120,7 +117,7 @@ public class DocumentService {
 
     @Transactional(readOnly = true)
     public DocumentViews.Detail get(CurrentUser actor, String workspaceId, String id) {
-        var document = access(actor, workspaceId, id, false, false);
+        var document = parts.requireDocument(actor, workspaceId, id, false, false);
         var row = documentQuery.findById(workspaceId, id).orElseThrow(DocumentErrorCode.DOCUMENT_NOT_FOUND::raise);
         var linked = new ArrayList<DocumentViews.LinkedWorkItem>();
         for (var link : documentQuery.links(workspaceId, id)) {
@@ -134,8 +131,12 @@ public class DocumentService {
             }
         }
         var s = row.summary();
+        boolean page = DocumentKind.page.name().equals(s.kind());
+        var versions = page ? pageQuery.versions(id) : List.<PageViews.VersionSummary>of();
         return new DocumentViews.Detail(
                 s.id(),
+                s.kind(),
+                page ? new PageViews.Overview(versions.getFirst().number(), versions) : null,
                 s.projectId(),
                 s.folderId(),
                 Parts.path(documentQuery.folders(workspaceId, document.projectId()), s.folderId()),
@@ -181,7 +182,7 @@ public class DocumentService {
             Set<String> labelIds) {
         parts.require(actor, workspaceId, projectId, true);
         if (folderId != null) parts.requireFolder(workspaceId, projectId, folderId);
-        labels(actor, workspaceId, labelIds);
+        parts.requireLabels(actor, workspaceId, labelIds);
         var document = Document.create(
                 workspaceId,
                 projectId,
@@ -194,18 +195,18 @@ public class DocumentService {
                 clock.instant());
         documentRepository.save(document);
         linkFacade.syncDocumentReferences(actor, workspaceId, document.id(), document.body());
-        changed(actor, document, "created", List.of());
+        documentActivity.changed(actor, document, "created", List.of());
         return document.id();
     }
 
     @Transactional
     public void revise(CurrentUser actor, String workspaceId, String id, DocumentRequests.Update request) {
-        var document = access(actor, workspaceId, id, true, false);
+        var document = parts.requireDocument(actor, workspaceId, id, true, false);
         version(document, request.getExpectedVersion());
         String title = request.hasTitle() ? request.getTitle() : document.title();
         String body = request.hasBody() ? request.getBody() : document.body();
         var labelIds = request.hasLabelIds() ? request.labels() : document.labelIds();
-        if (!labelIds.equals(document.labelIds())) labels(actor, workspaceId, labelIds);
+        if (!labelIds.equals(document.labelIds())) parts.requireLabels(actor, workspaceId, labelIds);
         String previousTitle = document.title();
         String previousBody = document.body();
         var previousLabels = document.labelIds();
@@ -214,8 +215,9 @@ public class DocumentService {
             if (body == null || !body.contains("attachment:" + upload))
                 throw io.github.goraebap.bit.shared.error.CommonErrorCode.COMMON_INVALID_REQUEST.raise();
         }
-        fileFacade.attach(actor, request.getUploadIds(), io.github.goraebap.bit.module.file.FileOwner.DOCUMENT, id);
+        // The domain refuses a page's body first, so no file is bound for a change that cannot be made.
         document.revise(title, body, labelIds, actor.userId(), actor.agent(), clock.instant());
+        fileFacade.attach(actor, request.getUploadIds(), io.github.goraebap.bit.module.file.FileOwner.DOCUMENT, id);
         if (document.version() == before) return;
         documentRepository.save(document);
         linkFacade.syncDocumentReferences(actor, workspaceId, document.id(), document.body());
@@ -226,14 +228,14 @@ public class DocumentService {
         if (!previousBody.equals(document.body())) changes.add(new FieldChange("body", null, null));
         if (!previousLabels.equals(document.labelIds()))
             changes.add(new FieldChange("labels", ids(previousLabels), ids(document.labelIds())));
-        changed(actor, document, "changed", changes);
+        documentActivity.changed(actor, document, "changed", changes);
     }
 
     /** Puts the document in another folder, or another part (a project's or the workspace's own) and its folder. */
     @Transactional
     public void move(
             CurrentUser actor, String workspaceId, String id, long expectedVersion, String projectId, String folderId) {
-        var document = access(actor, workspaceId, id, true, false);
+        var document = parts.requireDocument(actor, workspaceId, id, true, false);
         version(document, expectedVersion);
         if (!Objects.equals(projectId, document.projectId())) parts.require(actor, workspaceId, projectId, true);
         if (folderId != null) parts.requireFolder(workspaceId, projectId, folderId);
@@ -242,76 +244,47 @@ public class DocumentService {
         document.move(projectId, folderId, actor.userId(), actor.agent(), clock.instant());
         if (document.version() == version) return;
         documentRepository.save(document);
-        changed(actor, document, "changed", List.of(new FieldChange("place", before, place(projectId, folderId))));
+        documentActivity.changed(
+                actor, document, "changed", List.of(new FieldChange("place", before, place(projectId, folderId))));
     }
 
     @Transactional
     public void delete(CurrentUser actor, String workspaceId, String id, long expectedVersion) {
-        var document = access(actor, workspaceId, id, true, true);
+        var document = parts.requireDocument(actor, workspaceId, id, true, true);
         version(document, expectedVersion);
         if (document.deleted()) return;
         document.delete(actor.userId(), actor.agent(), clock.instant());
         documentRepository.save(document);
-        changed(actor, document, "deleted", List.of());
+        documentActivity.changed(actor, document, "deleted", List.of());
     }
 
     @Transactional
     public void restore(CurrentUser actor, String workspaceId, String id, long expectedVersion) {
-        var document = access(actor, workspaceId, id, true, true);
+        var document = parts.requireDocument(actor, workspaceId, id, true, true);
         version(document, expectedVersion);
         if (!document.deleted()) return;
         boolean folderLives = document.folderId() == null
                 || folderRepository.findById(workspaceId, document.folderId()).isPresent();
         document.restore(folderLives, actor.userId(), actor.agent(), clock.instant());
         documentRepository.save(document);
-        changed(actor, document, "restored", List.of());
+        documentActivity.changed(actor, document, "restored", List.of());
     }
 
     /** Links the document to a work item it is about (relates_to); linking it again returns the same link. */
     @Transactional
     public String link(CurrentUser actor, String workspaceId, String id, String workItemId) {
-        access(actor, workspaceId, id, true, false);
+        parts.requireDocument(actor, workspaceId, id, true, false);
         return linkFacade.connect(
                 actor, workspaceId, TargetType.document, id, "relates_to", TargetType.work_item, workItemId);
     }
 
     @Transactional
     public void unlink(CurrentUser actor, String workspaceId, String id, String linkId) {
-        access(actor, workspaceId, id, true, false);
+        parts.requireDocument(actor, workspaceId, id, true, false);
         if (documentQuery.links(workspaceId, id).stream()
                 .noneMatch(link -> link.linkId().equals(linkId)))
             throw DocumentErrorCode.DOCUMENT_LINK_NOT_FOUND.raise();
         linkFacade.disconnect(actor, workspaceId, linkId);
-    }
-
-    private Document access(CurrentUser actor, String workspaceId, String id, boolean writing, boolean deleted) {
-        var document = documentRepository
-                .findById(workspaceId, id, deleted)
-                .orElseThrow(DocumentErrorCode.DOCUMENT_NOT_FOUND::raise);
-        parts.require(actor, workspaceId, document.projectId(), writing);
-        return document;
-    }
-
-    /** Every label must be a live label of this workspace; deleted or foreign ids are rejected as one error. */
-    private void labels(CurrentUser actor, String workspaceId, Set<String> labelIds) {
-        if (labelIds.size() > MAX_LABELS) throw DocumentErrorCode.DOCUMENT_LABEL_INVALID.raise();
-        if (!labelIds.isEmpty()
-                && labelFacade.findAllById(actor, workspaceId, labelIds).size() != labelIds.size())
-            throw DocumentErrorCode.DOCUMENT_LABEL_INVALID.raise();
-    }
-
-    private void changed(CurrentUser actor, Document document, String action, List<FieldChange> changes) {
-        applicationEventPublisher.publishEvent(new TargetChangedEvent(
-                document.workspaceId(),
-                document.projectId(),
-                TargetType.document,
-                document.id(),
-                action,
-                document.version(),
-                actor.userId(),
-                actor.agent(),
-                document.audit().updatedAt(),
-                changes));
     }
 
     private static void version(Document document, long expected) {

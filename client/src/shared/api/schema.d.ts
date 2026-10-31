@@ -1892,11 +1892,11 @@ export interface components {
         };
         Connect: {
             /** @enum {string} */
-            fromType: "work_item" | "decision" | "session_record" | "artifact" | "code_ref" | "document";
+            fromType: "work_item" | "decision" | "session_record" | "code_ref" | "document";
             fromId: string;
             relation: string;
             /** @enum {string} */
-            toType: "work_item" | "decision" | "session_record" | "artifact" | "code_ref" | "document";
+            toType: "work_item" | "decision" | "session_record" | "code_ref" | "document";
             toId: string;
         };
         CreateProject: {
@@ -2082,7 +2082,7 @@ export interface components {
         };
         CreateComment: {
             /** @enum {string} */
-            targetType: "work_item" | "decision" | "session_record" | "artifact" | "document";
+            targetType: "work_item" | "decision" | "session_record" | "document";
             targetId: string;
             /** @description Markdown */
             body: string;
@@ -2139,7 +2139,7 @@ export interface components {
              * @description attachment(업무 설명·댓글 파일, 기본) 또는 picture(아바타·로고, 정사각 JPEG 1MB 이하)
              * @enum {string}
              */
-            purpose?: "attachment" | "picture";
+            purpose?: "attachment" | "picture" | "page";
             /** @description 사진 자리를 칠할 대표색(#RRGGBB) */
             dominantColor?: string;
             /**
@@ -2549,7 +2549,7 @@ export interface components {
             relation: string;
             outgoing: boolean;
             /** @enum {string} */
-            type: "work_item" | "decision" | "session_record" | "artifact" | "code_ref" | "document";
+            type: "work_item" | "decision" | "session_record" | "code_ref" | "document";
             id: string;
             projectId?: string;
             reference?: string;
@@ -2738,6 +2738,13 @@ export interface components {
         };
         DocumentSummary: {
             id: string;
+            /** @enum {string} */
+            kind: "markdown" | "page";
+            /**
+             * Format: int32
+             * @description A page's latest version; null for a Markdown document
+             */
+            pageVersion: number | null;
             projectId: string | null;
             folderId: string | null;
             title: string;
@@ -2762,6 +2769,10 @@ export interface components {
         };
         Document: {
             id: string;
+            /** @enum {string} */
+            kind: "markdown" | "page";
+            /** @description A page's versions; null for a Markdown document. A page's body is its latest text */
+            page: components["schemas"]["PageOverview"];
             projectId: string | null;
             folderId: string | null;
             /** @description The folders from the part's top down to the document's */
@@ -2780,6 +2791,24 @@ export interface components {
             updatedAt: string;
             updatedBy: string;
             updatedByAgent: string | null;
+        };
+        PageOverview: {
+            /** Format: int32 */
+            latest: number;
+            /** @description Newest first */
+            versions: components["schemas"]["PageVersionSummary"][];
+        };
+        PageVersionSummary: {
+            id: string;
+            /** Format: int32 */
+            number: number;
+            entry: string;
+            note: string | null;
+            baseCommit: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            createdBy: string;
+            createdByAgent: string | null;
         };
         DocumentPart: {
             projectId: string;
@@ -3730,7 +3759,7 @@ export interface operations {
     list_1: {
         parameters: {
             query: {
-                type: "work_item" | "decision" | "session_record" | "artifact" | "code_ref" | "document";
+                type: "work_item" | "decision" | "session_record" | "code_ref" | "document";
                 id: string;
             };
             header?: never;
@@ -5978,7 +6007,7 @@ export interface operations {
     timeline: {
         parameters: {
             query: {
-                targetType: "work_item" | "decision" | "session_record" | "artifact" | "code_ref" | "document";
+                targetType: "work_item" | "decision" | "session_record" | "code_ref" | "document";
                 targetId: string;
                 cursor?: string;
                 size?: number;

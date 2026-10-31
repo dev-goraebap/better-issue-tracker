@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-/** Comments on a work item, a decision, a session or an artifact, and the target's timeline (D-078). */
+/** Comments on a work item, a decision, a session or a document, and the target's timeline (D-078). */
 @RestController
 @RequestMapping(value = "/api/v1/workspaces/{workspaceId}", produces = "application/json")
 @RequiredArgsConstructor

@@ -1070,7 +1070,7 @@
           "required" : true,
           "schema" : {
             "type" : "string",
-            "enum" : [ "work_item", "decision", "session_record", "artifact", "code_ref", "document" ]
+            "enum" : [ "work_item", "decision", "session_record", "code_ref", "document" ]
           }
         }, {
           "name" : "id",
@@ -4562,7 +4562,7 @@
           "required" : true,
           "schema" : {
             "type" : "string",
-            "enum" : [ "work_item", "decision", "session_record", "artifact", "code_ref", "document" ]
+            "enum" : [ "work_item", "decision", "session_record", "code_ref", "document" ]
           }
         }, {
           "name" : "targetId",
@@ -6416,7 +6416,7 @@
         "properties" : {
           "fromType" : {
             "type" : "string",
-            "enum" : [ "work_item", "decision", "session_record", "artifact", "code_ref", "document" ]
+            "enum" : [ "work_item", "decision", "session_record", "code_ref", "document" ]
           },
           "fromId" : {
             "type" : "string",
@@ -6430,7 +6430,7 @@
           },
           "toType" : {
             "type" : "string",
-            "enum" : [ "work_item", "decision", "session_record", "artifact", "code_ref", "document" ]
+            "enum" : [ "work_item", "decision", "session_record", "code_ref", "document" ]
           },
           "toId" : {
             "type" : "string",
@@ -6935,7 +6935,7 @@
         "properties" : {
           "targetType" : {
             "type" : "string",
-            "enum" : [ "work_item", "decision", "session_record", "artifact", "document" ]
+            "enum" : [ "work_item", "decision", "session_record", "document" ]
           },
           "targetId" : {
             "type" : "string"
@@ -7105,7 +7105,7 @@
           "purpose" : {
             "type" : "string",
             "description" : "attachment(업무 설명·댓글 파일, 기본) 또는 picture(아바타·로고, 정사각 JPEG 1MB 이하)",
-            "enum" : [ "attachment", "picture" ]
+            "enum" : [ "attachment", "picture", "page" ]
           },
           "dominantColor" : {
             "type" : "string",
@@ -8164,7 +8164,7 @@
           },
           "type" : {
             "type" : "string",
-            "enum" : [ "work_item", "decision", "session_record", "artifact", "code_ref", "document" ]
+            "enum" : [ "work_item", "decision", "session_record", "code_ref", "document" ]
           },
           "id" : {
             "type" : "string"
@@ -8658,6 +8658,15 @@
           "id" : {
             "type" : "string"
           },
+          "kind" : {
+            "type" : "string",
+            "enum" : [ "markdown", "page" ]
+          },
+          "pageVersion" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int32",
+            "description" : "A page's latest version; null for a Markdown document"
+          },
           "projectId" : {
             "type" : [ "string", "null" ]
           },
@@ -8699,7 +8708,7 @@
             "type" : [ "string", "null" ]
           }
         },
-        "required" : [ "excerpt", "folderId", "id", "labelIds", "projectId", "title", "updatedAt", "updatedBy", "updatedByAgent", "version", "workItems" ]
+        "required" : [ "excerpt", "folderId", "id", "kind", "labelIds", "pageVersion", "projectId", "title", "updatedAt", "updatedBy", "updatedByAgent", "version", "workItems" ]
       },
       "LinkedWorkItem" : {
         "type" : "object",
@@ -8727,6 +8736,15 @@
         "properties" : {
           "id" : {
             "type" : "string"
+          },
+          "kind" : {
+            "type" : "string",
+            "enum" : [ "markdown", "page" ]
+          },
+          "page" : {
+            "type" : "null",
+            "$ref" : "#/components/schemas/PageOverview",
+            "description" : "A page's versions; null for a Markdown document. A page's body is its latest text"
           },
           "projectId" : {
             "type" : [ "string", "null" ]
@@ -8784,7 +8802,56 @@
             "type" : [ "string", "null" ]
           }
         },
-        "required" : [ "body", "createdAt", "createdBy", "createdByAgent", "folderId", "id", "labelIds", "path", "projectId", "title", "updatedAt", "updatedBy", "updatedByAgent", "version", "workItems" ]
+        "required" : [ "body", "createdAt", "createdBy", "createdByAgent", "folderId", "id", "kind", "labelIds", "page", "path", "projectId", "title", "updatedAt", "updatedBy", "updatedByAgent", "version", "workItems" ]
+      },
+      "PageOverview" : {
+        "type" : "object",
+        "properties" : {
+          "latest" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "versions" : {
+            "type" : "array",
+            "description" : "Newest first",
+            "items" : {
+              "$ref" : "#/components/schemas/PageVersionSummary"
+            }
+          }
+        },
+        "required" : [ "latest", "versions" ]
+      },
+      "PageVersionSummary" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string"
+          },
+          "number" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "entry" : {
+            "type" : "string"
+          },
+          "note" : {
+            "type" : [ "string", "null" ]
+          },
+          "baseCommit" : {
+            "type" : [ "string", "null" ]
+          },
+          "createdAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "createdBy" : {
+            "type" : "string"
+          },
+          "createdByAgent" : {
+            "type" : [ "string", "null" ]
+          }
+        },
+        "required" : [ "baseCommit", "createdAt", "createdBy", "createdByAgent", "entry", "id", "note", "number" ]
       },
       "DocumentPart" : {
         "type" : "object",

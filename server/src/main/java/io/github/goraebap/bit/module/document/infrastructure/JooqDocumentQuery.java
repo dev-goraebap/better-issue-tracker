@@ -5,6 +5,7 @@ import static io.github.goraebap.bit.jooq.tables.DocumentLabel.DOCUMENT_LABEL;
 import static io.github.goraebap.bit.jooq.tables.Folder.FOLDER;
 import static io.github.goraebap.bit.jooq.tables.Label.LABEL;
 import static io.github.goraebap.bit.jooq.tables.Link.LINK;
+import static io.github.goraebap.bit.jooq.tables.PageVersion.PAGE_VERSION;
 import static io.github.goraebap.bit.jooq.tables.Project.PROJECT;
 
 import io.github.goraebap.bit.module.document.application.DocumentQuery;
@@ -32,6 +33,10 @@ class JooqDocumentQuery implements DocumentQuery {
     private static final String WORK_ITEM_TYPE = "work_item";
     private static final Field<String> EXCERPT_FIELD =
             DSL.substring(DOCUMENT.BODY, 1, EXCERPT).as("excerpt");
+    private static final Field<Integer> PAGE_VERSION_FIELD = DSL.field(DSL.select(DSL.max(PAGE_VERSION.NUMBER))
+                    .from(PAGE_VERSION)
+                    .where(PAGE_VERSION.DOCUMENT_ID.eq(DOCUMENT.DOCUMENT_ID)))
+            .as("page_version");
     private final DSLContext dslContext;
 
     @Override
@@ -128,7 +133,9 @@ class JooqDocumentQuery implements DocumentQuery {
                     .where(DOCUMENT_LABEL.DOCUMENT_ID.eq(DOCUMENT.DOCUMENT_ID))
                     .and(DOCUMENT_LABEL.LABEL_ID.eq(search.labelId()))));
         if (search.text() != null && !search.text().isBlank())
-            where = where.and(DOCUMENT.TITLE.containsIgnoreCase(search.text().strip()));
+            where = where.and(DOCUMENT.TITLE
+                    .containsIgnoreCase(search.text().strip())
+                    .or(DOCUMENT.BODY.containsIgnoreCase(search.text().strip())));
         if (search.workItemId() != null)
             where = where.and(DSL.exists(DSL.selectOne()
                     .from(LINK)
@@ -189,6 +196,8 @@ class JooqDocumentQuery implements DocumentQuery {
     private static SelectFieldOrAsterisk[] summaryFields() {
         return new SelectFieldOrAsterisk[] {
             DOCUMENT.DOCUMENT_ID,
+            DOCUMENT.KIND,
+            PAGE_VERSION_FIELD,
             DOCUMENT.PROJECT_ID,
             DOCUMENT.FOLDER_ID,
             DOCUMENT.TITLE,
@@ -218,6 +227,8 @@ class JooqDocumentQuery implements DocumentQuery {
         return rows.stream()
                 .map(r -> new DocumentViews.Summary(
                         r.get(DOCUMENT.DOCUMENT_ID),
+                        r.get(DOCUMENT.KIND),
+                        r.get(PAGE_VERSION_FIELD),
                         r.get(DOCUMENT.PROJECT_ID),
                         r.get(DOCUMENT.FOLDER_ID),
                         r.get(DOCUMENT.TITLE),

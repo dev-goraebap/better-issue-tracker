@@ -44,6 +44,8 @@ public final class DocumentViews {
             name = "DocumentSummary",
             requiredProperties = {
                 "id",
+                "kind",
+                "pageVersion",
                 "projectId",
                 "folderId",
                 "title",
@@ -57,6 +59,12 @@ public final class DocumentViews {
             })
     public record Summary(
             String id,
+
+            @Schema(allowableValues = {"markdown", "page"}) String kind,
+
+            @Schema(nullable = true, description = "A page's latest version; null for a Markdown document")
+            Integer pageVersion,
+
             @Schema(nullable = true) String projectId,
             @Schema(nullable = true) String folderId,
             String title,
@@ -81,6 +89,8 @@ public final class DocumentViews {
         Summary with(List<LinkedWorkItem> linked) {
             return new Summary(
                     id,
+                    kind,
+                    pageVersion,
                     projectId,
                     folderId,
                     title,
@@ -149,6 +159,8 @@ public final class DocumentViews {
             name = "Document",
             requiredProperties = {
                 "id",
+                "kind",
+                "page",
                 "projectId",
                 "folderId",
                 "path",
@@ -166,6 +178,14 @@ public final class DocumentViews {
             })
     public record Detail(
             String id,
+
+            @Schema(allowableValues = {"markdown", "page"}) String kind,
+
+            @Schema(
+                    nullable = true,
+                    description = "A page's versions; null for a Markdown document. A page's body is its latest text")
+            PageViews.Overview page,
+
             @Schema(nullable = true) String projectId,
             @Schema(nullable = true) String folderId,
 

@@ -109,6 +109,15 @@ class OpenApiContractTest {
     private io.github.goraebap.bit.module.document.application.DocumentQuery documentQuery;
 
     @MockitoBean
+    private io.github.goraebap.bit.module.document.application.PageQuery pageQuery;
+
+    @MockitoBean
+    private io.github.goraebap.bit.module.document.domain.PageVersionRepository pageVersionRepository;
+
+    @MockitoBean
+    private io.github.goraebap.bit.module.file.domain.BlobRepository blobRepository;
+
+    @MockitoBean
     private org.springframework.transaction.support.TransactionTemplate transactionTemplate;
 
     @Autowired
