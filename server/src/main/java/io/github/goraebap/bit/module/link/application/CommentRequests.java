@@ -12,7 +12,7 @@ public final class CommentRequests {
 
     @Schema(name = "CreateComment")
     public record Create(
-            @NotNull @Schema(allowableValues = {"work_item", "decision", "session_record", "artifact", "document"})
+            @NotNull @Schema(allowableValues = {"work_item", "decision", "session_record", "document"})
             TargetType targetType,
 
             @NotNull String targetId,

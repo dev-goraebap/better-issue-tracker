@@ -5,7 +5,7 @@ import java.util.Locale;
 
 /**
  * What a file may belong to (D-090). The owning module decides who may open its files; the file module only keeps the
- * link. Artifact versions point at their blob directly and are not owners here.
+ * link. Page versions point at their blobs directly and are not owners here.
  */
 public enum FileOwner {
     WORK_ITEM,

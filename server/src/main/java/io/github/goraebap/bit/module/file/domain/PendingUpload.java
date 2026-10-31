@@ -53,7 +53,11 @@ public class PendingUpload {
         FileFormat format = FileFormat.ofFilename(name)
                 .filter(purpose::accepts)
                 .orElseThrow(() -> new DomainRuleViolation(
-                        purpose == UploadPurpose.picture ? "사진은 JPEG로 올려 주세요" : "올릴 수 없는 파일 형식입니다"));
+                        switch (purpose) {
+                            case picture -> "사진은 JPEG로 올려 주세요";
+                            case page -> "페이지는 묶음을 zip 하나로 올려 주세요";
+                            case attachment -> "올릴 수 없는 파일 형식입니다";
+                        }));
         if (size <= 0) throw new DomainRuleViolation("빈 파일은 올릴 수 없습니다");
         long limit = purpose.maxBytes(attachmentBytes);
         if (size > limit) throw new DomainRuleViolation("파일은 " + UploadPurpose.limitText(limit) + "까지 올릴 수 있습니다");
@@ -81,6 +85,16 @@ public class PendingUpload {
 
     public boolean expired(Instant now) {
         return !createdAt.plus(KEPT).isAfter(now);
+    }
+
+    /**
+     * Refuses a page bundle whose stored bytes are not one zip within attachmentBytes, whatever size the browser
+     * announced; start is the beginning of the stored file.
+     */
+    public void requireBundle(long storedSize, byte[] start, long attachmentBytes) {
+        if (storedSize <= 0 || storedSize > attachmentBytes)
+            throw new DomainRuleViolation("묶음 zip은 " + UploadPurpose.limitText(attachmentBytes) + "까지 올릴 수 있습니다");
+        if (!FileFormat.ZIP.matches(start)) throw new DomainRuleViolation(filename + "의 내용이 zip이 아닙니다");
     }
 
     private static String validFilename(String raw) {

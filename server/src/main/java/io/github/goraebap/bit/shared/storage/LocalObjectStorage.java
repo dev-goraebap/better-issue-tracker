@@ -113,11 +113,22 @@ public final class LocalObjectStorage implements ObjectStorage {
         }
     }
 
+    @Override
+    public void put(String key, String contentType, long size, InputStream body) {
+        if (!write(key, contentType, size, body))
+            throw new IllegalStateException("the body did not give the size it was stored with");
+    }
+
     /** Stores what a signed upload sends, after checking the URL allows exactly that. */
     void put(Map<String, String> params, String contentType, long length, InputStream body) {
         String key = verified(params, "PUT", "key", "type", "size");
         if (!params.get("type").equals(contentType) || Long.parseLong(params.get("size")) != length)
             throw new Refused("the upload is not the one this URL allows");
+        if (!write(key, contentType, length, body)) throw new Refused("the upload is not the one this URL allows");
+    }
+
+    /** Writes the object whole or not at all; false (and nothing kept) when body gives other than length bytes. */
+    private boolean write(String key, String contentType, long length, InputStream body) {
         Path file = file(key);
         try {
             Files.createDirectories(Objects.requireNonNull(file.getParent()));
@@ -125,10 +136,11 @@ public final class LocalObjectStorage implements ObjectStorage {
             Files.copy(body, partial, StandardCopyOption.REPLACE_EXISTING);
             if (Files.size(partial) != length) {
                 Files.delete(partial);
-                throw new Refused("the upload is not the one this URL allows");
+                return false;
             }
             Files.writeString(typeOf(file), contentType);
             Files.move(partial, file, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+            return true;
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }

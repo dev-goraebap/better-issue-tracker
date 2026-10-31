@@ -4,6 +4,7 @@ import io.github.goraebap.bit.module.mcp.McpArguments;
 import io.github.goraebap.bit.module.mcp.McpTool;
 import io.github.goraebap.bit.module.mcp.McpToolProvider;
 import io.github.goraebap.bit.shared.error.BusinessException;
+import io.github.goraebap.bit.shared.error.DomainRuleViolation;
 import io.github.goraebap.bit.shared.web.CurrentUser;
 import io.modelcontextprotocol.common.McpTransportContext;
 import io.modelcontextprotocol.json.McpJsonMapper;
@@ -45,6 +46,7 @@ class McpServerConfig {
             상태는 move_work_item으로 옮깁니다(백로그·할 일·진행 중·완료·취소 같은 칸 이름이나 backlog/todo/doing/done/canceled). 작업은 늘 상태가 있고, 상태를 주지 않고 만들면 할 일 칸에 들어갑니다. 나중으로 미뤄 두는 업무는 status에 backlog를 줍니다.
             프로젝트가 GitHub·GitLab·Gitea 저장소와 연결돼 있으면 브랜치는 orm-14-짧은-영문, 커밋 메시지와 PR 제목에는 ORM-14처럼 업무 키를 넣습니다. 그러면 브랜치·PR·커밋이 업무에 붙고 PR 열기와 병합이 칸을 옮기므로, PR로 가는 작업은 완료로 직접 옮기지 말고 병합에 맡깁니다. 이슈 동기화가 켜져 있으면 설명과 댓글이 저장소 이슈에도 복사됩니다.
             요구사항·설계·기획·회의록처럼 오래 두고 고쳐 가며 보는 글은 create_document로 프로젝트의 폴더(예: 설계/화면)에 문서로 남기고, link_document로 관련 업무와 잇습니다. 찾을 때는 list_documents, 읽을 때는 get_document를 씁니다.
+            사람이 보기 편한 HTML 결과물(설명서·시안·흐름도)은 zip 하나로 묶어 purpose page로 올린 뒤 create_page로 페이지를 만들고, 고친 결과물은 update_page로 새 버전을 올립니다.
             결정기록은 앞으로 다른 작업이 따라야 할 선택(규칙·방식·제약)을 남기는 업무입니다. 작업 업무와 따로 만들고 labels에 '결정기록'을 넣습니다.
             기존 결정을 뒤집을 때와, 여러 안 중 하나를 골라 이후 작업이 그것을 따라야 할 때만 씁니다. 한 번 하고 끝나는 선택이나 새 기능 추가 자체는 작업 업무의 댓글로 충분합니다.
             결정기록 본문은 ## 맥락 / ## 결정 / ## 검토한 대안(실제로 따져 본 안이 있을 때만)이고 섹션마다 몇 문장입니다. 맥락에 그 결정이 나온 업무의 참조를 적고, 확정한 결정은 고치지 않고 새 결정기록으로 대체합니다.
@@ -118,6 +120,8 @@ class McpServerConfig {
             return error(failure.errorCode().code() + ": " + failure.getMessage());
         } catch (IllegalArgumentException invalid) {
             return error(invalid.getMessage());
+        } catch (DomainRuleViolation rule) {
+            return error(rule.getMessage());
         } catch (IOException | RuntimeException failure) {
             LOG.error("MCP tool {} failed", tool.name(), failure);
             return error("도구를 실행하지 못했습니다. 잠시 뒤 다시 시도하세요.");

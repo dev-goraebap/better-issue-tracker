@@ -25,6 +25,8 @@
 | `create_document` | 요구사항·설계·기획·회의록처럼 오래 두고 고쳐 가며 보는 글 남기기(없는 폴더는 만듦) |
 | `update_document` | 문서 본문·제목·라벨 고치기, `project`·`folder`로 옮기기 |
 | `link_document` | 문서를 그 문서가 다루는 업무와 잇기(`remove: true`면 끊기) |
+| `create_page` | 로컬에서 만든 HTML 결과물을 zip 하나로 `purpose: "page"` 업로드한 뒤 문서함의 페이지(버전 1)로 만들기 |
+| `update_page` | 페이지에 고친 묶음을 새 버전으로 올리기(제목·라벨·위치는 `update_document`) |
 
 문서 도구가 목록에 없으면 문서 기능이 생기기 전의 옛 서버다. 그때 긴 글은 업무 설명에 쓴다.
 

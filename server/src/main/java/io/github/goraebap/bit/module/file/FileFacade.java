@@ -63,4 +63,23 @@ public interface FileFacade {
      */
     Map<String, String> copy(
             FileOwner owner, String fromOwnerId, String toOwnerId, Collection<String> attachmentIds, CurrentUser actor);
+
+    /**
+     * The member's finished page upload (purpose page) as a zip stream, after the checks attach makes: theirs, not
+     * expired, stored, within the attachment limit, starting as a zip does. It does not use the upload up: the daily
+     * cleanup removes it a day after it was made, and the caller keeps one upload from making two things. The caller
+     * closes the stream.
+     */
+    InputStream openBundle(CurrentUser uploader, String uploadId);
+
+    /**
+     * Keeps files the server read itself as blobs with no attachment, and returns their blobs in the given order. Equal
+     * bytes are kept once (key blobs/sha256/hex): the same content always gets the same blob, so a repeated call adopts
+     * what an earlier one stored, and versions sharing a file share its blob. Kept blobs are never cleaned up. Call it
+     * outside a transaction: it writes to storage first and then adds the rows in one statement.
+     */
+    List<KeptBlob> keep(CurrentUser actor, List<KeptFile> files);
+
+    /** A kept blob's bytes; the caller has checked that the member may read what holds it, and closes the stream. */
+    InputStream openKept(String blobId);
 }

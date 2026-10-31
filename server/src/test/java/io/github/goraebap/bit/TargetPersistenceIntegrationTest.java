@@ -247,7 +247,7 @@ class TargetPersistenceIntegrationTest {
                         .title())
                 .isEqualTo("A decision");
         denied(() -> targets.requireAccess(actor, workspace, TargetType.decision, decision, true), 403);
-        denied(() -> targets.requireAccess(actor, workspace, TargetType.artifact, Ids.newId(), false), 404);
+        denied(() -> targets.requireAccess(actor, workspace, TargetType.code_ref, Ids.newId(), false), 404);
         denied(() -> targets.requireAccess(actor, workspace, TargetType.decision, Ids.newId(), false), 404);
         denied(() -> targets.requireAccess(actor, Ids.newId(), TargetType.decision, decision, false), 404);
         jdbc.update("UPDATE iam_password SET must_change=1 WHERE iam_user_id=?", actor.userId());
@@ -1011,7 +1011,6 @@ class TargetPersistenceIntegrationTest {
                         .orElseThrow()
                         .targetId())
                 .isEqualTo(session);
-        denied(() -> comments.create(actor, workspace, TargetType.artifact, Ids.newId(), "Unimplemented"), 404);
         denied(() -> comments.create(actor, workspace, TargetType.work_item, Ids.newId(), "Missing"), 404);
         denied(() -> comments.create(actor, workspace, TargetType.code_ref, Ids.newId(), "Unsupported"), 404);
         assertThat(jdbc.queryForObject("SELECT count(*) FROM comment", Integer.class))

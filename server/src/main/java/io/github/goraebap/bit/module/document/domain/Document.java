@@ -9,7 +9,8 @@ import lombok.Getter;
 
 /**
  * A document (D-093): a title and Markdown text, kept in a folder of a project's part (projectId) or of the
- * workspace's own part (null), at the part's top when folderId is null, with workspace labels.
+ * workspace's own part (null), at the part's top when folderId is null, with workspace labels. A page (D-113) is a
+ * document whose content is its versions; its body is the latest version's text, which only a new version changes.
  */
 @Getter
 public final class Document {
@@ -18,6 +19,7 @@ public final class Document {
 
     private final String id;
     private final String workspaceId;
+    private final DocumentKind kind;
     private String projectId;
     private String folderId;
     private String title;
@@ -29,6 +31,7 @@ public final class Document {
     private Document(
             String id,
             String workspaceId,
+            DocumentKind kind,
             String projectId,
             String folderId,
             String title,
@@ -38,6 +41,7 @@ public final class Document {
             Audit audit) {
         this.id = id;
         this.workspaceId = workspaceId;
+        this.kind = Objects.requireNonNull(kind);
         this.projectId = projectId;
         this.folderId = folderId;
         this.title = title;
@@ -60,6 +64,7 @@ public final class Document {
         return new Document(
                 Ids.newId(),
                 Objects.requireNonNull(workspaceId),
+                DocumentKind.markdown,
                 projectId,
                 folderId,
                 validTitle(title),
@@ -69,9 +74,34 @@ public final class Document {
                 Audit.create(actor, agent, now));
     }
 
+    /** A page whose first version is saved with it; its body is that version's text. */
+    public static Document createPage(
+            String workspaceId,
+            String projectId,
+            String folderId,
+            String title,
+            Set<String> labelIds,
+            PageText text,
+            String actor,
+            String agent,
+            Instant now) {
+        return new Document(
+                Ids.newId(),
+                Objects.requireNonNull(workspaceId),
+                DocumentKind.page,
+                projectId,
+                folderId,
+                validTitle(title),
+                text.value(),
+                labelIds,
+                0,
+                Audit.create(actor, agent, now));
+    }
+
     public static Document fromPersistence(
             String id,
             String workspaceId,
+            DocumentKind kind,
             String projectId,
             String folderId,
             String title,
@@ -79,18 +109,29 @@ public final class Document {
             Set<String> labelIds,
             long version,
             Audit audit) {
-        return new Document(id, workspaceId, projectId, folderId, title, body, labelIds, version, audit);
+        return new Document(id, workspaceId, kind, projectId, folderId, title, body, labelIds, version, audit);
     }
 
-    /** Changes the words and labels; the version moves only when something changed. */
+    /**
+     * Changes the words and labels; the version moves only when something changed. A page's body comes from its latest
+     * version, so a different body for a page is refused; the same one, as a title-only edit sends back, passes.
+     */
     public void revise(String title, String body, Set<String> labelIds, String actor, String agent, Instant now) {
         String nextTitle = validTitle(title);
         String nextBody = validBody(body);
         var nextLabels = Set.copyOf(labelIds);
+        if (kind == DocumentKind.page && !nextBody.equals(this.body)) throw new PageBodyIsDerived();
         if (nextTitle.equals(this.title) && nextBody.equals(this.body) && nextLabels.equals(this.labelIds)) return;
         this.title = nextTitle;
         this.body = nextBody;
         this.labelIds = nextLabels;
+        touch(actor, agent, now);
+    }
+
+    /** A page's new version became its latest: the body becomes its text and the document moves on. */
+    public void publish(PageText text, String actor, String agent, Instant now) {
+        if (kind != DocumentKind.page) throw new IllegalStateException("Only a page has versions");
+        this.body = text.value();
         touch(actor, agent, now);
     }
 

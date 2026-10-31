@@ -20,11 +20,14 @@ LABEL org.opencontainers.image.title=bit
 WORKDIR /app
 COPY --from=server /src/server/build/libs/app.jar app.jar
 COPY --from=screens /src/client/dist screens/
+COPY --from=screens /src/client/node_modules/pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css page-fonts/
+COPY --from=screens /src/client/node_modules/pretendard/dist/web/variable/woff2-dynamic-subset page-fonts/woff2-dynamic-subset/
 RUN mkdir -p /var/lib/bit && chown 10001:10001 /var/lib/bit
 USER 10001:10001
 ENV DB_PATH=/var/lib/bit/bit.db
 ENV STORAGE_LOCAL_ROOT=/var/lib/bit/files
 ENV APP_SCREENS=file:/app/screens/
+ENV APP_PAGE_FONTS=file:/app/page-fonts/
 VOLUME /var/lib/bit
 EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \

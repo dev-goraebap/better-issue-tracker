@@ -4,6 +4,7 @@ import static io.github.goraebap.bit.jooq.tables.Document.DOCUMENT;
 import static io.github.goraebap.bit.jooq.tables.DocumentLabel.DOCUMENT_LABEL;
 
 import io.github.goraebap.bit.module.document.domain.Document;
+import io.github.goraebap.bit.module.document.domain.DocumentKind;
 import io.github.goraebap.bit.module.document.domain.DocumentRepository;
 import io.github.goraebap.bit.shared.domain.Ids;
 import io.github.goraebap.bit.shared.persistence.AuditRecords;
@@ -30,6 +31,7 @@ class JooqDocumentRepository implements DocumentRepository {
                 .fetchOptional(r -> Document.fromPersistence(
                         r.getDocumentId(),
                         r.getWorkspaceId(),
+                        DocumentKind.valueOf(r.getKind()),
                         r.getProjectId(),
                         r.getFolderId(),
                         r.getTitle(),
@@ -60,6 +62,7 @@ class JooqDocumentRepository implements DocumentRepository {
         var r = dslContext.newRecord(DOCUMENT);
         r.setDocumentId(d.id());
         r.setWorkspaceId(d.workspaceId());
+        r.setKind(d.kind().name());
         r.setProjectId(d.projectId());
         r.setFolderId(d.folderId());
         r.setTitle(d.title());

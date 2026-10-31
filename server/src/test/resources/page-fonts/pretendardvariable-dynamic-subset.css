@@ -1,0 +1,19 @@
+/* [0] */
+@font-face {
+	font-family: 'Pretendard Variable';
+	font-style: normal;
+	font-display: swap;
+	font-weight: 45 920;
+	src: url(./woff2-dynamic-subset/PretendardVariable.subset.0.woff2) format('woff2-variations');
+	unicode-range: U+ac00-d7a3;
+}
+
+/* [1] */
+@font-face {
+	font-family: 'Pretendard Variable';
+	font-style: normal;
+	font-display: swap;
+	font-weight: 45 920;
+	src: url(./woff2-dynamic-subset/PretendardVariable.subset.1.woff2) format('woff2-variations');
+	unicode-range: U+0020-007e;
+}

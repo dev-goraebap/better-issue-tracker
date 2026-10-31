@@ -30,6 +30,8 @@ dependencies {
     // Files on S3, Cloudflare R2 or MinIO through one adapter (D-029); without STORAGE_ENDPOINT they stay local.
     implementation platform('software.amazon.awssdk:bom:2.46.7')
     implementation 'software.amazon.awssdk:s3'
+    // Pages (D-113): reads each uploaded HTML file once, for repeated data-bit-id, external addresses and the text.
+    implementation 'org.jsoup:jsoup:1.21.2'
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
     jooqCodegen 'org.jooq:jooq-meta-extensions:3.21.6'
@@ -40,9 +42,10 @@ dependencies {
 }
 
 tasks.named('bootJar') { archiveFileName = 'app.jar' }
-// Tests keep their local file storage under build/ and run no nightly jobs.
+// Tests keep their local file storage under build/, read page fonts from a fixture and run no nightly jobs.
 tasks.withType(Test).configureEach {
     systemProperty 'app.storage.local-root', layout.buildDirectory.dir('test-files').get().asFile.absolutePath
+    systemProperty 'app.page-fonts', 'classpath:/page-fonts/'
     systemProperty 'app.jobs.enabled', 'false'
 }
 tasks.named('test') {
