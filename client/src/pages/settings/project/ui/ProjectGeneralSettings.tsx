@@ -62,6 +62,7 @@ export function ProjectGeneralSettings({ project, canManage }: { project: Projec
   };
   return <VStack gap={8}>
     <SettingsHead title="일반" description={`${project.name}의 이름과 업무 번호 앞에 붙는 키를 정합니다.${isArchived ? ' 보관한 프로젝트는 읽기만 됩니다.' : ''}`} />
+
     <form onSubmit={event => { event.preventDefault(); void save(); }}>
       <SettingsCard title="세부 정보" id="project-details" actions={editable ? <Button type="submit" label="저장" variant="secondary" size="sm" isDisabled={!isChanged} isLoading={isBusy} /> : undefined}>
         <SettingsRow label="아이콘" description="사이드바와 목록에서 프로젝트 이름 앞에 보입니다.">

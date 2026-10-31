@@ -80,7 +80,7 @@ export function NewWorkItem({ workspaceId, projectId, status, kind = 'task', typ
   const [error, setError] = useState('');
   const set = (patch: Partial<Draft>) => setDraft(previous => ({ ...previous, ...patch }));
   const project = projects.find(each => each.id === projectId);
-  const target = projects.find(each => each.id === (draft.projectId ?? projects[0]?.id));
+  const target = projects.find(each => each.id === draft.projectId);
   const columns = useQuery({ ...columnsQuery(workspaceId, target?.id ?? ''), enabled: !!target }).data ?? [];
   // The status stays where the member put it; until then, where the address said to start, in the project picked.
   const shownStatus = draft.status && (draft.status === NO_STATUS || columns.some(column => column.id === draft.status)) ? draft.status : startColumn(columns, status);
@@ -89,20 +89,20 @@ export function NewWorkItem({ workspaceId, projectId, status, kind = 'task', typ
   const parentTypes = type?.allowedParentTypeIds ?? [];
   const parent = draft.parent && parentTypes.includes(draft.parent.type?.id ?? '') ? draft.parent : undefined;
   const isParentMissing = !isEvent && !!type?.parentRequired && !parent;
-  const canCreate = !!draft.title.trim() && !!target && !isBusy && !files.isUploading;
+  const canCreate = !!draft.title.trim() && !isBusy && !files.isUploading;
   const create = async () => {
-    if (!canCreate || !target) return;
+    if (!canCreate) return;
     if (isParentMissing) { setError(`'${type!.name}' 유형은 상위 업무 밑에만 만들 수 있습니다. 상위 업무를 골라 주세요.`); return; }
     setBusy(true); setError('');
     try {
       const common = { title: draft.title.trim(), description: draft.body.trim() || null, uploadIds: files.uploadIds, peopleIds: draft.people, labelIds: draft.labelIds };
-      const id = await createItem(workspaceId, target.id, isEvent
+      const id = await createItem(workspaceId, target?.id ?? '', isEvent
         ? { ...common, kind: 'event', ...eventFields(draft.time), columnId: null, reminderMinutes: draft.time.allDay ? null : draft.reminder ?? null }
         : { ...common, kind: 'task', priority: draft.priority, dueDate: draft.dueDate ?? null, columnId: shownStatus === NO_STATUS ? null : shownStatus, typeId: type?.id ?? null, parentId: parent?.id ?? null });
       // A repeating one is made first and then repeats from its own day (D-092), its later occurrences made by the server.
-      if (draft.repeat) await repeatItem(workspaceId, target.id, id, repeatBody(draft.repeat, 0));
-      await refreshItems(client, workspaceId, target.id);
-      const href = workItemHref(workspaceId, { id, projectId: target.id });
+      if (draft.repeat && target) await repeatItem(workspaceId, target.id, id, repeatBody(draft.repeat, 0));
+      await refreshItems(client, workspaceId, target?.id ?? '');
+      const href = workItemHref(workspaceId, { id, projectId: target?.id ?? null });
       // The toast lives in a layer above the router, so its way to the work item navigates rather than linking.
       toast({ body: `${draft.title.trim()}을(를) 만들었습니다.`, endContent: <Button label="보기" variant="ghost" size="sm" onClick={() => void router.navigate({ href })} /> });
       if (isMore) { files.reset(); set({ title: '', body: draft.templateId ? WORK_ITEM_TEMPLATES.find(each => each.id === draft.templateId)?.body ?? '' : '' }); titleBox.current?.focus(); return; }
@@ -114,8 +114,8 @@ export function NewWorkItem({ workspaceId, projectId, status, kind = 'task', typ
   const keys = (event: KeyboardEvent) => { if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) { event.preventDefault(); void create(); } };
   const projectPill = project
     ? <span className={styles.projectChip}>{mark(project)}{project.key}</span>
-    : <PropertyPicker label="프로젝트" icon="board" value={target?.id} onChange={value => set({ projectId: value as string, status: undefined })}
-      options={projects.map(each => ({ value: each.id, label: each.name, icon: mark(each) }))} />;
+    : <PropertyPicker label="프로젝트" icon="board" value={target?.id ?? ''} onChange={value => set({ projectId: value as string, status: undefined })}
+      options={[{ value: '', label: '워크스페이스 공통', icon: <NavIcon name="home" /> }, ...projects.map(each => ({ value: each.id, label: each.name, icon: mark(each) }))]} />;
   const titleField = <input ref={titleBox} className={styles.title} value={draft.title} placeholder={`${name.noun} 제목`} aria-label={`${name.noun} 제목`} autoFocus data-autofocus
     onChange={event => set({ title: event.target.value })} />;
   const descriptionField = <div className={styles.description}>
@@ -147,14 +147,14 @@ ${next.body}`) : isUntouched ? '' : previous.body;
         <PropertyPicker label="유형" icon="tasks" options={typeOptions(types)} value={type?.id} onChange={value => { if (value) { set({ typeId: value as string }); setError(''); } }} />
         {parentTypes.length > 0 && <ParentPicker workspaceId={workspaceId} typeIds={parentTypes} value={parent} isRequired={!!type?.parentRequired}
           onChange={picked => { set({ parent: picked }); setError(''); }} />}
-        <PropertyPicker label="상태" icon="status" options={statusOptions(columns)} value={shownStatus} onChange={value => set({ status: (value as string | undefined) ?? NO_STATUS })} />
+        {target ? <PropertyPicker label="상태" icon="status" options={statusOptions(columns)} value={shownStatus} onChange={value => set({ status: (value as string | undefined) ?? NO_STATUS })} /> : <span className={styles.projectChip}><NavIcon name="status" />백로그</span>}
       </>}
     {!isEvent && <PropertyPicker label="우선순위" icon="priority" options={priorityOptions} value={draft.priority} onChange={value => set({ priority: (value as Priority | undefined) ?? 'medium' })} />}
     <PropertyPicker label={isEvent ? '참석자' : '담당자'} icon="person" options={peopleOptions(members)} value={draft.people} isMultiple
       onChange={value => set({ people: (value as string[] | undefined) ?? [] })} />
     <PropertyPicker label="라벨" icon="label" options={labelOptions(labels)} value={draft.labelIds} isMultiple onChange={value => set({ labelIds: (value as string[] | undefined) ?? [] })} />
     {!isEvent && <DuePicker value={draft.dueDate} onChange={dueDate => set({ dueDate })} />}
-    <RepeatPicker value={draft.repeat} onChange={repeat => set({ repeat })} />
+    {target && <RepeatPicker value={draft.repeat} onChange={repeat => set({ repeat })} />}
   </div>;
   const more = <Switch label="계속 만들기" size="sm" value={isMore} onChange={setMore} />;
   const submit = <Button className="bit-create-action" label={`${name.noun} 만들기`} variant="primary" size={panel ? 'sm' : undefined} isDisabled={!canCreate} isLoading={isBusy} onClick={() => { void create(); }}

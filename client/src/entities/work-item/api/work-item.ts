@@ -33,7 +33,7 @@ export const workspaceItemsQuery = (w: string, filters: TaskFilters = {}) => inf
   getNextPageParam: page => page.nextCursor ?? undefined, retry: false,
 });
 export const byRefQuery = (w: string, reference: string) => queryOptions({ queryKey: ['workspace', w, 'task-ref', reference], queryFn: ({ signal }) => readJson<WorkItem>(`/api/v1/workspaces/${encodeURIComponent(w)}/work-items/by-ref/${encodeURIComponent(reference)}`, signal), retry: false });
-export const createItem = (w: string, p: string, body: components['schemas']['CreateWorkItem']) => createAt(workBase(w, p), body);
+export const createItem = (w: string, p: string, body: components['schemas']['CreateWorkItem']) => createAt(p ? workBase(w, p) : `/api/v1/workspaces/${encodeURIComponent(w)}/work-items`, body);
 export const moveItem = (w: string, p: string, id: string, body: components['schemas']['MoveWorkItem']) => command('POST', `${itemPath(w, p, id)}/move`, body);
 /**
  * Changes a work item's fields (absent ones kept); a stale expectedVersion is 409. A repeating one's later occurrences

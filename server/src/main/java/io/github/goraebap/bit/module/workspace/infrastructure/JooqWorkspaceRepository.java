@@ -30,6 +30,17 @@ class JooqWorkspaceRepository implements WorkspaceRepository {
     private final DSLContext dslContext;
 
     @Override
+    public long allocateWorkItemNumber(String workspaceId) {
+        return dslContext
+                .update(WORKSPACE)
+                .set(WORKSPACE.LAST_WORK_ITEM_NUMBER, WORKSPACE.LAST_WORK_ITEM_NUMBER.plus(1L))
+                .where(WORKSPACE.WORKSPACE_ID.eq(workspaceId))
+                .returning(WORKSPACE.LAST_WORK_ITEM_NUMBER)
+                .fetchSingle()
+                .getLastWorkItemNumber();
+    }
+
+    @Override
     public List<CustomRole> customRoles(String workspaceId) {
         return dslContext
                 .selectFrom(WORKSPACE_CUSTOM_ROLE)

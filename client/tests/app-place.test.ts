@@ -21,3 +21,15 @@ test('document detail, creation and editing retain their route identity for brea
   assert.deepEqual(appPlace('/workspaces/aB3dE6gH9j/documents/new'), { workspaceId: 'aB3dE6gH9j', workspaceSection: '/documents', documentRef: 'new', isEditing: false });
   assert.equal(appPlace('/workspaces/aB3dE6gH9j/members/invite').workspaceSection, '/members/invite');
 });
+
+
+test('scope navigation retains the project for focused content and management addresses', () => {
+  for (const section of ['issues', 'schedules', 'manuals', 'resources', 'members']) {
+    assert.equal(appPlace(`/workspaces/aB3dE6gH9j/${section}`).workspaceSection, `/${section}`);
+    const place = appPlace(`/workspaces/aB3dE6gH9j/projects/xY7zQ1wE2r/${section}`);
+    assert.equal(place.projectId, 'xY7zQ1wE2r'); assert.equal(place.projectSection, section);
+  }
+  assert.deepEqual(appPlace('/workspaces/aB3dE6gH9j/projects/xY7zQ1wE2r/settings/board'), {
+    workspaceId: 'aB3dE6gH9j', projectId: 'xY7zQ1wE2r', settingsProjectId: 'xY7zQ1wE2r', settings: '/board',
+  });
+});

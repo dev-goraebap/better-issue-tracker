@@ -3,11 +3,11 @@ import { exampleManuals } from './examples';
 import { isManuals, type Manual } from './manual';
 
 /** Development-only review store. Never used as a substitute for the server's authorization/persistence. */
-export function useManualPreview(scope: string) {
+export function useManualPreview(scope: string, seed = true) {
   const key = `bit.manual-preview.v1.${scope}`;
   const [error, setError] = useState('');
   const [manuals, setManuals] = useState<Manual[]>(() => {
-    try { const raw = localStorage.getItem(key); if (!raw) return exampleManuals(); const data: unknown = JSON.parse(raw); if (isManuals(data)) return data; }
+    try { const raw = localStorage.getItem(key); if (!raw) return seed ? exampleManuals() : []; const data: unknown = JSON.parse(raw); if (isManuals(data)) return data; }
     catch { /* Preserve the original bytes; don't overwrite unreadable storage. */ }
     return [];
   });

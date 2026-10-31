@@ -15,7 +15,7 @@ import { FolderList } from './FolderList';
 import { FolderTrail } from './FolderTrail';
 
 /**
- * One folder of a part opened (D-093, BIT-41): a project's 문서, or 문서함's own folders. The way down to it is the
+ * One folder of a part opened (D-093, BIT-41): a project's 문서, or 리소스's own folders. The way down to it is the
  * header's trail on a desktop, where its tools sit beside 만들기 (BIT-115); a phone, whose header keeps only the step
  * above, shows the whole way in a row under it. Its folders come first, then its documents, as a list. Someone who may write
  * makes a folder or a document here, and renames or
@@ -30,8 +30,8 @@ export function DocumentFolder({ workspaceId, projectId, folderId, title, rootLa
   const search = useSearch({ strict: false }) as FolderSearch;
   const go = (patch: Partial<FolderSearch>, replace = false) => {
     const next = { ...search, ...patch };
-    if (projectId) void navigate({ to: '/workspaces/$workspaceId/projects/$projectId/documents', params: { workspaceId, projectId }, search: next, replace });
-    else void navigate({ to: '/workspaces/$workspaceId/documents', params: { workspaceId }, search: next, replace });
+    if (projectId) void navigate({ to: '/workspaces/$workspaceId/projects/$projectId/resources', params: { workspaceId, projectId }, search: next, replace });
+    else void navigate({ href: `/workspaces/${workspaceId}/resources?${new URLSearchParams(Object.fromEntries(Object.entries(next).filter(([, value]) => value !== undefined)) as Record<string, string>)}`, replace });
   };
   const [naming, setNaming] = useState<{ folder?: Folder } | null>(null);
   const [deleting, setDeleting] = useState<Folder | null>(null);

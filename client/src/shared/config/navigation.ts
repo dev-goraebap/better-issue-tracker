@@ -7,10 +7,14 @@ export type MenuEntry = { path: string; label: string; icon: string };
  * (D-059). A phone's tabs are these, then 더보기.
  */
 export const WORKSPACE_MENU: readonly MenuEntry[] = [
-  { path: '', label: '홈', icon: 'home' },
-  { path: '/documents', label: '문서함', icon: 'documents' },
-  { path: '/members', label: '구성원', icon: 'members' },
+  { path: '/issues', label: '이슈', icon: 'work-items' },
+  { path: '/schedules', label: '스케줄', icon: 'calendar' },
+  { path: '/manuals', label: '매뉴얼', icon: 'documents' },
+  { path: '/resources', label: '리소스', icon: 'document' },
+  { path: '/members', label: '멤버', icon: 'members' },
+  { path: '/projects', label: '프로젝트', icon: 'board' },
 ];
+export const PROJECT_MENU = WORKSPACE_MENU.filter(entry => entry.path !== '/projects');
 
 /**
  * The workspace's settings, which 워크스페이스 설정 opens: the menu turns into these, headed by 돌아가기 (or Esc). The
@@ -40,7 +44,7 @@ export const ACCOUNT_MENU: readonly MenuEntry[] = [
 export const workspacePath = (workspaceId: string, path = '') => `/workspaces/${workspaceId}${path}`;
 export const projectPath = (workspaceId: string, projectId: string, path = '') => `/workspaces/${workspaceId}/projects/${projectId}${path}`;
 export const workspaceSettingsPath = (workspaceId: string, path = '/general') => `/workspaces/${workspaceId}/settings${path}`;
-export const projectSettingsPath = (workspaceId: string, projectId: string, path = '/general') => `/workspaces/${workspaceId}/settings/projects/${projectId}${path}`;
+export const projectSettingsPath = (workspaceId: string, projectId: string, path = '/general') => `/workspaces/${workspaceId}/projects/${projectId}/settings${path}`;
 
 /** Where an address is: its workspace, project, the menu entry it belongs to, and the item a page shows. */
 export type AppPlace = {
@@ -48,7 +52,7 @@ export type AppPlace = {
   /** The workspace menu entry's path ('' for 홈), when the page is the workspace's. */
   workspaceSection?: string;
   /** A project's 문서 (D-093), rather than its work items. */
-  projectSection?: 'documents' | 'manuals';
+  projectSection?: 'documents' | 'manuals' | 'issues' | 'schedules' | 'resources' | 'members';
   /** A work item's page, or 'new' for 새 업무. */
   itemId?: string;
   documentRef?: string;
@@ -72,14 +76,20 @@ export function appPlace(pathname: string): AppPlace {
   const [, workspaceId, rest = ''] = match;
   const settings = /^\/settings(?:\/projects\/([^/]+))?(\/[^/]+)$/.exec(rest);
   if (settings) return { workspaceId, settingsProjectId: settings[1], settings: settings[2] };
+  const scopedSettings = /^\/projects\/([^/]+)\/settings(\/[^/]+)$/.exec(rest);
+  if (scopedSettings) return { workspaceId, projectId: scopedSettings[1], settingsProjectId: scopedSettings[1], settings: scopedSettings[2] };
   const project = /^\/projects\/([^/]+)(\/.*)?$/.exec(rest);
   // 문서함's documents and their forms (/documents/…) belong to its menu entry.
   if (!project) {
+    const workspaceItem = /^\/work-items\/id\/([^/]+)(\/edit)?$/.exec(rest);
+    if (workspaceItem) return { workspaceId, workspaceSection: '/issues', itemId: workspaceItem[1], isEditing: !!workspaceItem[2] };
+    if (rest === '/work-items/new') return { workspaceId, workspaceSection: '/issues', itemId: 'new' };
     const document = /^\/documents\/([^/]+)(\/edit)?$/.exec(rest);
     if (document) return { workspaceId, workspaceSection: '/documents', documentRef: document[1], isEditing: !!document[2] };
     return { workspaceId, workspaceSection: rest.startsWith('/inbox') ? '/inbox' : rest.startsWith('/documents') ? '/documents' : rest };
   }
   const [, projectId, inner = ''] = project;
+  for (const section of ['issues', 'schedules', 'resources', 'members'] as const) if (inner === `/${section}`) return { workspaceId, projectId, projectSection: section };
   if (inner.startsWith('/documents')) return { workspaceId, projectId, projectSection: 'documents' };
   if (inner.startsWith('/manuals')) return { workspaceId, projectId, projectSection: 'manuals' };
   const item = /^\/work-items\/([^/]+)(\/edit)?$/.exec(inner);

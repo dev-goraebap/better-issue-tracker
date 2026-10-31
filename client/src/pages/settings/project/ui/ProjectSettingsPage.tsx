@@ -1,3 +1,4 @@
+import { NavigationSettings } from '@/features/navigation-settings';
 import { useQuery } from '@tanstack/react-query';
 import { useParams } from '@tanstack/react-router';
 import { PROJECT_SETTINGS_MENU } from '@/shared/config';
@@ -20,7 +21,7 @@ export function ProjectSettingsPage() {
   const entry = PROJECT_SETTINGS_MENU.find(each => each.path === `/${section}`);
   if (!entry) return <PageFrame title="설정" icon="settings"><PageState kind="not-found" title="설정을 찾을 수 없습니다" /></PageFrame>;
   const canManage = canManageIn(role);
-  return <PageFrame title={project.data ? `${project.data.name} · ${entry.label}` : entry.label} icon={entry.icon} width="narrow">
+  return <PageFrame title={project.data ? `${project.data.name} · ${entry.label}` : entry.label} icon={entry.icon} width="narrow" chrome="header" actions={section === 'general' && canManage ? <NavigationSettings workspaceId={workspaceId} projectId={projectId} /> : undefined}>
     {!project.data ? <QueryMessage pending={project.isPending} error={project.error} retry={() => { void project.refetch(); }} />
       : section === 'general' ? <ProjectGeneralSettings key={project.data.id} project={project.data} canManage={canManage} />
       : section === 'integrations' ? <IntegrationSettings project={project.data} canManage={canManage} />

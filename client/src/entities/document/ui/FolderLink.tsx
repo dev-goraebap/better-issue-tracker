@@ -2,7 +2,7 @@ import type { AnchorHTMLAttributes } from 'react';
 import { Link } from '@tanstack/react-router';
 
 /**
- * A link to a folder of a part: the project's 문서 (D-093) or 문서함 for the workspace's own, at its top when no folder.
+ * A link to a folder of a part: the project's 문서 (D-093) or 리소스 for the workspace's own, at its top when no folder.
  * Anything else an anchor takes passes through.
  */
 export function FolderLink({ workspaceId, projectId, folderId, ...anchor }: Omit<AnchorHTMLAttributes<HTMLAnchorElement>, 'href'> & {

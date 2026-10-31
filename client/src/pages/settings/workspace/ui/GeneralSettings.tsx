@@ -70,6 +70,7 @@ export function GeneralSettings({ workspace }: { workspace: Space }) {
   const owner = members.find(member => member.role === 'owner');
   return <VStack gap={8}>
     <SettingsHead title="일반" description="워크스페이스의 이름과 소유자를 정합니다." />
+
     <SettingsCard title="세부 정보" id="workspace-details">
       <SettingsRow lead={<PictureButton label="워크스페이스 이미지 바꾸기" isDisabled={!canPicture} onClick={() => setPicturing(true)}><WorkspaceMark workspace={{ id: workspace.id, name: name || workspace.name, logo: workspace.logo }} size="lg" /></PictureButton>} label="이름"
         description={canEdit ? '바꾸면 구성원 모두에게 바로 보입니다.' : undefined}>

@@ -121,7 +121,10 @@ class WorkItemMcpTools implements McpToolProvider {
                         "업무 만들기",
                         "새 업무를 만들고 참조(예: ORM-20)를 돌려줍니다. 설명은 마크다운입니다. type으로 업무 유형을 고르며, 상위가 필요한 유형(예: 스토리는 에픽 아래)은 여기서 만들 수 없으니 create_subtask로 상위 업무 아래에 만드세요. 지금 맡아 작업할 업무면 assignee에 me를 주고, 나중으로 미뤄 두는 업무면 비워 둡니다. 업무는 기능 하나나 버그 하나입니다. 같은 기능의 후속 수정이나 앞으로 따를 결정은 새 업무 대신 add_comment로 그 업무에 남기세요.",
                         McpTool.input()
-                                .string("project", "프로젝트 키. 예: ORM", true)
+                                .string(
+                                        "project",
+                                        "프로젝트 키. 생략하면 워크스페이스 공통 업무(W-번호). 공통 업무는 백로그로 생성하며 반복은 프로젝트 선택 후 설정합니다.",
+                                        false)
                                 .string("title", "제목", true)
                                 .choice(
                                         "kind",
@@ -335,10 +338,19 @@ class WorkItemMcpTools implements McpToolProvider {
     private Object create(CurrentUser actor, McpArguments args) {
         String workspace =
                 workspaceFacade.resolve(actor, args.optionalString("workspace").orElse(null));
-        var project = projectFacade.findByKey(actor, workspace, args.string("project"));
-        var columns = projectFacade.boardColumns(actor, workspace, project.id());
+        var project = args.optionalString("project")
+                .filter(key -> !isNone(key))
+                .map(key -> projectFacade.findByKey(actor, workspace, key))
+                .orElse(null);
+        String projectId = project == null ? null : project.id();
+        if (projectId == null && (args.has("repeat") || args.has("status")))
+            throw new IllegalArgumentException(
+                    "워크스페이스 공통 업무는 백로그로 생성합니다. 상태는 생성 후 move_work_item으로 바꾸고, 반복은 프로젝트 선택 후 설정하세요.");
+        var columns = project == null
+                ? List.<ProjectFacade.ColumnInfo>of()
+                : projectFacade.boardColumns(actor, workspace, projectId);
         var kind = args.optionalString("kind").map(this::kind).orElse(WorkItem.Kind.task);
-        String column = kind == WorkItem.Kind.event
+        String column = projectId == null || kind == WorkItem.Kind.event
                 ? null
                 : args.optionalString("status")
                         .map(status -> column(columns, status))
@@ -371,9 +383,9 @@ class WorkItemMcpTools implements McpToolProvider {
                 .map(name -> typeId(actor, workspace, name))
                 .orElse(null);
         String id = workItemService.create(
-                actor, workspace, project.id(), kind, type, null, details, column, labels, reminder);
-        if (args.has("repeat")) repeat(actor, workspace, project.id(), id, args);
-        var item = workItemQueryService.get(actor, workspace, project.id(), id);
+                actor, workspace, projectId, kind, type, null, details, column, labels, reminder);
+        if (args.has("repeat")) repeat(actor, workspace, projectId, id, args);
+        var item = workItemQueryService.get(actor, workspace, projectId, id);
         return summary(item, columns, Map.of());
     }
 

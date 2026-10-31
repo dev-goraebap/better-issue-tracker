@@ -130,12 +130,12 @@ class WorkItemController {
         return workItemQueryService.byRef(actor, workspaceId, reference);
     }
 
-    @PostMapping("/projects/{projectId}/work-items")
+    @PostMapping({"/projects/{projectId}/work-items", "/work-items"})
     @ApiResponse(responseCode = "201", description = "업무 생성")
     ResponseEntity<Void> create(
             @AuthenticationPrincipal CurrentUser actor,
             @PathVariable String workspaceId,
-            @PathVariable String projectId,
+            @PathVariable(required = false) String projectId,
             @Valid @RequestBody WorkItemRequests.Create request) {
         String id = workItemService.createWithFiles(actor, workspaceId, projectId, request);
         return ResponseEntity.created(URI.create(base(workspaceId, projectId, id)))
@@ -252,6 +252,8 @@ class WorkItemController {
     }
 
     private static String base(String workspaceId, String projectId, String id) {
-        return "/api/v1/workspaces/" + workspaceId + "/projects/" + projectId + "/work-items/" + id;
+        return projectId == null
+                ? "/api/v1/workspaces/" + workspaceId + "/work-items/id/" + id
+                : "/api/v1/workspaces/" + workspaceId + "/projects/" + projectId + "/work-items/" + id;
     }
 }

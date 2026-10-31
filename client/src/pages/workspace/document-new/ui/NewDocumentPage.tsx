@@ -21,7 +21,7 @@ export function NewDocumentPage() {
   const place = [project ? projectName ?? '프로젝트' : '공통', ...path.map(each => each.name)].join(' › ');
   const back = project
     ? <BackLink to="/workspaces/$workspaceId/projects/$projectId/documents" params={{ workspaceId, projectId: project }} search={folder ? { folder } : {}} label="문서" />
-    : <BackLink to="/workspaces/$workspaceId/documents" params={{ workspaceId }} search={folder ? { folder } : {}} label="문서함" />;
+    : <BackLink to="/workspaces/$workspaceId/documents" params={{ workspaceId }} search={folder ? { folder } : {}} label="리소스" />;
   const save = async (draft: DocumentDraft) => {
     let id: string;
     try {

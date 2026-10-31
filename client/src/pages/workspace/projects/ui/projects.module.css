@@ -3,3 +3,12 @@
 .clip { display: block; min-inline-size: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--color-text-secondary); }
 /* A table row's name after the project's mark (a phone card leads with it). */
 .named { display: inline-flex; align-items: center; gap: var(--spacing-2); min-inline-size: 0; }
+
+.favoriteOn { color: var(--color-text-primary); }
+.favoriteOn svg path { fill: currentColor; }
+
+.ordered { position: relative; }
+.projectGhost { font-size: 13px; }
+tr.projectGhost { display: table; table-layout: fixed; }
+.projectGhost td { padding: var(--spacing-3); }
+.spoken { position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden; clip-path: inset(50%); }

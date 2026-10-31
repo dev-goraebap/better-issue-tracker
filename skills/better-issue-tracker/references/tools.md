@@ -4,6 +4,9 @@
 | :--- | :--- |
 | `whoami` | 연결, 계정, 워크스페이스 확인 |
 | `list_projects` | 프로젝트 키와 보드 칸 이름 확인 |
+| `get_navigation` | 범위별 메뉴 이름·순서·버전 읽기(scope: workspace 또는 프로젝트 ID, 도구가 있는 서버) |
+| `set_navigation` | get_navigation의 expected_version과 고정 keys·표시 labels 배열로 공유 메뉴 이름·순서 저장(설정 권한 필요) |
+| `set_project_favorite` | project_id와 favorite으로 API 키 주인의 프로젝트 즐겨찾기 추가·해제 |
 | `list_members` | 담당자로 지정할 사람 확인 |
 | `list_labels` | 쓸 수 있는 라벨 확인 |
 | `list_work_item_types` | 업무 유형과 유형별 상위 규칙 확인(유형이 있는 서버) |

@@ -1,7 +1,8 @@
+import { NavigationSettings } from '@/features/navigation-settings';
 import { useQuery } from '@tanstack/react-query';
-import { useParams } from '@tanstack/react-router';
+import { useNavigate, useParams } from '@tanstack/react-router';
 import { WORKSPACE_SETTINGS_MENU } from '@/shared/config';
-import { PageFrame, PageState, QueryMessage } from '@/shared/ui';
+import { PageFrame, PageState, PageTabs, QueryMessage } from '@/shared/ui';
 import { canManage, canWrite, workspaceQuery } from '@/entities/workspace';
 import { GeneralSettings } from './GeneralSettings';
 import { LabelsSettings } from './LabelsSettings';
@@ -15,11 +16,12 @@ import { TypesSettings } from './TypesSettings';
  */
 export function WorkspaceSettingsPage() {
   const { workspaceId, section } = useParams({ strict: false }) as { workspaceId: string; section: string };
+  const navigate = useNavigate();
   const workspace = useQuery(workspaceQuery(workspaceId));
   const entry = WORKSPACE_SETTINGS_MENU.find(each => each.path === `/${section}`);
   if (!entry) return <PageFrame title="설정" icon="settings"><PageState kind="not-found" title="설정을 찾을 수 없습니다" /></PageFrame>;
   const role = workspace.data;
-  return <PageFrame title={entry.label} icon={entry.icon} width="narrow">
+  return <PageFrame title="워크스페이스 관리" actions={section === 'general' && canManage(role) ? <NavigationSettings workspaceId={workspaceId} /> : undefined} icon="settings" width="narrow" chrome="header" tabs={<PageTabs value={section} panelId="workspace-settings" items={WORKSPACE_SETTINGS_MENU.map(item => ({ value: item.path.slice(1), label: item.label, icon: item.icon }))} onChange={next => void navigate({ href: `/workspaces/${workspaceId}/settings/${next}` })} />}>
     {!workspace.data ? <QueryMessage pending={workspace.isPending} error={workspace.error} retry={() => { void workspace.refetch(); }} />
       : section === 'general' ? <GeneralSettings key={workspace.data.id} workspace={workspace.data} />
       : section === 'roles' ? <RolesSettings workspaceId={workspaceId} />

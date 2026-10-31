@@ -30,6 +30,9 @@ import tools.jackson.databind.json.JsonMapper;
 @AutoConfigureMockMvc
 @Import(OpenApiContractTest.ExportSecurity.class)
 class OpenApiContractTest {
+    @org.springframework.test.context.bean.override.mockito.MockitoBean
+    private io.github.goraebap.bit.module.navigation.domain.NavigationRepository navigationRepository;
+
     @MockitoBean
     private io.github.goraebap.bit.module.link.domain.ReactionRepository reactionRepository;
 

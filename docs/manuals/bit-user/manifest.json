@@ -1,0 +1,215 @@
+{
+  "title": "BIT 사용자 매뉴얼",
+  "description": "워크스페이스 참여부터 업무·일정·문서·매뉴얼 관리까지, 기능별 사용 방법을 안내합니다.",
+  "cover": "book",
+  "sections": [
+    {
+      "id": "start",
+      "title": "시작하기"
+    },
+    {
+      "id": "work",
+      "title": "업무 관리"
+    },
+    {
+      "id": "collaboration",
+      "title": "일정과 협업"
+    },
+    {
+      "id": "documents",
+      "title": "문서와 페이지"
+    },
+    {
+      "id": "manuals",
+      "title": "매뉴얼"
+    },
+    {
+      "id": "team",
+      "title": "프로젝트와 구성원 관리"
+    },
+    {
+      "id": "account",
+      "title": "내 계정과 화면"
+    },
+    {
+      "id": "help",
+      "title": "문제 해결"
+    }
+  ],
+  "pages": [
+    {
+      "id": "start-here",
+      "title": "BIT 처음 사용하기",
+      "sectionId": "start",
+      "file": "start-here.md"
+    },
+    {
+      "id": "accept-invitation",
+      "title": "초대받고 참여하기",
+      "sectionId": "start",
+      "file": "accept-invitation.md"
+    },
+    {
+      "id": "sign-in",
+      "title": "로그인과 작업 공간 전환",
+      "sectionId": "start",
+      "file": "sign-in.md"
+    },
+    {
+      "id": "create-project",
+      "title": "프로젝트 만들기",
+      "sectionId": "work",
+      "file": "create-project.md"
+    },
+    {
+      "id": "create-task",
+      "title": "작업 만들기",
+      "sectionId": "work",
+      "file": "create-task.md"
+    },
+    {
+      "id": "task-properties",
+      "title": "상태·담당자·날짜 바꾸기",
+      "sectionId": "work",
+      "file": "task-properties.md"
+    },
+    {
+      "id": "hierarchy",
+      "title": "업무 유형과 상위·하위 업무",
+      "sectionId": "work",
+      "file": "hierarchy.md"
+    },
+    {
+      "id": "views-and-search",
+      "title": "검색·필터와 뷰 사용하기",
+      "sectionId": "work",
+      "file": "views-and-search.md"
+    },
+    {
+      "id": "board-calendar",
+      "title": "보드와 캘린더로 확인하기",
+      "sectionId": "work",
+      "file": "board-calendar.md"
+    },
+    {
+      "id": "events",
+      "title": "일정·반복·알림 설정하기",
+      "sectionId": "collaboration",
+      "file": "events.md"
+    },
+    {
+      "id": "comments-and-files",
+      "title": "설명·댓글·파일로 협업하기",
+      "sectionId": "collaboration",
+      "file": "comments-and-files.md"
+    },
+    {
+      "id": "notifications",
+      "title": "알림 확인하기",
+      "sectionId": "collaboration",
+      "file": "notifications.md"
+    },
+    {
+      "id": "folders",
+      "title": "문서함과 폴더 사용하기",
+      "sectionId": "documents",
+      "file": "folders.md"
+    },
+    {
+      "id": "write-document",
+      "title": "Markdown 문서 작성하기",
+      "sectionId": "documents",
+      "file": "write-document.md"
+    },
+    {
+      "id": "link-document",
+      "title": "문서와 업무 연결하기",
+      "sectionId": "documents",
+      "file": "link-document.md"
+    },
+    {
+      "id": "html-pages",
+      "title": "HTML 페이지와 버전 읽기",
+      "sectionId": "documents",
+      "file": "html-pages.md"
+    },
+    {
+      "id": "read-manual",
+      "title": "매뉴얼 탐색과 검색",
+      "sectionId": "manuals",
+      "file": "read-manual.md"
+    },
+    {
+      "id": "create-manual",
+      "title": "매뉴얼 만들고 구성하기",
+      "sectionId": "manuals",
+      "file": "create-manual.md"
+    },
+    {
+      "id": "edit-manual",
+      "title": "매뉴얼 본문과 이미지 편집하기",
+      "sectionId": "manuals",
+      "file": "edit-manual.md"
+    },
+    {
+      "id": "manual-tools",
+      "title": "매뉴얼 복사·내보내기·댓글",
+      "sectionId": "manuals",
+      "file": "manual-tools.md"
+    },
+    {
+      "id": "members",
+      "title": "구성원 초대와 참여 확인",
+      "sectionId": "team",
+      "file": "members.md"
+    },
+    {
+      "id": "roles",
+      "title": "역할과 프로젝트 접근 관리",
+      "sectionId": "team",
+      "file": "roles.md"
+    },
+    {
+      "id": "labels-types",
+      "title": "라벨과 업무 유형 관리",
+      "sectionId": "team",
+      "file": "labels-types.md"
+    },
+    {
+      "id": "workflow",
+      "title": "프로젝트 설정과 상태 칸",
+      "sectionId": "team",
+      "file": "workflow.md"
+    },
+    {
+      "id": "repository",
+      "title": "저장소 연동 확인하기",
+      "sectionId": "team",
+      "file": "repository.md"
+    },
+    {
+      "id": "appearance",
+      "title": "프로필·테마·메뉴 배치",
+      "sectionId": "account",
+      "file": "appearance.md"
+    },
+    {
+      "id": "security",
+      "title": "비밀번호와 로그인된 기기",
+      "sectionId": "account",
+      "file": "security.md"
+    },
+    {
+      "id": "api-keys",
+      "title": "에이전트용 API 키 관리",
+      "sectionId": "account",
+      "file": "api-keys.md"
+    },
+    {
+      "id": "troubleshooting",
+      "title": "자주 막히는 상황",
+      "sectionId": "help",
+      "file": "troubleshooting.md"
+    }
+  ]
+}

@@ -64,9 +64,9 @@ export function DocumentPage() {
   const files = useBodyFiles(text.draft.body);
   const isWriting = canWrite && text.isEditing;
   const document = result.data;
-  if (!document) return <PageFrame isDetail title="문서" width="default" back={<BackLink to="/workspaces/$workspaceId/documents" params={{ workspaceId }} label="문서함" />}>
+  if (!document) return <PageFrame isDetail title="문서" width="default" back={<BackLink to="/workspaces/$workspaceId/documents" params={{ workspaceId }} label="리소스" />}>
     {result.error && isNotFound(result.error)
-      ? <PageState kind="not-found" title="문서를 찾을 수 없습니다" description="지워졌거나 주소가 바뀌었습니다. 문서함에서 다시 찾아보세요." />
+      ? <PageState kind="not-found" title="문서를 찾을 수 없습니다" description="지워졌거나 주소가 바뀌었습니다. 리소스에서 다시 찾아보세요." />
       : <QueryMessage pending={result.isPending} error={result.error} retry={() => { void result.refetch(); }} />}
   </PageFrame>;
   const page = document.kind === 'page' ? document.page : null;
@@ -75,7 +75,7 @@ export function DocumentPage() {
   const search = folder ? { folder: folder.id } : {};
   const back = document.projectId
     ? <BackLink to="/workspaces/$workspaceId/projects/$projectId/documents" params={{ workspaceId, projectId: document.projectId }} search={search} label={folder?.name ?? '문서'} />
-    : <BackLink to="/workspaces/$workspaceId/documents" params={{ workspaceId }} search={search} label={folder?.name ?? '문서함'} />;
+    : <BackLink to="/workspaces/$workspaceId/documents" params={{ workspaceId }} search={search} label={folder?.name ?? '리소스'} />;
   const remove = async () => {
     setDeleting(false);
     try { await deleteDocument(workspaceId, document.id, document.version); }

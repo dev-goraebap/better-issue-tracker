@@ -3,6 +3,8 @@ package io.github.goraebap.bit;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowableOfType;
 
+import io.github.goraebap.bit.module.navigation.application.NavigationService;
+import io.github.goraebap.bit.module.navigation.domain.Navigation;
 import io.github.goraebap.bit.module.project.application.ProjectService;
 import io.github.goraebap.bit.module.view.application.ViewRequests;
 import io.github.goraebap.bit.module.view.application.ViewService;
@@ -68,6 +70,9 @@ class ViewIntegrationTest {
     @Autowired
     private ProjectService projectService;
 
+    @Autowired
+    private NavigationService navigationService;
+
     private CurrentUser owner;
     private CurrentUser admin;
     private CurrentUser member;
@@ -85,6 +90,8 @@ class ViewIntegrationTest {
     @BeforeEach
     void prepare() {
         for (String table : List.of(
+                "navigation_scope",
+                "project_favorite",
                 "notification",
                 "work_item_view_order",
                 "work_item_view_tweak",
@@ -109,6 +116,33 @@ class ViewIntegrationTest {
         member = member("member");
         other = member("member");
         viewer = member("viewer");
+    }
+
+    @Test
+    void scopeNavigationIsSharedVersionedAndManagedWhileFavoritesArePersonal() {
+        var initial = navigationService.get(owner, workspace, "workspace");
+        assertThat(initial.entries()).hasSize(6);
+        var entries = new java.util.ArrayList<>(initial.entries());
+        java.util.Collections.reverse(entries);
+        entries.set(0, new Navigation.Entry("projects", "팀 프로젝트"));
+        navigationService.save(owner, workspace, "workspace", 0, entries);
+        assertThat(navigationService.get(member, workspace, "workspace").entries())
+                .isEqualTo(entries);
+        assertThat(code(() -> navigationService.save(owner, workspace, "workspace", 0, entries)))
+                .isEqualTo("COMMON_CONFLICT");
+        assertThat(code(() -> navigationService.save(member, workspace, "workspace", 1, entries)))
+                .isEqualTo("AUTH_FORBIDDEN");
+        assertThat(code(() -> navigationService.save(
+                        owner, workspace, "workspace", 1, List.of(new Navigation.Entry("issues", "이슈")))))
+                .isEqualTo("COMMON_INVALID_REQUEST");
+        String project = projectService.create(owner, workspace, "Favorite", "FAV", null);
+        assertThat(navigationService.get(owner, workspace, project).entries()).hasSize(5);
+        navigationService.favorite(member, workspace, project, true);
+        navigationService.favorite(member, workspace, project, true);
+        assertThat(navigationService.favorites(member, workspace)).containsExactly(project);
+        assertThat(navigationService.favorites(other, workspace)).isEmpty();
+        navigationService.favorite(member, workspace, project, false);
+        assertThat(navigationService.favorites(member, workspace)).isEmpty();
     }
 
     @Test

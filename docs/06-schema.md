@@ -291,3 +291,10 @@ V25는 `reaction`(reaction_id, workspace_id, target_type, target_id, emoji, user
 - 마이그레이션은 모든 워크스페이스에 에픽(`epic`, 최상위)·스토리(`story`, 에픽 밑 필수)·작업(`tasks`, 에픽·스토리·작업 밑 선택, 기본)·버그(`bug`, 에픽·스토리·작업 밑 선택)를 넣고, 기존 작업을 모두 '작업'으로 채운다. 작업 밑 작업이 허용되므로 기존 `subtask_of` 연결은 그대로 맞는다. 이전에 일정 밑에 둔 작업이 있으면 그 연결은 남고 다음 변경 때 검사한다. 새 워크스페이스는 생성 트랜잭션 안에서 같은 네 유형을 받는다.
 - 규칙(상위 유형·필수)은 `link`의 `subtask_of`를 기준으로 서비스가 검사한다. 상위 업무를 지워도(소프트 삭제) 하위 연결은 남고, 규칙은 다음 명시적 변경(유형·종류·상위 바꾸기, 연결·끊기) 때 다시 본다. 규칙을 바꿀 때 어긋나게 되는 업무 수는 `link`와 `work_item`을 함께 읽어 센다.
 
+
+
+## 탐색 구성 (V31, D-116 / BIT-145)
+- `navigation_scope`: workspace_id + scope(workspace 또는 프로젝트 ID) 기본 키. entries(JSON 메뉴 key·label 순서), version, updated_at/by/agent. 공통 메뉴 이름·순서이며 접근·관리 권한은 범위 소유 모듈이 검사한다.
+- `project_favorite`: workspace_id + user_id + project_id 기본 키. 개인 즐겨찾기이며 프로젝트 공개 범위와 워크스페이스 가입 여부를 매번 검사한다.
+
+- V32: `workspace.last_work_item_number`는 프로젝트에 속하지 않은 업무의 번호를 발급한다. `W-번호`를 public_ref에 고정하며 프로젝트 키는 최소 두 글자이므로 충돌하지 않는다. 프로젝트 이동 시에도 참조는 유지한다.

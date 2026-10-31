@@ -120,7 +120,7 @@ export function WorkItemsView({ scope, view, tweak, effective, workItems, labels
     void updateView(client, view, { filters: effective.filters }).catch(failure => toast({ body: authError(failure) }));
     go(viewOwn);
   };
-  const views: ListViews = { label: '보기 방식', value: effective.layout, options: [...VIEW_LAYOUTS], onChange: layout => adjust({ layout: layout as ViewLayout }) };
+  const views: ListViews = { label: '보기 방식', value: effective.layout, options: VIEW_LAYOUTS.filter(layout => scope.kind !== 'event' || layout.value !== 'board'), onChange: layout => adjust({ layout: layout as ViewLayout }) };
   const order: ListSort = { keys: VIEW_SORT_KEYS, key: effective.sort.key, direction: effective.sort.direction, usual: view.sort,
     onChange: (key, direction) => { setShown(SLICE); adjust({ sort: { key: key as ViewSort['key'], direction } }); } };
   const display: ListDisplay = {
@@ -173,12 +173,12 @@ export function WorkItemsView({ scope, view, tweak, effective, workItems, labels
   const withStatus = rows.filter(row => row.columnCategory);
   return <>
     <ListToolbar search={{ label: '업무 검색', placeholder: '제목이나 키로 찾기', value: search.q, onChange: q => { setShown(SLICE); go({ q }, true); } }}
-      filters={filters} onFiltersChange={changeFilters} order={order} views={views} display={display} applied={applied}
-      action={create && { label: '만들기', icon: 'plus', onClick: create, isCreate: true, choices: onCreate && [
+      filters={scope.kind === 'event' ? filters.filter(filter => !['status', 'priority', 'type'].includes(filter.key)) : filters} onFiltersChange={changeFilters} order={order} views={views} display={display} applied={applied}
+      action={create && { label: scope.kind === 'event' ? '스케줄 만들기' : scope.kind === 'task' ? '이슈 만들기' : '만들기', icon: 'plus', onClick: create, isCreate: true, choices: !scope.kind && onCreate ? [
         // 작업 or 일정 (D-092, BIT-111): a task's type is chosen in its own form, which starts at the workspace's default type.
         { label: '작업', icon: 'board', onClick: () => onCreate() },
         { label: '일정', icon: 'calendar', onClick: () => onCreate(undefined, 'event') },
-      ] }} />
+      ] : undefined }} />
     {effective.layout === 'list' && (rows.length === 0 ? empty('업무', '첫 업무를 만들면 여기에 보입니다.') : <>
       <WorkItemList workspaceId={workspaceId} groups={limited.groups} search={search} columns={effective.columns} columnNames={columnNames} columnSteps={columnSteps} badges={badges}
         progress={progress} isPhone={isMobile} collapsed={collapsed} onToggle={toggleGroup} />

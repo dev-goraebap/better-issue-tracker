@@ -31,7 +31,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 public class WorkItemService implements WorkItemFacade, ColumnWorkItemSpi {
-    private static final Pattern REFERENCE = Pattern.compile("([A-Z0-9]{2,10})-([1-9][0-9]{0,18})");
+    private static final Pattern REFERENCE = Pattern.compile("([A-Z0-9]{1,10})-([1-9][0-9]{0,18})");
     private final WorkItemRepository workItemRepository;
     private final ProjectFacade projectFacade;
     private final WorkspaceFacade workspaceFacade;
@@ -255,7 +255,8 @@ public class WorkItemService implements WorkItemFacade, ColumnWorkItemSpi {
             Integer reminderMinutes,
             String recurrenceId,
             LocalDate occurrenceOn) {
-        projectFacade.requireAccess(actor, workspaceId, projectId, true);
+        if (projectId == null) workspaceFacade.requireAccess(actor, workspaceId, WorkspaceFacade.Action.WRITE_WORK);
+        else projectFacade.requireAccess(actor, workspaceId, projectId, true);
         validateDates(details);
         WorkItem.Details valid = shape(kind, details);
         people(actor, workspaceId, valid.peopleIds());
@@ -264,15 +265,19 @@ public class WorkItemService implements WorkItemFacade, ColumnWorkItemSpi {
         var type = kind == WorkItem.Kind.task ? workItemTypeService.resolve(workspaceId, typeId) : null;
         if (type != null) workItemTypeService.requireParent(workspaceId, type, parent(workspaceId, parentId), null);
         // A task always has a status (D-111): with none named it starts in the backlog column.
-        String columnId = kind == WorkItem.Kind.event
+        String columnId = projectId == null || kind == WorkItem.Kind.event
                 ? null
                 : requestedColumnId != null
                         ? requestedColumnId
                         : projectFacade
                                 .backlogColumn(actor, workspaceId, projectId)
                                 .id();
-        var column = projectFacade.requireColumn(actor, workspaceId, projectId, columnId);
-        long number = projectFacade.allocateWorkItemNumber(actor, workspaceId, projectId);
+        var column = projectId == null
+                ? new ProjectFacade.ColumnRef(null, false, null)
+                : projectFacade.requireColumn(actor, workspaceId, projectId, columnId);
+        long number = projectId == null
+                ? workspaceFacade.allocateWorkItemNumber(actor, workspaceId)
+                : projectFacade.allocateWorkItemNumber(actor, workspaceId, projectId);
         double position = workItemRepository.findColumnItems(projectId, columnId, false).stream()
                         .mapToDouble(WorkItem::position)
                         .max()
@@ -296,7 +301,10 @@ public class WorkItemService implements WorkItemFacade, ColumnWorkItemSpi {
         } catch (IllegalArgumentException invalid) {
             throw WorkItemErrorCode.WORK_ITEM_KIND_SHAPE_INVALID.raise();
         }
-        w.locate(workspaceId, null, null);
+        w.locate(
+                workspaceId,
+                projectId == null ? "W-" + number : null,
+                projectId == null && kind == WorkItem.Kind.task ? "backlog" : null);
         if (recurrenceId != null) w.occur(recurrenceId, occurrenceOn);
         workItemRepository.save(w);
         changed(actor, workspaceId, w, "created", List.of());

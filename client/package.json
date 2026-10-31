@@ -11,10 +11,11 @@
     "lint:fsd": "steiger ./src",
     "lint:components": "node scripts/check-components.mjs",
     "test": "node --import tsx --test tests/*.test.ts",
-    "check": "npm run lint:components && npm run lint:fsd && npm test && npm run build",
+    "check": "npm run lint:components && npm run lint:reorder && npm run lint:fsd && npm test && npm run build",
     "astryx": "node node_modules/@astryxdesign/cli/clients/cli/bin/astryx.mjs",
     "brand:generate": "node scripts/generate-brand.mjs",
-    "icons:generate": "node scripts/generate-icons.mjs"
+    "icons:generate": "node scripts/generate-icons.mjs",
+    "lint:reorder": "node ../scripts/check-reorder-ui.mjs"
   },
   "dependencies": {
     "@astryxdesign/core": "0.5.2",

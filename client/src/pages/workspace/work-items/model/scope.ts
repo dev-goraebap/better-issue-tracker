@@ -6,6 +6,6 @@ import type { BoardColumn, Project } from '@/entities/project';
  * names its rows give a status), none in 전체, whose board groups by category.
  */
 export type Scope = {
-  workspaceId: string; project?: Project; projects: readonly Project[]; firstProject?: Project; columns: readonly BoardColumn[];
+  kind?: 'task' | 'event'; workspaceId: string; project?: Project; projects: readonly Project[]; firstProject?: Project; columns: readonly BoardColumn[];
   me: string; role?: string; canWrite: boolean;
 };

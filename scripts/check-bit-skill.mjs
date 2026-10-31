@@ -5,6 +5,7 @@
 // description fits, no change-log file creeps back (history lives in git and BIT work items), the shipped skill never
 // brings back separate decision records (D-114), and its references/tools.md names exactly the MCP tools the server
 // registers. CI runs it; exits 1 on any drift.
+import { spawnSync } from 'node:child_process';
 import { readdirSync, readFileSync, existsSync, statSync } from 'node:fs';
 import { basename, dirname, join, relative, resolve } from 'node:path';
 
@@ -74,6 +75,9 @@ const table = readFileSync(join(SKILLS[0].dir, 'references', 'tools.md'), 'utf8'
 const documented = new Set(table);
 for (const name of registered) if (!documented.has(name)) problems.push(`references/tools.md: server tool ${name} is missing`);
 for (const name of documented) if (!registered.has(name)) problems.push(`references/tools.md: ${name} is not a tool the server registers`);
+
+const reorderUi = spawnSync(process.execPath, [join(ROOT, 'scripts', 'check-reorder-ui.mjs')], { encoding: 'utf8' });
+if (reorderUi.status !== 0) problems.push(reorderUi.stderr || 'Reorder UI check failed');
 
 if (problems.length) {
   console.error(problems.join('\n'));

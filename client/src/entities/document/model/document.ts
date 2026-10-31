@@ -16,6 +16,6 @@ export const documentIdOf = (reference: string) => decodeURIComponent(reference)
 
 /** A part's folder page: the project's 문서, or 문서함 for the workspace's own, at a folder when given. */
 export function folderHref(workspaceId: string, projectId: string | null, folderId?: string | null) {
-  const page = projectId ? `/workspaces/${workspaceId}/projects/${projectId}/documents` : `/workspaces/${workspaceId}/documents`;
+  const page = projectId ? `/workspaces/${workspaceId}/projects/${projectId}/resources` : `/workspaces/${workspaceId}/resources`;
   return folderId ? `${page}?folder=${encodeURIComponent(folderId)}` : page;
 }

@@ -1,0 +1,3 @@
+.person { display: flex; align-items: center; gap: var(--spacing-3); min-inline-size: 0; }
+.person strong { font-weight: 500; }
+.email { display: block; color: var(--color-text-secondary); font-size: var(--font-size-sm); }

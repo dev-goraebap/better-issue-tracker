@@ -37,6 +37,13 @@ public class WorkspaceService implements WorkspaceFacade {
     private final Clock clock;
 
     @Override
+    @Transactional
+    public long allocateWorkItemNumber(CurrentUser actor, String workspaceId) {
+        requireAccess(actor, workspaceId, WorkspaceFacade.Action.WRITE_WORK);
+        return workspaceRepository.allocateWorkItemNumber(workspaceId);
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public Map<String, String> memberNames(CurrentUser actor, String workspaceId, Set<String> userIds) {
         access(actor, workspaceId, Action.READ);

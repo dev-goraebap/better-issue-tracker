@@ -46,6 +46,7 @@ export function WorkItemsPage() {
   // The list's own place; the work item open over it (panel, depth) belongs to the modal.
   const search = useMemo(() => withoutPanel(fullSearch), [fullSearch]);
   const pathname = useRouterState({ select: state => state.location.pathname });
+  const kind = pathname.endsWith('/schedules') ? 'event' : 'task';
   const { host, depth } = useScreenPanel(pathname, fullSearch, search);
   const navigate = useNavigate();
   const panelId = useId();
@@ -60,30 +61,31 @@ export function WorkItemsPage() {
   const client = useQueryClient();
   const toast = useToast();
   const viewScope = projectId ?? HOME_SCOPE;
-  const views = useViews(workspaceId, viewScope);
-  const view = views.find(each => each.id === search.v) ?? views[0]!;
+  const allViews = useViews(workspaceId, viewScope);
+  const views = kind === 'event' ? allViews.filter(each => each.layout !== 'board' && !each.filters.status && !each.filters.priority) : allViews;
+  const defaultView = kind === 'event' ? views.find(each => each.layout === 'calendar') ?? views[0]! : views[0]!;
+  const view = views.find(each => each.id === search.v) ?? defaultView;
   const tweak = useViewTweak(workspaceId, view.id);
   const effective = useMemo(() => effectiveView(view, tweak, search), [view, tweak, search]);
   const canWrite = canWriteIn(role);
-  const scope: Scope = { workspaceId, project: project.data, projects, firstProject: project.data ?? projects[0], columns, me, role: role?.myRole, canWrite };
+  const scope: Scope = { kind, workspaceId, project: project.data, projects, firstProject: project.data ?? projects[0], columns, me, role: role?.myRole, canWrite };
   const [editing, setEditing] = useState<Editing | null>(null);
   const [isRemoving, setRemoving] = useState(false);
   const [isOrdering, setOrdering] = useState(false);
   // The page in view (전체 or the project) with its address's conditions changed, or a view's fresh start.
   const place = useCallback((next: WorkItemSearch, replace = false) => {
-    if (projectId) void navigate({ to: '/workspaces/$workspaceId/projects/$projectId', params: { workspaceId, projectId }, search: next, replace });
-    else void navigate({ to: '/workspaces/$workspaceId', params: { workspaceId }, search: next, replace });
-  }, [navigate, workspaceId, projectId]);
+    void navigate({ href: `${pathname}${Object.keys(next).length ? `?${new URLSearchParams(next as Record<string, string>)}` : ''}`, replace });
+  }, [navigate, pathname]);
   const go = useCallback((patch: Partial<WorkItemSearch>, replace = false) => place(
     Object.fromEntries(Object.entries({ ...search, ...patch }).filter(([, value]) => value !== undefined)) as WorkItemSearch, replace), [place, search]);
   // The scope's default view keeps the bare address, so the trail's link and the first chip are one place.
-  const pick = (id: string) => { setEditing(null); place(id === views[0]!.id ? {} : { v: id }); };
+  const pick = (id: string) => { setEditing(null); place(id === defaultView.id ? {} : { v: id }); };
   // 새 업무 at its address: the project's, or 전체's; a board lane's + says where it starts, 만들기 ▾ whether it is an event.
-  const openNew = (status?: string, kind?: 'event') => {
+  const openNew = (status?: string, newKind?: 'event') => {
     if (!canWrite) return;
     const path = projectId ? `/workspaces/${workspaceId}/projects/${projectId}/work-items/new` : `/workspaces/${workspaceId}/work-items/new`;
-    const query = new URLSearchParams(kind ? { kind } : status ? { status } : {}).toString();
-    host.open(query ? `${path}?${query}` : path);
+    const query = new URLSearchParams(newKind ? { kind: newKind } : status ? { status } : {}).toString();
+    const selected = kind === 'event' ? 'kind=event' : query; host.open(selected ? `${path}?${selected}` : path);
   };
   // A work item's link pressed (a plain click) opens the panel instead of leaving the list.
   const peek = (event: MouseEvent) => {
@@ -120,14 +122,14 @@ export function WorkItemsPage() {
       .then(id => place({ v: id })).catch(failure => toast({ body: authError(failure) }));
   };
   const panelPath = fullSearch.panel?.split('?')[0] ?? '';
-  return <PanelHostContext.Provider value={host}><PageFrame title={project.data?.name ?? '홈'} icon={projectId ? 'board' : 'home'} chrome="header"
+  return <PanelHostContext.Provider value={host}><PageFrame title={kind === 'event' ? '스케줄' : kind === 'task' ? '이슈' : project.data?.name ?? '홈'} icon={kind === 'event' ? 'calendar' : 'work-items'} chrome="header"
     tabs={<ViewTabs views={views} value={view.id} panelId={panelId} onPick={pick} onCreate={startCreate} onCopy={copy} onRemove={() => setRemoving(true)}
       onOrder={canManage(role) ? () => setOrdering(true) : undefined}
       onEdit={() => setEditing({ mode: 'edit', initial: { name: view.name, description: view.description ?? '', icon: view.icon, color: view.color, isPersonal: view.isPersonal } })} />}>
     <div role="tabpanel" id={panelId} onClickCapture={peek}>
       {editing && <ViewEditor key={`${editing.mode}-${view.id}`} initial={editing.initial} mode={editing.mode} onCancel={() => setEditing(null)} onSave={saveView} />}
       <RequestBoundary pending={scopeItems.isLoading} hasData={!scopeItems.isMissing} error={scopeItems.error} retry={() => { void scopeItems.refetch(); }}>
-        <WorkItemsView scope={scope} view={view} tweak={tweak} effective={effective} workItems={scopeItems.items} labels={labels} members={members} search={search} go={go}
+        <WorkItemsView scope={scope} view={view} tweak={tweak} effective={effective} workItems={kind ? scopeItems.items.filter(item => item.kind === kind) : scopeItems.items} labels={labels} members={members} search={search} go={go}
           onCreate={canWrite ? openNew : undefined} onSaveAsView={startCreate} />
       </RequestBoundary>
     </div>

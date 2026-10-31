@@ -1,5 +1,22 @@
-import { pageMarkdown, safeFilename, type ManualPageData } from './manual';
+import { pageMarkdown, safeFilename, type Manual, type ManualPageData } from './manual';
+import { readManualPackage } from './manual-package';
 import { zipFiles } from './zip';
+export async function downloadManual(manual: Manual) {
+  const embed = async (source: string) => {
+    const response = await fetch(source);
+    if (!response.ok) throw new Error('이미지 원본을 읽지 못했습니다.');
+    const blob = await response.blob();
+    return new Promise<string>((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(String(reader.result)); reader.onerror = () => reject(new Error('이미지를 내보내지 못했습니다.')); reader.readAsDataURL(blob); });
+  };
+  const assets = Object.fromEntries(await Promise.all(Object.entries(manual.assets).map(async ([id, source]) => [id, await embed(source)])));
+  const text = JSON.stringify({ format: 'bit-manual', version: 1, manual: { ...manual, assets, image: manual.image ? await embed(manual.image) : undefined, comments: [] } });
+  readManualPackage(text);
+  const blob = new Blob([text], { type: 'application/json' });
+  if (blob.size > 4 * 1024 * 1024) throw new Error('가져오기 파일의 4MB 범위를 초과했습니다. 이미지를 줄인 뒤 다시 시도해 주세요.');
+  const url = URL.createObjectURL(blob); const link = document.createElement('a');
+  link.href = url; link.download = `${safeFilename(manual.title)}.bit-manual.json`; link.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
 export async function downloadPage(page: ManualPageData, assets: Record<string, string>) {
   let markdown = pageMarkdown(page); const ids = [...new Set([...markdown.matchAll(/\(attachment:([A-Za-z][A-Za-z0-9]{9})\)/g)].map(match => match[1]!))];
   const files: { name: string; bytes: Uint8Array }[] = [];

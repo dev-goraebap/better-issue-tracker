@@ -142,6 +142,11 @@ final class AuthenticationFilter extends OncePerRequestFilter {
     private static boolean businessBearer(HttpServletRequest request) {
         String path = request.getRequestURI();
         String method = request.getMethod();
+        if (method.equals("POST") && path.matches("/api/v1/workspaces/[^/]+/work-items")) return true;
+        if (Set.of("GET", "PUT").contains(method) && path.matches("/api/v1/workspaces/[^/]+/navigation/[^/]+"))
+            return true;
+        if (method.equals("GET") && path.matches("/api/v1/workspaces/[^/]+/project-favorites")) return true;
+        if (method.equals("PUT") && path.matches("/api/v1/workspaces/[^/]+/project-favorites/[^/]+")) return true;
         String project = "/api/v1/workspaces/[^/]+/projects";
         if (Set.of("GET", "HEAD").contains(method)
                 && path.matches(project + "(?:/[^/]+(?:/(?:columns|work-items)(?:/[^/]+)?)?)?")) return true;

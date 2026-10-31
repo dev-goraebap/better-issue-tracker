@@ -159,6 +159,24 @@ class WorkItemIntegrationTest {
     }
 
     @Test
+    void workspaceItemsHaveIndependentStableNumbersAndNoProject() {
+        String first = workItemService.create(owner, workspace, null, details("공통 작업", null), null);
+        String second = workItemService.create(owner, workspace, null, details("다음 공통 작업", null), null);
+        var item = workItemQueryService.get(owner, workspace, null, first);
+        assertThat(item.projectId()).isNull();
+        assertThat(item.key()).isEqualTo("W-1");
+        assertThat(workItemQueryService.get(owner, workspace, null, second).key())
+                .isEqualTo("W-2");
+        assertThat(workItemQueryService.byRef(owner, workspace, "W-1").id()).isEqualTo(first);
+        workItemService.changeWorkspaceStatus(owner, workspace, first, "doing", 0);
+        assertThat(workItemQueryService
+                        .get(owner, workspace, null, first)
+                        .columnCategory()
+                        .name())
+                .isEqualTo("doing");
+    }
+
+    @Test
     void anAgentWorksOnWorkItemsOverStatelessMcpWithItsKeyAndASessionIsRefused() throws Exception {
         String password = "work item integration password phrase";
         jdbcTemplate.update(

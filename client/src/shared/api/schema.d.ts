@@ -116,6 +116,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workspaces/{workspaceId}/project-favorites/{projectId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["favorite"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{workspaceId}/navigation/{scope}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get"];
+        put: operations["save"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/workspaces/{workspaceId}/labels/order": {
         parameters: {
             query?: never;
@@ -373,6 +405,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workspaces/{workspaceId}/work-items": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listWorkspace"];
+        put?: never;
+        post: operations["create_1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/work-items": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list"];
+        put?: never;
+        post: operations["create_2"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/workspaces/{workspaceId}/work-item-types": {
         parameters: {
             query?: never;
@@ -396,9 +460,9 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list"];
+        get: operations["list_1"];
         put?: never;
-        post: operations["create_1"];
+        post: operations["create_3"];
         delete?: never;
         options?: never;
         head?: never;
@@ -412,7 +476,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_1"];
+        get: operations["list_2"];
         put?: never;
         post: operations["connect"];
         delete?: never;
@@ -428,25 +492,9 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_2"];
-        put?: never;
-        post: operations["create_2"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/workspaces/{workspaceId}/projects/{projectId}/work-items": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
         get: operations["list_3"];
         put?: never;
-        post: operations["create_3"];
+        post: operations["create_4"];
         delete?: never;
         options?: never;
         head?: never;
@@ -656,7 +704,7 @@ export interface paths {
         };
         get: operations["list_5"];
         put?: never;
-        post: operations["create_4"];
+        post: operations["create_5"];
         delete?: never;
         options?: never;
         head?: never;
@@ -673,7 +721,7 @@ export interface paths {
         /** Every folder of one part, by name: a project's, or the workspace's own when projectId is left out */
         get: operations["list_6"];
         put?: never;
-        post: operations["create_5"];
+        post: operations["create_6"];
         delete?: never;
         options?: never;
         head?: never;
@@ -722,7 +770,7 @@ export interface paths {
         /** Documents matching a search, the most recently changed first (D-093) */
         get: operations["search"];
         put?: never;
-        post: operations["create_6"];
+        post: operations["create_7"];
         delete?: never;
         options?: never;
         head?: never;
@@ -804,7 +852,7 @@ export interface paths {
         get?: never;
         put?: never;
         /** Make a page and its first version from an upload with purpose page (D-113) */
-        post: operations["create_7"];
+        post: operations["create_8"];
         delete?: never;
         options?: never;
         head?: never;
@@ -820,7 +868,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["create_8"];
+        post: operations["create_9"];
         delete?: never;
         options?: never;
         head?: never;
@@ -995,7 +1043,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get"];
+        get: operations["get_1"];
         put?: never;
         post?: never;
         delete: operations["delete"];
@@ -1011,7 +1059,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_1"];
+        get: operations["get_2"];
         put?: never;
         post?: never;
         delete: operations["delete_1"];
@@ -1043,7 +1091,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_2"];
+        get: operations["get_3"];
         put?: never;
         post?: never;
         delete: operations["delete_2"];
@@ -1059,7 +1107,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_3"];
+        get: operations["get_4"];
         put?: never;
         post?: never;
         delete: operations["delete_3"];
@@ -1123,7 +1171,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_4"];
+        get: operations["get_5"];
         put?: never;
         post?: never;
         delete: operations["delete_4"];
@@ -1155,7 +1203,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_5"];
+        get: operations["get_6"];
         put?: never;
         post?: never;
         delete: operations["delete_6"];
@@ -1187,7 +1235,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_6"];
+        get: operations["get_7"];
         put?: never;
         post?: never;
         delete: operations["delete_8"];
@@ -1226,22 +1274,6 @@ export interface paths {
         options?: never;
         head?: never;
         patch: operations["rename_2"];
-        trace?: never;
-    };
-    "/api/v1/workspaces/{workspaceId}/work-items": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["listWorkspace"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
         trace?: never;
     };
     "/api/v1/workspaces/{workspaceId}/work-items/by-ref/{reference}": {
@@ -1373,6 +1405,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workspaces/{workspaceId}/project-favorites": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["favorites"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/workspaces/{workspaceId}/notifications": {
         parameters: {
             query?: never;
@@ -1396,7 +1444,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_7"];
+        get: operations["get_8"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1859,6 +1907,27 @@ export interface components {
         ProjectOrder: {
             order: string[];
         };
+        ProjectFavorite: {
+            favorite?: boolean;
+        };
+        Entry: {
+            key?: string;
+            label?: string;
+        };
+        UpdateNavigation: {
+            /** Format: int64 */
+            expectedVersion: number;
+            entries: components["schemas"]["Entry"][];
+        };
+        NavigationEntry: {
+            key: string;
+            label: string;
+        };
+        ScopeNavigation: {
+            /** Format: int64 */
+            version: number;
+            entries: components["schemas"]["NavigationEntry"][];
+        };
         Order: {
             labels: components["schemas"]["OrderItem"][];
         };
@@ -1918,6 +1987,51 @@ export interface components {
             /** Format: int64 */
             expectedVersion: number;
         };
+        CreateWorkItem: {
+            title: string;
+            description?: string | null;
+            /** @enum {string|null} */
+            priority?: "low" | "medium" | "high" | "urgent" | null;
+            /** @enum {string|null} */
+            triggerType?: "request" | "finding" | "external" | "improvement" | "planned" | null;
+            /** @description Who does a task or attends an event */
+            peopleIds?: string[] | null;
+            /** Format: date */
+            startDate?: string | null;
+            /** Format: date */
+            dueDate?: string | null;
+            /**
+             * @description task (the default) or event (D-092)
+             * @enum {string|null}
+             */
+            kind?: "task" | "event" | null;
+            /**
+             * Format: date-time
+             * @description A timed event's start
+             */
+            startsAt?: string | null;
+            /**
+             * Format: date-time
+             * @description A timed event's end
+             */
+            endsAt?: string | null;
+            /** @description An event that lasts whole days, from startDate to dueDate */
+            allDay?: boolean | null;
+            /** @description A task's column; an event has none */
+            columnId?: string | null;
+            /**
+             * Format: int32
+             * @description An event's reminder, minutes before it starts
+             */
+            reminderMinutes?: number | null;
+            /** @description Workspace labels to attach; omitted or null attaches none */
+            labelIds?: string[] | null;
+            /** @description A task's type (D-104); omitted or null is the workspace's default. An event has none */
+            typeId?: string | null;
+            /** @description A work item of the workspace to make it a subtask of, in the same step; needed for a type that requires a parent */
+            parentId?: string | null;
+            uploadIds?: string[];
+        };
         CreateWorkItemType: {
             name: string;
             /** @description An icon name the screen draws, such as epic, story, tasks or bug */
@@ -1973,51 +2087,6 @@ export interface components {
             description?: string | null;
             icon?: string | null;
             color?: string | null;
-        };
-        CreateWorkItem: {
-            title: string;
-            description?: string | null;
-            /** @enum {string|null} */
-            priority?: "low" | "medium" | "high" | "urgent" | null;
-            /** @enum {string|null} */
-            triggerType?: "request" | "finding" | "external" | "improvement" | "planned" | null;
-            /** @description Who does a task or attends an event */
-            peopleIds?: string[] | null;
-            /** Format: date */
-            startDate?: string | null;
-            /** Format: date */
-            dueDate?: string | null;
-            /**
-             * @description task (the default) or event (D-092)
-             * @enum {string|null}
-             */
-            kind?: "task" | "event" | null;
-            /**
-             * Format: date-time
-             * @description A timed event's start
-             */
-            startsAt?: string | null;
-            /**
-             * Format: date-time
-             * @description A timed event's end
-             */
-            endsAt?: string | null;
-            /** @description An event that lasts whole days, from startDate to dueDate */
-            allDay?: boolean | null;
-            /** @description A task's column; an event has none */
-            columnId?: string | null;
-            /**
-             * Format: int32
-             * @description An event's reminder, minutes before it starts
-             */
-            reminderMinutes?: number | null;
-            /** @description Workspace labels to attach; omitted or null attaches none */
-            labelIds?: string[] | null;
-            /** @description A task's type (D-104); omitted or null is the workspace's default. An event has none */
-            typeId?: string | null;
-            /** @description A work item of the workspace to make it a subtask of, in the same step; needed for a type that requires a parent */
-            parentId?: string | null;
-            uploadIds?: string[];
         };
         Child: {
             title: string;
@@ -3311,6 +3380,81 @@ export interface operations {
             };
         };
     };
+    favorite: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+                projectId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProjectFavorite"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+                scope: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScopeNavigation"];
+                };
+            };
+        };
+    };
+    save: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+                scope: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateNavigation"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScopeNavigation"];
+                };
+            };
+        };
+    };
     order: {
         parameters: {
             query?: never;
@@ -3786,154 +3930,37 @@ export interface operations {
             };
         };
     };
-    listWorkItemTypes: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                workspaceId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["WorkItemType"][];
-                };
-            };
-        };
-    };
-    createWorkItemType: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                workspaceId: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CreateWorkItemType"];
-            };
-        };
-        responses: {
-            /** @description 업무 유형 생성 */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    list: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                workspaceId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["WorkItemView"][];
-                };
-            };
-        };
-    };
-    create_1: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                workspaceId: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CreateWorkItemView"];
-            };
-        };
-        responses: {
-            /** @description 뷰 생성 */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    list_1: {
-        parameters: {
-            query: {
-                type: "work_item" | "decision" | "session_record" | "code_ref" | "document";
-                id: string;
-            };
-            header?: never;
-            path: {
-                workspaceId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["RelationRef"][];
-                };
-            };
-        };
-    };
-    connect: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                workspaceId: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["Connect"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    list_2: {
+    listWorkspace: {
         parameters: {
             query?: {
-                status?: string;
+                /** @description Any of these projects (repeatable). Archived and deleted projects are always left out */
+                projectId?: string[];
+                /** @description Any of these columns (repeatable); use category=backlog for the backlog */
+                columnId?: string[];
+                /** @description Items this member does or attends */
+                personId?: string | null;
+                /** @description Any of task, event (repeatable) */
+                kind?: string[];
+                /** @description Any of these labels (repeatable). Deleted labels match nothing */
+                labelId?: string[];
+                /** @description Any of these work item types (repeatable). Events have no type, so they drop out */
+                typeId?: string[];
+                /** @description Any of backlog, todo, doing, done or canceled (repeatable); none is read as backlog (D-111) */
+                category?: string[];
+                /** @description true: has a start or due date. false: has neither */
+                hasDates?: boolean | null;
+                priority?: string[];
+                triggerType?: string[];
                 q?: string;
-                cursor?: string;
+                archived?: boolean;
+                deleted?: boolean;
+                closed?: boolean;
+                /** @description Keeps items whose start..due span (one day when only one is set) ends on or after it */
+                from?: string;
+                /** @description Keeps items whose start..due span starts on or before it */
+                to?: string;
                 size?: number;
+                cursor?: string;
                 sort?: string;
                 direction?: string;
             };
@@ -3951,12 +3978,12 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Projects"];
+                    "application/json": components["schemas"]["WorkItems"];
                 };
             };
         };
     };
-    create_2: {
+    create_1: {
         parameters: {
             query?: never;
             header?: never;
@@ -3967,11 +3994,11 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["CreateProject"];
+                "application/json": components["schemas"]["CreateWorkItem"];
             };
         };
         responses: {
-            /** @description 프로젝트 생성 */
+            /** @description 업무 생성 */
             201: {
                 headers: {
                     [name: string]: unknown;
@@ -3980,7 +4007,7 @@ export interface operations {
             };
         };
     };
-    list_3: {
+    list: {
         parameters: {
             query?: {
                 /** @description A column id of the project, or backlog for its backlog column */
@@ -4032,7 +4059,7 @@ export interface operations {
             };
         };
     };
-    create_3: {
+    create_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -4049,6 +4076,200 @@ export interface operations {
         };
         responses: {
             /** @description 업무 생성 */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    listWorkItemTypes: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkItemType"][];
+                };
+            };
+        };
+    };
+    createWorkItemType: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateWorkItemType"];
+            };
+        };
+        responses: {
+            /** @description 업무 유형 생성 */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    list_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkItemView"][];
+                };
+            };
+        };
+    };
+    create_3: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateWorkItemView"];
+            };
+        };
+        responses: {
+            /** @description 뷰 생성 */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    list_2: {
+        parameters: {
+            query: {
+                type: "work_item" | "decision" | "session_record" | "code_ref" | "document";
+                id: string;
+            };
+            header?: never;
+            path: {
+                workspaceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RelationRef"][];
+                };
+            };
+        };
+    };
+    connect: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Connect"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    list_3: {
+        parameters: {
+            query?: {
+                status?: string;
+                q?: string;
+                cursor?: string;
+                size?: number;
+                sort?: string;
+                direction?: string;
+            };
+            header?: never;
+            path: {
+                workspaceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Projects"];
+                };
+            };
+        };
+    };
+    create_4: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateProject"];
+            };
+        };
+        responses: {
+            /** @description 프로젝트 생성 */
             201: {
                 headers: {
                     [name: string]: unknown;
@@ -4419,7 +4640,7 @@ export interface operations {
             };
         };
     };
-    create_4: {
+    create_5: {
         parameters: {
             query?: never;
             header?: never;
@@ -4467,7 +4688,7 @@ export interface operations {
             };
         };
     };
-    create_5: {
+    create_6: {
         parameters: {
             query?: never;
             header?: never;
@@ -4596,7 +4817,7 @@ export interface operations {
             };
         };
     };
-    create_6: {
+    create_7: {
         parameters: {
             query?: never;
             header?: never;
@@ -4722,7 +4943,7 @@ export interface operations {
             };
         };
     };
-    create_7: {
+    create_8: {
         parameters: {
             query?: never;
             header?: never;
@@ -4748,7 +4969,7 @@ export interface operations {
             };
         };
     };
-    create_8: {
+    create_9: {
         parameters: {
             query?: never;
             header?: never;
@@ -5130,7 +5351,7 @@ export interface operations {
             };
         };
     };
-    get: {
+    get_1: {
         parameters: {
             query?: never;
             header?: never;
@@ -5203,7 +5424,7 @@ export interface operations {
             };
         };
     };
-    get_1: {
+    get_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -5350,7 +5571,7 @@ export interface operations {
             };
         };
     };
-    get_2: {
+    get_3: {
         parameters: {
             query?: never;
             header?: never;
@@ -5421,7 +5642,7 @@ export interface operations {
             };
         };
     };
-    get_3: {
+    get_4: {
         parameters: {
             query?: never;
             header?: never;
@@ -5667,7 +5888,7 @@ export interface operations {
             };
         };
     };
-    get_4: {
+    get_5: {
         parameters: {
             query?: never;
             header?: never;
@@ -5786,7 +6007,7 @@ export interface operations {
             };
         };
     };
-    get_5: {
+    get_6: {
         parameters: {
             query?: never;
             header?: never;
@@ -5905,7 +6126,7 @@ export interface operations {
             };
         };
     };
-    get_6: {
+    get_7: {
         parameters: {
             query?: never;
             header?: never;
@@ -6056,59 +6277,6 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
-            };
-        };
-    };
-    listWorkspace: {
-        parameters: {
-            query?: {
-                /** @description Any of these projects (repeatable). Archived and deleted projects are always left out */
-                projectId?: string[];
-                /** @description Any of these columns (repeatable); use category=backlog for the backlog */
-                columnId?: string[];
-                /** @description Items this member does or attends */
-                personId?: string | null;
-                /** @description Any of task, event (repeatable) */
-                kind?: string[];
-                /** @description Any of these labels (repeatable). Deleted labels match nothing */
-                labelId?: string[];
-                /** @description Any of these work item types (repeatable). Events have no type, so they drop out */
-                typeId?: string[];
-                /** @description Any of backlog, todo, doing, done or canceled (repeatable); none is read as backlog (D-111) */
-                category?: string[];
-                /** @description true: has a start or due date. false: has neither */
-                hasDates?: boolean | null;
-                priority?: string[];
-                triggerType?: string[];
-                q?: string;
-                archived?: boolean;
-                deleted?: boolean;
-                closed?: boolean;
-                /** @description Keeps items whose start..due span (one day when only one is set) ends on or after it */
-                from?: string;
-                /** @description Keeps items whose start..due span starts on or before it */
-                to?: string;
-                size?: number;
-                cursor?: string;
-                sort?: string;
-                direction?: string;
-            };
-            header?: never;
-            path: {
-                workspaceId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["WorkItems"];
-                };
             };
         };
     };
@@ -6329,6 +6497,28 @@ export interface operations {
             };
         };
     };
+    favorites: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": string[];
+                };
+            };
+        };
+    };
     list_8: {
         parameters: {
             query?: {
@@ -6355,7 +6545,7 @@ export interface operations {
             };
         };
     };
-    get_7: {
+    get_8: {
         parameters: {
             query?: never;
             header?: never;

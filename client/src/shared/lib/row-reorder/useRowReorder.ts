@@ -67,6 +67,12 @@ export function useRowReorder(rows: readonly Row[], noun: RowNoun, ghostClass: s
   const put = (next: Carry | null) => { carried.current = next; setCarry(next); };
   const show = (next: string[]) => { live.current = next; setMoved(next); };
   const rowsIn = () => [...(list.current?.querySelectorAll<HTMLElement>('[data-row]') ?? [])];
+  // Table rows and nested list items do not share the list's offsetParent. Exclude FLIP translation from layout geometry.
+  const topOf = (element: HTMLElement) => {
+    const transform = getComputedStyle(element).transform;
+    const shift = transform === 'none' ? 0 : new DOMMatrixReadOnly(transform).m42;
+    return element.getBoundingClientRect().top - shift - (list.current?.getBoundingClientRect().top ?? 0);
+  };
   const grabbing = (isOn: boolean) => { if (isOn) document.documentElement.dataset.rowCarrying = ''; else delete document.documentElement.dataset.rowCarrying; };
 
   /** Sends the order, after the one already on its way; only the last one asked for while waiting goes next. */
@@ -92,10 +98,9 @@ export function useRowReorder(rows: readonly Row[], noun: RowNoun, ghostClass: s
     const finish = () => { at?.element.remove(); if (ghost.current === at) ghost.current = null; put(null); };
     if (!at || !slot || !list.current || isReduced()) { finish(); return; }
     put({ id, isSettling: true });
-    const box = list.current.getBoundingClientRect();
     at.element.dataset.settling = '';
     delete at.element.dataset.lifted;
-    at.element.style.transform = `translate(${slot.getBoundingClientRect().left}px, ${box.top + slot.offsetTop}px)`;
+    at.element.style.transform = `translate(${slot.getBoundingClientRect().left}px, ${slot.getBoundingClientRect().top}px)`;
     let isDone = false;
     const done = () => { if (!isDone) { isDone = true; finish(); } };
     at.element.addEventListener('transitionend', event => { if (event.propertyName === 'transform') done(); });
@@ -138,7 +143,7 @@ export function useRowReorder(rows: readonly Row[], noun: RowNoun, ghostClass: s
     const from = elements.findIndex(element => element.dataset.row === now.id);
     if (from < 0) return;
     const middle = y - at.dy + at.height / 2 - list.current.getBoundingClientRect().top;
-    const index = placeFor(elements.map(element => ({ top: element.offsetTop, height: element.offsetHeight })), from, middle);
+    const index = placeFor(elements.map(element => ({ top: topOf(element), height: element.offsetHeight })), from, middle);
     const next = placeAt(live.current, now.id, index);
     if (next.join() !== live.current.join()) show(next);
   };
@@ -150,7 +155,7 @@ export function useRowReorder(rows: readonly Row[], noun: RowNoun, ghostClass: s
     const copy = row.cloneNode(true) as HTMLElement;
     copy.removeAttribute('data-row');
     copy.setAttribute('aria-hidden', 'true');
-    copy.classList.add(ghostClass);
+    copy.classList.add(...ghostClass.split(/\s+/).filter(Boolean));
     copy.style.inlineSize = `${rect.width}px`;
     copy.style.transformOrigin = `${at.x - rect.left}px ${at.y - rect.top}px`;
     copy.style.transform = `translate(${rect.left}px, ${rect.top}px)`;
@@ -231,7 +236,7 @@ export function useRowReorder(rows: readonly Row[], noun: RowNoun, ghostClass: s
     const next = new Map<string, number>();
     for (const element of rowsIn()) {
       const id = element.dataset.row!;
-      const top = element.offsetTop;
+      const top = topOf(element);
       next.set(id, top);
       const before = tops.current.get(id);
       if (before === undefined || before === top || isStill) continue;

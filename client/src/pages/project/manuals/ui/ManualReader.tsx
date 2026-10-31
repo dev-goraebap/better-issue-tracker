@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react';
 import { Button, TextInput, useToast } from '@astryxdesign/core';
 import { CompactDialog, MoreMenu, NavIcon, SearchToggle } from '@/shared/ui';
-import { downloadPage, printManual } from '../model/export-manual';
+import { downloadManual, downloadPage, printManual } from '../model/export-manual';
 import { newId, now, pageMarkdown, pagesInOrder, type Manual } from '../model/manual';
 import { ManualBody, type ManualHeading } from './ManualBody';
 import { ManualComments } from './ManualComments';
@@ -59,6 +59,7 @@ export function ManualReader({ manual, pageId, query, onQuery, onPage, onBack, o
             { label: '현재 페이지 목차', onClick: () => setMobilePanel(mobilePanel === 'toc' ? null : 'toc') },
             { label: '페이지 링크 복사', onClick: () => void copy(window.location.href) },
             { label: 'Markdown 내보내기', onClick: () => { void downloadPage(page, manual.assets).catch(error => toast({ body: error instanceof Error ? error.message : '내보내지 못했습니다.' })); } },
+            { label: '매뉴얼 원본 내보내기', onClick: () => { void downloadManual(manual).catch(error => toast({ body: error instanceof Error ? error.message : '내보내지 못했습니다.' })); } },
             { label: '현재 페이지 PDF로 저장', onClick: () => void print(false) },
             { label: '전체 매뉴얼 PDF로 저장', onClick: () => void print(true) },
           ]} /></div>}

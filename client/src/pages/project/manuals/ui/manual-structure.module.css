@@ -1,0 +1,12 @@
+.body { max-block-size: 60dvh; overflow: auto; padding-inline-end: var(--spacing-2); }
+.create { display: flex; align-items: end; gap: var(--spacing-3); }
+.create > :first-child { flex: 1; min-inline-size: 0; }
+.row { display: flex; align-items: center; gap: var(--spacing-2); padding-block: var(--spacing-2); }
+.row > :nth-child(2) { flex: 1; min-inline-size: 0; }
+.title { font-size: 13px; overflow-wrap: anywhere; }
+.heading { font-size: 13px; margin-block: var(--spacing-4) var(--spacing-2); }
+.help { margin-block: var(--spacing-2); color: var(--color-text-secondary); font-size: 12px; line-height: 1.7; }
+.section { display: flex; flex-wrap: wrap; gap: var(--spacing-2); padding: var(--spacing-3) var(--spacing-2); background: var(--color-background-muted); font-size: 12px; font-weight: 600; }
+.section span { font-weight: 400; color: var(--color-text-secondary); }
+.row select { max-inline-size: 40%; min-inline-size: 0; border: 1px solid var(--color-border); border-radius: var(--radius-element); padding: var(--spacing-2); background: var(--color-background-surface); color: var(--color-text-primary); font-size: 12px; }
+.spoken { position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden; clip-path: inset(50%); }

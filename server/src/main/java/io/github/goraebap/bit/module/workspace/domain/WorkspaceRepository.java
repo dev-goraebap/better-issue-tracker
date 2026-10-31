@@ -6,6 +6,8 @@ import java.util.Optional;
 import java.util.Set;
 
 public interface WorkspaceRepository {
+    long allocateWorkItemNumber(String workspaceId);
+
     Optional<Workspace> findById(String id);
 
     boolean existsBySlug(String slug);

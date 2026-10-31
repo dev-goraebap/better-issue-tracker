@@ -16,6 +16,8 @@ public interface WorkspaceFacade {
         OWNER
     }
 
+    long allocateWorkItemNumber(CurrentUser actor, String workspaceId);
+
     void requireAccess(CurrentUser actor, String workspaceId, Action action);
 
     /** Whether a member may take the action; a non-member still gets WORKSPACE_NOT_FOUND. */

@@ -142,6 +142,19 @@ class AuthSecurityConfig {
                         .authenticated()
                         .requestMatchers(HttpMethod.PATCH, "/api/v1/workspaces/*/projects/**")
                         .authenticated()
+                        // Scope navigation and personal project favorites (D-116); services enforce the scope's rights.
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/v1/workspaces/*/navigation/*",
+                                "/api/v1/workspaces/*/project-favorites")
+                        .authenticated()
+                        .requestMatchers(
+                                HttpMethod.PUT,
+                                "/api/v1/workspaces/*/navigation/*",
+                                "/api/v1/workspaces/*/project-favorites/*")
+                        .authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/workspaces/*/work-items")
+                        .authenticated()
                         // A member's notices (BIT-39).
                         .requestMatchers(
                                 HttpMethod.GET,
