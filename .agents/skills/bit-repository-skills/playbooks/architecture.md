@@ -1,9 +1,4 @@
----
-name: bit-architecture
-description: BIT 시스템 구성·제약·모듈 경계·런타임 흐름·선택 기능 어댑터·배포와 운영(도커 이미지, 데이터 볼륨, compose, Litestream 복제·복구, GitHub Actions 검사, 태그 이미지) 기준. "모듈 하나 새로 만들어줘", "이 기능 어느 모듈에 둬?", "메일/Git/S3 연동 붙여줘", "설정 없을 때 꺼지게 해줘", "Dockerfile 고쳐줘", "compose 만들어줘", "백업 어떻게 해?", "CI 붙여줘", "배포 준비"처럼 여러 영역에 걸친 구조를 바꾸거나, 새 기술·외부 연동을 들이거나, 배포·운영 DB·서버 설정을 다룰 때 쓴다.
----
-
-작업 전에 [운영 프로젝트 문서 읽기](references/project-documents.md)에 따라 해당 영역의 문서를 MCP로 읽는다. 스킬의 절차와 현재 코드 계약을 함께 적용한다.
+# 구조와 운영
 
 이 문서는 BIT 전반의 아키텍처 원칙, 시스템 제약, 컴포넌트 구조, 런타임 흐름 및 운영 기준을 정의하는 최상위 가이드다.
 세부 기술 표준은 백엔드·프론트엔드·API와 공통 계약 지침을, 결정의 맥락은 `docs/decisions.md`를 원본으로 참조한다.
@@ -107,8 +102,8 @@ dev.sh             로컬 실행
 - **화면 서빙**: 서버가 이미지 안 화면 파일을 서빙한다. `/api/`가 아니고 파일도 아닌 주소는 `index.html`, 마지막 조각에 확장자가 있는 주소는 404. `/assets/`는 1년 불변 캐시, 나머지 `no-cache`. 로그인 확인은 `/api/`에만 건다. 응답 압축은 앱 서버가 한다(프록시가 아니다).
 - **데이터**: 볼륨 하나(`/var/lib/bit`)에 SQLite DB(`bit.db`)와 로컬 파일 저장소를 둔다. 백업 대상은 이 볼륨이다.
 - **첫 실행 비밀값(D-035)**: `AUTH_SECRET`·`GIT_ENCRYPTION_KEY`가 비어 있으면 `GeneratedSecrets`가 DB 옆 `secrets.properties`에 독립된 키를 생성·유지한다. 환경 변수 값이 우선한다. 이 파일도 DB와 함께 백업한다.
-- **실행과 CI**: 로컬은 `sh dev.sh`(Docker 없음). 컨테이너 실행은 compose. CI는 GitHub Actions가 서버 `./gradlew check`, 화면 `npm run check`를 검사하고, 태그에서 이미지를 만든다. 배포 자동화는 나중이다 (D-026). 절차는 [배포](references/deploy.md).
-- **현재 운영 서버**: `~/apps/bit/compose.yml`을 실행 설정의 기준으로 삼고 같은 디렉터리의 `app.env`·`backups/`를 사용한다. 운영 배포·복구는 [운영 서버 배포](../../../docs/deployment.md)를 따른다. 기존 외부 볼륨과 프록시 네트워크를 유지한다.
+- **실행과 CI**: 로컬은 `sh dev.sh`(Docker 없음). 컨테이너 실행은 compose. CI는 GitHub Actions가 서버 `./gradlew check`, 화면 `npm run check`를 검사하고, 태그에서 이미지를 만든다. 배포 자동화는 나중이다 (D-026). 절차는 [배포](../references/architecture/deploy.md).
+- **현재 운영 서버**: `~/apps/bit/compose.yml`을 실행 설정의 기준으로 삼고 같은 디렉터리의 `app.env`·`backups/`를 사용한다. 운영 배포·복구는 [운영 서버 배포](../../../../docs/deployment.md)를 따른다. 기존 외부 볼륨과 프록시 네트워크를 유지한다.
 - **환경 변수 및 보안**: 자격 증명은 환경 변수로 주입한다. 선택 기능 설정이 비면 그 기능만 끈다(D-030). 비밀값(인증 비밀키·스토리지 키·SMTP 비밀번호·Git 토큰)은 관리자 화면에서 보이거나 바꾸지 않는다. 화면에는 값 없이 연결 상태(설정됨·없음)만 보인다. 저장소별 Git 토큰은 암호화해 DB에 둔다 (D-028).
 - **데이터베이스 운영**: 배포된 Flyway 마이그레이션은 수정하지 않고 새 마이그레이션으로 교정한다. DB와 파일 저장소 백업을 병행한다. SQLite 파일(WAL 포함)이 백업 대상이다. SQLite 설정(WAL, `synchronous=NORMAL`, `busy_timeout=5000`)은 Litestream 요구와 맞으며 서버는 체크포인트를 직접 하지 않는다. 연속 복제는 Litestream(선택)으로 한다.
 
@@ -118,9 +113,9 @@ dev.sh             로컬 실행
 
 | 영역 | 지침 |
 | :--- | :--- |
-| 서버 모듈·계층 규칙 | [백엔드](../bit-backend/SKILL.md) |
-| 클라이언트 구조·데이터 흐름·화면 | [프론트엔드](../bit-frontend/SKILL.md) |
-| API·오류·인증과 권한·파일 첨부 | [API와 공통 계약](../bit-api-contract/SKILL.md) |
+| 서버 모듈·계층 규칙 | [백엔드](backend.md) |
+| 클라이언트 구조·데이터 흐름·화면 | [프론트엔드](frontend.md) |
+| API·오류·인증과 권한·파일 첨부 | [API와 공통 계약](api-contract.md) |
 
 - **소프트 삭제**: `deleted_at` 하나로 관리하며, 유니크 제약은 `WHERE deleted_at IS NULL` 부분 유니크 인덱스로 DB에서 강제한다.
 - **제품 이름**: 문서·코드의 제품 이름은 `BIT`이고 코드 식별자도 `bit` 계열이다 (D-024). 정식 제품명은 미정이다.
@@ -158,8 +153,6 @@ dev.sh             로컬 실행
 
 ## 완료 기준
 
-- 이 스킬에 적힌 구조·운영 방식을 바꿨으면 같은 커밋에서 이 스킬 본문(또는 `references/deploy.md`)을 고쳤다
+- 이 플레이북에 적힌 구조·운영 방식을 바꿨으면 같은 커밋에서 이 플레이북(또는 [배포](../references/architecture/deploy.md))을 고쳤다
 - 선택 기능을 더했으면 그 설정을 모두 비운 채 서버가 뜨고, 켜진 기능 목록 API에서 그 기능이 꺼짐으로 나온다
 - 설계에 영향을 주는 판단을 했으면 `docs/decisions.md`에 D-번호로 남겼다
-
-결과가 틀리면 `skill-repair`로 이 스킬을 고친다.

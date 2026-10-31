@@ -72,7 +72,7 @@ description: 서버 모듈의 명명, 패키지·클래스 배치, 예외 처리
 - **기술 격리**: SQL 문자열 및 jOOQ 전용 타입(`DSLContext`, `Record`, `TableField` 등)은 반드시 `infrastructure` 계층 내부에서만 존재해야 한다.
 - **가시성 제어**: 저장소·조회 구현체(`Jooq*Repository`, `Jooq*Query`)와 외부 어댑터는 package-private으로 선언하여 외부 계층의 직접 접근을 차단한다.
 - **매핑 책임**: DB 레코드와 도메인/DTO 간의 변환은 구현체 내부의 private 매핑 메서드가 전담한다. 별도의 독립 `Mapper` 패키지를 난립시키지 않는다.
-- **마이그레이션 불변성**: 공유 환경(테스트/운영)에 이미 적용된 Flyway SQL 스크립트는 절대 임의로 수정하지 않는다. 첫 배포 이전 수정이 필요한 경우 `bit-database` 스킬 지침을 준수한다.
+- **마이그레이션 불변성**: 공유 환경(테스트/운영)에 이미 적용된 Flyway SQL 스크립트는 절대 임의로 수정하지 않는다. 첫 배포 이전 수정이 필요한 경우 [로컬 DB와 마이그레이션](../../playbooks/database.md)을 준수한다.
 
 ---
 

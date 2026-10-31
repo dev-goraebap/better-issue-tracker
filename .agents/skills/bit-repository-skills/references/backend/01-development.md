@@ -24,7 +24,7 @@ description: 서버 기술 스택 버전, 로컬 실행, 외부 기능 설정, �
 | **문서 텍스트 변환** | Apache POI (poi-ooxml), PDFBox | POI 5.4.1, PDFBox는 초기화 때 고정 | docx·xlsx·pptx·PDF → Markdown(D-031) |
 | **PDF 생성** | CommonMark 계열 + openhtmltopdf 계열 | 초기화 때 고정 | Markdown → HTML → PDF, 한글 글꼴 임베드(D-032) |
 
-- **도메인 범위**: 공유 오류 처리, `traceId`, 시스템 `Clock`, 모듈 간 의존성 검사를 공통 기반으로 둔다. MCP 서버는 이 서버 안의 `/api/mcp`(Streamable HTTP)이며 별도 패키지를 두지 않는다(D-022). 에이전트는 사람의 개인 API 키(Bearer)로 MCP와 REST를 쓴다(D-021, `bit-api-contract`의 인증 문서).
+- **도메인 범위**: 공유 오류 처리, `traceId`, 시스템 `Clock`, 모듈 간 의존성 검사를 공통 기반으로 둔다. MCP 서버는 이 서버 안의 `/api/mcp`(Streamable HTTP)이며 별도 패키지를 두지 않는다(D-022). 에이전트는 사람의 개인 API 키(Bearer)로 MCP와 REST를 쓴다(D-021, [인증과 권한](../api/03-authentication.md)).
 
 ---
 

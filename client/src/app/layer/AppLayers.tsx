@@ -5,7 +5,7 @@ import { MOBILE_QUERY } from '@/shared/config';
 
 /**
  * The layers over every screen (toasts, popovers, dialogs). A toast keeps clear of what a hand covers: a desktop shows it
- * at the bottom end, a phone at the top, above its tab bar and floating actions (bit-frontend 04).
+ * at the bottom end, a phone at the top, above its tab bar and floating actions (skill frontend/04-layout).
  */
 export function AppLayers({ children }: { children: ReactNode }) {
   const isMobile = useMediaQuery(MOBILE_QUERY);

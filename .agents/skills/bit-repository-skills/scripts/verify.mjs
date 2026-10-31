@@ -1,17 +1,17 @@
 #!/usr/bin/env node
-// Drives a throwaway BIT for verification (verify-bit skill): its own data folder and ports, started from this checkout
+// Drives a throwaway BIT for verification (bit-repository-skills, playbooks/verify.md): its own data folder and ports, started from this checkout
 // the way dev.sh does (the server's bootRun in the dev profile, the client's Vite), with a first account, a workspace and
 // an API key made through the real API. Each run lives in .tmp/verify/<run>/; cleanup stops what launch started and
 // keeps evidence/ and logs/.
 //
-//   node .agents/skills/verify-bit/scripts/verify.mjs launch <run>
-//   node .agents/skills/verify-bit/scripts/verify.mjs doctor <run>
-//   node .agents/skills/verify-bit/scripts/verify.mjs api <run> <METHOD> <path> [json|@file] [--save <label>]
-//   node .agents/skills/verify-bit/scripts/verify.mjs mcp <run> <tool|--list> [json] [--save <label>]
-//   node .agents/skills/verify-bit/scripts/verify.mjs db <run> "<select …>" [--save <label>]
-//   node .agents/skills/verify-bit/scripts/verify.mjs note <run> <label>   (stdin → evidence)
-//   node .agents/skills/verify-bit/scripts/verify.mjs cleanup <run>
-//   node .agents/skills/verify-bit/scripts/verify.mjs list
+//   node .agents/skills/bit-repository-skills/scripts/verify.mjs launch <run>
+//   node .agents/skills/bit-repository-skills/scripts/verify.mjs doctor <run>
+//   node .agents/skills/bit-repository-skills/scripts/verify.mjs api <run> <METHOD> <path> [json|@file] [--save <label>]
+//   node .agents/skills/bit-repository-skills/scripts/verify.mjs mcp <run> <tool|--list> [json] [--save <label>]
+//   node .agents/skills/bit-repository-skills/scripts/verify.mjs db <run> "<select …>" [--save <label>]
+//   node .agents/skills/bit-repository-skills/scripts/verify.mjs note <run> <label>   (stdin → evidence)
+//   node .agents/skills/bit-repository-skills/scripts/verify.mjs cleanup <run>
+//   node .agents/skills/bit-repository-skills/scripts/verify.mjs list
 import { spawn, spawnSync } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
 import { chmodSync, existsSync, mkdirSync, openSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';

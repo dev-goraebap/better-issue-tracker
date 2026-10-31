@@ -28,7 +28,7 @@ function scrollParent(element: HTMLElement): HTMLElement {
 }
 
 /**
- * Carrying a board card to another lane or place, by every hand (bit-frontend 05): a mouse drags it, a finger rests on
+ * Carrying a board card to another lane or place, by every hand (skill frontend/05-design-system): a mouse drags it, a finger rests on
  * it and then drags, and the keyboard picks it up with Space, walks it with the arrows and puts it down with Space or
  * Enter. While carried the card is shown where it would land, a copy of it follows the pointer and the board scrolls
  * at its edges; Escape puts it back. A drop is shown in place until it is saved (onMove), and every step is read out.

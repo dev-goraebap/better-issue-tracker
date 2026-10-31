@@ -13,7 +13,7 @@ export { useLoadingHold } from './use-loading-hold';
 
 export { DateField } from './date-field';
 
-// Brought from SandboxHr shared/ui with the same names and roles (bit-frontend).
+// Brought from SandboxHr shared/ui with the same names and roles (skill playbooks/frontend).
 export { PageBackShownContext, PageChromeContext, type PageChromeTargets } from './page-chrome';
 export { SHEET_ROW_LINK, SheetTable, type SheetColumn } from './sheet-table';
 export type { ListSort, SortDirection, SortKey } from './sort-menu';

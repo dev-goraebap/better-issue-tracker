@@ -35,7 +35,7 @@ import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 /**
- * Uploads go straight from the browser to storage through a signed URL (bit-api-contract 04). The owning module binds
+ * Uploads go straight from the browser to storage through a signed URL (skill api/04-attachments). The owning module binds
  * them when its command succeeds, in its transaction, after this checks what storage really holds: the size and the
  * format's first bytes (D-090); only a member's or workspace's picture is decoded whole.
  */

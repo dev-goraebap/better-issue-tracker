@@ -1,6 +1,6 @@
 # 운영 서버 배포
 
-이 저장소의 운영 서버는 **`~/apps/bit/compose.yml`을 기준으로 배포한다.** 0.9.0부터 적용한 구성이다(BIT-55, BIT-56). 태그·이미지 게시 절차는 [bit-release](../.agents/skills/bit-release/SKILL.md), 공통 백업·복구 원칙은 [배포와 운영](../.agents/skills/bit-architecture/references/deploy.md)을 따른다.
+이 저장소의 운영 서버는 **`~/apps/bit/compose.yml`을 기준으로 배포한다.** 0.9.0부터 적용한 구성이다(BIT-55, BIT-56). 태그·이미지 게시 절차는 [배포(릴리스)](../.agents/skills/bit-repository-skills/playbooks/release.md), 공통 백업·복구 원칙은 [배포와 운영](../.agents/skills/bit-repository-skills/references/architecture/deploy.md)을 따른다.
 
 ## 운영 구성
 

@@ -9,7 +9,7 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * Files other modules bind to what they own (bit-api-contract 04). The file module checks uploads and stores the link;
+ * Files other modules bind to what they own (skill api/04-attachments). The file module checks uploads and stores the link;
  * the owning module decides who may open an owner's files before asking for a URL, since only it knows who may see the
  * owner. While storage is off (D-030) every call that needs it raises FILE_STORAGE_NOT_CONFIGURED.
  */
