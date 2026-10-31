@@ -42,6 +42,11 @@ final class UnavailableStorage implements ObjectStorage {
     }
 
     @Override
+    public void put(String key, String contentType, long size, InputStream body) {
+        throw refused();
+    }
+
+    @Override
     public void delete(String key) {
         throw refused();
     }

@@ -38,7 +38,8 @@ class PageMigrationIntegrationTest {
 
         try (var connection = DriverManager.getConnection(url)) {
             var jdbc = jdbc(connection);
-            assertThat(jdbc.queryForObject("SELECT kind FROM document WHERE document_id=?", String.class, seed.document))
+            assertThat(jdbc.queryForObject(
+                            "SELECT kind FROM document WHERE document_id=?", String.class, seed.document))
                     .isEqualTo("markdown");
             assertThat(jdbc.queryForObject("SELECT count(*) FROM link", Integer.class))
                     .isEqualTo(1);
@@ -54,17 +55,16 @@ class PageMigrationIntegrationTest {
             assertThat(jdbc.queryForObject("PRAGMA integrity_check", String.class))
                     .isEqualTo("ok");
 
-            assertThatThrownBy(() -> jdbc.update(
-                            "UPDATE link SET to_type='artifact' WHERE link_id=?", seed.link))
+            assertThatThrownBy(() -> jdbc.update("UPDATE link SET to_type='artifact' WHERE link_id=?", seed.link))
                     .isInstanceOf(DataIntegrityViolationException.class);
-            assertThatThrownBy(() -> jdbc.update(
-                            "UPDATE comment SET target_type='artifact' WHERE comment_id=?", seed.comment))
+            assertThatThrownBy(() ->
+                            jdbc.update("UPDATE comment SET target_type='artifact' WHERE comment_id=?", seed.comment))
                     .isInstanceOf(DataIntegrityViolationException.class);
             assertThatThrownBy(() -> jdbc.update(
                             "UPDATE activity SET target_type='artifact' WHERE activity_id=?", seed.activity))
                     .isInstanceOf(DataIntegrityViolationException.class);
-            assertThatThrownBy(() -> jdbc.update(
-                            "UPDATE document SET kind='slides' WHERE document_id=?", seed.document))
+            assertThatThrownBy(
+                            () -> jdbc.update("UPDATE document SET kind='slides' WHERE document_id=?", seed.document))
                     .isInstanceOf(DataIntegrityViolationException.class);
             jdbc.update("UPDATE pending_upload SET purpose='page'");
         }
@@ -81,7 +81,8 @@ class PageMigrationIntegrationTest {
             jdbc.update("UPDATE comment SET target_type='artifact' WHERE comment_id=?", seed.comment);
         }
 
-        assertThatThrownBy(() -> Flyway.configure().dataSource(url, null, null).load().migrate())
+        assertThatThrownBy(() ->
+                        Flyway.configure().dataSource(url, null, null).load().migrate())
                 .isInstanceOf(FlywayException.class)
                 .hasStackTraceContaining("ck_no_row_may_still_name_artifact");
 

@@ -4,6 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import io.github.goraebap.bit.module.file.FileOwner;
+import io.github.goraebap.bit.module.file.KeptBlob;
+import io.github.goraebap.bit.module.file.KeptFile;
 import io.github.goraebap.bit.module.file.Picture;
 import io.github.goraebap.bit.module.file.application.FileService;
 import io.github.goraebap.bit.shared.domain.Ids;
@@ -32,6 +34,7 @@ import javax.imageio.ImageIO;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
@@ -48,7 +51,8 @@ import tools.jackson.databind.json.JsonMapper;
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
         properties = {
             "app.secrets.generate=false", "app.auth.secret=file-integration-secret-at-least-32-characters",
-            "app.auth.cookie-secure=false", "app.auth.allowed-origins=http://localhost:8080"
+            "app.auth.cookie-secure=false", "app.auth.allowed-origins=http://localhost:8080",
+            "app.auth.attempts-per-minute=1000"
         })
 class FileIntegrationTest {
     private static final JsonMapper JSON = JsonMapper.builder().build();
@@ -86,6 +90,8 @@ class FileIntegrationTest {
         for (String table : List.of(
                 "notification",
                 "attachment",
+                "page_version_file",
+                "page_version",
                 "blob",
                 "pending_upload",
                 "work_item_view_order",
@@ -325,6 +331,76 @@ class FileIntegrationTest {
     }
 
     @Test
+    void aPageBundleIsReadOnlyAsABundleAndNeverBecomesAnAttachment() throws Exception {
+        byte[] zip = {0x50, 0x4B, 0x03, 0x04, 1, 2, 3, 4};
+        expect(http(session, "POST", "/api/v1/files/uploads", bundle("page.html", 10)), 400);
+        var ticket = upload(session, bundle("page.zip", zip.length));
+        expect(put(ticket, zip, "application/zip"), 200);
+        String id = ticket.path("id").asText();
+
+        assertThat(code(() -> fileService.attach(owner, List.of(id), FileOwner.WORK_ITEM, Ids.newId())))
+                .isEqualTo("FILE_UPLOAD_PURPOSE");
+        assertThat(jdbcTemplate.queryForObject("SELECT count(*) FROM attachment", Integer.class))
+                .isZero();
+        try (var in = fileService.openBundle(owner, id)) {
+            assertThat(in.readAllBytes()).isEqualTo(zip);
+        }
+        try (var again = fileService.openBundle(owner, id)) {
+            assertThat(again.readAllBytes())
+                    .as("opening does not use the upload up")
+                    .isEqualTo(zip);
+        }
+
+        var other = identity("other");
+        assertThat(code(() -> fileService.openBundle(other, id))).isEqualTo("FILE_UPLOAD_MISSING");
+        var attachment = upload(session, "a.zip", zip.length, null, null, null);
+        expect(put(attachment, zip, "application/zip"), 200);
+        assertThat(code(() ->
+                        fileService.openBundle(owner, attachment.path("id").asText())))
+                .isEqualTo("FILE_UPLOAD_PURPOSE");
+        var notZip = upload(session, bundle("fake.zip", 4));
+        expect(put(notZip, "<a/>".getBytes(StandardCharsets.UTF_8), "application/zip"), 200);
+        assertThatThrownBy(() -> fileService.openBundle(owner, notZip.path("id").asText()))
+                .isInstanceOf(DomainRuleViolation.class)
+                .hasMessageContaining("zip이 아닙니다");
+        jdbcTemplate.update(
+                "UPDATE pending_upload SET created_at=? WHERE pending_upload_id=?",
+                InstantTextBinding.text(Instant.now().minus(Duration.ofDays(2))),
+                id);
+        assertThat(code(() -> fileService.openBundle(owner, id))).isEqualTo("FILE_UPLOAD_MISSING");
+    }
+
+    @Test
+    void keptFilesShareOneBlobPerContentAndSurviveTheCleanup(@TempDir Path folder) throws Exception {
+        Path css = java.nio.file.Files.writeString(folder.resolve("a.css"), "body{}");
+        Path same = java.nio.file.Files.writeString(folder.resolve("b.css"), "body{}");
+        Path js = java.nio.file.Files.writeString(folder.resolve("app.js"), "alert(1)");
+        var first = fileService.keep(
+                owner,
+                List.of(
+                        new KeptFile(css, "a.css", "text/css"),
+                        new KeptFile(same, "b.css", "text/css"),
+                        new KeptFile(js, "app.js", "text/javascript")));
+        assertThat(first).extracting(KeptBlob::size).containsExactly(6L, 6L, 8L);
+        assertThat(first.get(0).blobId())
+                .isEqualTo(first.get(1).blobId())
+                .isNotEqualTo(first.get(2).blobId());
+        assertThat(jdbcTemplate.queryForList("SELECT storage_key FROM blob ORDER BY storage_key", String.class))
+                .hasSize(2)
+                .allMatch(key -> key.matches("blobs/sha256/[0-9a-f]{64}"));
+
+        var again = fileService.keep(owner, List.of(new KeptFile(js, "renamed.js", "text/javascript")));
+        assertThat(again).containsExactly(first.get(2));
+        assertThat(jdbcTemplate.queryForObject("SELECT count(*) FROM blob", Integer.class))
+                .isEqualTo(2);
+
+        assertThat(fileService.cleanUp()).isZero();
+        try (var in = fileService.openKept(first.get(0).blobId())) {
+            assertThat(new String(in.readAllBytes(), StandardCharsets.UTF_8)).isEqualTo("body{}");
+        }
+    }
+
+    @Test
     void cleanupRemovesUploadsNobodyTookWithTheirBytes() throws Exception {
         var stale = upload(session, "old.pdf", 5, null, null, null);
         expect(put(stale, "%PDF-".getBytes(StandardCharsets.US_ASCII), "application/pdf"), 200);
@@ -390,6 +466,10 @@ class FileIntegrationTest {
         if (width != null) body.put("width", width);
         if (height != null) body.put("height", height);
         return JSON.writeValueAsString(body);
+    }
+
+    private static String bundle(String filename, long size) {
+        return JSON.writeValueAsString(Map.of("filename", filename, "size", size, "purpose", "page"));
     }
 
     private static String picture(String filename, long size) {

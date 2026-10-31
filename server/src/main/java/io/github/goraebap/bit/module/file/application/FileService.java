@@ -3,21 +3,34 @@ package io.github.goraebap.bit.module.file.application;
 import io.github.goraebap.bit.module.file.AttachedFile;
 import io.github.goraebap.bit.module.file.FileFacade;
 import io.github.goraebap.bit.module.file.FileOwner;
+import io.github.goraebap.bit.module.file.KeptBlob;
+import io.github.goraebap.bit.module.file.KeptFile;
 import io.github.goraebap.bit.module.file.domain.Attachment;
 import io.github.goraebap.bit.module.file.domain.AttachmentRepository;
+import io.github.goraebap.bit.module.file.domain.BlobRepository;
 import io.github.goraebap.bit.module.file.domain.FileFormat;
 import io.github.goraebap.bit.module.file.domain.ImageTraits;
 import io.github.goraebap.bit.module.file.domain.PendingUpload;
 import io.github.goraebap.bit.module.file.domain.PendingUploadRepository;
+import io.github.goraebap.bit.module.file.domain.UploadPurpose;
 import io.github.goraebap.bit.shared.domain.Ids;
 import io.github.goraebap.bit.shared.storage.ObjectStorage;
 import io.github.goraebap.bit.shared.storage.StorageStatus;
 import io.github.goraebap.bit.shared.web.CurrentUser;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.UncheckedIOException;
 import java.net.URI;
+import java.nio.file.Files;
+import java.security.DigestInputStream;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.Clock;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HexFormat;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -54,6 +67,7 @@ public class FileService implements FileFacade {
 
     private final PendingUploadRepository pendingUploadRepository;
     private final AttachmentRepository attachmentRepository;
+    private final BlobRepository blobRepository;
     private final FileQuery fileQuery;
     private final ObjectStorage objectStorage;
     private final StorageStatus storageStatus;
@@ -144,6 +158,7 @@ public class FileService implements FileFacade {
             var upload = found.get(id);
             if (upload == null || !upload.uploadedBy(uploader.userId()) || upload.expired(now))
                 throw FileErrorCode.FILE_UPLOAD_MISSING.raise();
+            if (upload.purpose() == UploadPurpose.page) throw FileErrorCode.FILE_UPLOAD_PURPOSE.raise();
             var stored = objectStorage.find(upload.storageKey()).orElseThrow(FileErrorCode.FILE_NOT_STORED::raise);
             byte[] start = objectStorage.readStart(upload.storageKey(), FileFormat.SIGNATURE_LENGTH);
             attachments.add(Attachment.bind(
@@ -223,6 +238,57 @@ public class FileService implements FileFacade {
         return newIds;
     }
 
+    @Override
+    public InputStream openBundle(CurrentUser uploader, String uploadId) {
+        requireAvailable();
+        var upload = pendingUploadRepository.findAllById(List.of(uploadId)).stream()
+                .findFirst()
+                .filter(found -> found.uploadedBy(uploader.userId()) && !found.expired(clock.instant()))
+                .orElseThrow(FileErrorCode.FILE_UPLOAD_MISSING::raise);
+        if (upload.purpose() != UploadPurpose.page) throw FileErrorCode.FILE_UPLOAD_PURPOSE.raise();
+        var stored = objectStorage.find(upload.storageKey()).orElseThrow(FileErrorCode.FILE_NOT_STORED::raise);
+        byte[] start = objectStorage.readStart(upload.storageKey(), FileFormat.SIGNATURE_LENGTH);
+        upload.requireBundle(stored.size(), start, storageStatus.maxFileBytes());
+        return objectStorage.open(upload.storageKey());
+    }
+
+    @Override
+    public List<KeptBlob> keep(CurrentUser actor, List<KeptFile> files) {
+        if (files.isEmpty()) return List.of();
+        requireAvailable();
+        var objects = files.stream().map(FileService::addressed).toList();
+        var keys = objects.stream().map(BlobRepository.KeptObject::storageKey).toList();
+        var ids = blobRepository.findIdsByStorageKey(keys);
+        Map<String, BlobRepository.KeptObject> missing = new LinkedHashMap<>();
+        for (int i = 0; i < files.size(); i++) {
+            var object = objects.get(i);
+            if (ids.containsKey(object.storageKey()) || missing.containsKey(object.storageKey())) continue;
+            missing.put(object.storageKey(), object);
+            try (InputStream body = Files.newInputStream(files.get(i).source())) {
+                objectStorage.put(object.storageKey(), object.contentType(), object.size(), body);
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
+        }
+        if (!missing.isEmpty()) {
+            blobRepository.saveAllIfAbsent(List.copyOf(missing.values()), actor.userId(), actor.agent());
+            ids = blobRepository.findIdsByStorageKey(keys);
+        }
+        var found = ids;
+        return objects.stream()
+                .map(object -> new KeptBlob(found.get(object.storageKey()), object.size()))
+                .toList();
+    }
+
+    @Override
+    public InputStream openKept(String blobId) {
+        requireAvailable();
+        String key = blobRepository
+                .findStorageKeyById(blobId)
+                .orElseThrow(() -> new IllegalStateException("A kept blob is missing: " + blobId));
+        return objectStorage.open(key);
+    }
+
     /**
      * Removes uploads nobody took within PendingUpload.KEPT, with their bytes, and deletes the bytes of files discarded
      * in the last week again. A storage failure leaves the row for the next run. Does nothing while storage is off.
@@ -270,6 +336,27 @@ public class FileService implements FileFacade {
             // S3 and file system failures arrive as different runtime exceptions; each means "try again tomorrow".
             log.warn("저장소에서 파일을 지우지 못했습니다: {}", key, e);
             return false;
+        }
+    }
+
+    /** The kept object a file becomes: its storage key names the SHA-256 of its bytes. */
+    private static BlobRepository.KeptObject addressed(KeptFile file) {
+        try {
+            var digest = MessageDigest.getInstance("SHA-256");
+            long size;
+            try (var in = new DigestInputStream(Files.newInputStream(file.source()), digest)) {
+                size = in.transferTo(OutputStream.nullOutputStream());
+            }
+            if (size == 0) throw new IllegalArgumentException("An empty file has no blob: " + file.filename());
+            String key = "blobs/sha256/" + HexFormat.of().formatHex(digest.digest());
+            String name = file.filename().length() > PendingUpload.FILENAME_MAX
+                    ? file.filename().substring(0, PendingUpload.FILENAME_MAX)
+                    : file.filename();
+            return new BlobRepository.KeptObject(key, name, file.contentType(), size);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException(e);
         }
     }
 

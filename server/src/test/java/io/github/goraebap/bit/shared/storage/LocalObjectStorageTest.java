@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.io.ByteArrayInputStream;
+import java.lang.reflect.Proxy;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
@@ -15,6 +16,10 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.PutObjectResponse;
 
 class LocalObjectStorageTest {
     private static final String SECRET = "local-storage-test-secret-at-least-32-characters";
@@ -66,6 +71,46 @@ class LocalObjectStorageTest {
         storage.delete("uploads/../../a.txt");
         storage.delete("uploads/../../a.txt");
         assertThat(storage.find("uploads/../../a.txt")).isEmpty();
+    }
+
+    @Test
+    void theServerPutsWhatItHoldsWholeOrNotAtAll() throws Exception {
+        var storage = new LocalObjectStorage(folder, SECRET, Clock.fixed(NOW, ZoneOffset.UTC));
+        byte[] bytes = "body{}".getBytes(StandardCharsets.UTF_8);
+        storage.put("blobs/sha256/ab", "text/css", bytes.length, new ByteArrayInputStream(bytes));
+        assertThat(storage.find("blobs/sha256/ab")).hasValue(new ObjectStorage.StoredObject(6, "text/css"));
+        try (var in = storage.open("blobs/sha256/ab")) {
+            assertThat(in.readAllBytes()).isEqualTo(bytes);
+        }
+
+        assertThatThrownBy(() -> storage.put("blobs/sha256/cd", "text/css", 99, new ByteArrayInputStream(bytes)))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(storage.find("blobs/sha256/cd")).isEmpty();
+    }
+
+    @Test
+    void anS3PutSendsTheTypeAndLengthUnderThePrefix() {
+        var sent = new java.util.ArrayList<PutObjectRequest>();
+        var client = (S3Client) Proxy.newProxyInstance(
+                S3Client.class.getClassLoader(), new Class<?>[] {S3Client.class}, (proxy, method, args) -> {
+                    if (method.getName().equals("putObject")
+                            && args.length == 2
+                            && args[0] instanceof PutObjectRequest request
+                            && args[1] instanceof RequestBody) {
+                        sent.add(request);
+                        return PutObjectResponse.builder().build();
+                    }
+                    throw new UnsupportedOperationException(method.getName());
+                });
+        var storage = new S3ObjectStorage(client, null, "bucket", "bit/");
+        byte[] bytes = "alert(1)".getBytes(StandardCharsets.UTF_8);
+        storage.put("blobs/sha256/ef", "text/javascript", bytes.length, new ByteArrayInputStream(bytes));
+        assertThat(sent).singleElement().satisfies(request -> {
+            assertThat(request.bucket()).isEqualTo("bucket");
+            assertThat(request.key()).isEqualTo("bit/blobs/sha256/ef");
+            assertThat(request.contentType()).isEqualTo("text/javascript");
+            assertThat(request.contentLength()).isEqualTo(8L);
+        });
     }
 
     @Test

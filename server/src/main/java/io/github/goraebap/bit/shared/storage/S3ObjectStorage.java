@@ -8,6 +8,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.core.sync.ResponseTransformer;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
@@ -110,6 +111,18 @@ public final class S3ObjectStorage implements ObjectStorage, AutoCloseable {
     public InputStream open(String key) {
         return client.getObject(
                 GetObjectRequest.builder().bucket(bucket).key(at(key)).build());
+    }
+
+    @Override
+    public void put(String key, String contentType, long size, InputStream body) {
+        client.putObject(
+                PutObjectRequest.builder()
+                        .bucket(bucket)
+                        .key(at(key))
+                        .contentType(contentType)
+                        .contentLength(size)
+                        .build(),
+                RequestBody.fromInputStream(body, size));
     }
 
     @Override

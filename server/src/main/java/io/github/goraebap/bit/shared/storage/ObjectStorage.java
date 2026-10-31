@@ -36,6 +36,9 @@ public interface ObjectStorage {
     /** The whole object as a stream; the caller closes it. */
     InputStream open(String key);
 
+    /** Stores bytes the server itself holds under key, replacing what is there; body gives exactly size bytes. */
+    void put(String key, String contentType, long size, InputStream body);
+
     /** Removes the object; removing one that is not there succeeds. */
     void delete(String key);
 
