@@ -107,9 +107,9 @@ class WorkItemMcpTools implements McpToolProvider {
                                         false)
                                 .string("assignee", "담당자나 참석자: me, 이메일, 또는 이름", false)
                                 .choice("kind", "종류로 거르기: task(작업), event(일정)", List.of("task", "event"), false)
-                                .string("label", "라벨 이름. 예: 결정기록", false)
+                                .string("label", "라벨 이름. 예: 기능", false)
                                 .string("type", "업무 유형 이름으로 거르기. 예: 버그 (일정은 유형이 없어 빠집니다)", false)
-                                .bool("include_closed", "완료한 업무도 넣을지. 결정기록은 대부분 완료 상태라 찾을 때 true를 주세요.")
+                                .bool("include_closed", "완료·취소한 업무도 넣을지. 같은 기능의 업무를 찾을 때는 끝난 것도 보려고 true를 주세요.")
                                 .integer("limit", "가져올 개수 (기본 30)", 1, 100)
                                 .string("cursor", "앞 응답의 nextCursor로 다음 쪽을 읽습니다", false)
                                 .string("workspace", WORKSPACE, false)
@@ -119,7 +119,7 @@ class WorkItemMcpTools implements McpToolProvider {
                 new McpTool(
                         "create_work_item",
                         "업무 만들기",
-                        "새 업무를 만들고 참조(예: ORM-20)를 돌려줍니다. 설명은 마크다운입니다. type으로 업무 유형을 고르며, 상위가 필요한 유형(예: 스토리는 에픽 아래)은 여기서 만들 수 없으니 create_subtask로 상위 업무 아래에 만드세요. 지금 맡아 작업할 업무면 assignee에 me를 주고, 나중으로 미뤄 두는 업무면 비워 둡니다. 결정기록(앞으로 다른 작업이 따라야 할 선택)은 작업 업무와 따로 만들고, labels에 '결정기록'을 넣어 설명을 ## 맥락 / ## 결정 / ## 검토한 대안 으로 쓰세요.",
+                        "새 업무를 만들고 참조(예: ORM-20)를 돌려줍니다. 설명은 마크다운입니다. type으로 업무 유형을 고르며, 상위가 필요한 유형(예: 스토리는 에픽 아래)은 여기서 만들 수 없으니 create_subtask로 상위 업무 아래에 만드세요. 지금 맡아 작업할 업무면 assignee에 me를 주고, 나중으로 미뤄 두는 업무면 비워 둡니다. 업무는 기능 하나나 버그 하나입니다. 같은 기능의 후속 수정이나 앞으로 따를 결정은 새 업무 대신 add_comment로 그 업무에 남기세요.",
                         McpTool.input()
                                 .string("project", "프로젝트 키. 예: ORM", true)
                                 .string("title", "제목", true)
