@@ -12,7 +12,7 @@ export async function downloadManual(manual: Manual) {
   const text = JSON.stringify({ format: 'bit-manual', version: 1, manual: { ...manual, assets, image: manual.image ? await embed(manual.image) : undefined, comments: [] } });
   readManualPackage(text);
   const blob = new Blob([text], { type: 'application/json' });
-  if (blob.size > 4 * 1024 * 1024) throw new Error('가져오기 파일의 4MB 범위를 초과했습니다. 이미지를 줄인 뒤 다시 시도해 주세요.');
+  if (blob.size > 100 * 1024 * 1024) throw new Error('매뉴얼 파일의 100MB 범위를 초과했습니다.');
   const url = URL.createObjectURL(blob); const link = document.createElement('a');
   link.href = url; link.download = `${safeFilename(manual.title)}.bit-manual.json`; link.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);

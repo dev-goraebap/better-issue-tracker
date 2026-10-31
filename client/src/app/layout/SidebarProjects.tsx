@@ -86,7 +86,7 @@ export function SidebarProjects({ workspaceId, projects, currentId, currentSecti
       collapsible={{ isCollapsed: !isOpen, onCollapsedChange: isCollapsed => toggle(project.id, !isCollapsed) }}>
       <SideNavItem label="업무" href={link} icon={<NavIcon name="work-items" />} isSelected={currentId === project.id && currentSection === 'work-items'} onClick={onGo(link)} />
       <SideNavItem label="문서" href={documents} icon={<NavIcon name="document" />} isSelected={currentId === project.id && currentSection === 'documents'} onClick={onGo(documents)} />
-      {import.meta.env.DEV && <SideNavItem label="매뉴얼" href={href(project, 'manuals')} icon={<NavIcon name="documents" />} isSelected={currentId === project.id && currentSection === 'manuals'} onClick={onGo(href(project, 'manuals'))} />}
+      {<SideNavItem label="매뉴얼" href={href(project, 'manuals')} icon={<NavIcon name="documents" />} isSelected={currentId === project.id && currentSection === 'manuals'} onClick={onGo(href(project, 'manuals'))} />}
     </SideNavItem>;
     if (!canReorder) return item;
     return <div key={project.id} data-project-row={project.id} className={styles.projectRow} draggable title="끌거나 Alt + ↑/↓로 순서를 바꿉니다"

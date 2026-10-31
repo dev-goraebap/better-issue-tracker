@@ -10,6 +10,7 @@ import java.util.Locale;
 public enum FileOwner {
     WORK_ITEM,
     DOCUMENT,
+    MANUAL,
     COMMENT,
     /** A member's picture. */
     USER,

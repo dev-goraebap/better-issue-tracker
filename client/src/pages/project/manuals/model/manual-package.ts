@@ -20,4 +20,4 @@ export function readManualPackage(text: string): Manual {
   }
   return manual;
 }
-export const manualAsNew = (manual: Manual): Manual => ({ ...manual, id: newId(), comments: [] });
+export const manualAsNew = (manual: Manual): Manual => ({ ...manual, id: newId(), comments: [], version: undefined, canEdit: undefined, pageCount: undefined, projectId: undefined });

@@ -31,6 +31,19 @@
 | `create_page` | 로컬에서 만든 HTML 결과물을 zip 하나로 `purpose: "page"` 업로드한 뒤 문서함의 페이지(버전 1)로 만들기 |
 | `update_page` | 페이지에 고친 묶음을 새 버전으로 올리기(제목·라벨·위치는 `update_document`) |
 
+## 매뉴얼 도구
+
+| 도구 | 쓰는 때 |
+| :--- | :--- |
+| `list_manuals` / `get_manual` | 공간/프로젝트 매뉴얼 목록과 본문·섹션·댓글·버전 읽기 |
+| `create_manual` / `update_manual` | 매뉴얼 생성과 메타데이터 수정(프로젝트 생략 생성은 공통) |
+| `create_manual_section` / `update_manual_section` | 섹션 생성과 제목 변경 |
+| `get_manual_page` / `create_manual_page` / `update_manual_page` | 페이지 읽기·작성·수정, 새 원본 이미지 업로드 확정 |
+| `reorder_manual` | 섹션/페이지 순서와 페이지 소속을 전체 ID 배열로 변경 |
+| `add_manual_comment` / `resolve_manual_comment` | 페이지 개선 의견과 해결/재열기 |
+
+매뉴얼 수정 도구에는 `get_manual`에서 읽은 `version`을 `expected_version`으로 준다. 공개 사이트 게시와 실시간 공동 편집은 이 도구의 범위가 아니다.
+
 문서 도구가 목록에 없으면 문서 기능이 생기기 전의 옛 서버다. 그때 긴 글은 업무 설명에 쓴다.
 
 도구 이름이 이 표와 다르거나 `Unknown tool` 오류가 나면, 서버가 업데이트됐는데 연결이 옛 도구 목록을 들고 있는 것이다. 사용자에게 MCP 서버를 다시 연결하거나 새 세션을 열어 달라고 한다. 업무 도구 이름을 issue로 바꿨던 일부 옛 서버(0.8 무렵)는 업무 도구 이름이 `get_issue_context`, `list_issues`, `create_issue`, `update_issue`, `move_issue`이다. 연결된 서버의 도구 목록에 있는 이름을 쓴다.

@@ -283,6 +283,8 @@ class AuthSecurityConfig {
                                 "/api/v1/workspaces/*/work-items/id/*/restore")
                         .authenticated()
                         // Documents and their folders (D-093).
+                        .requestMatchers("/api/v1/workspaces/*/manuals", "/api/v1/workspaces/*/manuals/**")
+                        .authenticated()
                         .requestMatchers(HttpMethod.PUT, "/api/v1/workspaces/*/documents/order")
                         .authenticated()
                         .requestMatchers(

@@ -1,7 +1,7 @@
 export type Cover = 'book' | 'structure' | 'path';
 export type ManualPageData = { id: string; title: string; body: string; sectionId: string; updatedAt: string };
-export type ManualComment = { id: string; pageId: string; body: string; resolved: boolean; createdAt: string };
-export type Manual = { id: string; title: string; description: string; cover: Cover; image?: string; icon?: string; color?: string; createdAt?: string; updatedAt?: string;
+export type ManualComment = { id: string; pageId: string; body: string; resolved: boolean; createdAt: string; authorName?: string; agentName?: string };
+export type Manual = { id: string; title: string; description: string; cover: Cover; image?: string; icon?: string; color?: string; createdAt?: string; updatedAt?: string; version?: number; canEdit?: boolean; pageCount?: number; projectId?: string;
   sections: { id: string; title: string }[]; pages: ManualPageData[]; comments: ManualComment[]; assets: Record<string, string> };
 export type ManualSearch = { manual?: string; page?: string; q?: string; scope?: string; color?: string; sort?: 'title' | 'updated'; dir?: 'asc' | 'desc'; finding?: 1 };
 export const parseManualSearch = (input: Record<string, unknown>): ManualSearch => ({

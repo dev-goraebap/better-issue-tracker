@@ -212,7 +212,7 @@ const routeTree = rootRoute.addChildren([
     scoped.addChildren([
       home, ...scopePages, projectMembers, focusedSettings, workItemsNew, inbox, myTasks, members, membersInvite, documents, documentNew, documentDetail, documentEdit, projects, projectDocuments,
       projectItems, itemNew, itemDetail, itemEdit, workspaceItem, workspaceItemEdit, itemReference, ...issueAddresses,
-      ...(import.meta.env.DEV ? [manualPreview, workspaceManuals] : []),
+      manualPreview, workspaceManuals,
       settingsStart, settings, projectSettingsStart, projectSettings, oldProjectSettings,
     ]),
     profile, security, keys, appearance, ...legacy, shortAddress,

@@ -298,3 +298,10 @@ V25는 `reaction`(reaction_id, workspace_id, target_type, target_id, emoji, user
 - `project_favorite`: workspace_id + user_id + project_id 기본 키. 개인 즐겨찾기이며 프로젝트 공개 범위와 워크스페이스 가입 여부를 매번 검사한다.
 
 - V32: `workspace.last_work_item_number`는 프로젝트에 속하지 않은 업무의 번호를 발급한다. `W-번호`를 public_ref에 고정하며 프로젝트 키는 최소 두 글자이므로 충돌하지 않는다. 프로젝트 이동 시에도 참조는 유지한다.
+
+
+## 매뉴얼 (V33, BIT-144 · D-119)
+
+`manual`은 워크스페이스와 선택 프로젝트에 속한 책이다. 이름·설명·아이콘·색·버전·작성/수정/삭제 감사 정보를 가진다. `content` JSON은 순서가 있는 sections, pages(Markdown), comments(개선 의견과 서버 작성자·해결 정보)를 담는다. 한 책의 구조·본문·의견은 하나의 버전으로 원자 저장한다. 페이지와 섹션의 식별자는 책 내부에서만 유일하며 제목이나 순서 변경에도 유지한다. 목록은 본문 없이 SQL 투영·필터·정렬·커서 페이지와 건수를 제공한다.
+
+이미지는 `attachment.owner_type=manual`과 manual_id를 사용한다. 기존 첨부 계약으로 원본을 저장하고 소유 매뉴얼의 읽기 권한을 검사한 경로로 연다. 본문에서 사용하지 않는 첨부는 저장 시 해제하고 매뉴얼 삭제 때 전체를 해제한다. 사용하지 않은 업로드는 기존 정리 절차를 따른다. 적용된 V1~V32는 수정하지 않는다.

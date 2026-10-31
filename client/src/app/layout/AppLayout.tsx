@@ -50,7 +50,7 @@ export function AppLayout() {
   const currentProject = useQuery({ ...projectQuery(workspaceId ?? '', focusedProject ?? ''), enabled: !!workspaceId && !!focusedProject }).data;
   const navigation = useQuery({ ...navigationQuery(workspaceId, focusedProject), enabled: !!workspaceId });
   const favorites = useQuery({ ...favoritesQuery(workspaceId), enabled: !!workspaceId }).data ?? [];
-  const menus = scopeMenu(navigation.data?.entries, !!focusedProject).filter(entry => import.meta.env.DEV || entry.path !== '/manuals');
+  const menus = scopeMenu(navigation.data?.entries, !!focusedProject);
   const scopeHref = (path: string) => focusedProject ? projectPath(workspaceId, focusedProject, path) : workspacePath(workspaceId, path);
   const documentFolder = useQuery({ ...contentsQuery(workspaceId ?? '', documentProject, folderId), enabled: !!workspaceId && !!folderId && (['/documents', '/resources'].includes(place.workspaceSection ?? '') || ['documents', 'resources'].includes(place.projectSection ?? '')) }).data;
   const me = useQuery(sessionQueryOptions).data?.user;

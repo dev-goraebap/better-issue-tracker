@@ -1,8 +1,8 @@
 import { useParams } from '@tanstack/react-router';
-import { ManualPreview } from './ManualPreview';
+import { ManualWorkspace } from './ManualWorkspace';
 
-/** Local design review only, registered by the router exclusively in development mode. */
+/** Shared workspace/project manuals, persisted and authorized by the server. */
 export function ManualsPage() {
   const { workspaceId, projectId } = useParams({ strict: false }) as { workspaceId: string; projectId?: string };
-  return <ManualPreview key={`${workspaceId}.${projectId}`} workspaceId={workspaceId} projectId={projectId} />;
+  return <ManualWorkspace key={`${workspaceId}.${projectId}`} workspaceId={workspaceId} projectId={projectId} />;
 }

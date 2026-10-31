@@ -185,6 +185,8 @@ final class AuthenticationFilter extends OncePerRequestFilter {
         if (Set.of("GET", "HEAD", "POST", "DELETE").contains(method)
                 && path.matches("/api/v1/workspaces/[^/]+/relations(?:/[^/]+)?")) return true;
         // An agent reads and writes documents and their folders as its owner (D-093).
+        if (Set.of("GET", "HEAD", "POST", "PUT", "DELETE").contains(method)
+                && path.matches("/api/v1/workspaces/[^/]+/manuals(?:/[^/]+){0,3}")) return true;
         if (method.equals("PUT") && path.matches("/api/v1/workspaces/[^/]+/documents/order")) return true;
         if (Set.of("GET", "HEAD", "POST", "PATCH", "DELETE").contains(method)
                 && path.matches("/api/v1/workspaces/[^/]+/(?:documents|folders)(?:/[^/]+){0,3}")) return true;

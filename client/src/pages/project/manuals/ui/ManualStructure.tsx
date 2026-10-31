@@ -6,7 +6,7 @@ import { newId, type Manual } from '../model/manual';
 import { manualPageRows, orderManualPages } from '../model/manual-order';
 import styles from './manual-structure.module.css';
 
-export function ManualStructure({ manual, onSave, onClose }: { manual: Manual; onSave: (manual: Manual) => boolean; onClose: () => void }) {
+export function ManualStructure({ manual, onSave, onClose }: { manual: Manual; onSave: (manual: Manual) => Promise<boolean>; onClose: () => void }) {
   const [draft, setDraft] = useState(manual);
   const [section, setSection] = useState('');
   const [error, setError] = useState('');
@@ -15,7 +15,7 @@ export function ManualStructure({ manual, onSave, onClose }: { manual: Manual; o
     async order => { setDraft(current => ({ ...current, sections: order.map(id => current.sections.find(section => section.id === id)!) })); }, failure => setError(String(failure)));
   const pages = useRowReorder(manualPageRows(draft), { word: '페이지', object: '페이지를', topic: '페이지는' }, rows.ghost,
     async order => { setDraft(current => orderManualPages(current, order)); }, failure => setError(String(failure)));
-  return <CompactDialog title="매뉴얼 구성" width={680} onClose={onClose} footer={<><Button variant="ghost" label="취소" onClick={onClose} /><Button label="구성 저장" onClick={() => { if (onSave(draft)) onClose(); }} /></>}>
+  return <CompactDialog title="매뉴얼 구성" width={680} onClose={onClose} footer={<><Button variant="ghost" label="취소" onClick={onClose} /><Button label="구성 저장" onClick={async () => { if (await onSave(draft)) onClose(); }} /></>}>
     <div className={styles.body}><div className={styles.create}><TextInput label="새 섹션" value={section} onChange={value => setSection(value.slice(0, 100))} placeholder="예: 개발 기준" /><Button variant="secondary" label="추가" isDisabled={!section.trim()} onClick={() => { setDraft({ ...draft, sections: [...draft.sections, { id: newId(), title: section.trim() }] }); setSection(''); }} /></div>
     <p className={styles.help}>손잡이를 끌어 순서를 바꿉니다. 페이지는 다른 섹션 제목 아래로 옮길 수 있습니다.</p>
     <h3 className={styles.heading}>섹션</h3>

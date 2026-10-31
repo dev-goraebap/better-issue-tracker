@@ -11,6 +11,6 @@ export function ManualNavigation({ manual, pageId, query, onPage, onBack, onCrea
     <div className={styles.navigationPages}>{query ? <><p className={styles.groupTitle}>검색 결과 {pages.length}개</p>{pages.map(pageLink)}</> : <>
       {pages.filter(page => !page.sectionId).map(pageLink)}
       {manual.sections.map(section => <section key={section.id}><h3 className={styles.groupTitle}>{section.title}</h3>{pages.filter(page => page.sectionId === section.id).map(pageLink)}</section>)}
-    </>}</div><button type="button" className={styles.newPage} onClick={onCreate}><NavIcon name="plus" />페이지 추가</button>
+    </>}</div>{manual.canEdit !== false && <button type="button" className={styles.newPage} onClick={onCreate}><NavIcon name="plus" />페이지 추가</button>}
   </nav>;
 }

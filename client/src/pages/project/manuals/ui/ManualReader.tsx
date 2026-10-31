@@ -14,7 +14,7 @@ import { useManualNavWidth } from '../model/use-manual-nav-width';
 import styles from './manuals.module.css';
 
 export function ManualReader({ manual, pageId, query, onQuery, onPage, onBack, onSave }: { manual: Manual; pageId?: string; query: string;
-  onQuery: (query: string) => void; onPage: (id: string) => void; onBack: () => void; onSave: (manual: Manual) => boolean }) {
+  onQuery: (query: string) => void; onPage: (id: string) => void; onBack: () => void; onSave: (manual: Manual) => Promise<boolean> }) {
   const ordered = pagesInOrder(manual); const page = ordered.find(item => item.id === pageId) ?? (!pageId ? ordered[0] : undefined);
   const [headings, setHeadings] = useState<ManualHeading[]>([]); const [active, setActive] = useState('');
   const [editingPage, setEditingPage] = useState<string | null>(null); const editing = editingPage === page?.id;
@@ -45,7 +45,7 @@ export function ManualReader({ manual, pageId, query, onQuery, onPage, onBack, o
     <div className={styles.mobileTools}><button type="button" aria-expanded={mobilePanel === 'navigation'} onClick={() => setMobilePanel(mobilePanel === 'navigation' ? null : 'navigation')}><NavIcon name="documents" />탐색</button><span>{manual.title}</span><button type="button" aria-expanded={mobilePanel === 'toc'} onClick={() => setMobilePanel(mobilePanel === 'toc' ? null : 'toc')}>목차</button></div>
     <div className={styles.navRegion} data-open={mobilePanel === 'navigation' || undefined}>
       <ManualNavigation manual={manual} pageId={page?.id} query={query} onPage={onPage} onBack={onBack} onCreate={createPage} />
-      <div className={styles.manageNav}><button type="button" disabled={editing} onClick={() => setStructure(true)}><NavIcon name="settings" />구성 편집</button><button type="button" disabled={editing} onClick={() => setSettings(true)}>설정</button></div>
+      {manual.canEdit !== false && <div className={styles.manageNav}><button type="button" disabled={editing} onClick={() => setStructure(true)}><NavIcon name="settings" />구성 편집</button><button type="button" disabled={editing} onClick={() => setSettings(true)}>설정</button></div>}
       <div className={styles.navigationResize} role="separator" aria-label="매뉴얼 탐색 너비 조절" aria-orientation="vertical" aria-valuemin={200} aria-valuemax={navigation.maximum} aria-valuenow={navigation.width} tabIndex={0} title="끌어서 너비 조절 · 방향키로 이동 · 두 번 눌러 초기화" {...navigation.handle} />
     </div>
     <div className={styles.readRegion}>
@@ -53,7 +53,7 @@ export function ManualReader({ manual, pageId, query, onQuery, onPage, onBack, o
         <SearchToggle label="매뉴얼 내용 검색" placeholder="매뉴얼 안에서 검색" value={query} onChange={value => onQuery(value ?? '')} />
         {page && <div className={styles.headerActions}>
           <button type="button" aria-label="페이지 댓글" aria-expanded={comments} title="댓글" onClick={() => setComments(!comments)}><NavIcon name="comment" /><span>{manual.comments.filter(comment => comment.pageId === page.id && !comment.resolved).length || ''}</span></button>
-          <Button label="편집" variant="ghost" size="sm" onClick={() => setEditing(!editing)} isDisabled={editing} />
+          {manual.canEdit !== false && <Button label="편집" variant="ghost" size="sm" onClick={() => setEditing(!editing)} isDisabled={editing} />}
           <MoreMenu label="페이지 도구" items={[
             { label: 'Markdown 복사', onClick: () => void copy(pageMarkdown(page)) },
             { label: '현재 페이지 목차', onClick: () => setMobilePanel(mobilePanel === 'toc' ? null : 'toc') },
@@ -64,20 +64,20 @@ export function ManualReader({ manual, pageId, query, onQuery, onPage, onBack, o
             { label: '전체 매뉴얼 PDF로 저장', onClick: () => void print(true) },
           ]} /></div>}
       </ManualHeader>
-      {editing && page ? <ManualEditor key={page.id} manual={manual} page={page} onClose={() => setEditing(false)} onSave={(updated, assets) => onSave({ ...manual, assets, pages: manual.pages.map(item => item.id === updated.id ? updated : item) })} /> :
+      {editing && page ? <ManualEditor key={page.id} manual={manual} page={page} onClose={() => setEditing(false)} onSave={onSave} /> :
         <div className={styles.readScroll} ref={scroll}><div className={styles.readColumns}><main className={styles.article} aria-label="매뉴얼 본문">
           {page ? <><h1>{page.title}</h1><ManualBody page={page} manual={manual} onHeadings={receiveHeadings} />
             <nav className={styles.previousNext} aria-label="이전 다음 페이지">{at > 0 ? <button type="button" onClick={() => onPage(ordered[at - 1]!.id)}><span>이전</span><strong>{ordered[at - 1]!.title}</strong></button> : <span />}
               {at < ordered.length - 1 && <button type="button" onClick={() => onPage(ordered[at + 1]!.id)}><span>다음</span><strong>{ordered[at + 1]!.title}<NavIcon name="next" /></strong></button>}</nav></> :
-            <div className={styles.empty}><NavIcon name="document" /><h1>{pageId ? '페이지를 찾을 수 없습니다' : manual.title}</h1><p>{pageId ? '왼쪽에서 다른 페이지를 선택해 주세요.' : manual.description || '첫 페이지를 작성해 매뉴얼을 시작하세요.'}</p><Button label="페이지 추가" onClick={createPage} /></div>}
+            <div className={styles.empty}><NavIcon name="document" /><h1>{pageId ? '페이지를 찾을 수 없습니다' : manual.title}</h1><p>{pageId ? '왼쪽에서 다른 페이지를 선택해 주세요.' : manual.description || '첫 페이지를 작성해 매뉴얼을 시작하세요.'}</p>{manual.canEdit !== false && <Button label="페이지 추가" onClick={createPage} />}</div>}
         </main>{page && <aside className={styles.toc} data-open={mobilePanel === 'toc' || undefined} aria-label="현재 페이지 목차">{toc}</aside>}</div></div>}
     </div>
     {comments && page && <ManualComments key={page.id} manual={manual} pageId={page.id} onSave={onSave} onClose={() => setComments(false)} />}
     {structure && <ManualStructure manual={manual} onSave={onSave} onClose={() => setStructure(false)} />}
     {settings && <ManualDialog manual={manual} onSave={onSave} onClose={() => setSettings(false)} />}
-    {creating && <CompactDialog title="페이지 추가" onClose={() => setCreating(false)} onSubmit={() => {
+    {creating && <CompactDialog title="페이지 추가" onClose={() => setCreating(false)} onSubmit={async () => {
       if (!title.trim()) return; const id = newId();
-      if (onSave({ ...manual, pages: [...manual.pages, { id, title: title.trim(), body: '', sectionId, updatedAt: now() }] })) { setCreating(false); setTitle(''); onPage(id); setEditingPage(id); }
+      if (await onSave({ ...manual, pages: [...manual.pages, { id, title: title.trim(), body: '', sectionId, updatedAt: now() }] })) { setCreating(false); setTitle(''); onPage(id); setEditingPage(id); }
     }} footer={<><Button variant="ghost" label="취소" onClick={() => setCreating(false)} /><Button type="submit" label="페이지 추가" isDisabled={!title.trim()} /></>}>
       <TextInput label="페이지 제목" value={title} onChange={value => setTitle(value.slice(0, 160))} hasAutoFocus /><label className={styles.selectLabel}>섹션<select value={sectionId} onChange={event => setSectionId(event.target.value)}><option value="">최상위</option>{manual.sections.map(section => <option key={section.id} value={section.id}>{section.title}</option>)}</select></label>
     </CompactDialog>}

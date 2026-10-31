@@ -428,6 +428,105 @@
         }
       }
     },
+    "/api/v1/workspaces/{workspaceId}/manuals/{id}" : {
+      "get" : {
+        "tags" : [ "manual-controller" ],
+        "operationId" : "get_1",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ManualDetail"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put" : {
+        "tags" : [ "manual-controller" ],
+        "operationId" : "update",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SaveManual"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        }
+      },
+      "delete" : {
+        "tags" : [ "manual-controller" ],
+        "operationId" : "delete",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "expectedVersion",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        }
+      }
+    },
     "/api/v1/workspaces/{workspaceId}/labels/order" : {
       "put" : {
         "tags" : [ "label-controller" ],
@@ -2332,10 +2431,125 @@
         }
       }
     },
+    "/api/v1/workspaces/{workspaceId}/manuals" : {
+      "get" : {
+        "tags" : [ "manual-controller" ],
+        "operationId" : "list_5",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "projectId",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "cursor",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "q",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "scope",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "color",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "sort",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : "updated"
+          }
+        }, {
+          "name" : "dir",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : "desc"
+          }
+        }, {
+          "name" : "limit",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 100,
+            "maximum" : 100,
+            "minimum" : 1
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ManualListing"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post" : {
+        "tags" : [ "manual-controller" ],
+        "operationId" : "create_5",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SaveManual"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        }
+      }
+    },
     "/api/v1/workspaces/{workspaceId}/labels" : {
       "get" : {
         "tags" : [ "label-controller" ],
-        "operationId" : "list_5",
+        "operationId" : "list_6",
         "parameters" : [ {
           "name" : "workspaceId",
           "in" : "path",
@@ -2362,7 +2576,7 @@
       },
       "post" : {
         "tags" : [ "label-controller" ],
-        "operationId" : "create_5",
+        "operationId" : "create_6",
         "parameters" : [ {
           "name" : "workspaceId",
           "in" : "path",
@@ -2392,7 +2606,7 @@
       "get" : {
         "tags" : [ "folder-controller" ],
         "summary" : "Every folder of one part, by name: a project's, or the workspace's own when projectId is left out",
-        "operationId" : "list_6",
+        "operationId" : "list_7",
         "parameters" : [ {
           "name" : "workspaceId",
           "in" : "path",
@@ -2426,7 +2640,7 @@
       },
       "post" : {
         "tags" : [ "folder-controller" ],
-        "operationId" : "create_6",
+        "operationId" : "create_7",
         "parameters" : [ {
           "name" : "workspaceId",
           "in" : "path",
@@ -2654,7 +2868,7 @@
       },
       "post" : {
         "tags" : [ "document-controller" ],
-        "operationId" : "create_7",
+        "operationId" : "create_8",
         "parameters" : [ {
           "name" : "workspaceId",
           "in" : "path",
@@ -2836,7 +3050,7 @@
       "post" : {
         "tags" : [ "page-controller" ],
         "summary" : "Make a page and its first version from an upload with purpose page (D-113)",
-        "operationId" : "create_8",
+        "operationId" : "create_9",
         "parameters" : [ {
           "name" : "workspaceId",
           "in" : "path",
@@ -2872,7 +3086,7 @@
     "/api/v1/workspaces/{workspaceId}/comments" : {
       "post" : {
         "tags" : [ "comment-controller" ],
-        "operationId" : "create_9",
+        "operationId" : "create_10",
         "parameters" : [ {
           "name" : "workspaceId",
           "in" : "path",
@@ -3348,7 +3562,7 @@
     "/api/v1/workspaces/{workspaceId}/work-items/id/{id}" : {
       "get" : {
         "tags" : [ "work-item-controller" ],
-        "operationId" : "get_1",
+        "operationId" : "get_2",
         "parameters" : [ {
           "name" : "workspaceId",
           "in" : "path",
@@ -3379,7 +3593,7 @@
       },
       "delete" : {
         "tags" : [ "work-item-controller" ],
-        "operationId" : "delete",
+        "operationId" : "delete_1",
         "parameters" : [ {
           "name" : "workspaceId",
           "in" : "path",
@@ -3457,7 +3671,7 @@
     "/api/v1/workspaces/{workspaceId}/projects/{projectId}/work-items/{id}" : {
       "get" : {
         "tags" : [ "work-item-controller" ],
-        "operationId" : "get_2",
+        "operationId" : "get_3",
         "parameters" : [ {
           "name" : "workspaceId",
           "in" : "path",
@@ -3495,7 +3709,7 @@
       },
       "delete" : {
         "tags" : [ "work-item-controller" ],
-        "operationId" : "delete_1",
+        "operationId" : "delete_2",
         "parameters" : [ {
           "name" : "workspaceId",
           "in" : "path",
@@ -3687,7 +3901,7 @@
     "/api/v1/workspaces/{workspaceId}/views/{viewId}" : {
       "get" : {
         "tags" : [ "view-controller" ],
-        "operationId" : "get_3",
+        "operationId" : "get_4",
         "parameters" : [ {
           "name" : "workspaceId",
           "in" : "path",
@@ -3718,7 +3932,7 @@
       },
       "delete" : {
         "tags" : [ "view-controller" ],
-        "operationId" : "delete_2",
+        "operationId" : "delete_3",
         "parameters" : [ {
           "name" : "workspaceId",
           "in" : "path",
@@ -3787,7 +4001,7 @@
     "/api/v1/workspaces/{workspaceId}/projects/{projectId}" : {
       "get" : {
         "tags" : [ "project-controller" ],
-        "operationId" : "get_4",
+        "operationId" : "get_5",
         "parameters" : [ {
           "name" : "workspaceId",
           "in" : "path",
@@ -3818,7 +4032,7 @@
       },
       "delete" : {
         "tags" : [ "project-controller" ],
-        "operationId" : "delete_3",
+        "operationId" : "delete_4",
         "parameters" : [ {
           "name" : "workspaceId",
           "in" : "path",
@@ -4170,7 +4384,7 @@
     "/api/v1/workspaces/{workspaceId}/labels/{labelId}" : {
       "get" : {
         "tags" : [ "label-controller" ],
-        "operationId" : "get_5",
+        "operationId" : "get_6",
         "parameters" : [ {
           "name" : "workspaceId",
           "in" : "path",
@@ -4201,7 +4415,7 @@
       },
       "delete" : {
         "tags" : [ "label-controller" ],
-        "operationId" : "delete_4",
+        "operationId" : "delete_5",
         "parameters" : [ {
           "name" : "workspaceId",
           "in" : "path",
@@ -4270,7 +4484,7 @@
     "/api/v1/workspaces/{workspaceId}/folders/{folderId}" : {
       "delete" : {
         "tags" : [ "folder-controller" ],
-        "operationId" : "delete_5",
+        "operationId" : "delete_6",
         "parameters" : [ {
           "name" : "workspaceId",
           "in" : "path",
@@ -4339,7 +4553,7 @@
     "/api/v1/workspaces/{workspaceId}/documents/{documentId}" : {
       "get" : {
         "tags" : [ "document-controller" ],
-        "operationId" : "get_6",
+        "operationId" : "get_7",
         "parameters" : [ {
           "name" : "workspaceId",
           "in" : "path",
@@ -4370,7 +4584,7 @@
       },
       "delete" : {
         "tags" : [ "document-controller" ],
-        "operationId" : "delete_6",
+        "operationId" : "delete_7",
         "parameters" : [ {
           "name" : "workspaceId",
           "in" : "path",
@@ -4439,7 +4653,7 @@
     "/api/v1/workspaces/{workspaceId}/comments/{commentId}" : {
       "delete" : {
         "tags" : [ "comment-controller" ],
-        "operationId" : "delete_7",
+        "operationId" : "delete_8",
         "parameters" : [ {
           "name" : "workspaceId",
           "in" : "path",
@@ -4508,7 +4722,7 @@
     "/api/v1/workspaces/{id}" : {
       "get" : {
         "tags" : [ "workspace-controller" ],
-        "operationId" : "get_7",
+        "operationId" : "get_8",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -4532,7 +4746,7 @@
       },
       "delete" : {
         "tags" : [ "workspace-controller" ],
-        "operationId" : "delete_8",
+        "operationId" : "delete_9",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -5128,7 +5342,7 @@
     "/api/v1/workspaces/{workspaceId}/project-members" : {
       "get" : {
         "tags" : [ "project-member-controller" ],
-        "operationId" : "list_7",
+        "operationId" : "list_8",
         "parameters" : [ {
           "name" : "workspaceId",
           "in" : "path",
@@ -5183,7 +5397,7 @@
     "/api/v1/workspaces/{workspaceId}/notifications" : {
       "get" : {
         "tags" : [ "notification-controller" ],
-        "operationId" : "list_8",
+        "operationId" : "list_9",
         "parameters" : [ {
           "name" : "workspaceId",
           "in" : "path",
@@ -5235,7 +5449,7 @@
     "/api/v1/workspaces/{workspaceId}/notifications/{id}" : {
       "get" : {
         "tags" : [ "notification-controller" ],
-        "operationId" : "get_8",
+        "operationId" : "get_9",
         "parameters" : [ {
           "name" : "workspaceId",
           "in" : "path",
@@ -5493,6 +5707,39 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/manuals/{id}/assets/{assetId}" : {
+      "get" : {
+        "tags" : [ "manual-controller" ],
+        "operationId" : "asset",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "assetId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK"
           }
         }
       }
@@ -5901,7 +6148,7 @@
     "/api/v1/me/workspaces" : {
       "get" : {
         "tags" : [ "workspace-controller" ],
-        "operationId" : "list_9",
+        "operationId" : "list_10",
         "parameters" : [ {
           "name" : "cursor",
           "in" : "query",
@@ -6491,6 +6738,144 @@
           }
         },
         "required" : [ "entries", "version" ]
+      },
+      "Comment" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string"
+          },
+          "pageId" : {
+            "type" : "string"
+          },
+          "body" : {
+            "type" : "string"
+          },
+          "resolved" : {
+            "type" : "boolean"
+          },
+          "createdAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "authorId" : {
+            "type" : "string"
+          },
+          "authorName" : {
+            "type" : "string"
+          },
+          "agentName" : {
+            "type" : "string"
+          },
+          "resolvedAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "resolvedBy" : {
+            "type" : "string"
+          }
+        }
+      },
+      "ManualContent" : {
+        "type" : "object",
+        "properties" : {
+          "sections" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Section"
+            }
+          },
+          "pages" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Page"
+            }
+          },
+          "comments" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Comment"
+            }
+          }
+        }
+      },
+      "Page" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string"
+          },
+          "title" : {
+            "type" : "string"
+          },
+          "body" : {
+            "type" : "string"
+          },
+          "sectionId" : {
+            "type" : "string"
+          },
+          "updatedAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        }
+      },
+      "SaveManual" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string",
+            "minLength" : 1
+          },
+          "projectId" : {
+            "type" : "string"
+          },
+          "expectedVersion" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "title" : {
+            "type" : "string",
+            "maxLength" : 120,
+            "minLength" : 0
+          },
+          "description" : {
+            "type" : "string",
+            "maxLength" : 400,
+            "minLength" : 0
+          },
+          "icon" : {
+            "type" : "string",
+            "minLength" : 1
+          },
+          "color" : {
+            "type" : "string",
+            "minLength" : 1
+          },
+          "content" : {
+            "$ref" : "#/components/schemas/ManualContent"
+          },
+          "uploadIds" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            },
+            "maxItems" : 500,
+            "minItems" : 0
+          }
+        },
+        "required" : [ "color", "content", "description", "icon", "id", "title" ]
+      },
+      "Section" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string"
+          },
+          "title" : {
+            "type" : "string"
+          }
+        }
       },
       "Order" : {
         "type" : "object",
@@ -9017,6 +9402,122 @@
           }
         },
         "required" : [ "unread" ]
+      },
+      "ManualListing" : {
+        "type" : "object",
+        "properties" : {
+          "items" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ManualSummary"
+            }
+          },
+          "nextCursor" : {
+            "type" : "string"
+          },
+          "canCreate" : {
+            "type" : "boolean"
+          },
+          "total" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        },
+        "required" : [ "canCreate", "items", "total" ]
+      },
+      "ManualSummary" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string"
+          },
+          "projectId" : {
+            "type" : "string"
+          },
+          "scopeName" : {
+            "type" : "string"
+          },
+          "title" : {
+            "type" : "string"
+          },
+          "description" : {
+            "type" : "string"
+          },
+          "icon" : {
+            "type" : "string"
+          },
+          "color" : {
+            "type" : "string"
+          },
+          "pageCount" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "version" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "createdAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "updatedAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "canEdit" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "canEdit", "color", "createdAt", "description", "icon", "id", "pageCount", "scopeName", "title", "updatedAt", "version" ]
+      },
+      "ManualDetail" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string"
+          },
+          "projectId" : {
+            "type" : "string"
+          },
+          "title" : {
+            "type" : "string"
+          },
+          "description" : {
+            "type" : "string"
+          },
+          "icon" : {
+            "type" : "string"
+          },
+          "color" : {
+            "type" : "string"
+          },
+          "content" : {
+            "$ref" : "#/components/schemas/ManualContent"
+          },
+          "assets" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "type" : "string"
+            }
+          },
+          "version" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "createdAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "updatedAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "canEdit" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "assets", "canEdit", "color", "content", "createdAt", "description", "icon", "id", "title", "updatedAt", "version" ]
       },
       "Label" : {
         "type" : "object",
