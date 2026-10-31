@@ -23,7 +23,7 @@ BIT는 업무와 문서를 한곳에 두는 셀프호스팅 업무 트래커다.
 | 업무를 시작·진행·마무리함 | 진행 중으로 옮기고, 댓글로 진행과 결과(커밋·검증)를 남기고, 맞는 칸으로 닫는다 | [playbooks/work.md](playbooks/work.md) |
 | 앞으로 따를 선택을 하거나 전에 정한 것을 바꿈 | 그 업무에 '결정' 댓글을 하나 남긴다. 따로 업무나 문서를 만들지 않는다 | [playbooks/work.md](playbooks/work.md) |
 | 저장소와 연결된 프로젝트에서 브랜치·커밋·PR을 만들거나 배포함 | 이름에 업무 키를 넣고, PR로 가는 작업은 병합에 맡긴다. 배포는 업무로 만들지 않는다 | [playbooks/repository.md](playbooks/repository.md) |
-| 오래 두고 고칠 글(요구사항, 설계, 회의록, 제품·사용자 설명서, 인수인계)을 쓰거나 고침 | 독자를 정하고 팩트 시트부터 모은 뒤, 확인한 사실만 쓰고 '문서 기준'을 남긴다 | [playbooks/document.md](playbooks/document.md) |
+| 오래 두고 고칠 글(요구사항, 설계, 회의록, 사용자 가이드, 인수인계)을 쓰거나 고침 | 독자와 팩트 시트를 정하고, 가이드는 실제 사용 단계와 화면을 확인해 쓴다 | [playbooks/document.md](playbooks/document.md) |
 | BIT 자체가 기대와 다르게 동작하거나 제보를 부탁받음 | 초안을 쓰고 사용자 승인 뒤에만 올린다 | [playbooks/report.md](playbooks/report.md) |
 | 도구 이름·인자가 헷갈리거나 `Unknown tool` 오류 | 도구 표를 본다 | [references/tools.md](references/tools.md) |
 | 업무 본문·댓글을 씀 | 쓰는 말과 틀을 따른다 | [references/writing.md](references/writing.md) |
@@ -54,4 +54,4 @@ BIT는 업무와 문서를 한곳에 두는 셀프호스팅 업무 트래커다.
 | :--- | :--- |
 | [tools.md](references/tools.md) | 도구별 쓰는 때와 인자, 옛 도구 이름 |
 | [writing.md](references/writing.md) | 쓰는 말, 결과 댓글의 예 |
-| [document-types.md](references/document-types.md) | 제품설명서·사용자설명서·인수인계의 독자, 답할 질문, 구성 |
+| [document-types.md](references/document-types.md) | 사용자 가이드·인수인계의 구성과 화면 촬영·인쇄 검수 |
