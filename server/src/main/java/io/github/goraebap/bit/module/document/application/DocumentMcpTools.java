@@ -77,7 +77,7 @@ class DocumentMcpTools implements McpToolProvider {
                 new McpTool(
                         "create_document",
                         "문서 만들기",
-                        "새 마크다운 문서를 만들고 id를 돌려줍니다. 오래 두고 고쳐 가며 보는 글(요구사항·설계·기획·회의록·결정기록)을 씁니다. 없는 폴더는 경로대로 만듭니다. 결정기록은 labels에 '결정기록'을 넣고 본문을 ## 맥락 / ## 결정 / ## 검토한 대안 으로 씁니다.",
+                        "새 마크다운 문서를 만들고 id를 돌려줍니다. 오래 두고 고쳐 가며 보는 글(요구사항·설계·기획·회의록·설명서)을 씁니다. 없는 폴더는 경로대로 만듭니다. 앞으로 따를 결정은 문서가 아니라 그 결정이 나온 업무의 댓글로 남깁니다.",
                         McpTool.input()
                                 .string("project", PROJECT, false)
                                 .string("folder", FOLDER + ". 없는 폴더는 만듭니다", false)

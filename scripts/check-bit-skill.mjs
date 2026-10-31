@@ -2,8 +2,9 @@
 // Checks BIT's own skills against this repository, so they cannot drift: the skill BIT ships
 // (skills/better-issue-tracker) and the one this repository works under (.agents/skills/bit-repository-skills).
 // Every relative link resolves, every playbook and reference is reachable, the frontmatter names the folder and its
-// description fits, no change-log file creeps back (history lives in git and BIT work items), and the shipped skill's
-// references/tools.md names exactly the MCP tools the server registers. CI runs it; exits 1 on any drift.
+// description fits, no change-log file creeps back (history lives in git and BIT work items), the shipped skill never
+// brings back separate decision records (D-114), and its references/tools.md names exactly the MCP tools the server
+// registers. CI runs it; exits 1 on any drift.
 import { readdirSync, readFileSync, existsSync, statSync } from 'node:fs';
 import { basename, dirname, join, relative, resolve } from 'node:path';
 
@@ -15,6 +16,7 @@ const SKILLS = [
 ];
 const RETIRED = /\b(bit-(architecture|backend|frontend|database|api-contract|release)|verify-bit)\b/g;
 const CHANGE_LOGS = /^(notes|changelog)\.md$/i;
+const DECISION_RECORD = '결정기록';
 const problems = [];
 
 const walk = (dir, keep) => readdirSync(dir).flatMap(name => {
@@ -56,6 +58,12 @@ for (const { dir, numberedSections } of SKILLS) {
 for (const file of [join(ROOT, 'skills'), join(ROOT, '.agents', 'skills')]
   .flatMap(dir => walk(dir, path => CHANGE_LOGS.test(basename(path))))) {
   problems.push(`${show(file)}: change-log files are not kept; say it in the commit and the BIT work item`);
+}
+
+for (const file of walk(SKILLS[0].dir, () => true)) {
+  if (readFileSync(file, 'utf8').includes(DECISION_RECORD)) {
+    problems.push(`${show(file)}: ${DECISION_RECORD} is gone (D-114); a choice later work follows is a '결정' comment on its work item`);
+  }
 }
 
 const registered = new Set(walk(SERVER, path => path.endsWith('McpTools.java'))

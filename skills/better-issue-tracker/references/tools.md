@@ -5,16 +5,16 @@
 | `whoami` | 연결, 계정, 워크스페이스 확인 |
 | `list_projects` | 프로젝트 키와 보드 칸 이름 확인 |
 | `list_members` | 담당자로 지정할 사람 확인 |
-| `list_labels` | 쓸 수 있는 라벨 확인(`결정기록`은 기본 라벨이라 워크스페이스가 지웠을 수 있다) |
+| `list_labels` | 쓸 수 있는 라벨 확인 |
 | `list_work_item_types` | 업무 유형과 유형별 상위 규칙 확인(유형이 있는 서버) |
-| `list_work_items` | 업무·결정기록 찾기(`query`, `label`, `include_closed`, `assignee`, 유형이 있으면 `type`) |
+| `list_work_items` | 업무 찾기(`query`, `label`, `include_closed`, `assignee`, 유형이 있으면 `type`) |
 | `get_work_item_context` | 업무 하나를 설명, 댓글, 활동까지 읽기 |
-| `create_work_item` | 업무·결정기록 만들기. `assignee`·`start_date`·`due_date`·`priority`·`labels`는 [업무 만들기](../playbooks/create.md)의 속성 정하기대로, 유형이 있으면 `type`. 일정은 `kind: "event"`와 `starts_at`·`ends_at`(예: `2026-10-28T10:00+09:00`), 사람이 여럿이면 `people`. 반복은 `repeat: "weekly"`(와 `repeat_on`, `repeat_until`), 일정 알림은 `remind_before`(분) |
+| `create_work_item` | 업무 만들기. `assignee`·`start_date`·`due_date`·`priority`·`labels`는 [업무 만들기](../playbooks/create.md)의 속성 정하기대로, 유형이 있으면 `type`. 일정은 `kind: "event"`와 `starts_at`·`ends_at`(예: `2026-10-28T10:00+09:00`), 사람이 여럿이면 `people`. 반복은 `repeat: "weekly"`(와 `repeat_on`, `repeat_until`), 일정 알림은 `remind_before`(분) |
 | `create_subtask` | 상위 업무(`parent`) 밑에 하위 업무 만들기. 상위의 프로젝트·우선순위를 따르고 미배정·시작 전으로 생긴다. 유형이 있으면 `type` |
 | `update_work_item` | 제목, 설명, 라벨, 사람, 날짜·시각, 유형(`type`), 상위(`parent`) 고치기(준 값만 바뀜). 작업과 일정은 서로 바꿀 수 없다(새로 만든다). 값을 지우려면 `none`. 반복 업무의 이후 회차까지 고치려면 `scope: "following"`, 반복을 끝내려면 `repeat: "none"` |
 | `move_work_item` | 칸(백로그, 할 일, 진행 중, 완료, 취소 등) 옮기기, 보관. 상태 분류는 backlog·todo·doing·done·canceled이고, 작업은 늘 상태가 있다(일정만 없음) |
 | `set_work_item_project` | 업무를 다른 프로젝트로 옮기거나 `none`으로 프로젝트에서 빼기(참조 번호는 그대로) |
-| `add_comment` | 진행, 결과, 막힌 점 남기기 |
+| `add_comment` | 진행, 결과, 막힌 점, '결정' 남기기 |
 | `list_relations` | 업무의 상위·하위 업무와 연결된 문서, 문서의 참조 읽기 |
 | `link_targets` | 기존 업무·문서 잇기(`subtask_of`: 하위 → 상위, `relates_to`: 업무 ↔ 문서, `references`: 문서 → 문서) |
 | `unlink_targets` | `list_relations`의 `linkId`로 연결만 끊기(대상은 지우지 않음) |
