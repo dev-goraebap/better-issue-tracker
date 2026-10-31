@@ -29,7 +29,9 @@ erDiagram
   workspace ||--o{ workspace_member : ""
   workspace ||--o{ project : ""
   workspace ||--o{ folder : "문서함"
-  workspace ||--o{ artifact : "문서함"
+  folder ||--o{ document : ""
+  document ||--o{ page_version : "페이지(kind=page)"
+  page_version ||--o{ page_version_file : ""
   project ||--o{ project_key : "현재 키 + 별칭"
   project ||--o{ board_column : ""
   project ||--o{ work_item : ""
@@ -37,9 +39,6 @@ erDiagram
   project ||--o{ session_record : ""
   project ||--o{ git_repository : ""
   git_repository ||--o{ code_ref : ""
-  artifact ||--o{ artifact_version : ""
-  artifact_version ||--o{ artifact_rendition : "파생본"
-  artifact ||--o{ artifact_project : "프로젝트 라벨"
   link }o--o{ work_item : "왜·근거 (다형)"
 ```
 
@@ -174,13 +173,16 @@ erDiagram
 | 테이블 | 열 | 제약·인덱스 |
 |---|---|---|
 | `folder` | `folder_id`, `workspace_id`, `project_id?`, `parent_folder_id?`, `name varchar(128)`, `color varchar(7)?`(V19, 아이콘 색상), `version`, 감사 | `ux_folder_area_parent_name` (workspace_id, coalesce(project_id,''), coalesce(parent_folder_id,''), lower(name), deleted_at IS NULL), `ck_folder_name` (앞뒤 공백 없음, `/` 없음), `ck_folder_color` (NULL 또는 #RRGGBB), 프로젝트 FK는 (project_id, workspace_id) |
-| `document` | `document_id`, `workspace_id`, `project_id?`, `folder_id?`, `title varchar(200)`, `body text`(마크다운, 200,000자 이하), `version`, 감사 | `ix_document_workspace_id_project_id_folder_id`, `ix_document_workspace_id_updated_at_id` |
+| `document` | `document_id`, `workspace_id`, `project_id?`, `folder_id?`, `kind varchar(8)`(V30, 기본 `markdown`), `title varchar(200)`, `body text`(마크다운, 200,000자 이하. 페이지는 최신 버전의 시작 파일에서 뽑은 글자), `version`, 감사 | `ck_document_kind` (markdown, page), `ix_document_workspace_id_project_id_folder_id`, `ix_document_workspace_id_updated_at_id` |
+| `page_version` | `page_version_id`, `document_id`, `number`(문서마다 1부터), `entry varchar(512)`(시작 파일), `note varchar(200)?`(한 줄), `base_commit varchar(64)?`(소문자 16진 7~64자), `upload_id varchar(10)`, `created_at`, `created_by`, `created_by_agent?` | `ux_page_version_document_id_number`, `ux_page_version_upload_id`(업로드 하나는 버전 하나), `ck_page_version_note`, `ck_page_version_base_commit` |
+| `page_version_file` | `page_version_id`, `path varchar(512)`(묶음 안 상대 경로, NFC), `blob_id?`, `byte_size`, `content_type varchar(64)`, `inject_at?`(HTML에 BIT 태그를 넣을 바이트 위치) | PK `(page_version_id, path)`, `ix_page_version_file_blob_id`, `ck_page_version_file_byte_size`(빈 파일만 blob이 없다), `ck_page_version_file_inject_at` |
 | `document_label` | `document_label_id`, `document_id`, `label_id`, `created_at`, `created_by`, `created_by_agent?` | `ux_document_label_document_id_label_id` |
 
 - **부분(part)**: 문서와 폴더는 프로젝트의 부분(`project_id`)이나 워크스페이스 자체의 부분(`project_id` NULL)에 속한다. 프로젝트 폴더는 프로젝트 자체라 행이 없고 이름을 바꾸거나 지울 수 없다. `parent_folder_id`·`folder_id`가 NULL이면 그 부분의 맨 위다. 폴더는 같은 부분 안에서만 옮기고, 자기 안으로는 옮기지 못한다. 비어 있어야 지운다.
 - **라벨·연결·댓글**: 라벨은 업무와 같은 워크스페이스 라벨이다. 업무와의 연결은 `link`의 `relates_to`(from `document`, to `work_item`)이고, 댓글·활동은 대상 종류 `document`다. V15가 link·activity·comment의 CHECK에 `document`를 더했다.
 - **첨부**: 문서 본문의 파일은 파일 모듈(9절)의 첨부로 붙일 예정이다(첨부 주인에 문서 추가는 아직).
-- 예전 산출물 설계(`artifact`·`artifact_version`·`artifact_rendition`, D-016·D-018·D-019)는 D-093으로 대체되어 만들지 않았다.
+- 예전 산출물 설계(`artifact`·`artifact_version`·`artifact_rendition`, D-016·D-018·D-019)는 D-093으로 대체되어 만들지 않았다. 남아 있던 빈 자리(대상 종류 `artifact`, `link.artifact_version_id`·`anchor`)는 V30이 지웠다.
+- **페이지(V30, D-113)**: `kind=page`인 문서의 내용은 바뀌지 않는 버전들이다. 최신 버전은 `max(number)`이고 문서에 사본을 두지 않는다. 버전의 파일은 첨부 없이 `blob`을 직접 가리키고, 같은 바이트는 blob 하나를 함께 쓴다(저장소 키 `blobs/sha256/<hex>`). 그래서 `blob_id`가 같으면 내용이 같다. 빈 파일은 blob 없이 행만 있다. 본문은 사람이 고치지 않는다.
 
 ## 7. coderef — 저장소 연동 (`V11__repository_integration.sql`, D-087)
 
@@ -197,26 +199,25 @@ erDiagram
 
 | 테이블 | 열 | 제약·인덱스 |
 |---|---|---|
-| `link` | `link_id`, `workspace_id`, `from_type varchar(16)`, `from_id uuid`, `to_type varchar(16)`, `to_id uuid`, `relation varchar(16)`, `artifact_version_id uuid?`, `anchor varchar(128)?`, `created_at`, `created_by`, `created_by_agent varchar(64)?`, `deleted_at?`, `deleted_by?` | `ux_link_edge` (from_type, from_id, to_type, to_id, relation, coalesce(artifact_version_id,''), deleted_at IS NULL), `ix_link_from`, `ix_link_to`, `ck_link_type` (work_item, decision, session_record, artifact, code_ref), `ck_link_relation` |
+| `link` | `link_id`, `workspace_id`, `from_type varchar(16)`, `from_id uuid`, `to_type varchar(16)`, `to_id uuid`, `relation varchar(16)`, `created_at`, `created_by`, `created_by_agent varchar(64)?`, `deleted_at?`, `deleted_by?` | `ux_link_edge` (from_type, from_id, to_type, to_id, relation, deleted_at IS NULL), `ix_link_from`, `ix_link_to`, `ck_link_from_type`·`ck_link_to_type` (work_item, decision, session_record, code_ref, document), `ck_link_relation` |
 | `activity` | `activity_id`, `workspace_id`, `project_id uuid?`, `target_type varchar(16)`, `target_id uuid`, `type varchar(32)`, `actor_id uuid?`, `actor_agent varchar(64)?`, `payload jsonb?`, `occurred_at` | `ix_activity_target` (target_type, target_id, occurred_at), `ix_activity_project_id_occurred_at` |
 | `comment` | `comment_id`, `target_type varchar(16)`, `target_id uuid`, `body text`, `author_agent varchar(64)?`, 감사 | `ix_comment_target` (target_type, target_id, created_at) |
 
-- **relation 값**: `derives_from`(결정←세션, 업무←결정), `implements`(커밋→업무), `revises`(업무/결정→산출물), `based_on`(업무→근거 산출물), `supersedes`(결정→결정), `blocks`, `relates_to`, `subtask_of`(업무↔업무).
+- **relation 값**: `derives_from`(결정←세션, 업무←결정), `implements`(커밋→업무), `supersedes`(결정→결정), `blocks`, `relates_to`, `subtask_of`(업무↔업무), `references`·`mentions`(문서→문서). 산출물용이던 `revises`·`based_on`은 V30이 지웠다.
 - **방향**: 화살표는 "뒤에 생긴 것 → 앞선 것" 쪽으로 저장한다. 예: `D-007 derives_from S-003`, `abc123 implements BIT-42`.
-- **산출물 링크(D-019)**: `to_type = artifact`. 1차에는 `artifact_version_id`·`anchor`가 비어 있고, 관리 문서가 생기면 채운다.
 - **대상 존재 검사**는 link 모듈이 만들 때 한다. 대상이 소프트 삭제되면 링크는 남기고 조회에서 숨긴다 (D-014).
-- **activity / comment(D-020)**: 업무뿐 아니라 결정·세션·산출물에도 붙는다. 연결 타임라인은 `activity`와 `link`를 시간순으로 합쳐 그린다.
+- **activity / comment(D-020)**: 업무뿐 아니라 결정·세션·문서에도 붙는다. 연결 타임라인은 `activity`와 `link`를 시간순으로 합쳐 그린다.
 - **에이전트 표시(D-021)**: 사람 ID(`created_by`, `actor_id`)와 함께 API 키의 `agent_name`을 `*_agent` 열에 남긴다. 화면에는 "홍길동 (codex)"처럼 보인다.
 
 ## 9. file — 파일 저장 (SandboxHr `file` 모듈을 옮김, V13, D-090)
 
 | 테이블 | 열 | 제약·인덱스 |
 | --- | --- | --- |
-| `pending_upload` | `pending_upload_id`, `blob_id`, `storage_key varchar(512)`, `purpose varchar(16)`, `filename varchar(256)`, `content_type`, `byte_size`(알린 크기), `dominant_color varchar(7)?`, `width?`, `height?`, `created_at`, `created_by`, `created_by_agent` | `ck_..._purpose` (attachment, picture), `ix_pending_upload_created_at` |
+| `pending_upload` | `pending_upload_id`, `blob_id`, `storage_key varchar(512)`, `purpose varchar(16)`, `filename varchar(256)`, `content_type`, `byte_size`(알린 크기), `dominant_color varchar(7)?`, `width?`, `height?`, `created_at`, `created_by`, `created_by_agent` | `ck_..._purpose` (attachment, picture, page), `ix_pending_upload_created_at` |
 | `blob` | `blob_id`, `storage_key`, `filename`, `content_type`, `byte_size`(저장소가 가진 크기), `dominant_color?`, `width?`, `height?`, 감사 | `ux_blob_storage_key`, `ck_blob_dominant_color`(`#` + 소문자 16진 6자) |
 | `attachment` | `attachment_id`(업로드 id를 그대로), `blob_id`, `owner_type varchar(16)`, `owner_id`, `position`, 감사 | `ck_..._owner_type` (work_item, comment, user, workspace), `ix_attachment_owner`(지우지 않은 것) |
 
-- 산출물 정본과 파생본은 `artifact_version.blob_id`, `artifact_rendition.blob_id`로 `blob`을 직접 가리킨다.
+- 페이지 버전의 파일은 `page_version_file.blob_id`로 `blob`을 직접 가리킨다(첨부 없음, V30). 이 blob은 서버가 묶음을 풀어 만든 것이고 야간 정리가 지우지 않는다. `page` 업로드는 zip 하나이고 첨부로 확정할 수 없다.
 - 업무 설명·댓글에 붙는 이미지 등은 `attachment`로 붙인다. 아바타(`user`)와 워크스페이스 로고(`workspace`)도 `attachment` 하나다.
 - 대표색과 크기는 브라우저가 잰 값이고 사진 자리 표시에만 쓴다(D-090). 아바타·로고는 서버가 디코딩한 크기로 바꿔 둔다.
 - 업로드 흐름(사전 서명 PUT → 확정 → 크기·시그니처 검증), 버린 blob과 하루 지난 업로드의 정리 배치도 SandboxHr와 같다.
