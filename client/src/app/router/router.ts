@@ -19,7 +19,7 @@ import { ProjectSettingsPage } from '@/pages/settings/project';
 import { SecurityPage } from '@/pages/settings/security';
 import { loadWorkspaceSettings, WorkspaceSettingsPage } from '@/pages/settings/workspace';
 import { DocumentsPage } from '@/pages/workspace/documents';
-import { DocumentPage } from '@/pages/workspace/document';
+import { DocumentPage, loadDocument, parseDocumentSearch } from '@/pages/workspace/document';
 import { NewDocumentPage } from '@/pages/workspace/document-new';
 import { ProjectDocumentsPage } from '@/pages/project/documents';
 import { parseFolderSearch, parseNewDocumentSearch } from '@/entities/document';
@@ -119,7 +119,8 @@ const membersInvite = createRoute({ getParentRoute: () => scoped, path: '/member
 // 문서함 and its documents (D-093): a document at /documents/<제목>-<id>, 새 문서 at its own address.
 const documents = createRoute({ getParentRoute: () => scoped, path: '/documents', component: DocumentsPage, validateSearch: ownSearch(parseFolderSearch) });
 const documentNew = createRoute({ getParentRoute: () => scoped, path: '/documents/new', component: NewDocumentPage, validateSearch: ownSearch(parseNewDocumentSearch) });
-const documentDetail = createRoute({ getParentRoute: () => scoped, path: '/documents/$documentRef', component: DocumentPage });
+const documentDetail = createRoute({ getParentRoute: () => scoped, path: '/documents/$documentRef', component: DocumentPage, validateSearch: ownSearch(parseDocumentSearch),
+  loaderDeps: ({ search }) => ({ v: search.v }), loader: ({ params, deps }) => loadDocument(queryClient, params.workspaceId, params.documentRef, deps) });
 // The edit pages are gone (D-107): a document is written on its own page, so an old /edit address opens it.
 const documentEdit = createRoute({ getParentRoute: () => scoped, path: '/documents/$documentRef/edit',
   beforeLoad: ({ params }) => leadTo(`/workspaces/${params.workspaceId}/documents/${params.documentRef}`) });

@@ -19,7 +19,7 @@ const SOLAR = {
   branch: 'git-branch', workflow: 'structure', key: 'hashtag', agent: 'stars', 'filter-funnel': 'filter', send: 'arrow-up',
   bug: 'bug', template: 'layers-minimalistic', epic: 'star-fall', story: 'book-bookmark', idea: 'lightbulb', target: 'target',
   rocket: 'rocket', wrench: 'toolbox', 'pull-request': 'git-pull-request', commit: 'git-commit',
-  download: 'download-minimalistic', external: 'arrow-right-up', unplug: 'plug-circle',
+  download: 'download-minimalistic', external: 'arrow-right-up', unplug: 'plug-circle', page: 'window-frame', print: 'printer-minimalistic',
 };
 
 // The icons the mark picker offers first after the app's own (D-086), drawn at once rather than with the whole set, as

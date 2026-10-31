@@ -21,10 +21,12 @@ import styles from './activity.module.css';
  * comment at the foot. Someone who may write comments; their own they may 수정 and delete, and someone who manages the
  * workspace may delete anyone's. A viewer reads.
  */
-export function WorkItemActivity({ workspaceId, projectId, workItemId, canWrite, canModerate, targetType = 'work_item' }: {
+export function WorkItemActivity({ workspaceId, projectId, workItemId, canWrite, canModerate, targetType = 'work_item', hideHeading = false }: {
   workspaceId: string; projectId?: string | null; workItemId: string; canWrite: boolean; canModerate: boolean;
   /** A document's timeline reads the same (D-093); workItemId is then the document's id. */
   targetType?: 'work_item' | 'document';
+  /** A containing panel already supplies the visible heading. */
+  hideHeading?: boolean;
 }) {
   const client = useQueryClient();
   const toast = useToast();
@@ -51,8 +53,8 @@ export function WorkItemActivity({ workspaceId, projectId, workItemId, canWrite,
     catch (failure) { toast({ body: authError(failure) }); return false; }
     finally { await refresh(); }
   };
-  return <section aria-labelledby="detail-activity" className={styles.activity}>
-    <SectionHeader id="detail-activity" title="활동" />
+  return <section aria-labelledby={hideHeading ? undefined : 'detail-activity'} aria-label={hideHeading ? '댓글 및 활동' : undefined} className={styles.activity}>
+    {!hideHeading && <SectionHeader id="detail-activity" title="활동" />}
     {timeline.isPending || timeline.error
       ? <QueryMessage pending={timeline.isPending} error={timeline.error} retry={() => { void timeline.refetch(); }} />
       : <Timeline label="활동 기록">{lines.map(entry => entry.kind === 'comment'

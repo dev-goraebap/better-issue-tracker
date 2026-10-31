@@ -38,6 +38,10 @@
 .chromeRows { position: sticky; inset-block-start: var(--workspace-topbar-height); z-index: 2; flex-shrink: 0; background: var(--color-background-surface); }
 .chromeRows:empty { display: none; }
 .content { inline-size: 100%; flex-shrink: 0; flex-grow: 1; min-inline-size: 0; animation: reveal 180ms ease-out both; }
+.card:has([data-page-fill]) { overflow: hidden; scrollbar-gutter: auto; }
+.content:has(> [data-page-fill]) { flex: 1; min-block-size: 0; overflow: hidden; animation: none; }
+.card:has([data-page-fill]) .detailTitle { display: block; }
+.card:has([data-page-fill]) .trail { display: none; }
 .footSlot { position: sticky; inset-block-end: 0; z-index: 2; flex-shrink: 0; }
 .footSlot:empty { display: none; }
 .footSlot > [data-fallback]:not(:only-child) { display: none; }

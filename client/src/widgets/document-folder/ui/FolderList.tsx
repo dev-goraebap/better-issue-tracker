@@ -27,7 +27,7 @@ export function FolderList({ workspaceId, projectId, rows, labels, foot, onRenam
         <span className={styles.partMark} title="프로젝트 폴더"><NavIcon name="link" /></span></>;
       case 'folder': return <><span className={styles.icon} style={row.folder.color ? { color: row.folder.color } : undefined}><NavIcon name="documents" /></span>
         <FolderLink className={styles.rowLink} workspaceId={workspaceId} projectId={projectId} folderId={row.folder.id}>{row.folder.name}</FolderLink></>;
-      case 'document': return <><span className={styles.icon}><NavIcon name="document" /></span>
+      case 'document': return <><span className={styles.icon} title={row.document.kind === 'page' ? '페이지' : '문서'}><NavIcon name={row.document.kind === 'page' ? 'page' : 'document'} /></span>
         <DocumentLink className={styles.rowLink} workspaceId={workspaceId} document={row.document}>{row.document.title}</DocumentLink></>;
     }
   };
@@ -47,6 +47,7 @@ export function FolderList({ workspaceId, projectId, rows, labels, foot, onRenam
           {row.kind === 'project' && <><span className={styles.kind}>프로젝트</span>{row.part && <span className={styles.count}>문서 {row.part.documentCount} · 폴더 {row.part.folderCount}</span>}</>}
           {row.kind === 'folder' && <span className={styles.count}>문서 {row.folder.documentCount}</span>}
           {row.kind === 'document' && <>
+            {row.document.pageVersion !== null && <span className={styles.count} title="최신 버전">v{row.document.pageVersion}</span>}
             {row.document.labelIds.length > 0 && <span className={styles.labels}><LabelTokens labels={labels.filter(label => row.document.labelIds.includes(label.id))} /></span>}
             {row.document.workItems.length > 0 && <span className={styles.linked} title={row.document.workItems.map(item => `${item.reference} ${item.title}`).join('\n')}><NavIcon name="link" />{row.document.workItems[0]!.reference}{row.document.workItems.length > 1 ? ` +${row.document.workItems.length - 1}` : ''}</span>}
           </>}

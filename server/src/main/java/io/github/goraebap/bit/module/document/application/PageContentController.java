@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.text.Normalizer;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -29,6 +30,14 @@ class PageContentController {
     private final PageQuery pageQuery;
     private final PageFonts pageFonts;
     private final FileFacade fileFacade;
+
+    @GetMapping("/pages/_bit-page.js")
+    void helper(HttpServletResponse response) throws IOException {
+        byte[] bytes = new ClassPathResource("pages/bit-page.js").getContentAsByteArray();
+        fontHeaders(response, "text/javascript;charset=utf-8", bytes.length);
+        response.setHeader(HttpHeaders.CACHE_CONTROL, "no-cache");
+        response.getOutputStream().write(bytes);
+    }
 
     @GetMapping({"/pages", "/pages/**"})
     void none(HttpServletResponse response) throws IOException {
@@ -90,7 +99,8 @@ class PageContentController {
         var served = file.get();
         response.setStatus(HttpServletResponse.SC_OK);
         response.setContentType(served.contentType());
-        response.setHeader(HttpHeaders.CACHE_CONTROL, "private, max-age=3600");
+        response.setHeader(
+                HttpHeaders.CACHE_CONTROL, served.injectAt() == null ? "private, max-age=3600" : "private, no-cache");
         response.setHeader(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, ANY_ORIGIN);
         response.setContentLengthLong(served.size() + (served.injectAt() == null ? 0 : PageInjection.BYTES.length));
         if (served.blobId() == null) {

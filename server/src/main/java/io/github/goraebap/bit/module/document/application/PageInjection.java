@@ -10,8 +10,9 @@ import java.nio.charset.StandardCharsets;
  * font link a page never asks for /pages/_fonts/, since the CDN link it was made with is blocked.
  */
 final class PageInjection {
-    static final byte[] BYTES =
-            "<link rel=\"stylesheet\" href=\"/pages/_fonts/pretendard.css\">".getBytes(StandardCharsets.UTF_8);
+    static final byte[] BYTES = ("<link rel=\"stylesheet\" href=\"/pages/_fonts/pretendard.css\">"
+                    + "<script src=\"/pages/_bit-page.js\"></script>")
+            .getBytes(StandardCharsets.UTF_8);
 
     private PageInjection() {}
 

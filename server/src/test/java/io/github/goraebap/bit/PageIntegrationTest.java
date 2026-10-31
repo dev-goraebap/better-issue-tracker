@@ -416,12 +416,21 @@ class PageIntegrationTest {
         sandboxed(html);
         assertThat(html.headers().firstValue("Content-Type")).hasValue("text/html;charset=utf-8");
         assertThat(html.headers().firstValue("Access-Control-Allow-Origin")).hasValue("*");
+        assertThat(html.headers().firstValue("Cache-Control")).hasValue("private, no-cache");
         String served = new String(html.body(), StandardCharsets.UTF_8);
         String head = "<!doctype html><html lang=\"ko\"><head>";
         assertThat(served)
                 .isEqualTo(head + "<link rel=\"stylesheet\" href=\"/pages/_fonts/pretendard.css\">"
+                        + "<script src=\"/pages/_bit-page.js\"></script>"
                         + INDEX.substring(head.length()));
         assertThat(html.headers().firstValueAsLong("Content-Length")).hasValue(html.body().length);
+
+        var helper = get("/pages/_bit-page.js");
+        assertThat(helper.statusCode()).isEqualTo(200);
+        sandboxed(helper);
+        assertThat(helper.headers().firstValue("Content-Type")).hasValue("text/javascript;charset=utf-8");
+        assertThat(new String(helper.body(), StandardCharsets.UTF_8))
+                .contains("event.source !== window.parent", "window.print()");
 
         var png = get(base + "img/%EB%A1%9C%EA%B3%A0.png");
         assertThat(png.statusCode()).isEqualTo(200);

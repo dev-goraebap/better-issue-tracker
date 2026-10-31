@@ -34,7 +34,7 @@ import styles from './page.module.css';
  * A detail replaces the shell breadcrumb with its back action, title and actions on desktop and phone.
  * Its content has no duplicate heading. Forms keep their own heading and the breadcrumb.
  */
-export function PageFrame({ title, icon, back, actions, tabs, hasRule = !!tabs, width: givenWidth, wrapsTitle = false, isDetail = false, headerLabel, hideHeading = false, chrome, tools, conditions, children }: {
+export function PageFrame({ title, icon, back, actions, tabs, hasRule = !!tabs, width: givenWidth, wrapsTitle = false, isDetail = false, headerLabel, hideHeading = false, fillsContent = false, chrome, tools, conditions, children }: {
   title: string; icon?: string; back?: ReactNode; actions?: ReactNode; tabs?: ReactNode; hasRule?: boolean;
   /**
    * The content's width (default 64rem). Under chrome="header" the content takes the card's whole width unless a width
@@ -48,6 +48,8 @@ export function PageFrame({ title, icon, back, actions, tabs, hasRule = !!tabs, 
   headerLabel?: string;
   /** Forms start at their title input; omit the duplicate page heading. */
   hideHeading?: boolean;
+  /** Fills the card below its header; the page owns scrolling inside its content. */
+  fillsContent?: boolean;
   /**
    * header lays a list page out as Plane does: its actions and its toolbar's tools at the card's header row, its tabs in
    * a row under it, the conditions in force under them, the content across the whole width (HeaderChromePage). A phone
@@ -101,7 +103,7 @@ export function PageFrame({ title, icon, back, actions, tabs, hasRule = !!tabs, 
     {tools && targets.tools && createPortal(tools, targets.tools)}
     {conditions && targets.rows && createPortal(<div className={styles.conditions} data-action-row>{conditions}</div>, targets.rows)}
   </>;
-  return <VStack gap={6} className={`${styles.page} ${width === 'default' ? '' : styles[width]} ${isDetail && width === 'full' ? styles.detailFull : ''}`}>
+  return <VStack gap={6} data-page-fill={fillsContent || undefined} className={`${styles.page} ${width === 'default' ? '' : styles[width]} ${isDetail && width === 'full' ? styles.detailFull : ''} ${fillsContent ? styles.fill : ''}`}>
     {legacy}
     {!targets.tools && tools}
     {wayBack && (targets.back

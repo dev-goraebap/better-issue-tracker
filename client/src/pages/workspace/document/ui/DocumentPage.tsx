@@ -3,17 +3,19 @@ import { useState } from 'react';
 import { IconButton, useToast } from '@astryxdesign/core';
 import { useMediaQuery } from '@astryxdesign/core/hooks';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useNavigate, useParams } from '@tanstack/react-router';
+import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import { authError, isNotFound } from '@/shared/api';
 import { MOBILE_QUERY } from '@/shared/config';
 import { afterOverlayClose } from '@/shared/lib/back-close';
 import { DetailLayout, MarkdownEditor, MoreMenu, BackLink, ConfirmDialog, NavIcon, PageFrame, PageState, QueryMessage } from '@/shared/ui';
 import { canManage, canWrite as canWriteIn, workspaceQuery } from '@/entities/workspace';
-import { deleteDocument, documentIdOf, documentQuery, folderHref, refreshDocuments, updateDocument } from '@/entities/document';
+import { deleteDocument, documentIdOf, documentQuery, folderHref, refreshDocuments, updateDocument, type DocumentDetail } from '@/entities/document';
 import { refreshRelations } from '@/entities/relation';
 import { AttachmentBody, DetailEngagement, fileHref, useBodyFiles } from '@/features/detail-engagement';
 import { EditableTitle, EditBar, InlineBody, LeaveGuard, ReadTitle, SaveQuestions, useInlineEdit } from '@/features/inline-edit';
+import { shownVersion, type DocumentSearch } from '../model/search';
 import { DocumentProperties } from './DocumentProperties';
+import { PageDocumentView } from './PageDocumentView';
 import { refreshTimeline, WorkItemActivity } from '@/widgets/work-item-detail';
 import styles from './document.module.css';
 
@@ -22,11 +24,13 @@ import styles from './document.module.css';
  * body, then its 활동 and comments (D-078); beside it the folder it is in, its labels, who made it, and the work items
  * with their commits under the body. Its title and body are read until the member asks to write them (D-109: two
  * presses, or 고치기), then written in place and saved together from the bar at the foot (D-107). The menu copies its
- * link or deletes it (it can be restored).
+ * link or deletes it (it can be restored). A page (D-113) shows the version its address names, or its latest, in a frame
+ * across the whole width instead of a body; only its title is written here, its content changing by new versions.
  */
 export function DocumentPage() {
   const { workspaceId, documentRef } = useParams({ strict: false }) as { workspaceId: string; documentRef: string };
   const id = documentIdOf(documentRef);
+  const address = useSearch({ strict: false }) as DocumentSearch;
   const client = useQueryClient();
   const navigate = useNavigate();
   const toast = useToast();
@@ -37,11 +41,14 @@ export function DocumentPage() {
   const result = useQuery(documentQuery(workspaceId, id));
   const role = useQuery(workspaceQuery(workspaceId)).data;
   const canWrite = canWriteIn(role, 'WRITE_DOCUMENTS');
+  // A page's body is the text of its latest version, which a new version changes: the title alone is written, so a
+  // version published meanwhile is no conflict.
+  const writtenBody = (read?: DocumentDetail) => read?.kind === 'page' ? '' : read?.body ?? '';
   const text = useInlineEdit({
-    current: { title: result.data?.title ?? '', body: result.data?.body ?? '' },
+    current: { title: result.data?.title ?? '', body: writtenBody(result.data) },
     latest: async () => {
       const fresh = await client.fetchQuery({ ...documentQuery(workspaceId, id), staleTime: 0 });
-      return { title: fresh.title, body: fresh.body, version: fresh.version };
+      return { title: fresh.title, body: writtenBody(fresh), version: fresh.version };
     },
     send: async (changes, version) => {
       await updateDocument(workspaceId, id, {
@@ -62,6 +69,8 @@ export function DocumentPage() {
       ? <PageState kind="not-found" title="문서를 찾을 수 없습니다" description="지워졌거나 주소가 바뀌었습니다. 문서함에서 다시 찾아보세요." />
       : <QueryMessage pending={result.isPending} error={result.error} retry={() => { void result.refetch(); }} />}
   </PageFrame>;
+  const page = document.kind === 'page' ? document.page : null;
+  const number = page ? shownVersion(address, page.latest) : 0;
   const folder = document.path.at(-1);
   const search = folder ? { folder: folder.id } : {};
   const back = document.projectId
@@ -74,6 +83,8 @@ export function DocumentPage() {
     await refreshDocuments(client, workspaceId);
     afterOverlayClose(() => void navigate({ href: folderHref(workspaceId, document.projectId, folder?.id), replace: true }));
   };
+  if (page) return <PageDocumentView key={document.id} workspaceId={workspaceId} documentRef={documentRef} document={document}
+    number={number} back={back} canWrite={canWrite} canModerate={canManage(role)} />;
   return <PageFrame isDetail headerLabel="문서" title={document.title} wrapsTitle width="full" back={back} actions={<>
     {canWrite && isMobile && !text.isEditing && <IconButton label="고치기" tooltip="고치기" variant="ghost" icon={<NavIcon name="edit" />} onClick={() => text.edit()} />}
     <MoreMenu label="문서 메뉴" variant="ghost" placement="end" items={[
@@ -90,7 +101,7 @@ export function DocumentPage() {
           write={startAt => <MarkdownEditor key={text.revision} startAt={startAt} attachmentUrl={fileId => fileHref({ workspaceId, type: 'document', id: document.id }, fileId, false)}
             filePicker={files.picker} filePickerPortal={fileActionHost} linkPicker={insert => <DocumentLinkButton workspaceId={workspaceId} onInsert={insert} />} value={text.draft.body} onChange={text.setBody}
             label="본문" placeholder="쓰기 시작하세요… ( / 로 블록)" />} />
-      </section>
+        </section>
       <DetailEngagement target={{ workspaceId, type: 'document', id: document.id }} canWrite={canWrite} actionHost={setFileActionHost} />
         <TargetRelations workspaceId={workspaceId} projectId={document.projectId} type="document" id={document.id} title={document.title} canWrite={canWrite} />
         <WorkItemActivity workspaceId={workspaceId} projectId={document.projectId} workItemId={document.id} targetType="document"

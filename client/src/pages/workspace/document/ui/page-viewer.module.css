@@ -1,0 +1,10 @@
+.viewer { display: flex; flex-direction: column; flex: 1; min-inline-size: 0; min-block-size: 0; overflow: hidden; }
+.stage { display: flex; flex-direction: column; flex: 1; min-inline-size: 0; min-block-size: 0; overflow: hidden; }
+.stage > :last-child { display: flex; flex-direction: column; flex: 1; min-block-size: 0; }
+/* An unstyled upload gets the browser's light canvas; BIT never repaints the uploaded document. */
+.frame { display: block; flex: 1; inline-size: 100%; min-block-size: 0; border: 0; color-scheme: light; background: Canvas; }
+.caption { display: flex; align-items: center; flex: 0 0 auto; gap: var(--spacing-3); min-inline-size: 0; padding: var(--spacing-1) var(--spacing-3);
+  border-block-start: var(--border-width) solid var(--color-border-subtle); background: var(--color-background-surface); color: var(--color-text-secondary); font-size: 0.75rem; line-height: 1.5; }
+.notice { display: inline-flex; align-items: center; gap: var(--spacing-1); flex: 0 0 auto; }
+.notice svg { inline-size: 0.875rem; block-size: 0.875rem; }
+.made { margin-inline-start: auto; min-inline-size: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-variant-numeric: tabular-nums; }

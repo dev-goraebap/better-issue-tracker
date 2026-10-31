@@ -31,7 +31,7 @@ export function DocumentProperties({ workspaceId, document, canWrite }: { worksp
   };
   return <div className={styles.properties}>
     <h2 data-inspector-desktop>속성</h2>
-    <span className={styles.value} title="문서 종류"><NavIcon name="document" />문서</span>
+    <span className={styles.value} title="문서 종류">{document.kind === 'page' ? <><NavIcon name="page" />페이지</> : <><NavIcon name="document" />문서</>}</span>
     <span className={styles.value}><NavIcon name="folder" /><FolderLink workspaceId={workspaceId} projectId={document.projectId} folderId={folder?.id}>{folder?.name ?? '문서함'}</FolderLink></span>
     <h3 data-inspector-desktop>라벨</h3>
     {canWrite ? <PropertyPicker label="라벨" icon="label" options={labelOptions(labels)} value={preview ?? document.labelIds} isMultiple onChange={value => change(value as string[] ?? [])} />
