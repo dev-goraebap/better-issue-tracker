@@ -1,6 +1,6 @@
 # better-issue-tracker 스킬
 
-BIT를 업무 트래커로 쓰는 프로젝트에서, 에이전트가 MCP로 업무와 결정기록을 남기며 일하게 하는 [Agent Skill](https://agentskills.io)입니다. Claude Code, Codex 등 `SKILL.md`를 읽는 에이전트에서 씁니다.
+BIT를 업무 트래커로 쓰는 프로젝트에서, 에이전트가 MCP로 업무를 남기며 일하게 하는 [Agent Skill](https://agentskills.io)입니다. Claude Code, Codex 등 `SKILL.md`를 읽는 에이전트에서 씁니다.
 
 ## 설치
 
