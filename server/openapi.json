@@ -2320,6 +2320,50 @@
         }
       }
     },
+    "/api/v1/workspaces/{workspaceId}/documents/{documentId}/versions" : {
+      "post" : {
+        "tags" : [ "page-controller" ],
+        "summary" : "Add a page's next version from an upload with purpose page; the same upload again is that version",
+        "operationId" : "publish",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "documentId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/PublishPageVersion"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "description" : "새 버전",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublishedPage"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/workspaces/{workspaceId}/documents/{documentId}/restore" : {
       "post" : {
         "tags" : [ "document-controller" ],
@@ -2428,10 +2472,47 @@
         }
       }
     },
+    "/api/v1/workspaces/{workspaceId}/documents/pages" : {
+      "post" : {
+        "tags" : [ "page-controller" ],
+        "summary" : "Make a page and its first version from an upload with purpose page (D-113)",
+        "operationId" : "create_7",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CreatePage"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "description" : "페이지 생성",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublishedPage"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/workspaces/{workspaceId}/comments" : {
       "post" : {
         "tags" : [ "comment-controller" ],
-        "operationId" : "create_7",
+        "operationId" : "create_8",
         "parameters" : [ {
           "name" : "workspaceId",
           "in" : "path",
@@ -5298,6 +5379,93 @@
         }
       }
     },
+    "/api/v1/workspaces/{workspaceId}/documents/{documentId}/versions/{number}" : {
+      "get" : {
+        "tags" : [ "page-controller" ],
+        "summary" : "One version of a page: its files and the address to view it at for about an hour",
+        "operationId" : "version",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "documentId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "number",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "minimum" : 1
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PageVersion"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/documents/{documentId}/bundle" : {
+      "get" : {
+        "tags" : [ "page-controller" ],
+        "summary" : "A version's files as one zip, the latest unless version is given",
+        "operationId" : "bundle",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "documentId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "version",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "minimum" : 1
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/zip" : {
+                "schema" : {
+                  "type" : "string",
+                  "format" : "binary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/workspaces/{workspaceId}/documents/parts" : {
       "get" : {
         "tags" : [ "document-controller" ],
@@ -6890,6 +7058,66 @@
         },
         "required" : [ "title" ]
       },
+      "PublishPageVersion" : {
+        "type" : "object",
+        "properties" : {
+          "uploadId" : {
+            "type" : "string",
+            "description" : "A finished upload with purpose page: the bundle as one zip",
+            "pattern" : "[A-Za-z][A-Za-z0-9]{9}"
+          },
+          "entry" : {
+            "type" : [ "string", "null" ],
+            "description" : "The HTML file to open first; default index.html",
+            "maxLength" : 512,
+            "minLength" : 0
+          },
+          "note" : {
+            "type" : [ "string", "null" ],
+            "description" : "What changed, one line",
+            "maxLength" : 200,
+            "minLength" : 0
+          },
+          "baseCommit" : {
+            "type" : [ "string", "null" ],
+            "description" : "The commit the page describes, 7-64 hex characters",
+            "maxLength" : 64,
+            "minLength" : 0
+          }
+        },
+        "required" : [ "uploadId" ]
+      },
+      "PublishedPage" : {
+        "type" : "object",
+        "properties" : {
+          "documentId" : {
+            "type" : "string"
+          },
+          "versionId" : {
+            "type" : "string"
+          },
+          "version" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "entry" : {
+            "type" : "string"
+          },
+          "files" : {
+            "type" : "integer",
+            "format" : "int32",
+            "description" : "How many files the version holds"
+          },
+          "warnings" : {
+            "type" : "array",
+            "description" : "What BIT changed or will block, such as a stripped top folder or an external address",
+            "items" : {
+              "type" : "string"
+            }
+          }
+        },
+        "required" : [ "documentId", "entry", "files", "version", "versionId", "warnings" ]
+      },
       "DocumentVersion" : {
         "type" : "object",
         "properties" : {
@@ -6929,6 +7157,56 @@
           }
         },
         "required" : [ "workItemId" ]
+      },
+      "CreatePage" : {
+        "type" : "object",
+        "properties" : {
+          "projectId" : {
+            "type" : [ "string", "null" ],
+            "description" : "The project whose part holds it; omitted or null for the workspace's own"
+          },
+          "folderId" : {
+            "type" : [ "string", "null" ],
+            "description" : "A folder of that part; omitted or null for the part's top"
+          },
+          "title" : {
+            "type" : "string",
+            "maxLength" : 200,
+            "minLength" : 0
+          },
+          "labelIds" : {
+            "type" : [ "array", "null" ],
+            "items" : {
+              "type" : "string"
+            },
+            "maxItems" : 50,
+            "minItems" : 0
+          },
+          "uploadId" : {
+            "type" : "string",
+            "description" : "A finished upload with purpose page: the bundle as one zip",
+            "pattern" : "[A-Za-z][A-Za-z0-9]{9}"
+          },
+          "entry" : {
+            "type" : [ "string", "null" ],
+            "description" : "The HTML file to open first; default index.html",
+            "maxLength" : 512,
+            "minLength" : 0
+          },
+          "note" : {
+            "type" : [ "string", "null" ],
+            "description" : "What this version is, one line",
+            "maxLength" : 200,
+            "minLength" : 0
+          },
+          "baseCommit" : {
+            "type" : [ "string", "null" ],
+            "description" : "The commit the page describes, 7-64 hex characters",
+            "maxLength" : 64,
+            "minLength" : 0
+          }
+        },
+        "required" : [ "title", "uploadId" ]
       },
       "CreateComment" : {
         "type" : "object",
@@ -8852,6 +9130,45 @@
           }
         },
         "required" : [ "baseCommit", "createdAt", "createdBy", "createdByAgent", "entry", "id", "note", "number" ]
+      },
+      "PageFile" : {
+        "type" : "object",
+        "properties" : {
+          "path" : {
+            "type" : "string"
+          },
+          "contentType" : {
+            "type" : "string"
+          },
+          "size" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        },
+        "required" : [ "contentType", "path", "size" ]
+      },
+      "PageVersion" : {
+        "type" : "object",
+        "properties" : {
+          "version" : {
+            "$ref" : "#/components/schemas/PageVersionSummary"
+          },
+          "files" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/PageFile"
+            }
+          },
+          "viewUrl" : {
+            "type" : "string",
+            "description" : "Opens the entry in a sandboxed frame; ask again before viewExpiresAt"
+          },
+          "viewExpiresAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        },
+        "required" : [ "files", "version", "viewExpiresAt", "viewUrl" ]
       },
       "DocumentPart" : {
         "type" : "object",

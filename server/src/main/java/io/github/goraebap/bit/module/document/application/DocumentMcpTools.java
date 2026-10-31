@@ -35,6 +35,7 @@ class DocumentMcpTools implements McpToolProvider {
     private static final String PROJECT = "프로젝트 키. 예: ORM. 생략하면 워크스페이스 공통 문서";
     private static final String FOLDER = "폴더 경로. 예: 설계/화면. 생략하면 맨 위";
     private final DocumentService documentService;
+    private final PageService pageService;
     private final io.github.goraebap.bit.module.link.LinkFacade relationFacade;
     private final FolderService folderService;
     private final DocumentQuery documentQuery;
@@ -65,7 +66,8 @@ class DocumentMcpTools implements McpToolProvider {
                 new McpTool(
                         "get_document",
                         "문서 읽기",
-                        "문서 하나를 통째로 읽습니다: 제목, 위치, 라벨, 마크다운 본문, 연결된 업무, 그리고 댓글과 활동을 오래된 순으로.",
+                        "문서 하나를 통째로 읽습니다: 제목, 위치, 라벨, 마크다운 본문, 연결된 업무, 그리고 댓글과 활동을 오래된 순으로. "
+                                + "페이지(kind page)는 body 대신 최신 버전에서 뽑은 text와, page에 최신 버전·시작 파일·보는 주소·버전 목록·파일 목록을 줍니다.",
                         McpTool.input()
                                 .string("id", "문서 id (list_documents의 id)", true)
                                 .string("workspace", WORKSPACE, false)
@@ -89,7 +91,8 @@ class DocumentMcpTools implements McpToolProvider {
                 new McpTool(
                         "update_document",
                         "문서 고치기",
-                        "문서의 준 값만 바꿉니다. body는 통째로 바뀌고 labels는 준 목록으로 바뀝니다. project나 folder를 주면 그 위치로 옮깁니다(워크스페이스 공통으로 옮기려면 project에 none).",
+                        "문서의 준 값만 바꿉니다. body는 통째로 바뀌고 labels는 준 목록으로 바뀝니다. project나 folder를 주면 그 위치로 옮깁니다(워크스페이스 공통으로 옮기려면 project에 none). "
+                                + "페이지의 내용은 body로 바꿀 수 없고 update_page로 새 버전을 올립니다.",
                         McpTool.input()
                                 .string("id", "문서 id", true)
                                 .string("title", "새 제목", false)
@@ -101,6 +104,44 @@ class DocumentMcpTools implements McpToolProvider {
                                 .build(),
                         false,
                         this::update),
+                new McpTool(
+                        "create_page",
+                        "페이지 만들기",
+                        "로컬에서 만든 HTML 결과물(설명서·시안·흐름도)을 문서함의 페이지로 올리고 버전 1을 만듭니다. 먼저 폴더를 zip 하나로 묶어 "
+                                + "REST POST /api/v1/files/uploads에 {\"filename\":\"page.zip\",\"size\":바이트,\"purpose\":\"page\"}로 올릴 자리를 받고, "
+                                + "응답의 url(BIT 주소 기준)로 method·headers 그대로 zip을 보낸 뒤 그 id를 upload_id로 줍니다. "
+                                + "zip 맨 위 폴더 하나는 벗겨지고, 시작 파일은 entry 또는 index.html입니다. html·css·js·json·svg·그림·글꼴만 받고, "
+                                + "한 파일 안에서 data-bit-id가 겹치면 거절합니다. 외부 주소(CDN)는 BIT에서 막히고 Pretendard 글꼴은 BIT가 대신 줍니다. "
+                                + "같은 upload_id로 다시 부르면 이미 만든 페이지를 돌려줍니다.",
+                        McpTool.input()
+                                .string("project", PROJECT, false)
+                                .string("folder", FOLDER + ". 없는 폴더는 만듭니다", false)
+                                .string("title", "제목", true)
+                                .string("upload_id", "purpose page로 올린 zip의 업로드 id", true)
+                                .string("entry", "처음 열 HTML 파일의 묶음 안 경로 (기본 index.html)", false)
+                                .string("note", "이 버전이 무엇인지 한 줄", false)
+                                .string("base_commit", "결과물이 설명하는 코드의 기준 커밋", false)
+                                .strings("labels", "라벨 이름들. 예: [\"설계\"]", false)
+                                .string("workspace", WORKSPACE, false)
+                                .build(),
+                        false,
+                        this::createPage),
+                new McpTool(
+                        "update_page",
+                        "페이지 새 버전",
+                        "페이지에 새 버전을 올립니다. 묶음을 create_page와 같이 purpose page로 올리고 그 upload_id를 줍니다. "
+                                + "버전은 바뀌지 않고 쌓이며, 본문(검색 글자)은 새 버전의 시작 파일 글자로 바뀝니다. 제목·라벨·위치는 update_document로 바꿉니다. "
+                                + "같은 upload_id로 다시 부르면 이미 만든 버전을 돌려줍니다.",
+                        McpTool.input()
+                                .string("id", "페이지 id", true)
+                                .string("upload_id", "purpose page로 올린 zip의 업로드 id", true)
+                                .string("entry", "처음 열 HTML 파일의 묶음 안 경로 (기본 index.html)", false)
+                                .string("note", "이 버전에서 바꾼 것 한 줄", false)
+                                .string("base_commit", "결과물이 설명하는 코드의 기준 커밋", false)
+                                .string("workspace", WORKSPACE, false)
+                                .build(),
+                        false,
+                        this::updatePage),
                 new McpTool(
                         "link_document",
                         "문서와 업무 잇기",
@@ -158,7 +199,12 @@ class DocumentMcpTools implements McpToolProvider {
         view.put("project", projectKey(actor, workspace, document.projectId()));
         view.put("folder", path(document.path()));
         view.put("labels", document.labelIds().stream().map(labels::get).toList());
-        view.put("body", document.body());
+        view.put("kind", document.kind());
+        if (document.page() == null) view.put("body", document.body());
+        else {
+            view.put("text", document.body());
+            view.put("page", page(actor, workspace, document));
+        }
         view.put(
                 "workItems",
                 document.workItems().stream()
@@ -233,6 +279,79 @@ class DocumentMcpTools implements McpToolProvider {
         return Map.of("id", id, "title", after.title(), "version", after.version());
     }
 
+    private Object createPage(CurrentUser actor, McpArguments args) {
+        String workspace = workspace(actor, args);
+        String projectId =
+                project(actor, workspace, args.optionalString("project")).orElse(null);
+        String folderId = folderService.resolve(
+                actor, workspace, projectId, args.optionalString("folder").orElse(null), true);
+        Set<String> labelIds = args.strings("labels")
+                .map(names -> labelIds(actor, workspace, names))
+                .orElse(Set.of());
+        var published = pageService.create(
+                actor,
+                workspace,
+                new PageRequests.Create(
+                        projectId,
+                        folderId,
+                        args.string("title"),
+                        List.copyOf(labelIds),
+                        args.string("upload_id"),
+                        args.optionalString("entry").orElse(null),
+                        args.optionalString("note").orElse(null),
+                        args.optionalString("base_commit").orElse(null)));
+        var view = published(published);
+        view.put("title", args.string("title").strip());
+        return view;
+    }
+
+    private Object updatePage(CurrentUser actor, McpArguments args) {
+        String workspace = workspace(actor, args);
+        return published(pageService.publish(
+                actor,
+                workspace,
+                args.string("id"),
+                new PageRequests.Publish(
+                        args.string("upload_id"),
+                        args.optionalString("entry").orElse(null),
+                        args.optionalString("note").orElse(null),
+                        args.optionalString("base_commit").orElse(null))));
+    }
+
+    private static Map<String, Object> published(PageViews.Published published) {
+        var view = new LinkedHashMap<String, Object>();
+        view.put("id", published.documentId());
+        view.put("version", published.version());
+        view.put("entry", published.entry());
+        view.put("files", published.files());
+        view.put("warnings", published.warnings());
+        return view;
+    }
+
+    /** A page's latest version as an agent reads it: where to view it, its versions and its files. */
+    private Map<String, Object> page(CurrentUser actor, String workspace, DocumentViews.Detail document) {
+        var latest = pageService.version(actor, workspace, document.id(), null);
+        var page = new LinkedHashMap<String, Object>();
+        page.put("version", latest.version().number());
+        page.put("entry", latest.version().entry());
+        page.put("viewPath", latest.viewUrl());
+        page.put(
+                "versions",
+                document.page().versions().stream()
+                        .map(version -> {
+                            var entry = new LinkedHashMap<String, Object>();
+                            entry.put("number", version.number());
+                            entry.put("note", version.note());
+                            entry.put("baseCommit", version.baseCommit());
+                            entry.put("createdAt", version.createdAt());
+                            entry.put("agent", version.createdByAgent());
+                            return entry;
+                        })
+                        .toList());
+        page.put("files", latest.files());
+        return page;
+    }
+
     private Object link(CurrentUser actor, McpArguments args) {
         String workspace = workspace(actor, args);
         String id = args.string("id");
@@ -277,6 +396,8 @@ class DocumentMcpTools implements McpToolProvider {
                     var view = new LinkedHashMap<String, Object>();
                     view.put("id", document.id());
                     view.put("title", document.title());
+                    view.put("kind", document.kind());
+                    if (document.pageVersion() != null) view.put("pageVersion", document.pageVersion());
                     view.put(
                             "project",
                             document.projectId() == null

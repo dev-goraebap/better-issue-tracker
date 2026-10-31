@@ -729,6 +729,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workspaces/{workspaceId}/documents/{documentId}/versions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Add a page's next version from an upload with purpose page; the same upload again is that version */
+        post: operations["publish"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/workspaces/{workspaceId}/documents/{documentId}/restore": {
         parameters: {
             query?: never;
@@ -777,6 +794,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workspaces/{workspaceId}/documents/pages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Make a page and its first version from an upload with purpose page (D-113) */
+        post: operations["create_7"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/workspaces/{workspaceId}/comments": {
         parameters: {
             query?: never;
@@ -786,7 +820,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["create_7"];
+        post: operations["create_8"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1411,6 +1445,40 @@ export interface paths {
             cookie?: never;
         };
         get: operations["open"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{workspaceId}/documents/{documentId}/versions/{number}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One version of a page: its files and the address to view it at for about an hour */
+        get: operations["version"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{workspaceId}/documents/{documentId}/bundle": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A version's files as one zip, the latest unless version is given */
+        get: operations["bundle"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2065,6 +2133,30 @@ export interface components {
             labelIds?: string[] | null;
             uploadIds?: string[];
         };
+        PublishPageVersion: {
+            /** @description A finished upload with purpose page: the bundle as one zip */
+            uploadId: string;
+            /** @description The HTML file to open first; default index.html */
+            entry?: string | null;
+            /** @description What changed, one line */
+            note?: string | null;
+            /** @description The commit the page describes, 7-64 hex characters */
+            baseCommit?: string | null;
+        };
+        PublishedPage: {
+            documentId: string;
+            versionId: string;
+            /** Format: int32 */
+            version: number;
+            entry: string;
+            /**
+             * Format: int32
+             * @description How many files the version holds
+             */
+            files: number;
+            /** @description What BIT changed or will block, such as a stripped top folder or an external address */
+            warnings: string[];
+        };
         DocumentVersion: {
             /** Format: int64 */
             expectedVersion: number;
@@ -2079,6 +2171,22 @@ export interface components {
         };
         LinkDocument: {
             workItemId: string;
+        };
+        CreatePage: {
+            /** @description The project whose part holds it; omitted or null for the workspace's own */
+            projectId?: string | null;
+            /** @description A folder of that part; omitted or null for the part's top */
+            folderId?: string | null;
+            title: string;
+            labelIds?: string[] | null;
+            /** @description A finished upload with purpose page: the bundle as one zip */
+            uploadId: string;
+            /** @description The HTML file to open first; default index.html */
+            entry?: string | null;
+            /** @description What this version is, one line */
+            note?: string | null;
+            /** @description The commit the page describes, 7-64 hex characters */
+            baseCommit?: string | null;
         };
         CreateComment: {
             /** @enum {string} */
@@ -2809,6 +2917,20 @@ export interface components {
             createdAt: string;
             createdBy: string;
             createdByAgent: string | null;
+        };
+        PageFile: {
+            path: string;
+            contentType: string;
+            /** Format: int64 */
+            size: number;
+        };
+        PageVersion: {
+            version: components["schemas"]["PageVersionSummary"];
+            files: components["schemas"]["PageFile"][];
+            /** @description Opens the entry in a sandboxed frame; ask again before viewExpiresAt */
+            viewUrl: string;
+            /** Format: date-time */
+            viewExpiresAt: string;
         };
         DocumentPart: {
             projectId: string;
@@ -4498,6 +4620,33 @@ export interface operations {
             };
         };
     };
+    publish: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+                documentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PublishPageVersion"];
+            };
+        };
+        responses: {
+            /** @description 새 버전 */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublishedPage"];
+                };
+            };
+        };
+    };
     restore_3: {
         parameters: {
             query?: never;
@@ -4574,6 +4723,32 @@ export interface operations {
         };
     };
     create_7: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreatePage"];
+            };
+        };
+        responses: {
+            /** @description 페이지 생성 */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublishedPage"];
+                };
+            };
+        };
+    };
+    create_8: {
         parameters: {
             query?: never;
             header?: never;
@@ -6298,6 +6473,55 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    version: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+                documentId: string;
+                number: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PageVersion"];
+                };
+            };
+        };
+    };
+    bundle: {
+        parameters: {
+            query?: {
+                version?: number;
+            };
+            header?: never;
+            path: {
+                workspaceId: string;
+                documentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/zip": string;
+                };
             };
         };
     };
