@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react';
+import { flushSync } from 'react-dom';
 import { Button, TextInput, useToast } from '@astryxdesign/core';
 import { CompactDialog, MoreMenu, NavIcon, SearchToggle } from '@/shared/ui';
 import { downloadManual, downloadPage, printManual } from '../model/export-manual';
@@ -21,6 +22,7 @@ export function ManualReader({ manual, pageId, query, onQuery, onPage, onBack, o
   const setEditing = (value: boolean) => setEditingPage(value ? page?.id ?? null : null);
   const [comments, setComments] = useState(false); const [structure, setStructure] = useState(false);
   const [settings, setSettings] = useState(false); const [creating, setCreating] = useState(false); const [title, setTitle] = useState('');
+  const [printMode, setPrintMode] = useState<'page' | 'manual' | null>(null);
   const [sectionId, setSectionId] = useState(''); const [mobilePanel, setMobilePanel] = useState<'navigation' | 'toc' | null>(null);
   const navigation = useManualNavWidth();
   const scroll = useRef<HTMLDivElement>(null); const printed = useRef<HTMLDivElement>(null); const currentPrint = useRef<HTMLDivElement>(null);
@@ -35,8 +37,14 @@ export function ManualReader({ manual, pageId, query, onQuery, onPage, onBack, o
     return () => observer.disconnect();
   }, [headings]);
   const copy = async (value: string) => { try { await navigator.clipboard.writeText(value); toast({ body: '복사했습니다.' }); } catch { toast({ body: '브라우저의 복사 권한을 확인해 주세요.' }); } };
-  const print = async (all: boolean) => { const element = all ? printed.current : currentPrint.current; if (!element) return;
-    try { await printManual(element, all ? manual.title : page?.title ?? manual.title); } catch (error) { toast({ body: error instanceof Error ? error.message : '인쇄 창을 열지 못했습니다.' }); } };
+  const print = async (all: boolean) => {
+    // Prepare only on the click, keeping the popup's user gesture and avoiding a hidden editor per page while reading.
+    flushSync(() => setPrintMode(all ? 'manual' : 'page'));
+    const element = all ? printed.current : currentPrint.current;
+    try { if (element) await printManual(element, all ? manual.title : page?.title ?? manual.title); }
+    catch (error) { toast({ body: error instanceof Error ? error.message : '인쇄 창을 열지 못했습니다.' }); }
+    finally { setPrintMode(null); }
+  };
   const at = ordered.findIndex(item => item.id === page?.id);
   const toc = <><h2>이 페이지에서</h2>{headings.length ? headings.map(heading => <button type="button" key={heading.id} data-depth={heading.level} aria-current={active === heading.id ? 'location' : undefined} onClick={() => {
     scroll.current?.querySelector<HTMLElement>(`[id="${heading.id}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'start' }); setActive(heading.id); setMobilePanel(null);
@@ -81,7 +89,7 @@ export function ManualReader({ manual, pageId, query, onQuery, onPage, onBack, o
     }} footer={<><Button variant="ghost" label="취소" onClick={() => setCreating(false)} /><Button type="submit" label="페이지 추가" isDisabled={!title.trim()} /></>}>
       <TextInput label="페이지 제목" value={title} onChange={value => setTitle(value.slice(0, 160))} hasAutoFocus /><label className={styles.selectLabel}>섹션<select value={sectionId} onChange={event => setSectionId(event.target.value)}><option value="">최상위</option>{manual.sections.map(section => <option key={section.id} value={section.id}>{section.title}</option>)}</select></label>
     </CompactDialog>}
-    <div hidden ref={printed}>{ordered.map(item => <article key={item.id}><h1>{item.title}</h1><ManualBody printable page={item} manual={manual} /></article>)}</div>
-    <div hidden ref={currentPrint}>{page && <article><h1>{page.title}</h1><ManualBody printable page={page} manual={manual} /></article>}</div>
+    {printMode === 'manual' && <div hidden ref={printed}>{ordered.map(item => <article key={item.id}><h1>{item.title}</h1><ManualBody printable page={item} manual={manual} /></article>)}</div>}
+    {printMode === 'page' && <div hidden ref={currentPrint}>{page && <article><h1>{page.title}</h1><ManualBody printable page={page} manual={manual} /></article>}</div>}
   </div>;
 }

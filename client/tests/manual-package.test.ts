@@ -22,3 +22,11 @@ test('portable manual keeps original GIF image data instead of requiring JPEG co
   const portable = { ...manual, pages: [{ ...manual.pages[0], body: '![동작](attachment:Image00001)' }], assets: { Image00001: source } };
   assert.equal(readManualPackage(bundle(portable)).assets.Image00001, source);
 });
+
+
+test('portable book limits match the server rather than truncating books over 200 pages', () => {
+  const pages = Array.from({ length: 500 }, (_, i) => ({ ...manual.pages[0]!, id: `page${i}` }));
+  assert.equal(readManualPackage(bundle({ ...manual, pages })).pages.length, 500);
+  assert.throws(() => readManualPackage(bundle({ ...manual, pages: [...pages, { ...pages[0], id: 'extra' }] })));
+  assert.throws(() => readManualPackage(bundle({ ...manual, pages: pages.slice(0, 26).map(page => ({ ...page, body: 'x'.repeat(200_000) })) })));
+});

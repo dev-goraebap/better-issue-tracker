@@ -1,5 +1,5 @@
 import { pageMarkdown, safeFilename, type Manual, type ManualPageData } from './manual';
-import { readManualPackage } from './manual-package';
+import { MANUAL_PACKAGE_MAX_BYTES, readManualPackage } from './manual-package';
 import { zipFiles } from './zip';
 export async function downloadManual(manual: Manual) {
   const embed = async (source: string) => {
@@ -12,7 +12,7 @@ export async function downloadManual(manual: Manual) {
   const text = JSON.stringify({ format: 'bit-manual', version: 1, manual: { ...manual, assets, image: manual.image ? await embed(manual.image) : undefined, comments: [] } });
   readManualPackage(text);
   const blob = new Blob([text], { type: 'application/json' });
-  if (blob.size > 100 * 1024 * 1024) throw new Error('매뉴얼 파일의 100MB 범위를 초과했습니다.');
+  if (blob.size > MANUAL_PACKAGE_MAX_BYTES) throw new Error('매뉴얼 원본 파일의 200MB 범위를 초과했습니다.');
   const url = URL.createObjectURL(blob); const link = document.createElement('a');
   link.href = url; link.download = `${safeFilename(manual.title)}.bit-manual.json`; link.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
