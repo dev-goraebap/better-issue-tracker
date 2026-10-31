@@ -1,11 +1,7 @@
-/** A menu entry: where it goes (from its scope's root), its name and its icon (NavIcon). */
+/** A menu entry keeps its fixed path, label and NavIcon name. */
 export type MenuEntry = { path: string; label: string; icon: string };
 
-/**
- * The workspace's menu (D-064, D-071): 홈 (전체's work items and views, D-065), 문서함 and 구성원; the projects follow under
- * 프로젝트, and 워크스페이스 설정 sits at the menu's foot. The notices are not an entry but the bell at the menu's head
- * (D-059). A phone's tabs are these, then 더보기.
- */
+/** D-116: fixed feature paths; workspace/project menu names and order are configured per scope. */
 export const WORKSPACE_MENU: readonly MenuEntry[] = [
   { path: '/issues', label: '이슈', icon: 'work-items' },
   { path: '/schedules', label: '스케줄', icon: 'calendar' },

@@ -118,7 +118,7 @@ npm run astryx --prefix client -- docs tokens --dense
 
 ### 제품 자산 관리
 - **로고 자산**: 로고나 심볼은 독립 파일 리소스로 분리하여 로드하며, 수백 라인에 달하는 복잡한 인라인 SVG 코드를 DOM 구조에 직접 삽입하지 않는다. 웹의 로고는 독립 SVG 파일을 CSS 마스크로 읽고 `--color-text-primary`를 칠해 앱의 팔레트·모드를 따른다.
-- **아이콘과 설치**: 파비콘(`favicon-16.png`, `favicon-32.png`, `icon-192.png`)·iOS 아이콘(`icon-apple-touch.png`)·PWA 아이콘(`icon-512.png`, `icon-maskable-512.png`)과 매니페스트(`manifest.webmanifest`)는 `client/public/`에 둔다. 아이콘에는 투명한 곳을 두지 않는다. 투명하면 어두운 탭·홈 화면에서 글자가 배경에 묻히므로 기본 팔레트 Stone의 밝은 바탕(`#F3F3F5`)에 먹색(`#25252A`) 단색 심볼을 합친 불투명 PNG로 둔다. 심볼 원본과 생성 절차는 아직 정하지 않았다.
+- **아이콘과 설치**: 파비콘(`favicon-16.png`, `favicon-32.png`, `icon-192.png`)·iOS 아이콘(`icon-apple-touch.png`)·PWA 아이콘(`icon-512.png`, `icon-maskable-512.png`)과 매니페스트(`manifest.webmanifest`)는 `client/public/`에 둔다. 아이콘에는 투명한 곳을 두지 않는다. 투명하면 어두운 탭·홈 화면에서 글자가 배경에 묻히므로 기본 팔레트 Stone의 밝은 바탕(`#F3F3F5`)에 먹색(`#25252A`) 단색 심볼을 합친 불투명 PNG로 둔다. 확정된 곡선형 심볼 원본은 `client/src/shared/ui/brand/bit-symbol.svg`이며 가운데 i의 점도 심볼과 같은 단색이다. `npm run brand:generate --prefix client`가 이 원본으로 favicon SVG/ICO/16·32·64px PNG, Apple touch 180px, PWA 192·512px와 maskable 512px 및 manifest를 생성한다. 아이콘 배경은 전체 정사각형이며 별도 라운드나 흰 외부 여백을 넣지 않는다. maskable 원본의 축소·안전 영역은 유지하고 OS 마스크를 존중한다. 원본을 새로 그리거나 이전 로고 생성기로 교체하지 않는다. 재생성 후 diff와 실제 PNG 크기·불투명 배경을 확인한다.
 - **제품 이름**: 화면의 제품 이름은 `PRODUCT_NAME`(`'BIT'`, `shared/config`) 상수 하나를 쓰고, 문구에 직접 적지 않는다. 정식 제품명이 정해지면 이 값만 바꾼다(D-024).
 
 
