@@ -1,0 +1,4 @@
+.fill { block-size: 0; pointer-events: none;
+  background-image: radial-gradient(color-mix(in srgb, var(--color-icon-secondary) 35%, transparent) 1px, transparent 1.3px);
+  background-size: 16px 16px; background-position: 8px 8px;
+  mask-image: linear-gradient(to bottom, #000 0%, rgb(0 0 0 / 0.85) 40%, rgb(0 0 0 / 0.45) 70%, transparent 90%); }

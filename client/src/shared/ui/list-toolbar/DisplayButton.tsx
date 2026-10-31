@@ -18,7 +18,7 @@ export function DisplayButton({ views, sort, display }: { views?: ListViews; sor
     {({ ref, onClick }) => <span ref={ref} className={styles.trigger}>
       <Tooltip content="표시">
         <button type="button" className={styles.roundButton} aria-label={isChanged ? '표시, 바뀜' : '표시'} aria-haspopup="dialog" aria-expanded={isOpen} onClick={onClick}>
-          <NavIcon name="display" />
+          <NavIcon name={sort ? 'sort' : 'display'} />
         </button>
       </Tooltip>
       {isChanged && <span className={styles.roundDot} aria-hidden="true" />}

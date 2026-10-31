@@ -1,14 +1,15 @@
-/* A project's key, as a work item's: quieter figures of one width; a long description cut to one line. */
-.key { font-size: 0.8125rem; font-variant-numeric: tabular-nums; color: var(--color-text-secondary); white-space: nowrap; }
-.clip { display: block; min-inline-size: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--color-text-secondary); }
-/* A table row's name after the project's mark (a phone card leads with it). */
-.named { display: inline-flex; align-items: center; gap: var(--spacing-2); min-inline-size: 0; }
-
+.key { flex-shrink: 0; font-weight: 400; font-size: 0.8125rem; font-variant-numeric: tabular-nums; color: var(--color-text-secondary); white-space: nowrap; }
 .favoriteOn { color: var(--color-text-primary); }
 .favoriteOn svg path { fill: currentColor; }
-
 .ordered { position: relative; }
 .projectGhost { font-size: 13px; }
-tr.projectGhost { display: table; table-layout: fixed; }
-.projectGhost td { padding: var(--spacing-3); }
 .spoken { position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden; clip-path: inset(50%); }
+
+.projectRow { --item-copy-gap: 0px; min-block-size: 4.5rem; block-size: 4.5rem; }
+li.projectRow[data-has-description] { block-size: 4.5rem; }
+.actions { display: inline-flex; align-items: center; gap: var(--spacing-2); }
+.loaded { padding-inline: var(--spacing-6); color: var(--color-text-secondary); font-size: 12px; }
+@media (width < 64rem) { li.projectRow { min-block-size: 6rem; block-size: 6rem; } li.projectRow[data-has-description] { block-size: 6rem; } }
+
+.titleLink { display: inline-flex; align-items: baseline; gap: var(--spacing-2); max-inline-size: 100%; vertical-align: top; }
+.projectName { min-inline-size: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

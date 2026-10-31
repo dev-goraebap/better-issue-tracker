@@ -120,3 +120,12 @@ npm run astryx --prefix client -- docs tokens --dense
 - **로고 자산**: 로고나 심볼은 독립 파일 리소스로 분리하여 로드하며, 수백 라인에 달하는 복잡한 인라인 SVG 코드를 DOM 구조에 직접 삽입하지 않는다. 웹의 로고는 독립 SVG 파일을 CSS 마스크로 읽고 `--color-text-primary`를 칠해 앱의 팔레트·모드를 따른다.
 - **아이콘과 설치**: 파비콘(`favicon-16.png`, `favicon-32.png`, `icon-192.png`)·iOS 아이콘(`icon-apple-touch.png`)·PWA 아이콘(`icon-512.png`, `icon-maskable-512.png`)과 매니페스트(`manifest.webmanifest`)는 `client/public/`에 둔다. 아이콘에는 투명한 곳을 두지 않는다. 투명하면 어두운 탭·홈 화면에서 글자가 배경에 묻히므로 기본 팔레트 Stone의 밝은 바탕(`#F3F3F5`)에 먹색(`#25252A`) 단색 심볼을 합친 불투명 PNG로 둔다. 심볼 원본과 생성 절차는 아직 정하지 않았다.
 - **제품 이름**: 화면의 제품 이름은 `PRODUCT_NAME`(`'BIT'`, `shared/config`) 상수 하나를 쓰고, 문구에 직접 적지 않는다. 정식 제품명이 정해지면 이 값만 바꾼다(D-024).
+
+
+필터 동작은 Solar `tuning-2-linear`, 정렬 동작은 `list-vertical-linear`로 통일한다. 앱에서는 `NavIcon`의 `filter`/`sort` 이름을 쓰고, 원본 매핑 `client/scripts/generate-icons.mjs`를 고친 뒤 재생성한다. 생성된 `solar-icons.ts`를 손으로 고치지 않는다. 정렬을 포함한 표시 메뉴의 진입 아이콘도 `sort`를 사용하고, 오름차순·내림차순 방향 아이콘은 각각의 의미를 유지한다.
+
+
+도메인 메뉴 아이콘은 `manuals` → notebook-2-linear, `resources` → folder-with-files-linear, `work-items`(이슈)·`tasks`(작업) → notes-linear, `roles` → shield-star-linear, `projects` → blocks-linear, `members` → file-smile-linear로 통일한다. 사용자 지정 프로젝트 마크는 덮어쓰지 않는다.
+
+
+가로·세로 더보기는 외곽선 대신 채워진 Solar Bold Duotone을 사용한다. `more`는 menu-dots-bold-duotone, `more-vertical`은 menu-dots-vertical-bold-duotone이다. 이 둘만 기본 Linear 스타일의 예외로 아이콘 생성기에 명시한다. 순서 변경 손잡이(grip)는 더보기가 아니므로 변경하지 않는다.

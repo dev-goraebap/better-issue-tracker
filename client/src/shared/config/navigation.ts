@@ -9,10 +9,10 @@ export type MenuEntry = { path: string; label: string; icon: string };
 export const WORKSPACE_MENU: readonly MenuEntry[] = [
   { path: '/issues', label: '이슈', icon: 'work-items' },
   { path: '/schedules', label: '스케줄', icon: 'calendar' },
-  { path: '/manuals', label: '매뉴얼', icon: 'documents' },
-  { path: '/resources', label: '리소스', icon: 'document' },
+  { path: '/manuals', label: '매뉴얼', icon: 'manuals' },
+  { path: '/resources', label: '리소스', icon: 'resources' },
   { path: '/members', label: '멤버', icon: 'members' },
-  { path: '/projects', label: '프로젝트', icon: 'board' },
+  { path: '/projects', label: '프로젝트', icon: 'projects' },
 ];
 export const PROJECT_MENU = WORKSPACE_MENU.filter(entry => entry.path !== '/projects');
 
@@ -23,7 +23,7 @@ export const PROJECT_MENU = WORKSPACE_MENU.filter(entry => entry.path !== '/proj
  */
 export const WORKSPACE_SETTINGS_MENU: readonly MenuEntry[] = [
   { path: '/general', label: '일반', icon: 'settings' },
-  { path: '/roles', label: '역할', icon: 'shield' },
+  { path: '/roles', label: '역할', icon: 'roles' },
   { path: '/labels', label: '라벨', icon: 'label' },
   { path: '/types', label: '업무 유형', icon: 'tasks' },
 ];

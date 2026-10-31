@@ -80,7 +80,7 @@ export function DocumentFolder({ workspaceId, projectId, folderId, title, rootLa
     { label: '새 문서', icon: 'document', onClick: newDocument },
     { label: '새 폴더', icon: 'documents', onClick: () => setNaming({}) },
   ];
-  return <PageFrame title={here?.name ?? title} icon="documents" chrome="header"
+  return <PageFrame title={here?.name ?? title} icon="resources" chrome="header"
     tabs={isMobile && data && data.path.length > 0 ? <FolderTrail workspaceId={workspaceId} projectId={projectId} rootLabel={rootLabel} path={data.path} /> : undefined}>
     <ListToolbar search={{ label: '문서와 폴더 검색', placeholder: '이름으로 찾기', value: search.q, onChange: q => go({ q }, true) }}
       filters={[

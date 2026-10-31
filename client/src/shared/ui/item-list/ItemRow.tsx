@@ -9,15 +9,15 @@ import styles from './item-list.module.css';
  * beside both lines. depth sets the whole row in under the one above it (a subtask under its parent, D-106); guide is
  * what the caller draws over the row's inset (the lines tying it to its parent).
  */
-export function ItemRow({ lead, title, meta, end, tone, depth = 0, guide, isTitleSingleLine = false, rowProps }: {
+export function ItemRow({ lead, title, description, meta, end, tone, depth = 0, guide, isTitleSingleLine = false, rowProps }: {
   rowProps?: HTMLAttributes<HTMLLIElement>;
-  lead?: ReactNode; title: ReactNode; meta?: ReactNode; end?: ReactNode; tone?: 'accent'; depth?: number; guide?: ReactNode; isTitleSingleLine?: boolean;
+  lead?: ReactNode; title: ReactNode; description?: ReactNode; meta?: ReactNode; end?: ReactNode; tone?: 'accent'; depth?: number; guide?: ReactNode; isTitleSingleLine?: boolean;
 }) {
-  return <li {...rowProps} className={`${styles.row} ${rowProps?.className ?? ''}`} data-tone={tone} data-title-single-line={isTitleSingleLine || undefined} data-depth={depth > 0 ? depth : undefined}
+  return <li {...rowProps} className={`${styles.row} ${rowProps?.className ?? ''}`} data-tone={tone} data-has-description={!!description || undefined} data-title-single-line={isTitleSingleLine || undefined} data-depth={depth > 0 ? depth : undefined}
     style={depth > 0 ? { '--depth': depth } as CSSProperties : undefined}>
     {guide}
     {lead && <span className={styles.lead}>{lead}</span>}
-    <span className={styles.title}>{title}</span>
+    {description ? <span className={styles.copy}><span className={styles.title}>{title}</span><span className={styles.description}>{description}</span></span> : <span className={styles.title}>{title}</span>}
     {meta && <span className={styles.meta}>{meta}</span>}
     {end && <span className={styles.end}>{end}</span>}
   </li>;

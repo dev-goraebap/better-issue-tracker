@@ -36,7 +36,7 @@ export function MemberProjectsDialog({ workspaceId, member, projects, joined, ca
       : <ul className={styles.projectList} aria-label="프로젝트">{shown.map(project => <li key={project.id} className={styles.projectRow}>
         <ProjectMark project={project} size="md" />
         <span className={styles.projectText}><span className={styles.personName}>{project.name}</span><span className={styles.personEmail}>{project.key}</span></span>
-        {canEdit && <Switch label={`${project.name}에 참여`} isLabelHidden size="sm" value={joined.has(project.id)} isDisabled={busy === project.id}
+        {canEdit && <Switch label={`${project.name}에 참여`} isLabelHidden size="sm" value={joined.has(project.id)} isDisabled={!!busy}
           onChange={isOn => { void toggle(project, isOn); }} />}
       </li>)}</ul>}
     <FormMessage message={error} />

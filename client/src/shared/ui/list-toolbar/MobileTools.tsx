@@ -53,7 +53,7 @@ export function MobileTools({ target, search, filters, onFiltersChange, onFilter
         {active > 0 && <span className={styles.toolCount} aria-hidden="true">{active}</span>}
       </span>}
       {(sort || views || display) && <span className={styles.toolWrap}>
-        <IconButton label="표시" icon={<NavIcon name="display" />} variant="ghost" onClick={() => setSheet({ kind: 'display' })} />
+        <IconButton label="표시" icon={<NavIcon name={sort ? 'sort' : 'display'} />} variant="ghost" onClick={() => setSheet({ kind: 'display' })} />
         {isChanged && <span className={styles.toolDot} aria-hidden="true" />}
       </span>}
       {search && <IconButton label={search.label} icon={<NavIcon name="search" />} variant="ghost" onClick={searchScreen.open} />}

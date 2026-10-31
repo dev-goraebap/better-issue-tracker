@@ -74,3 +74,9 @@
 /* Compact work lists keep one title line beside the trailing people. */
 .row[data-title-single-line] .title { display: block; white-space: nowrap; }
 .row[data-title-single-line] .title .rowLink:is(button) { white-space: nowrap; }
+
+/* A description belongs to the title's reading block; dates and keys remain trailing metadata. */
+.copy { flex: 1; min-inline-size: 0; display: flex; flex-direction: column; gap: var(--item-copy-gap, var(--spacing-1)); grid-area: title; }
+.description { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.75rem; line-height: 1.5; color: var(--color-text-secondary); font-weight: 400; }
+.row[data-has-description] { block-size: auto; min-block-size: 4.5rem; padding-block: var(--spacing-3); }
+@media (width >= 64rem) { .copy .title { display: block; line-height: 1.5; } }

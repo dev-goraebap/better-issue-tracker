@@ -187,7 +187,7 @@ const scopePages = [false, true].flatMap(project => {
   const prefix = project ? '/projects/$projectId' : '';
   return [
     ...['issues', 'schedules'].map(section => createRoute({ getParentRoute: () => scoped, path: `${prefix}/${section}`, component: WorkItemsPage,
-      validateSearch: ownSearch(parseWorkItemSearch), loader: async ({ params }) => { const p = 'projectId' in params ? params.projectId : undefined; if (p) await loadProject(params.workspaceId, p); await loadWorkItems(queryClient, params.workspaceId, p); } })),
+      validateSearch: ownSearch(parseWorkItemSearch), loader: async ({ params }) => { const p = 'projectId' in params ? params.projectId : undefined; if (p) await loadProject(params.workspaceId, p); await loadWorkItems(queryClient, params.workspaceId, p, section === 'schedules' ? 'event' : 'task'); } })),
     createRoute({ getParentRoute: () => scoped, path: `${prefix}/resources`, component: project ? ProjectDocumentsPage : DocumentsPage,
       validateSearch: ownSearch(parseFolderSearch), loader: ({ params }) => 'projectId' in params ? loadProject(params.workspaceId, params.projectId) : undefined }),
   ];

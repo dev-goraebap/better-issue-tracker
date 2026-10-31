@@ -20,7 +20,7 @@ export function DocumentsPage() {
   }, [folder, hasNextPage, isFetchingNextPage, isFetchNextPageError, fetchNextPage]);
   const projects = result.data?.pages.flatMap(page => page.items) ?? [];
   const parts = useQuery({ ...partsQuery(workspaceId, projects.map(project => project.id)), enabled: !folder && projects.length > 0 });
-  if (!folder && (!result.data || hasNextPage || (projects.length > 0 && !parts.data))) return <PageFrame title="리소스" icon="documents" chrome="header">
+  if (!folder && (!result.data || hasNextPage || (projects.length > 0 && !parts.data))) return <PageFrame title="리소스" icon="resources" chrome="header">
     <QueryMessage pending={result.isPending || result.isFetchingNextPage || parts.isPending} error={result.error ?? parts.error}
       retry={() => { if (isFetchNextPageError) void fetchNextPage(); else { void result.refetch(); if (projects.length > 0) void parts.refetch(); } }} />
   </PageFrame>;

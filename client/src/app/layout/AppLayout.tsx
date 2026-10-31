@@ -14,11 +14,12 @@ import { rememberPictures } from '@/shared/lib/person-pictures';
 import { DefaultAvatar, NavIcon, NotificationBell } from '@/shared/ui';
 import { WorkspaceSwitcher } from '@/features/workspace-switcher';
 import { forgetWorkspace, workspaceQuery } from '@/entities/workspace';
-import { ProjectMark, projectsQuery, type Project } from '@/entities/project';
+import { ProjectMark, projectQuery, projectsQuery, type Project } from '@/entities/project';
 import { contentsQuery, documentQuery, documentIdOf, documentHref, folderHref } from '@/entities/document';
 import { itemQuery } from '@/entities/work-item';
 import { unreadCountQuery } from '@/entities/notification';
 import { favoritesQuery, navigationQuery, scopeMenu } from '@/entities/navigation';
+import { ProjectSwitcher } from './ProjectSwitcher';
 import styles from './app-layout.module.css';
 
 const SECTION_NAMES: Record<string, string> = { '/inbox': '알림', '/projects': '모든 프로젝트', '/work-items/new': '새 업무' };
@@ -46,6 +47,7 @@ export function AppLayout() {
   const folderId = documentSearch.get('folder') ?? undefined;
   const documentProject = document?.projectId ?? place.projectId ?? documentSearch.get('project') ?? undefined;
   const focusedProject = place.projectId ?? place.settingsProjectId ?? (place.documentRef ? documentProject : undefined);
+  const currentProject = useQuery({ ...projectQuery(workspaceId ?? '', focusedProject ?? ''), enabled: !!workspaceId && !!focusedProject }).data;
   const navigation = useQuery({ ...navigationQuery(workspaceId, focusedProject), enabled: !!workspaceId });
   const favorites = useQuery({ ...favoritesQuery(workspaceId), enabled: !!workspaceId }).data ?? [];
   const menus = scopeMenu(navigation.data?.entries, !!focusedProject).filter(entry => import.meta.env.DEV || entry.path !== '/manuals');
@@ -63,6 +65,12 @@ export function AppLayout() {
   const activeSection = place.documentRef || place.projectSection === 'documents' || place.workspaceSection === '/documents' ? '/resources'
     : place.itemId ? item.data?.kind === 'event' || documentSearch.get('kind') === 'event' ? '/schedules' : '/issues'
     : focusedProject ? place.projectSection ? `/${place.projectSection}` : undefined : place.workspaceSection;
+
+  const projectHref = (id: string) => place.settings && focusedProject
+    ? projectSettingsPath(workspaceId, id, place.settings)
+    : projectPath(workspaceId, id, activeSection ?? '/issues');
+  const projectSwitcher = (onSelect?: (href: string) => void, isFolded = false) => <ProjectSwitcher key={`${workspaceId}.${focusedProject}`} workspaceId={workspaceId} workspaceName={workspace?.name}
+    currentId={focusedProject ?? ''} current={currentProject} projects={projects} isFolded={isFolded} hrefFor={projectHref} onSelect={onSelect} />;
 
   // A workspace the member can no longer see: back to choosing one.
   useEffect(() => {
@@ -167,10 +175,9 @@ export function AppLayout() {
       </SideNavSection>
     </SideNav>
     : <SideNav aria-label={focusedProject ? '프로젝트 메뉴' : '워크스페이스 메뉴'} className={`${styles.sidebar} ${folded ? styles.folded : ''}`} collapsible={{ hasButton: false }} resizable={resizable}
-      header={<header className={styles.heading} data-folded={folded || undefined}><WorkspaceSwitcher current={workspace} isFolded={folded} />{bell}</header>}
+      header={<header className={styles.heading} data-folded={folded || undefined}>{focusedProject ? projectSwitcher(undefined, folded) : <WorkspaceSwitcher current={workspace} isFolded={folded} />}{bell}</header>}
       footer={<div className={styles.foot}>{account}{version}</div>}>
-      {focusedProject && entry('워크스페이스로 돌아가기', 'previous', workspacePath(workspaceId, '/issues'), false)}
-      <SideNavSection title={focusedProject ? projectName(focusedProject) ?? '프로젝트' : '워크스페이스'}>
+      <SideNavSection title={focusedProject ? '' : '워크스페이스'}>
         {workspace && menus.map(each => each.path === '/projects' ? <SideNavItem key="projects" label={each.label} href={scopeHref(each.path)} icon={<NavIcon name={each.icon} size="navigation" />} isSelected={place.workspaceSection === '/projects'} onClick={go(scopeHref(each.path))}>
           {favorites.length > 0 ? projects.filter(project => favorites.includes(project.id)).map(project => <SideNavItem key={project.id} label={project.name} href={projectPath(workspaceId, project.id, '/issues')} icon={projectMark(project)} onClick={go(projectPath(workspaceId, project.id, '/issues'))} />) : undefined}
         </SideNavItem> : entry(each.label, each.icon, scopeHref(each.path), activeSection === each.path))}
@@ -186,7 +193,7 @@ export function AppLayout() {
     : menus.map(each => tab(each.label, each.icon, scopeHref(each.path), activeSection === each.path));
   const count = 3;
   const more = [...scopeTabs.slice(count),
-    ...(focusedProject ? [tab('워크스페이스로 돌아가기', 'previous', workspacePath(workspaceId, '/issues'), false), ...PROJECT_SETTINGS_MENU.map(each => tab(each.label, each.icon, projectSettingsPath(workspaceId, focusedProject, each.path), place.settings === each.path))] : [tab('워크스페이스 관리', 'settings', workspaceSettingsPath(workspaceId), isSpaceSettings)]),
+    ...(focusedProject ? [...PROJECT_SETTINGS_MENU.map(each => tab(each.label, each.icon, projectSettingsPath(workspaceId, focusedProject, each.path), place.settings === each.path))] : [tab('워크스페이스 관리', 'settings', workspaceSettingsPath(workspaceId), isSpaceSettings)]),
     tab('내 설정', 'settings', ACCOUNT_MENU[0]!.path, isAccount)];
   // A phone's 더보기 sheet ends with the member: their picture and name, their own settings and 로그아웃 (skill frontend/04-layout §2).
   const mobileAccount = <div className={styles.sheetAccount}>
@@ -196,8 +203,8 @@ export function AppLayout() {
     <Button label="로그아웃" variant="secondary" icon={<NavIcon name="logout" />} onClick={() => { void signOut(); }} />
   </div>;
   return <ShellFrame folded={folded} onExpandSidebar={() => setFolded(false)} pathname={pathname} trail={<Trail steps={steps} />} sidebar={sidebar} mobileEnd={bell}
-    mobileNav={isSettings ? <ShellTabBar label="설정 메뉴" moreTitle={isAccount ? '계정' : `${workspace?.name ?? ''} 설정`} tabs={scopeTabs.slice(0, count)} more={more} account={mobileAccount} />
-      : workspace ? <ShellTabBar label="워크스페이스 메뉴" moreTitle={workspace.name} tabs={scopeTabs.slice(0, count)} more={more} account={mobileAccount} /> : undefined}>
+    mobileNav={isSettings ? <ShellTabBar label="설정 메뉴" moreTitle={isAccount ? '계정' : `${workspace?.name ?? ''} 설정`} tabs={scopeTabs.slice(0, count)} more={more} scopeSwitcher={focusedProject ? onSelect => projectSwitcher(onSelect) : undefined} account={mobileAccount} />
+      : workspace ? <ShellTabBar label="워크스페이스 메뉴" moreTitle={workspace.name} tabs={scopeTabs.slice(0, count)} more={more} scopeSwitcher={focusedProject ? onSelect => projectSwitcher(onSelect) : undefined} account={mobileAccount} /> : undefined}>
     <Outlet />
   </ShellFrame>;
 }

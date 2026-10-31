@@ -1,5 +1,5 @@
 import { useRef, type HTMLAttributes, type MouseEvent, type ReactNode, type RefObject } from 'react';
-import { useFillRoom } from '../use-fill-room';
+import { ListFill } from '../list-fill/ListFill';
 import type { ListSort } from '../sort-menu';
 import { SortHeader } from './SortHeader';
 import styles from './sheet-table.module.css';
@@ -46,7 +46,6 @@ export function SheetTable<T>({ label, columns, rows, rowKey, rowProps, order, m
   foot?: ReactNode;
 }) {
   const head = useRef<HTMLDivElement>(null);
-  const ghost = useFillRoom<HTMLDivElement>(true);
   const body = useRef<HTMLDivElement>(null);
   // The header and the rows scroll sideways together, whichever of them the viewer scrolls.
   const follow = (from: RefObject<HTMLDivElement | null>, to: RefObject<HTMLDivElement | null>) => () => {
@@ -80,7 +79,7 @@ export function SheetTable<T>({ label, columns, rows, rowKey, rowProps, order, m
       {/* Under few rows a faint dot grid fills the card's end, fading, so the page does not read as a void: for the eye
           alone, never pressed or read out. */}
       {foot}
-      <div ref={ghost} className={styles.ghost} aria-hidden="true" />
+      <ListFill />
     </div>
   </div>;
 }

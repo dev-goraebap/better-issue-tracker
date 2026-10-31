@@ -53,10 +53,3 @@ button.rowLink { display: block; padding: 0; border: 0; background: none; font: 
 .sortHead:hover, .sortHead[aria-expanded="true"] { color: var(--color-text-primary); background: var(--color-overlay-hover); }
 .sortHead svg { inline-size: 0.75rem; block-size: 0.75rem; flex-shrink: 0; }
 .menu { padding: 0; }
-
-/* The room under few rows: no height of its own (useFillRoom gives the room left), a faint dot grid that stays in sight
-   down to 90% of that room, fading slowly on the way and gone at 90%. */
-.ghost { block-size: 0; pointer-events: none;
-  background-image: radial-gradient(color-mix(in srgb, var(--color-icon-secondary) 35%, transparent) 1px, transparent 1.3px);
-  background-size: 16px 16px; background-position: 8px 8px;
-  mask-image: linear-gradient(to bottom, #000 0%, rgb(0 0 0 / 0.85) 40%, rgb(0 0 0 / 0.45) 70%, transparent 90%); }

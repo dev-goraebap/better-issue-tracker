@@ -1,0 +1,10 @@
+.row { --item-copy-gap: 0px; min-block-size: 4.5rem; block-size: 4.5rem; }
+li.row[data-has-description] { block-size: 4.5rem; }
+.mark { display: inline-grid; place-items: center; flex-shrink: 0; inline-size: 1.75rem; block-size: 1.75rem; border-radius: 6px;
+  color: var(--mark); background: color-mix(in srgb, var(--mark) 16%, transparent); }
+.mark svg { inline-size: 1rem; block-size: 1rem; }
+@media (width < 64rem) { li.row, li.row[data-has-description] { min-block-size: 6rem; block-size: 6rem; } }
+
+.color { display: inline-block; inline-size: 0.75rem; block-size: 0.75rem; border-radius: 50%; flex-shrink: 0; }
+
+.scopeName { max-inline-size: 9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

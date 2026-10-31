@@ -1,0 +1,34 @@
+/* The menu's head: the project's mark and name as one quiet button, its chevron at the end, tinted under the pointer. */
+.trigger { display: flex; align-items: center; gap: var(--spacing-2); inline-size: 100%; min-inline-size: 0; block-size: 2.25rem; padding: 0 var(--spacing-2);
+  border: 0; border-radius: 4px; background: none; color: var(--color-text-primary); font: inherit; text-align: start; cursor: pointer; }
+.trigger:hover, .trigger[aria-expanded="true"] { background: var(--color-overlay-hover); }
+.trigger:focus-visible { outline: var(--focus-outline-width) var(--focus-outline-style) var(--focus-outline-color); }
+.trigger[data-folded] { justify-content: center; inline-size: 2.25rem; padding: 0; margin-inline: auto; }
+.triggerName { flex: 1; min-inline-size: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.9375rem; font-weight: 700; letter-spacing: -0.01em; }
+.chevron { display: inline-flex; flex-shrink: 0; color: var(--color-icon-secondary); }
+.chevron svg { inline-size: 0.875rem; block-size: 0.875rem; }
+
+/* The workspace is a quiet parent link; projects use the same row geometry as the workspace switcher. */
+.popover.popover { padding: 0; overflow: hidden; }
+.panel { display: flex; flex-direction: column; padding: var(--spacing-1); }
+.panelTitle { padding: var(--spacing-2) var(--spacing-2) var(--spacing-1); font-size: 0.75rem; font-weight: 600; color: var(--color-text-secondary); }
+.items { margin: 0; padding: 0; list-style: none; }
+.item { display: flex; align-items: center; gap: var(--spacing-2); inline-size: 100%; min-block-size: 2.25rem; padding: 0 var(--spacing-2); box-sizing: border-box;
+  border: 0; border-radius: 4px; background: none; color: inherit; font: inherit; font-size: 0.875rem; text-align: start; text-decoration: none; cursor: pointer; }
+.item:hover, .item:focus-visible { background: var(--color-background-muted); outline: none; }
+.itemName { flex: 1; min-inline-size: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.check { display: inline-flex; color: var(--color-text-primary); }
+.check svg { inline-size: 1rem; block-size: 1rem; }
+.rule { margin: var(--spacing-1) 0; border: 0; border-block-start: 1px solid var(--color-border-subtle); }
+
+
+.items { max-block-size: min(50dvh, 20rem); overflow-y: auto; }
+.key { flex-shrink: 0; color: var(--color-text-secondary); font-size: 0.75rem; }
+.search { padding: var(--spacing-2); }
+.empty { padding: var(--spacing-2); font-size: 0.8125rem; color: var(--color-text-secondary); }
+
+.workspaceLink { display: flex; align-items: center; gap: var(--spacing-2); padding: var(--spacing-2); border-radius: var(--radius-inner); color: var(--color-text-secondary); font-size: 0.75rem; text-decoration: none; }
+.workspaceLink span { min-inline-size: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.workspaceLink svg { flex-shrink: 0; }
+.workspaceLink:hover { background: var(--color-overlay-hover); color: var(--color-text-primary); }
+.workspaceLink:focus-visible { outline: var(--focus-outline-width) var(--focus-outline-style) var(--focus-outline-color); outline-offset: -2px; }
