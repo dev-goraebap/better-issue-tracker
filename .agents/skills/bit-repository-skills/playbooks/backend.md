@@ -1,11 +1,6 @@
----
-name: bit-backend
-description: BIT 서버(server/, Spring Boot·jOOQ·SQLite) 모듈 구조·계층 규칙, MCP·외부 기능 어댑터·다형 대상 처리와 개발·코드 스타일·모듈 간 조회. "서버 기능 추가", "API 구현", "모듈 만들어줘", "MCP 도구 구현", "백엔드 고쳐줘", Java 파일을 만들거나 고칠 때, 서버 설계를 바꿀 때 쓴다.
----
+# 서버
 
-작업 전에 [운영 프로젝트 문서 읽기](../bit-architecture/references/project-documents.md)에 따라 해당 영역의 문서를 MCP로 읽는다. 스킬의 절차와 현재 코드 계약을 함께 적용한다.
-
-서버는 `io.github.goraebap.bit` 아래 `module/<업무>`와 `shared/{config,domain,error,mail,persistence,storage,text,web}`으로 나눈 모듈형 모놀리스다. 모듈은 단수 소문자로 `module/` 바로 아래에 둔다(iam·workspace·project·workitem·decision·session·document·coderef·link·file·notification). 모듈 사이 순환 참조는 금지하며 의존 방향은 ArchUnit(`ArchitectureTest`)으로 강제한다. 로그인한 사용자 `CurrentUser`는 모든 모듈이 쓰므로 `shared/web`에 둔다. 모듈은 루트의 공개 계약(`*Facade`, `*Spi`, `*Event`)으로만 서로 부르고, 계층·트랜잭션·저장소 규칙은 [계층과 처리 흐름](references/03-layers.md)을 따른다.
+서버는 `io.github.goraebap.bit` 아래 `module/<업무>`와 `shared/{config,domain,error,mail,persistence,storage,text,web}`으로 나눈 모듈형 모놀리스다. 모듈은 단수 소문자로 `module/` 바로 아래에 둔다(iam·workspace·project·workitem·decision·session·document·coderef·link·file·notification). 모듈 사이 순환 참조는 금지하며 의존 방향은 ArchUnit(`ArchitectureTest`)으로 강제한다. 로그인한 사용자 `CurrentUser`는 모든 모듈이 쓰므로 `shared/web`에 둔다. 모듈은 루트의 공개 계약(`*Facade`, `*Spi`, `*Event`)으로만 서로 부르고, 계층·트랜잭션·저장소 규칙은 [계층과 처리 흐름](../references/backend/03-layers.md)을 따른다.
 
 ## BIT 고유 규칙
 
@@ -19,10 +14,10 @@ description: BIT 서버(server/, Spring Boot·jOOQ·SQLite) 모듈 구조·계�
 
 | 작업 | 파일 |
 | :--- | :--- |
-| 서버를 빌드·실행하거나 검사를 돌릴 때 | [개발 환경](references/01-development.md) |
-| 서버 코드를 쓸 때 | [코드 스타일](references/02-code-style.md) |
-| 기능을 구현하거나 모듈 계약을 만들 때 | [계층과 처리 흐름](references/03-layers.md) |
-| 다른 모듈의 값을 목록·검색에 쓸 때 | [모듈 경계를 넘는 조회](references/04-cross-module-read.md) |
+| 서버를 빌드·실행하거나 검사를 돌릴 때 | [개발 환경](../references/backend/01-development.md) |
+| 서버 코드를 쓸 때 | [코드 스타일](../references/backend/02-code-style.md) |
+| 기능을 구현하거나 모듈 계약을 만들 때 | [계층과 처리 흐름](../references/backend/03-layers.md) |
+| 다른 모듈의 값을 목록·검색에 쓸 때 | [모듈 경계를 넘는 조회](../references/backend/04-cross-module-read.md) |
 
 ## BIT에서 정할 것
 
@@ -41,5 +36,3 @@ SandboxHr 규칙과 BIT 문서만으로 정해지지 않은 것이다. 정하면
 - HTTP 계약이 바뀌었으면 `./gradlew exportOpenApi`로 만든 `server/openapi.json`과 `client/src/shared/api/schema.d.ts`가 같은 커밋에 있다
 - 이미 있던 `V*__*.sql` 마이그레이션 파일을 고치지 않았다(`git diff --stat`에 새 파일만 있다)
 - 외부 기능을 건드렸으면 그 설정을 비운 채로 서버가 뜨고, 그 기능을 부르면 업무 오류가 난다
-
-결과가 틀리면 `skill-repair`로 이 스킬을 고친다.

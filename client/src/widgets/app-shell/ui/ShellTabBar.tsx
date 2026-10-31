@@ -10,7 +10,7 @@ export type ShellTab = { label: string; icon: string; href: string; isCurrent: b
 
 /**
  * A phone's tab bar: the scope's core menus as tabs, then 더보기, which opens the scope's other menus in a bottom sheet
- * (bit-frontend 04 §2). account is what the sheet ends with (the account rows and sign-out).
+ * (skill frontend/04-layout §2). account is what the sheet ends with (the account rows and sign-out).
  */
 export function ShellTabBar({ label, tabs, more, moreTitle, account }: { label: string; tabs: ShellTab[]; more: ShellTab[]; moreTitle: string; account?: ReactNode }) {
   const [isMoreOpen, setMoreOpen] = useState(false);

@@ -37,7 +37,7 @@ flowchart LR
 
 ## compose
 
-환경별 compose 예시는 저장소 `deploy/` 아래에 둔다(local·dev·prod). 실제 배포는 대상 서버에 이미 있는 운영 compose를 기준으로 한다. 이 저장소의 현재 운영 서버는 **`~/apps/bit/compose.yml`**이며, 같은 디렉터리의 `app.env`와 `backups/`를 사용한다. 서비스·외부 볼륨·네트워크와 명령은 [운영 서버 배포](../../../../docs/deployment.md)를 따른다. 다른 경로에 운영 compose를 새로 만들거나 옛 수동 실행 스크립트로 교체하지 않는다.
+환경별 compose 예시는 저장소 `deploy/` 아래에 둔다(local·dev·prod). 실제 배포는 대상 서버에 이미 있는 운영 compose를 기준으로 한다. 이 저장소의 현재 운영 서버는 **`~/apps/bit/compose.yml`**이며, 같은 디렉터리의 `app.env`와 `backups/`를 사용한다. 서비스·외부 볼륨·네트워크와 명령은 [운영 서버 배포](../../../../../docs/deployment.md)를 따른다. 다른 경로에 운영 compose를 새로 만들거나 옛 수동 실행 스크립트로 교체하지 않는다.
 
 | 항목 | 규칙 |
 | :--- | :--- |
@@ -58,13 +58,13 @@ flowchart LR
 
 태그는 옮기거나 다시 쓰지 않는다. 배포본은 태그와 커밋으로 식별한다. main 병합은 배포하지 않는다.
 
-태그 이미지는 `.github/workflows/release.yml`이 `ghcr.io/dev-goraebap/better-issue-tracker`에 올린다(D-082). 태그를 다는 절차는 `bit-release` 스킬이다.
+태그 이미지는 `.github/workflows/release.yml`이 `ghcr.io/dev-goraebap/better-issue-tracker`에 올린다(D-082). 태그를 다는 절차는 [배포(릴리스)](../../playbooks/release.md)다.
 
 ## 이미지 바꾸기 (수동)
 
 배포 자동화 전까지 사람이 한다. 나중에 자동화해도 같은 순서를 따른다.
 
-현재 운영 서버에서는 아래 순서를 `~/apps/bit/compose.yml`의 `app` 서비스에 적용한다. 이미지 태그는 compose에 저장해 다음 실행에도 유지되게 하고, 명령에는 `-f compose.yml`을 명시한다. 서버 Docker 경로는 `/snap/bin/docker`다. 구체적인 백업 검사와 복구 절차는 [운영 서버 배포](../../../../docs/deployment.md)를 따른다.
+현재 운영 서버에서는 아래 순서를 `~/apps/bit/compose.yml`의 `app` 서비스에 적용한다. 이미지 태그는 compose에 저장해 다음 실행에도 유지되게 하고, 명령에는 `-f compose.yml`을 명시한다. 서버 Docker 경로는 `/snap/bin/docker`다. 구체적인 백업 검사와 복구 절차는 [운영 서버 배포](../../../../../docs/deployment.md)를 따른다.
 
 1. 새 태그 이미지가 호스트에 있는지 확인한다.
 2. 컨테이너를 멈추고 데이터 볼륨을 `backups/<시각>-<태그>/`로 복사한다. Litestream을 쓰면 두 컨테이너를 함께 멈추고, 사본에서 Litestream 상태 폴더(`.bit.db-litestream`)를 뺀다.

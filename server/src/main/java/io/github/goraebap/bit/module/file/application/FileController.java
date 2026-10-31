@@ -23,7 +23,7 @@ class FileController {
     private final FileService fileService;
 
     /**
-     * Returns where to send the bytes. The body is an explicit exception to the empty 201 of bit-api-contract 01, since
+     * Returns where to send the bytes. The body is an explicit exception to the empty 201 of skill api/01-api-contract, since
      * the browser uses the URL and headers right away.
      */
     @Operation(summary = "Start an upload: where to send a file's bytes")

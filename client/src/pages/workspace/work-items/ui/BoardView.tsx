@@ -13,7 +13,7 @@ type Lane = { key: string; name: string; category: ColumnCategory; cards: WorkIt
 
 /**
  * The board view: a lane per status across the card's whole width, scrolling sideways inside its own box so the page
- * never shakes (bit-frontend 04 §5). The board takes the height the page leaves below the toolbar (useFillRoom), so the
+ * never shakes (skill frontend/04-layout §5). The board takes the height the page leaves below the toolbar (useFillRoom), so the
  * page never scrolls for it; each lane runs that full height and scrolls its own cards. In a project the lanes are its columns, in 전체 the categories (할 일, 진행 중,
  * 완료, D-066). A lane's head is the status's mark and name with its count and its own + to add there; a card is a link to
  * the work item's page with its key, title (after its type's mark, D-104), priority and the assignee's picture (D-067). Only work items with a status show. In

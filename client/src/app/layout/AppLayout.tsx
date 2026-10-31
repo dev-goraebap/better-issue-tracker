@@ -234,7 +234,7 @@ export function AppLayout() {
     tab('공간 선택 · 전환', 'switcher', '/workspaces', !!place.isWorkspaces),
     tab('내 설정', 'settings', ACCOUNT_MENU[0]!.path, false),
   ];
-  // A phone's 더보기 sheet ends with the member: their picture and name, their own settings and 로그아웃 (bit-frontend 04 §2).
+  // A phone's 더보기 sheet ends with the member: their picture and name, their own settings and 로그아웃 (skill frontend/04-layout §2).
   const mobileAccount = <div className={styles.sheetAccount}>
     <div className={styles.account}><DefaultAvatar seed={me?.id ?? ''} name={name} />
       <span className={styles.accountText}><Text weight="semibold" maxLines={1}>{name}</Text><Text type="supporting" color="secondary" maxLines={1}>{me?.email}</Text></span>

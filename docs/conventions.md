@@ -139,27 +139,27 @@ Kaneo와 SandboxHr의 전체 레이아웃이 비슷하므로 SandboxHr 셸을 �
 - 커밋 메시지에 업무 키를 넣는다(BIT 자체 도그푸딩 시작 후).
 
 ## 8. 에이전트 스킬 관리 방법론
-SandboxHr `AGENTS.md`, `skill-repair` 스킬, `scripts/sync-skills.mjs`를 그대로 따른다.
-2026-10-22에 옮겼다: `bit-architecture`, `bit-backend`, `bit-frontend`, `bit-api-contract`, `bit-database`, `feature-sliced-design`, `skill-repair` (D-033).
-각 `bit-*` SKILL.md 끝의 "BIT에서 정할 것"은 해당 기능을 만들 때 정한다.
+SandboxHr `AGENTS.md`, `skill-repair` 스킬, `scripts/sync-skills.mjs`에서 출발했다.
+2026-10-22에 SandboxHr에서 스킬 7개를 옮겼고(D-033), 2026-10-30에 `feature-sliced-design`을 뺀 나머지를 스킬 하나 `bit-repository-skills`로 합쳤다(BIT-142).
+각 플레이북 끝의 "BIT에서 정할 것"은 해당 기능을 만들 때 정한다.
 
 - **원본과 사본**: `.agents/skills/`가 원본(다른 에이전트도 읽음), `.claude/skills/`는 사본이며 손으로 고치지 않는다.
   SessionStart 훅이 `scripts/sync-skills.mjs`로 동기화한다. `.claude/*`는 `settings.json`만 커밋, `skills-lock.json`은 gitignore.
 - **배포하는 스킬**: BIT가 사용자에게 주는 스킬(`skills/better-issue-tracker/`)은 `skills/`가 원본이다. 같은 스크립트가 `.agents/skills/`에 설치하고 거기서 `.claude/skills/`로 복사한다. 설치본은 gitignore라 원본은 한 곳뿐이고, 고칠 때는 `skills/`를 고친다.
-- **스킬 하나의 구조**
-  - `SKILL.md`: 프론트매터 `name` + 실제 요청 문구가 든 `description`. 본문은 짧은 규칙, "작업 → 참고 파일" 표, 반증 가능한 완료 기준,
-    마지막 줄 "결과가 틀리면 `skill-repair`로 이 스킬을 고친다".
-  - `references/NN-주제.md`: 목적당 파일 하나, 이름에 날짜·버전 금지, 프론트매터에 title·description(언제 읽나).
+- **스킬의 구조**(배포 스킬과 같다)
+  - `SKILL.md`: 입구. 프론트매터 `name` + 실제 요청 문구가 든 `description`(1,024자 이하). 본문은 늘 지킬 것과 "작업 → 플레이북" 표.
+  - `playbooks/`: 작업별 절차와 반증 가능한 완료 기준.
+  - `references/<영역>/NN-주제.md`: 목적당 파일 하나, 이름에 날짜·버전 금지, 프론트매터에 title·description(언제 읽나).
   - `scripts/`: 기계적 단계 대신.
-  - `notes.md`: 수정 기록, 최신이 위, `## 날짜 · 층` + 증상·수정·확인.
-- **skill-repair 절차**: 멈춤 → 층 하나 진단(절차·도구·검증) → 가장 작은 영구 수정 → 초안 승인 → 적용·notes 기록 → 동기화 후 같은 작업 재실행 비교.
-- **같은 내용을 두 번 쓰지 않는다**: 제품 동작·설계, 제품 결정의 이유, 작업 규칙의 이유, 일하는 방식(스킬), 고친 이력(notes)은 각각 한 곳에.
+  - 수정 기록 파일(`notes.md`, CHANGELOG)은 두지 않는다. 고친 이유는 커밋 메시지와 BIT 업무에, 기계로 잡을 수 있는 실수는 `scripts/check-bit-skill.mjs`(CI)에.
+- **스킬 수선 절차**(`playbooks/skill-repair.md`): 멈춤 → 층 하나 진단(입구·절차·도구·검증) → 가장 작은 영구 수정 → 초안 승인 → 적용·커밋과 업무에 기록 → 동기화 후 같은 작업 재실행 비교.
+- **같은 내용을 두 번 쓰지 않는다**: 제품 동작·설계, 제품 결정의 이유, 작업 규칙의 이유, 일하는 방식(스킬), 고친 이력(git과 업무)은 각각 한 곳에.
   SandboxHr는 앞의 둘을 Gitifact(`.gitifact/`)에 둔다. BIT에서 무엇에 둘지는 미결(`open-questions.md`).
 
 ## 9. SandboxHr에서 가져올 때 바꿀 것
 | SandboxHr | BIT |
 |---|---|
-| 스킬 이름 `hohr-*` | `bit-*` (예: `bit-backend`) |
+| 스킬 이름 `hohr-*` | 스킬 하나 `bit-repository-skills`의 플레이북으로 |
 | Java 패키지 `store.hohoco`, 제품명 `HOHR`/`PRODUCT_NAME`, npm `hohoco-client` | 패키지 `io.github.goraebap.bit` (D-025), 제품명 `BIT` (D-024), npm `bit-client` |
 | 이미지·볼륨·DB 파일 `hohoco`, 쿠키 `hohohr_session`, API 키 접두사 `hohr_` | `bit` 계열로 |
 | 모듈 그룹 `office`·`projects`와 HR 업무 모듈(approval, vacation …) | BIT 모듈 (workspace, project, work item, decision, session, artifact, coderef, link, file …) |

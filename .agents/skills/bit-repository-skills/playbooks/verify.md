@@ -1,20 +1,15 @@
----
-name: verify-bit
-description: BIT를 이 체크아웃 그대로 따로 띄워 사람(화면)·에이전트(MCP)·API가 쓰는 길로 조작하고, 바뀐 동작을 증거(응답·DB·화면 글)로 남긴 뒤 치우는 검증 절차. "실제로 되는지 확인해줘", "화면에서 검증", "MCP로 돌려봐", "검증 스킬", 화면·API·MCP 동작을 바꾼 뒤 완료라고 말하기 전에 쓴다.
----
-
 # BIT 검증
 
 이 체크아웃의 코드로 BIT를 하나 더 띄워, 사용자가 쓰는 길로 기능을 돌리고 증거를 남긴다. 실행·점검·조작·증거·정리는
-`scripts/verify.mjs` 하나가 맡는다. 기능별 조작법은 [features/](features/README.md)에 있다.
+`scripts/verify.mjs` 하나가 맡는다. 기능별 조작법은 [기능 목록](../references/verify/README.md)에 있다.
 
-모든 명령은 저장소 루트에서 `node .agents/skills/verify-bit/scripts/verify.mjs <명령> <run>`이다. 아래에서는 `verify`로 줄인다.
+모든 명령은 저장소 루트에서 `node .agents/skills/bit-repository-skills/scripts/verify.mjs <명령> <run>`이다. 아래에서는 `verify`로 줄인다.
 `<run>`은 소문자·숫자·하이픈 이름(`status-board`)이고, 한 run의 모든 것은 `.tmp/verify/<run>/`(git 무시)에 있다.
 
 ## 실행
 
 ```bash
-node .agents/skills/verify-bit/scripts/verify.mjs launch <run>
+node .agents/skills/bit-repository-skills/scripts/verify.mjs launch <run>
 ```
 
 - 하는 일: 빈 `data/`에 서버(`server`의 `bootRun --no-daemon`, dev 프로필)와 화면(`client`의 Vite)을 빈 포트로 띄우고,
@@ -28,7 +23,7 @@ node .agents/skills/verify-bit/scripts/verify.mjs launch <run>
 ## 점검(doctor)
 
 ```bash
-node .agents/skills/verify-bit/scripts/verify.mjs doctor <run>
+node .agents/skills/bit-repository-skills/scripts/verify.mjs doctor <run>
 ```
 
 읽기만 한다. 프로세스 둘이 살아 있는지, health, 화면 응답, API 키로 `/api/v1/me/workspaces`가 200인지, launch 때 커밋과
@@ -44,7 +39,7 @@ node .agents/skills/verify-bit/scripts/verify.mjs doctor <run>
 - **화면 길.** 내장 브라우저(`mcp__Claude_Browser__*`)로 출력의 `client` 주소를 연다. `/login`에서 `account.json`의 이메일·
   비밀번호로 로그인한다(이 run만의 시험 계정이다. 비밀번호를 대화에 옮겨 적지 않는다). 찾을 때는 좌표 대신 보이는 이름
   (`find`의 버튼 글, `aria-label`)을 쓴다. 화면을 못 쓰는 에이전트는 MCP·API 길로만 검증하고 화면은 못 봤다고 적는다.
-- 기능마다 준비 조건·입구·확인할 끝 상태는 [features/](features/README.md)의 파일을 따른다. 준비가 안 돼 막히면 그 기능의
+- 기능마다 준비 조건·입구·확인할 끝 상태는 [기능 목록](../references/verify/README.md)의 파일을 따른다. 준비가 안 돼 막히면 그 기능의
   `Gotchas`에 이유를 적고 실패로 보고한다. 통과시키려고 절차를 줄이지 않는다.
 
 ## 증거
@@ -58,7 +53,7 @@ node .agents/skills/verify-bit/scripts/verify.mjs doctor <run>
 ## 정리
 
 ```bash
-node .agents/skills/verify-bit/scripts/verify.mjs cleanup <run>
+node .agents/skills/bit-repository-skills/scripts/verify.mjs cleanup <run>
 ```
 
 launch가 띄운 프로세스만 프로세스 트리째 멈추고(이름으로 죽이지 않는다) `data/`와 `account.json`을 지운다. `evidence/`와
@@ -74,5 +69,3 @@ launch가 띄운 프로세스만 프로세스 트리째 멈추고(이름으로 �
 - 출력에 `doctor`의 `"ok": true`가 있었다.
 - 검증한 기능마다 `evidence/`에 조작 결과와, 그것을 다른 길(DB·화면)로 다시 본 파일이 있다.
 - `cleanup` 뒤 `verify list`에서 그 run의 `running`이 false이고 `evidence/` 파일이 그대로 있다.
-
-결과가 틀리면 `skill-repair`로 이 스킬을 고친다.
