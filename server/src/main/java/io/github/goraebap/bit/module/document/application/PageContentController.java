@@ -61,16 +61,14 @@ class PageContentController {
             @PathVariable String path,
             HttpServletResponse response)
             throws IOException {
-        switch (pageTokens.check(versionId, token)) {
-            case FORGED -> {
-                text(response, HttpServletResponse.SC_NOT_FOUND, "페이지를 찾을 수 없습니다");
-                return;
-            }
-            case EXPIRED -> {
-                text(response, HttpServletResponse.SC_FORBIDDEN, "이 주소는 만료되었습니다. BIT에서 페이지를 다시 여세요");
-                return;
-            }
-            case VALID -> {}
+        var check = pageTokens.check(versionId, token);
+        if (check == PageTokens.Check.FORGED) {
+            text(response, HttpServletResponse.SC_NOT_FOUND, "페이지를 찾을 수 없습니다");
+            return;
+        }
+        if (check == PageTokens.Check.EXPIRED) {
+            text(response, HttpServletResponse.SC_FORBIDDEN, "이 주소는 만료되었습니다. BIT에서 페이지를 다시 여세요");
+            return;
         }
         String relative = Normalizer.normalize(path.startsWith("/") ? path.substring(1) : path, Normalizer.Form.NFC);
         if (relative.isEmpty()) {
