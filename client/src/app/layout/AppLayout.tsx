@@ -122,6 +122,7 @@ export function AppLayout() {
     if (place.projectId) {
       steps.push(scopeStep(projectName(place.projectId) ?? '프로젝트', projectPath(workspaceId, place.projectId)));
       if (place.projectSection === 'documents') steps.push({ label: '문서' });
+      else if (place.projectSection === 'manuals') steps.push({ label: '매뉴얼' });
       const key = item.data?.key;
       if (place.itemId) {
         if (place.itemId === 'new') steps.push({ label: '새 업무' });
@@ -201,7 +202,7 @@ export function AppLayout() {
       {workspace && <SideNavSection title="프로젝트" endContent={folded || !canMakeProjects ? undefined : <button type="button" className={styles.sectionAdd} aria-label="프로젝트 만들기"
         title="프로젝트 만들기" onClick={() => setCreatingProject(true)}><NavIcon name="plus" /></button>}>
         <SidebarProjects workspaceId={workspaceId} projects={projects} currentId={place.projectId} currentSection={place.projectSection ?? 'work-items'}
-          canReorder={canMakeProjects && !folded} href={(project, section) => projectPath(workspaceId, project.id, section === 'documents' ? '/documents' : '')}
+          canReorder={canMakeProjects && !folded} href={(project, section) => projectPath(workspaceId, project.id, section === 'documents' ? '/documents' : section === 'manuals' ? '/manuals' : '')}
           mark={projectMark} onGo={go} />
         {!folded && canMakeProjects && projects.length === 0 && <button type="button" className={styles.firstProject} onClick={() => setCreatingProject(true)}>
           <span className={styles.firstProjectMark} aria-hidden="true"><NavIcon name="board" /></span>

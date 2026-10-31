@@ -8,7 +8,7 @@ const SOLAR = {
   members: 'users-group-rounded', people: 'users-group-rounded', person: 'user', documents: 'folder', document: 'document-text',
   file: 'file', more: 'menu-dots', sidebar: 'panel-left', close: 'close', settings: 'settings', switcher: 'transfer-horizontal',
   back: 'arrow-left', forward: 'alt-arrow-right', previous: 'alt-arrow-left', logout: 'logout-2', next: 'arrow-right',
-  check: 'check', done: 'check-read', 'chevron-down': 'alt-arrow-down', 'chevrons-up-down': 'chevrons-up-down',
+  check: 'check', done: 'check-read', 'chevron-down': 'alt-arrow-down', 'chevron-up': 'alt-arrow-up', 'chevrons-up-down': 'chevrons-up-down',
   filter: 'filter', display: 'tuning-2', grip: 'grip-vertical', 'list-filter': 'filter', plus: 'add', created: 'add-circle',
   'expand-page': 'full-screen', retry: 'refresh', repeat: 'repeat', search: 'magnifier', sort: 'sort-vertical',
   'sort-asc': 'sort-from-bottom-to-top', 'sort-desc': 'sort-from-top-to-bottom', bell: 'bell', status: 'circle-dot',

@@ -34,7 +34,7 @@ import styles from './page.module.css';
  * A detail replaces the shell breadcrumb with its back action, title and actions on desktop and phone.
  * Its content has no duplicate heading. Forms keep their own heading and the breadcrumb.
  */
-export function PageFrame({ title, icon, back, actions, tabs, hasRule = !!tabs, width: givenWidth, wrapsTitle = false, isDetail = false, headerLabel, hideHeading = false, fillsContent = false, chrome, tools, conditions, children }: {
+export function PageFrame({ title, icon, back, actions, tabs, hasRule = !!tabs, width: givenWidth, wrapsTitle = false, isDetail = false, headerLabel, headerContent, hideHeading = false, fillsContent = false, chrome, tools, conditions, children }: {
   title: string; icon?: string; back?: ReactNode; actions?: ReactNode; tabs?: ReactNode; hasRule?: boolean;
   /**
    * The content's width (default 64rem). Under chrome="header" the content takes the card's whole width unless a width
@@ -46,6 +46,8 @@ export function PageFrame({ title, icon, back, actions, tabs, hasRule = !!tabs, 
   /** Replaces the shell breadcrumb with the detail title and actions, without a duplicate content heading. */
   isDetail?: boolean;
   headerLabel?: string;
+  /** A detail may supply a navigable breadcrumb in place of its plain header title. */
+  headerContent?: ReactNode;
   /** Forms start at their title input; omit the duplicate page heading. */
   hideHeading?: boolean;
   /** Fills the card below its header; the page owns scrolling inside its content. */
@@ -109,7 +111,7 @@ export function PageFrame({ title, icon, back, actions, tabs, hasRule = !!tabs, 
     {wayBack && (targets.back
       ? createPortal(<BackButton link={wayBack} label="이전으로 돌아가기" isIconOnly />, targets.back)
       : <BackButton link={wayBack} label="이전으로 돌아가기" isIconOnly />)}
-    {detailHeader && targets.title && createPortal(headerLabel ? <span className={styles.headerTitle} title={headerLabel}>{headerLabel}</span> : <h1 className={styles.headerTitle} title={title}>{title}</h1>, targets.title)}
+    {detailHeader && targets.title && createPortal(headerContent ?? (headerLabel ? <span className={styles.headerTitle} title={headerLabel}>{headerLabel}</span> : <h1 className={styles.headerTitle} title={title}>{title}</h1>), targets.title)}
     {detailHeader && actions && detailActionTarget && createPortal(actions, detailActionTarget)}
     {!detailHeader && mobileBackToolbar && actions && targets.mobileActions && createPortal(actions, targets.mobileActions)}
     {tabs || hasRule

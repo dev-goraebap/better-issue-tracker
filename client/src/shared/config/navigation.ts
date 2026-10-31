@@ -48,7 +48,7 @@ export type AppPlace = {
   /** The workspace menu entry's path ('' for 홈), when the page is the workspace's. */
   workspaceSection?: string;
   /** A project's 문서 (D-093), rather than its work items. */
-  projectSection?: 'documents';
+  projectSection?: 'documents' | 'manuals';
   /** A work item's page, or 'new' for 새 업무. */
   itemId?: string;
   documentRef?: string;
@@ -81,6 +81,7 @@ export function appPlace(pathname: string): AppPlace {
   }
   const [, projectId, inner = ''] = project;
   if (inner.startsWith('/documents')) return { workspaceId, projectId, projectSection: 'documents' };
+  if (inner.startsWith('/manuals')) return { workspaceId, projectId, projectSection: 'manuals' };
   const item = /^\/work-items\/([^/]+)(\/edit)?$/.exec(inner);
   return { workspaceId, projectId, itemId: item?.[1], isEditing: !!item?.[2] };
 }

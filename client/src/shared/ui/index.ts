@@ -29,6 +29,7 @@ export { BackLink } from './BackLink';
 export { PageState } from './page-state';
 export { StatusToken } from './StatusToken';
 export { SearchTrigger } from './search-palette';
+export { SearchToggle } from './list-toolbar/SearchToggle';
 export { PageTabs, type PageTab } from './page-tabs';
 export { SearchSelect, Select, SheetList, type SheetChoice, type SheetGroup } from './select';
 export { useFillRoom } from './use-fill-room';

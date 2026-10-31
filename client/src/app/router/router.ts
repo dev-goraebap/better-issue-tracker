@@ -2,7 +2,7 @@ import { createRootRoute, createRoute, createRouter, redirect } from '@tanstack/
 import { ApiError, bootstrapQueryOptions, capabilitiesQueryOptions, keyQueryOptions, resetCsrf, sessionQueryOptions, setUnauthorizedHandler } from '@/shared/api';
 import { followHistory } from '@/shared/lib/history-trail';
 import { isId, ownSearch } from '@/shared/lib/route-search';
-import { projectKey, projectQuery } from '@/entities/project';
+import { projectKey, projectQuery, projectsQuery } from '@/entities/project';
 import { itemQuery, byRefQuery, parseWorkItemSearch, parseNewWorkItemSearch } from '@/entities/work-item';
 import { workspaceKey, workspacePagesQuery, workspaceQuery, workspacesQuery } from '@/entities/workspace';
 import { BootstrapPage } from '@/pages/entry/bootstrap';
@@ -22,6 +22,7 @@ import { DocumentsPage } from '@/pages/workspace/documents';
 import { DocumentPage, loadDocument, parseDocumentSearch } from '@/pages/workspace/document';
 import { NewDocumentPage } from '@/pages/workspace/document-new';
 import { ProjectDocumentsPage } from '@/pages/project/documents';
+import { ManualsPage, parseManualSearch } from '@/pages/project/manuals';
 import { parseFolderSearch, parseNewDocumentSearch } from '@/entities/document';
 import { InboxPage, parseInboxSearch } from '@/pages/workspace/inbox';
 import { NewWorkItemPage } from '@/pages/workspace/work-item-new';
@@ -127,6 +128,10 @@ const documentEdit = createRoute({ getParentRoute: () => scoped, path: '/documen
 // A project's 문서 is 문서함's folder of it opened at once.
 const projectDocuments = createRoute({ getParentRoute: () => scoped, path: '/projects/$projectId/documents', component: ProjectDocumentsPage,
   validateSearch: ownSearch(parseFolderSearch), loader: ({ params }) => loadProject(params.workspaceId, params.projectId) });
+const manualPreview = createRoute({ getParentRoute: () => scoped, path: '/projects/$projectId/manuals', component: ManualsPage,
+  validateSearch: ownSearch(parseManualSearch), loader: async ({ params }) => {
+    await Promise.all([loadProject(params.workspaceId, params.projectId), queryClient.prefetchInfiniteQuery(projectsQuery(params.workspaceId))]);
+  } });
 const projects = createRoute({ getParentRoute: () => scoped, path: '/projects', component: ProjectsPage, validateSearch: ownSearch(parseProjectsSearch),
   loaderDeps: ({ search }) => search, loader: ({ params, deps }) => loadProjects(queryClient, params.workspaceId, deps) });
 
@@ -191,6 +196,7 @@ const routeTree = rootRoute.addChildren([
     scoped.addChildren([
       home, workItemsNew, inbox, myTasks, members, membersInvite, documents, documentNew, documentDetail, documentEdit, projects, projectDocuments,
       projectItems, itemNew, itemDetail, itemEdit, workspaceItem, workspaceItemEdit, itemReference, ...issueAddresses,
+      ...(import.meta.env.DEV ? [manualPreview] : []),
       settingsStart, settings, projectSettingsStart, projectSettings, oldProjectSettings,
     ]),
     profile, security, keys, appearance, ...legacy, shortAddress,
