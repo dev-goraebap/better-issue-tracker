@@ -36,16 +36,21 @@ class PageTokens {
         FORGED
     }
 
-    /** The address a viewer opens: each path segment of the entry percent-encoded. */
+    /** The address a viewer opens, valid for about TTL. */
     PageViews.ViewLink link(String versionId, PagePath entry) {
         long step = STEP.toSeconds();
         long exp = Math.ceilDiv(clock.instant().plus(TTL).getEpochSecond(), step) * step;
         String token = exp + "." + secretTokens.hash(PURPOSE, versionId + "\n" + exp);
-        String path = Arrays.stream(entry.value().split("/"))
+        return new PageViews.ViewLink(address(versionId, token, entry), Instant.ofEpochSecond(exp));
+    }
+
+    /** A file's address under a token, each path segment percent-encoded. */
+    String address(String versionId, String token, PagePath file) {
+        String path = Arrays.stream(file.value().split("/"))
                 .map(segment ->
                         URLEncoder.encode(segment, StandardCharsets.UTF_8).replace("+", "%20"))
                 .collect(Collectors.joining("/"));
-        return new PageViews.ViewLink(PREFIX + versionId + "/" + token + "/" + path, Instant.ofEpochSecond(exp));
+        return PREFIX + versionId + "/" + token + "/" + path;
     }
 
     /** FORGED for anything this server did not make for this version: bad shape, wrong signature, another version. */

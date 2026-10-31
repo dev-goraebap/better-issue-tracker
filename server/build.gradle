@@ -42,9 +42,10 @@ dependencies {
 }
 
 tasks.named('bootJar') { archiveFileName = 'app.jar' }
-// Tests keep their local file storage under build/ and run no nightly jobs.
+// Tests keep their local file storage under build/, read page fonts from a fixture and run no nightly jobs.
 tasks.withType(Test).configureEach {
     systemProperty 'app.storage.local-root', layout.buildDirectory.dir('test-files').get().asFile.absolutePath
+    systemProperty 'app.page-fonts', 'classpath:/page-fonts/'
     systemProperty 'app.jobs.enabled', 'false'
 }
 tasks.named('test') {

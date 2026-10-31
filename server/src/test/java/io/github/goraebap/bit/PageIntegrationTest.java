@@ -7,6 +7,7 @@ import io.github.goraebap.bit.module.workspace.application.WorkspaceService;
 import io.github.goraebap.bit.shared.domain.Ids;
 import io.github.goraebap.bit.shared.persistence.InstantTextBinding;
 import io.github.goraebap.bit.shared.web.CurrentUser;
+import io.github.goraebap.bit.shared.web.SecretTokens;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -74,6 +75,9 @@ class PageIntegrationTest {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private SecretTokens secretTokens;
 
     private CurrentUser owner;
     private String workspace;
@@ -380,6 +384,141 @@ class PageIntegrationTest {
         assertThat(new String(unpacked.get("index.html"), StandardCharsets.UTF_8))
                 .isEqualTo(INDEX);
         assertThat(unpacked.get("empty.json")).isEmpty();
+    }
+
+    @Test
+    void aVersionIsServedSandboxedUnderItsTokenAndNothingElseIs() throws Exception {
+        String id = tool(
+                        "create_page",
+                        Map.of(
+                                "title",
+                                "보기",
+                                "upload_id",
+                                upload(zip(Map.of(
+                                        "index.html",
+                                        INDEX,
+                                        "img/로고.png",
+                                        PNG,
+                                        "empty.json",
+                                        "",
+                                        "docs/index.html",
+                                        "<p>설명서</p>")))))
+                .path("id")
+                .asString();
+        var version = JSON.readTree(
+                bearer("GET", "/api/v1/workspaces/" + workspace + "/documents/" + id + "/versions/1", null)
+                        .body());
+        String view = version.path("viewUrl").asString();
+        String base = view.substring(0, view.lastIndexOf('/') + 1);
+
+        var html = get(view);
+        assertThat(html.statusCode()).isEqualTo(200);
+        sandboxed(html);
+        assertThat(html.headers().firstValue("Content-Type")).hasValue("text/html;charset=utf-8");
+        assertThat(html.headers().firstValue("Access-Control-Allow-Origin")).hasValue("*");
+        String served = new String(html.body(), StandardCharsets.UTF_8);
+        String head = "<!doctype html><html lang=\"ko\"><head>";
+        assertThat(served)
+                .isEqualTo(head + "<link rel=\"stylesheet\" href=\"/pages/_fonts/pretendard.css\">"
+                        + INDEX.substring(head.length()));
+        assertThat(html.headers().firstValueAsLong("Content-Length")).hasValue(html.body().length);
+
+        var png = get(base + "img/%EB%A1%9C%EA%B3%A0.png");
+        assertThat(png.statusCode()).isEqualTo(200);
+        sandboxed(png);
+        assertThat(png.headers().firstValue("Content-Type")).hasValue("image/png");
+        assertThat(png.body()).isEqualTo(PNG);
+        var empty = get(base + "empty.json");
+        assertThat(empty.statusCode()).isEqualTo(200);
+        assertThat(empty.body()).isEmpty();
+        var root = get(base);
+        assertThat(root.statusCode()).isEqualTo(302);
+        assertThat(root.headers().firstValue("Location")).hasValue(view);
+        var folder = get(base + "docs/");
+        assertThat(new String(folder.body(), StandardCharsets.UTF_8)).contains("설명서");
+        var headOnly = HttpClient.newHttpClient()
+                .send(
+                        HttpRequest.newBuilder(URI.create("http://localhost:" + port + view))
+                                .method("HEAD", HttpRequest.BodyPublishers.noBody())
+                                .build(),
+                        HttpResponse.BodyHandlers.ofByteArray());
+        assertThat(headOnly.statusCode()).isEqualTo(200);
+        assertThat(headOnly.body()).isEmpty();
+        sandboxed(headOnly);
+
+        for (String missing : List.of(
+                base + "nope.html", "/pages", "/pages/anything", base.replace("/pages/", "/pages/X") + "index.html")) {
+            var none = get(missing);
+            assertThat(none.statusCode()).as(missing).isEqualTo(404);
+            assertThat(new String(none.body(), StandardCharsets.UTF_8))
+                    .as("not the screens' index.html")
+                    .doesNotContain("<html");
+            sandboxed(none);
+        }
+        String versionId = version.path("version").path("id").asString();
+        long past = Instant.now().getEpochSecond() - 60;
+        var expired = get("/pages/" + versionId + "/" + past + "."
+                + secretTokens.hash("page-view", versionId + "\n" + past) + "/index.html");
+        assertThat(expired.statusCode()).isEqualTo(403);
+        assertThat(new String(expired.body(), StandardCharsets.UTF_8)).contains("만료");
+        var tampered = view.replaceFirst("/(\\d+)\\.", "/" + (Instant.now().getEpochSecond() + 7200) + ".");
+        assertThat(get(tampered).statusCode()).isEqualTo(404);
+
+        var posted = HttpClient.newHttpClient()
+                .send(
+                        HttpRequest.newBuilder(URI.create("http://localhost:" + port + view))
+                                .POST(HttpRequest.BodyPublishers.ofString("x"))
+                                .build(),
+                        HttpResponse.BodyHandlers.ofByteArray());
+        assertThat(posted.statusCode()).isEqualTo(403);
+        sandboxed(posted);
+
+        var health = get("/api/v1/health");
+        assertThat(health.headers().firstValue("X-Frame-Options")).hasValue("DENY");
+        assertThat(health.headers().firstValue("Content-Security-Policy")).isEmpty();
+
+        var css = get("/pages/_fonts/pretendard.css");
+        assertThat(css.statusCode()).isEqualTo(200);
+        assertThat(css.headers().firstValue("Access-Control-Allow-Origin")).hasValue("*");
+        String fonts = new String(css.body(), StandardCharsets.UTF_8);
+        assertThat(fonts).contains("font-family: 'Pretendard Variable';").contains("font-family: 'Pretendard';");
+        assertThat(fonts)
+                .contains("url(/pages/_fonts/PretendardVariable.subset.0.woff2)")
+                .doesNotContain("url(./");
+        var font = get("/pages/_fonts/PretendardVariable.subset.0.woff2");
+        assertThat(font.statusCode()).isEqualTo(200);
+        assertThat(font.headers().firstValue("Content-Type")).hasValue("font/woff2");
+        assertThat(get("/pages/_fonts/PretendardVariable.subset.1.woff2").statusCode())
+                .as("listed but not in the folder")
+                .isEqualTo(404);
+        assertThat(get("/pages/_fonts/secret.txt").statusCode()).isEqualTo(404);
+
+        expect(
+                http(
+                        session,
+                        "DELETE",
+                        "/api/v1/workspaces/" + workspace + "/documents/" + id + "?expectedVersion=0",
+                        null),
+                204);
+        assertThat(get(view).statusCode()).as("a deleted page is not served").isEqualTo(404);
+    }
+
+    private HttpResponse<byte[]> get(String path) throws Exception {
+        return HttpClient.newHttpClient()
+                .send(
+                        HttpRequest.newBuilder(URI.create("http://localhost:" + port + path))
+                                .build(),
+                        HttpResponse.BodyHandlers.ofByteArray());
+    }
+
+    private static void sandboxed(HttpResponse<?> response) {
+        assertThat(response.headers().firstValue("Content-Security-Policy")).hasValueSatisfying(csp -> assertThat(csp)
+                .startsWith("sandbox allow-scripts allow-modals;")
+                .contains("frame-ancestors 'self'")
+                .contains("connect-src 'none'"));
+        assertThat(response.headers().firstValue("X-Frame-Options")).isEmpty();
+        assertThat(response.headers().firstValue("X-Content-Type-Options")).hasValue("nosniff");
+        assertThat(response.headers().firstValue("Referrer-Policy")).hasValue("no-referrer");
     }
 
     private String upload(byte[] zip) throws Exception {
