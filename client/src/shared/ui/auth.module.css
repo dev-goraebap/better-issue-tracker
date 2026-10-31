@@ -3,6 +3,7 @@
   --bit-auth-font-size: var(--text-body-size);
   --bit-auth-field-height: var(--bit-field-height);
 }
+.title { min-inline-size: 0; word-break: keep-all; overflow-wrap: anywhere; }
 /* The email field, drawn as Astryx's fields are under D-074: its label 13px/500 7px above, a hairline with no fill, the accent's line in focus. */
 .emailLabel { display: grid; gap: var(--bit-field-label-gap); font-size: var(--text-label-size); font-weight: 500; color: var(--bit-field-label); }
 .emailInput { box-sizing: border-box; width: 100%; block-size: var(--bit-field-height); padding-inline: var(--bit-field-inset); border: 1px solid var(--bit-field-border);
