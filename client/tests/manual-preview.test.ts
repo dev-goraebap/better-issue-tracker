@@ -28,3 +28,12 @@ test('route input ignores object parameters and bounds query size', () => {
   assert.deepEqual(parseManualSearch({ manual: {}, page: 'a', q: ' ' }), { page: 'a' });
   assert.equal(parseManualSearch({ q: 'a'.repeat(1000) }).q?.length, 200);
 });
+
+test('manual URL query trims before its length limit without changing other search parameters', () => {
+  const filters = { manual: 'book', page: 'a', scope: 'a123456789', color: '#4cb782', sort: 'updated', dir: 'desc', finding: 1 } as const;
+  assert.deepEqual(parseManualSearch({ ...filters, q: `${' '.repeat(200)}환경  설정 \t\n` }), { ...filters, q: '환경  설정' });
+  assert.equal(parseManualSearch({ q: ` \t${'가'.repeat(201)} \n` }).q, '가'.repeat(200));
+  for (const q of ['', ' \t\r\n', undefined, null, 123, {}]) {
+    assert.deepEqual(parseManualSearch({ ...filters, q }), filters);
+  }
+});

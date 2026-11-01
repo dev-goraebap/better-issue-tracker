@@ -7,7 +7,7 @@ export type ManualSearch = { manual?: string; page?: string; q?: string; scope?:
 export const parseManualSearch = (input: Record<string, unknown>): ManualSearch => ({
   ...(typeof input.manual === 'string' ? { manual: input.manual } : {}),
   ...(typeof input.page === 'string' ? { page: input.page } : {}),
-  ...(typeof input.q === 'string' && input.q.trim() ? { q: input.q.slice(0, 200) } : {}),
+  ...(typeof input.q === 'string' && input.q.trim() ? { q: input.q.trim().slice(0, 200) } : {}),
   ...(typeof input.scope === 'string' && /^(workspace|[A-Za-z][A-Za-z0-9]{9})$/.test(input.scope) ? { scope: input.scope } : {}),
   ...(typeof input.color === 'string' && /^#[0-9a-fA-F]{6}$/.test(input.color) ? { color: input.color } : {}),
   ...(input.sort === 'title' || input.sort === 'updated' ? { sort: input.sort } : {}),
