@@ -24,7 +24,7 @@ BIT는 업무와 문서를 한곳에 두는 셀프호스팅 업무 트래커다.
 | 매뉴얼을 사용하는 프로젝트의 기능·구조·개발 규칙이 바뀜 | 별도 요청 없이 영향받는 매뉴얼을 함께 갱신한다. 미사용·비활성 프로젝트에는 생성이나 갱신을 요구하지 않는다 | [references/manual-maintenance.md](references/manual-maintenance.md) |
 | 앞으로 따를 선택을 하거나 전에 정한 것을 바꿈 | 그 업무에 '결정' 댓글을 하나 남긴다. 따로 업무나 문서를 만들지 않는다 | [playbooks/work.md](playbooks/work.md) |
 | 저장소와 연결된 프로젝트에서 브랜치·커밋·PR을 만들거나 배포함 | 이름에 업무 키를 넣고, PR로 가는 작업은 병합에 맡긴다. 배포는 업무로 만들지 않는다 | [playbooks/repository.md](playbooks/repository.md) |
-| 오래 두고 고칠 글(요구사항, 설계, 회의록, 사용자 가이드, 개발 매뉴얼, 인수인계)을 쓰거나 고침 | 독자와 팩트 시트를 정하고, 사용자 가이드는 실제 화면, 아키텍처는 구조·이유, 개발 규칙은 실제 코드·반례·검증 기준과 대조한다 | [playbooks/document.md](playbooks/document.md) |
+| 오래 두고 고칠 글(요구사항, 설계, 회의록, 사용자 가이드, 개발 매뉴얼, 인수인계)을 쓰거나 고침 | 독자와 팩트 시트를 정하고, 사용자 가이드는 실제 화면, 아키텍처는 구조·설계 규칙·코드 예·검증 기준, 개발 매뉴얼은 작업 순서·명령·회복 절차와 대조한다 | [playbooks/document.md](playbooks/document.md) |
 | BIT 자체가 기대와 다르게 동작하거나 제보를 부탁받음 | 초안을 쓰고 사용자 승인 뒤에만 올린다 | [playbooks/report.md](playbooks/report.md) |
 | 도구 이름·인자가 헷갈리거나 `Unknown tool` 오류 | 도구 표를 본다 | [references/tools.md](references/tools.md) |
 | 업무 본문·댓글을 씀 | 쓰는 말과 틀을 따른다 | [references/writing.md](references/writing.md) |

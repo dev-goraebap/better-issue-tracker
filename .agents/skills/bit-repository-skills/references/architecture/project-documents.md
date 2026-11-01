@@ -1,29 +1,41 @@
 # 운영 프로젝트 문서 읽기
 
-BIT 프로젝트의 현행 설명은 두 매뉴얼을 우선 읽는다(D-122, BIT-148). 기존 리소스 문서는 D-098/BIT-62/BIT-63의 과거 근거로 보존한다. 스킬은 작업 절차를 유지하고, 프로젝트 지식 본문은 필요한 부분만 MCP로 가져온다.
+BIT 프로젝트의 현행 설명은 두 매뉴얼을 우선 읽는다(D-122·D-123, BIT-148). 기존 리소스 문서는 D-098/BIT-62/BIT-63의 과거 근거로 보존한다. 스킬은 작업 절차를 유지하고, 프로젝트 지식 본문은 필요한 부분만 MCP로 가져온다.
 
 ## 현재 매뉴얼 진입점
 
 - MCP 서버 `bit`, workspace `고래밥 스튜디오`, project `BIT`.
-- [아키텍처 매뉴얼](https://bit.goraebap.xyz/workspaces/s9eYqb2Aqz/projects/wyuo6Iro9D/manuals?manual=A1igql2JUH&page=o4BOFpGwfQ): 책 `A1igql2JUH`, 진입 `o4BOFpGwfQ`. arc42 12영역의 구조·이유·품질/위험.
-- [개발 매뉴얼](https://bit.goraebap.xyz/workspaces/s9eYqb2Aqz/projects/wyuo6Iro9D/manuals?manual=CdJ85AUD13&page=zAhysBXYMY): 책 `CdJ85AUD13`, 진입 `zAhysBXYMY`. 적용 규칙·실제 코드·반례·검사·실행 절차.
-- `get_manual_page(workspace="고래밥 스튜디오", id="CdJ85AUD13", page_id="zAhysBXYMY")`로 작업 길잡이를 읽고 관련 규칙을 고른다. 설계 판단이 필요하면 연결된 arc42 페이지를 읽는다. 책을 매번 통째로 읽지 않는다.
+- [아키텍처 매뉴얼](https://bit.goraebap.xyz/workspaces/s9eYqb2Aqz/projects/wyuo6Iro9D/manuals?manual=A1igql2JUH&page=o4BOFpGwfQ): 책 `A1igql2JUH`, 진입 `o4BOFpGwfQ`. arc42 12영역의 구조·이유·품질/위험과 횡단 설계 규칙·실제 예·검증 기준.
+- [개발 매뉴얼](https://bit.goraebap.xyz/workspaces/s9eYqb2Aqz/projects/wyuo6Iro9D/manuals?manual=CdJ85AUD13&page=zAhysBXYMY): 책 `CdJ85AUD13`, 진입 `zAhysBXYMY`. 준비·변경·검사·협업·배포의 수행 절차.
+- `get_manual_page(workspace="고래밥 스튜디오", id="CdJ85AUD13", page_id="zAhysBXYMY")`로 작업 절차를 고르고 연결된 arc42 횡단 관심사의 설계 규칙·실제 예·검증 기준을 함께 읽는다. 책을 매번 통째로 읽지 않는다.
 - ID가 없거나 책 구조/버전 변화로 탐색이 필요하면 `list_manuals(project="BIT")`와 `get_manual(id=...)`로 확인한다. 같은 세션의 확인된 ID와 버전은 재사용하되 쓰기 직전에는 최신 본문/버전을 확인한다. 현재 도구에 목차 전용·본문 검색·변경분 조회가 있다고 가정하지 않는다.
 
-## 작업별 개발 페이지
+## 작업별 절차와 횡단 관심사
 
-| 작업 | 개발 페이지 ID | 관련 아키텍처 페이지 ID |
+| 작업 | 개발 절차 페이지 ID | 아키텍처 설계 규칙 페이지 ID |
 | --- | --- | --- |
-| 서버 계층·DTO/스타일·도메인·트랜잭션 | `YrHTVBFxOY` · `r9H9JoBuz4` · `oSyVeWhOlE` · `eMIBcD18ZX` | `tIv5Msv7KG` |
-| API·MCP·권한·오류 | `xlXKn4GNiy` · `ArYXJ23IQQ` · `hBPou6i68E` | `YwbxTrzXk9` |
-| DB·조회·버전·첨부 | `fRHDxTp1C8` · `MJ3kcUrbmX` · `bXuMEwplXk` · `V4r21gaIls` | `qoPHQyNfIG` |
-| 화면 배치·상태·HTTP | `i75mcSXKgO` · `F8ID8dxSdL` · `Mz8JeOVDcL` | `BEzXrFTF1X` |
-| 목록·드래그·디자인 | `YjCqoSHJBo` · `jRJDZcpEJV` | `bgdEpYjSxz` |
-| 검사·실제 검증 | `AQygip0Rv4` · `RqGTB7dtd6` | `wSwn4EnNhp` |
-| 릴리스·배포·운영 | `U0JhDpQURF` · `tpKZ6UIr31` · `zMxDaRLgq2` | `L6HuRcXuVj` · `EQUszOg1KB` |
+| 서버 배치 | `YrHTVBFxOY` | `tIv5Msv7KG` |
+| DTO·명명·형식 | `r9H9JoBuz4` | `Alg91m18V6` |
+| 도메인 | `oSyVeWhOlE` | `U5t4uVJJrE` |
+| 트랜잭션 | `eMIBcD18ZX` | `by1uOTKEyK` |
+| REST·MCP | `xlXKn4GNiy` | `Qz4Sozn74C` |
+| 권한 | `ArYXJ23IQQ` | `YwbxTrzXk9` |
+| 오류 | `hBPou6i68E` | `qcb1FD05j8` |
+| SQL·페이징 | `MJ3kcUrbmX` | `kegByIaS5R` |
+| 스키마·보존 | `fRHDxTp1C8` | `ghuI6tESTu` |
+| 버전·감사 | `bXuMEwplXk` | `qoPHQyNfIG` |
+| 첨부 | `V4r21gaIls` | `kKgaLI96P5` |
+| FSD | `i75mcSXKgO` | `LlJflSsoiL` |
+| 상태 | `F8ID8dxSdL` | `BEzXrFTF1X` |
+| HTTP·재시도 | `Mz8JeOVDcL` | `NnbZ5SNWxA` |
+| 목록 UI | `YjCqoSHJBo` | `bgdEpYjSxz` |
+| 순서·접근성 | `jRJDZcpEJV` | `G1r5xJ4407` |
+| 검사·실제 검증 | `AQygip0Rv4` | `wSwn4EnNhp` |
+| 릴리스·배포 | `tpKZ6UIr31` | `L6HuRcXuVj` |
+| 운영 점검 | `zMxDaRLgq2` | `EQUszOg1KB` |
 | 문서·스킬 | `pNDA17FCoQ` | `ci84DL5Z0k` |
 
-개발 페이지는 개발 책 ID, 아키텍처 페이지는 아키텍처 책 ID와 함께 조회한다. 페이지가 없어졌거나 구성이 달라졌으면 표를 추측해 쓰지 말고 최신 책을 확인한다.
+개발 절차는 책 `CdJ85AUD13`, 설계 규칙은 책 `A1igql2JUH`와 함께 조회한다. 페이지가 없어졌거나 구성이 달라졌으면 표를 추측해 쓰지 말고 최신 책을 확인한다. 규칙 상세를 개발 책에 다시 유지하지 않는다.
 
 ## 기존 리소스 문서 조회
 
