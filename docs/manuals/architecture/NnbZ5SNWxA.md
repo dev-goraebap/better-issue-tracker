@@ -22,7 +22,7 @@ export async function readJson<T>(path: string, signal?: AbortSignal, quietUnaut
 
 ### 매뉴얼의 저장 결과와 갱신 결과 분리 — BIT-149 개발 변경
 
-적용 리비전은 `e8e03bb`이며 운영 미배포입니다. 아래 반환값 명칭은 BIT-149 후속 커밋을 반영했습니다. `client/src/pages/project/manuals/api/save-manual.ts`의 현재 코드에서 발췌했습니다.
+적용 리비전은 `e8e03bb`이며 0.23.0에 운영 반영됐습니다. 아래 반환값 명칭은 BIT-149 후속 커밋을 반영했습니다. `client/src/pages/project/manuals/api/save-manual.ts`의 현재 코드에서 발췌했습니다.
 
 ```ts
   await storeManual(workspaceId, projectId, complete);
@@ -50,13 +50,13 @@ catch { await fetch(url, { method: "POST", body }); }
 
 ## 예외와 적용 한계
 
-서버가 멱등성을 명시적으로 보장하는 별도 계약은 그 조건대로 판단합니다. 상세/한 조각 목록의 invalidateQueries와 여러 조각 목록의 changeRows/startListsOver 정책은 서로 다릅니다. 운영 v0.22.0의 매뉴얼 save는 후속 재조회까지 하나의 catch로 처리합니다. 아래 BIT-149 개발 변경은 이를 분리했지만 아직 운영 배포되지 않았으므로 운영 코드와 구분합니다.
+서버가 멱등성을 명시적으로 보장하는 별도 계약은 그 조건대로 판단합니다. 상세/한 조각 목록의 invalidateQueries와 여러 조각 목록의 changeRows/startListsOver 정책은 서로 다릅니다. v0.22.0의 매뉴얼 save는 후속 재조회까지 하나의 catch로 처리했습니다. BIT-149 변경은 이를 분리했으며 0.23.0부터 운영에 반영됐습니다.
 
 ## 검증 기준
 
 자동: `npm test --prefix client`의 http/auth-http/route-read 테스트를 확인합니다. BIT-149 개발 변경은 `client/tests/manual-save.test.ts`에서 정상 저장, 저장 뒤 상세 읽기 실패, 목록 갱신 실패, 쓰기 충돌, 요약 버전 충돌을 확인합니다. 실패한 후속 읽기 때문에 쓰기를 재전송하지 않는지도 검사합니다.
 
-BIT-149 후속 회귀 보완(`2e63469`·운영 미배포)은 요약 저장 전 상세 조회 실패의 오류 전달과 쓰기/갱신 미실행, PUT 통신 오류의 오류 전달과 재전송/성공 추정 금지, 동일 버전 요약 저장의 최신 섹션·본문·댓글 보존 및 제목·설명·아이콘·색 반영도 검사합니다. 기존 5개와 함께 총 8개이며 제품 함수의 동작 변경은 없습니다.
+BIT-149 후속 회귀 보완(`2e63469`·0.23.0 반영)은 요약 저장 전 상세 조회 실패의 오류 전달과 쓰기/갱신 미실행, PUT 통신 오류의 오류 전달과 재전송/성공 추정 금지, 동일 버전 요약 저장의 최신 섹션·본문·댓글 보존 및 제목·설명·아이콘·색 반영도 검사합니다. 기존 5개와 함께 총 8개이며 제품 함수의 동작 변경은 없습니다.
 
 수동/네트워크: 요청 취소·세션 만료·명시적 CSRF 실패·네트워크 끊김·저장 후 읽기 실패에서 중복 쓰기·초안 손실·잘못된 성공/실패 안내가 없는지 확인합니다.
 
@@ -73,4 +73,4 @@ BIT-149 후속 회귀 보완(`2e63469`·운영 미배포)은 요약 저장 전 �
 - [client/src/pages/project/manuals/ui/ManualWorkspace.tsx](../../../client/src/pages/project/manuals/ui/ManualWorkspace.tsx)
 
 - BIT-149 개발 변경 원본: `client/src/pages/project/manuals/api/save-manual.ts`, `client/src/pages/project/manuals/ui/ManualWorkspace.tsx`, `client/tests/manual-save.test.ts`
-- 개발 변경 기준: `e8e03bb` (운영 미배포). 실행/화면 증거: BIT-149.
+- 개발 변경 기준: `e8e03bb` (0.23.0 반영). 실행/화면 증거: BIT-149.
