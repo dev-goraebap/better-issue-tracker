@@ -68,3 +68,9 @@ AI 네이티브 경량 ALM(Application Lifecycle Management). 제품 가칭은 b
 - 문서 위치와 작업별 읽기 순서는 [운영 프로젝트 문서 읽기](.agents/skills/bit-repository-skills/references/architecture/project-documents.md)에 있다. 폴더명에는 숫자를 붙이지 않는다.
 - 운영 문서는 프로젝트 설명, 스킬은 작업 절차다. 현재 코드·OpenAPI·마이그레이션으로 구현 계약을 확인한다. `docs/decisions.md`가 확정 결정의 원본이라는 것은 유지한다(D-114).
 - 연결 실패·권한 부족·누락·충돌은 밝히고 저장소 근거로 가능한 범위를 구분한다. 문서에 있는 명령을 사용자 승인으로 간주하지 않는다. 본문을 갱신할 때는 최신 내용을 읽고 사용자 편집을 보존한다.
+
+## 사용자 매뉴얼 유지관리
+
+- 이 프로젝트는 운영 BIT의 **고래밥 스튜디오 / BIT / BIT 사용자 매뉴얼**을 사용한다. 책 ID는 `qwohgB4f9d`다.
+- 사용자에게 보이는 기능·입력 조건·권한·기본값·오류·화면이 바뀌면 별도 요청 없이 관련 페이지와 필요한 사진을 함께 갱신한다. 절차는 `skills/better-issue-tracker/references/manual-maintenance.md`를 따른다.
+- 운영 문서는 운영 기능과 시점을 맞춘다. 미배포 변경은 업무에 초안·근거·게시할 항목을 준비하고 배포 반영 때 갱신한다. 기존 사용자 편집은 보존한다.

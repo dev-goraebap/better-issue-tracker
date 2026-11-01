@@ -21,6 +21,7 @@ BIT는 업무와 문서를 한곳에 두는 셀프호스팅 업무 트래커다.
 | 작업 중 이번 요청과 다른 문제를 찾음 | 이번에 고치면 이 업무 댓글에 쓰고, 지금 고치지 않을 것만 백로그 업무로 만든다 | [playbooks/create.md](playbooks/create.md) |
 | 한 기능이 여러 PR이나 여러 날에 걸침, 에픽·스토리·하위 업무 | 에픽 하나 아래 PR 크기의 하위 업무로 나누고 유형 규칙을 따른다 | [playbooks/split.md](playbooks/split.md) |
 | 업무를 시작·진행·마무리함 | 진행 중으로 옮기고, 댓글로 진행과 결과(커밋·검증)를 남기고, 맞는 칸으로 닫는다 | [playbooks/work.md](playbooks/work.md) |
+| 매뉴얼을 사용하는 프로젝트의 기능·입력 조건·권한·화면이 바뀜 | 별도 요청 없이 영향받는 매뉴얼을 함께 갱신한다. 미사용·비활성 프로젝트에는 생성이나 갱신을 요구하지 않는다 | [references/manual-maintenance.md](references/manual-maintenance.md) |
 | 앞으로 따를 선택을 하거나 전에 정한 것을 바꿈 | 그 업무에 '결정' 댓글을 하나 남긴다. 따로 업무나 문서를 만들지 않는다 | [playbooks/work.md](playbooks/work.md) |
 | 저장소와 연결된 프로젝트에서 브랜치·커밋·PR을 만들거나 배포함 | 이름에 업무 키를 넣고, PR로 가는 작업은 병합에 맡긴다. 배포는 업무로 만들지 않는다 | [playbooks/repository.md](playbooks/repository.md) |
 | 오래 두고 고칠 글(요구사항, 설계, 회의록, 사용자 가이드, 인수인계)을 쓰거나 고침 | 독자와 팩트 시트를 정하고, 가이드는 실제 사용 단계와 화면을 확인해 쓴다 | [playbooks/document.md](playbooks/document.md) |
