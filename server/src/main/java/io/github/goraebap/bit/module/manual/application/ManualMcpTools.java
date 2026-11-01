@@ -168,7 +168,8 @@ class ManualMcpTools implements McpToolProvider {
     }
 
     private static McpTool.Input version() {
-        return book().integer("expected_version", "get_manual에서 읽은 version (필수)", 0, Integer.MAX_VALUE);
+        return book().integer(
+                        "expected_version", "get_manual_page 또는 get_manual에서 읽은 책 version (필수)", 0, Integer.MAX_VALUE);
     }
 
     private static McpTool.Input pageInput() {

@@ -42,7 +42,7 @@
 | `reorder_manual` | 섹션/페이지 순서와 페이지 소속을 전체 ID 배열로 변경 |
 | `add_manual_comment` / `resolve_manual_comment` | 페이지 개선 의견과 해결/재열기 |
 
-매뉴얼 수정 도구에는 `get_manual`에서 읽은 `version`을 `expected_version`으로 준다. 공개 사이트 게시와 실시간 공동 편집은 이 도구의 범위가 아니다.
+매뉴얼 수정 도구에는 `get_manual_page` 또는 `get_manual`에서 읽은 책 `version`을 `expected_version`으로 준다. 단일 페이지 수정은 최신 페이지를 읽고 `update_manual_page`로 반영한다. 전체 책 조회를 반복하지 않는 방법과 충돌 처리는 [매뉴얼 유지관리](manual-maintenance.md)를 따른다. 공개 사이트 게시와 실시간 공동 편집은 이 도구의 범위가 아니다.
 
 문서 도구가 목록에 없으면 문서 기능이 생기기 전의 옛 서버다. 그때 긴 글은 업무 설명에 쓴다.
 

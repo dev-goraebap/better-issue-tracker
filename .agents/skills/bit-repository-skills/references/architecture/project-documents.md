@@ -8,7 +8,23 @@ BIT 프로젝트의 현행 설명은 두 매뉴얼을 우선 읽는다(D-122·D-
 - [아키텍처 매뉴얼](https://bit.goraebap.xyz/workspaces/s9eYqb2Aqz/projects/wyuo6Iro9D/manuals?manual=A1igql2JUH&page=o4BOFpGwfQ): 책 `A1igql2JUH`, 진입 `o4BOFpGwfQ`. arc42 12영역의 구조·이유·품질/위험과 횡단 설계 규칙·실제 예·검증 기준.
 - [개발 매뉴얼](https://bit.goraebap.xyz/workspaces/s9eYqb2Aqz/projects/wyuo6Iro9D/manuals?manual=CdJ85AUD13&page=zAhysBXYMY): 책 `CdJ85AUD13`, 진입 `zAhysBXYMY`. 준비·변경·검사·협업·배포의 수행 절차.
 - `get_manual_page(workspace="고래밥 스튜디오", id="CdJ85AUD13", page_id="zAhysBXYMY")`로 작업 절차를 고르고 연결된 arc42 횡단 관심사의 설계 규칙·실제 예·검증 기준을 함께 읽는다. 책을 매번 통째로 읽지 않는다.
-- ID가 없거나 책 구조/버전 변화로 탐색이 필요하면 `list_manuals(project="BIT")`와 `get_manual(id=...)`로 확인한다. 같은 세션의 확인된 ID와 버전은 재사용하되 쓰기 직전에는 최신 본문/버전을 확인한다. 현재 도구에 목차 전용·본문 검색·변경분 조회가 있다고 가정하지 않는다.
+- ID가 없거나 페이지 삭제·구성 변경으로 탐색이 필요하면 `list_manuals(project="BIT")`와 `get_manual(id=...)`로 확인한다. 전체 응답은 세션에서 보관해 목차·본문 탐색에 재사용한다. 책 version 변경만으로 전체 책을 다시 읽지 않는다. 쓰기 직전에는 해당 `get_manual_page`의 최신 본문/책 version을 읽고 `update_manual_page`에 반영한다. 현재 도구에 목차 전용·본문 검색·변경분 조회가 있다고 가정하지 않는다. 공통 절차는 배포 스킬의 `references/manual-maintenance.md`를 따른다.
+
+## 사용자 매뉴얼 영향 페이지 찾기
+
+사용자에게 보이는 동작을 바꿀 때는 책 `qwohgB4f9d`의 아래 ID로 `get_manual_page`를 읽는다. 이 표는 탐색 지도이며 사용법 본문을 복제하지 않는다. 다른 기능에도 영향이 있으면 해당 행을 함께 확인한다. 페이지 추가·삭제·이동으로 지도가 달라지면 이 표도 맞춘다.
+
+| 기능 | 페이지 ID와 내용 |
+| --- | --- |
+| 시작·초대·로그인 | `mo7LjPy5LN` 작업 공간 이해 / `m7V2CXMoi9` 초대 참여 / `mhHCnOqWpf` 로그인·공간 선택 |
+| 권한·멤버 | `mr0ViclaWh` 역할·권한 / `mIsWmIWzmE` 초대·역할 변경·내보내기 / `mc93iqoYkA` 프로젝트 멤버 |
+| 프로젝트 | `yl8U8QA59h` 만들기 / `mrEWbtEzLw` 찾기·즐겨찾기·보관 |
+| 이슈 | `mTRw2hqQ7G` 만들기 / `mZMhRhMpGo` 상태·담당자·설명 / `mBgnqDN58D` 상하위·자료 연결 / `m0WfmbZrWI` 검색·필터·뷰 / `muK8iczaY7` 댓글·첨부·활동 |
+| 일정 | `mYCfWjOekJ` 만들기·참석자 / `m1gthcnUYP` 반복·알림 |
+| 매뉴얼 | `mEcNtBR18Q` 만들기·목록 검색·필터·정렬 / `mOxUVmY0BB` 페이지 작성·목차 / `miIlSHW2kk` 읽기·본문 검색·개선 의견 / `m2QKpSPG1S` 복사·Markdown·PDF·원본 |
+| 리소스 | `m1WJ1ML0uY` 문서·폴더·첨부 / `mnhj88J8Sp` HTML·버전 |
+| 설정 | `msE39hqhPF` 워크스페이스·메뉴 / `mzCU7nvWNK` 라벨·업무 유형 / `mWg7tkeQeh` 워크플로·저장소 |
+| 알림·계정·문제 해결 | `mksVegdF88` 알림 / `m3euOjrMnn` 프로필·화면 모양 / `mJBFi2AUze` 보안·API 키·에이전트 / `mqgVqfia1F` 조회·저장 실패 |
 
 ## 작업별 절차와 횡단 관심사
 
