@@ -1,0 +1,640 @@
+{
+  "formatVersion": 1,
+  "repository": "dev-goraebap/better-issue-tracker",
+  "workspace": "고래밥 스튜디오",
+  "project": "BIT",
+  "books": [
+    {
+      "key": "architecture",
+      "targetId": "A1igql2JUH",
+      "title": "BIT 아키텍처 매뉴얼",
+      "sections": [
+        {
+          "id": "yxQpFgeimc",
+          "title": "01 소개와 목표"
+        },
+        {
+          "id": "GtO8seIQhQ",
+          "title": "02 제약사항"
+        },
+        {
+          "id": "wFZ9vd6XkT",
+          "title": "03 맥락과 범위"
+        },
+        {
+          "id": "SkLJEyDrPb",
+          "title": "04 해결 전략"
+        },
+        {
+          "id": "X5OtWDdKsy",
+          "title": "05 구성 요소"
+        },
+        {
+          "id": "Pu3SMtLXGf",
+          "title": "06 실행 흐름"
+        },
+        {
+          "id": "H9pHj6CjHd",
+          "title": "07 배포 관점"
+        },
+        {
+          "id": "moIiZlIa1C",
+          "title": "08 횡단 관심사"
+        },
+        {
+          "id": "nvObMPSEWa",
+          "title": "09 아키텍처 결정"
+        },
+        {
+          "id": "xZRmLcW4AF",
+          "title": "10 품질 요구사항"
+        },
+        {
+          "id": "WM2m0zbkfm",
+          "title": "11 위험과 기술 부채"
+        },
+        {
+          "id": "b7kymbFM6B",
+          "title": "12 용어집"
+        }
+      ],
+      "pages": [
+        {
+          "key": "o4BOFpGwfQ",
+          "targetId": "o4BOFpGwfQ",
+          "sectionId": "yxQpFgeimc",
+          "source": "architecture/o4BOFpGwfQ.md"
+        },
+        {
+          "key": "ci84DL5Z0k",
+          "targetId": "ci84DL5Z0k",
+          "sectionId": "yxQpFgeimc",
+          "source": "architecture/ci84DL5Z0k.md"
+        },
+        {
+          "key": "BeNb9Gkzrh",
+          "targetId": "BeNb9Gkzrh",
+          "sectionId": "GtO8seIQhQ",
+          "source": "architecture/BeNb9Gkzrh.md"
+        },
+        {
+          "key": "IGeM4TvwNl",
+          "targetId": "IGeM4TvwNl",
+          "sectionId": "wFZ9vd6XkT",
+          "source": "architecture/IGeM4TvwNl.md"
+        },
+        {
+          "key": "dK5meKebW1",
+          "targetId": "dK5meKebW1",
+          "sectionId": "SkLJEyDrPb",
+          "source": "architecture/dK5meKebW1.md"
+        },
+        {
+          "key": "j83U7eq671",
+          "targetId": "j83U7eq671",
+          "sectionId": "X5OtWDdKsy",
+          "source": "architecture/j83U7eq671.md"
+        },
+        {
+          "key": "v1fxXxJWn3",
+          "targetId": "v1fxXxJWn3",
+          "sectionId": "Pu3SMtLXGf",
+          "source": "architecture/v1fxXxJWn3.md"
+        },
+        {
+          "key": "L6HuRcXuVj",
+          "targetId": "L6HuRcXuVj",
+          "sectionId": "H9pHj6CjHd",
+          "source": "architecture/L6HuRcXuVj.md"
+        },
+        {
+          "key": "uDoCFGJeZL",
+          "targetId": "uDoCFGJeZL",
+          "sectionId": "H9pHj6CjHd",
+          "source": "architecture/uDoCFGJeZL.md"
+        },
+        {
+          "key": "tIv5Msv7KG",
+          "targetId": "tIv5Msv7KG",
+          "sectionId": "moIiZlIa1C",
+          "source": "architecture/tIv5Msv7KG.md"
+        },
+        {
+          "key": "Alg91m18V6",
+          "targetId": "Alg91m18V6",
+          "sectionId": "moIiZlIa1C",
+          "source": "architecture/Alg91m18V6.md"
+        },
+        {
+          "key": "U5t4uVJJrE",
+          "targetId": "U5t4uVJJrE",
+          "sectionId": "moIiZlIa1C",
+          "source": "architecture/U5t4uVJJrE.md"
+        },
+        {
+          "key": "by1uOTKEyK",
+          "targetId": "by1uOTKEyK",
+          "sectionId": "moIiZlIa1C",
+          "source": "architecture/by1uOTKEyK.md"
+        },
+        {
+          "key": "Qz4Sozn74C",
+          "targetId": "Qz4Sozn74C",
+          "sectionId": "moIiZlIa1C",
+          "source": "architecture/Qz4Sozn74C.md"
+        },
+        {
+          "key": "YwbxTrzXk9",
+          "targetId": "YwbxTrzXk9",
+          "sectionId": "moIiZlIa1C",
+          "source": "architecture/YwbxTrzXk9.md"
+        },
+        {
+          "key": "qcb1FD05j8",
+          "targetId": "qcb1FD05j8",
+          "sectionId": "moIiZlIa1C",
+          "source": "architecture/qcb1FD05j8.md"
+        },
+        {
+          "key": "kegByIaS5R",
+          "targetId": "kegByIaS5R",
+          "sectionId": "moIiZlIa1C",
+          "source": "architecture/kegByIaS5R.md"
+        },
+        {
+          "key": "ghuI6tESTu",
+          "targetId": "ghuI6tESTu",
+          "sectionId": "moIiZlIa1C",
+          "source": "architecture/ghuI6tESTu.md"
+        },
+        {
+          "key": "qoPHQyNfIG",
+          "targetId": "qoPHQyNfIG",
+          "sectionId": "moIiZlIa1C",
+          "source": "architecture/qoPHQyNfIG.md"
+        },
+        {
+          "key": "kKgaLI96P5",
+          "targetId": "kKgaLI96P5",
+          "sectionId": "moIiZlIa1C",
+          "source": "architecture/kKgaLI96P5.md"
+        },
+        {
+          "key": "LlJflSsoiL",
+          "targetId": "LlJflSsoiL",
+          "sectionId": "moIiZlIa1C",
+          "source": "architecture/LlJflSsoiL.md"
+        },
+        {
+          "key": "BEzXrFTF1X",
+          "targetId": "BEzXrFTF1X",
+          "sectionId": "moIiZlIa1C",
+          "source": "architecture/BEzXrFTF1X.md"
+        },
+        {
+          "key": "NnbZ5SNWxA",
+          "targetId": "NnbZ5SNWxA",
+          "sectionId": "moIiZlIa1C",
+          "source": "architecture/NnbZ5SNWxA.md"
+        },
+        {
+          "key": "bgdEpYjSxz",
+          "targetId": "bgdEpYjSxz",
+          "sectionId": "moIiZlIa1C",
+          "source": "architecture/bgdEpYjSxz.md"
+        },
+        {
+          "key": "G1r5xJ4407",
+          "targetId": "G1r5xJ4407",
+          "sectionId": "moIiZlIa1C",
+          "source": "architecture/G1r5xJ4407.md"
+        },
+        {
+          "key": "xBqefUiRin",
+          "targetId": "xBqefUiRin",
+          "sectionId": "nvObMPSEWa",
+          "source": "architecture/xBqefUiRin.md"
+        },
+        {
+          "key": "wSwn4EnNhp",
+          "targetId": "wSwn4EnNhp",
+          "sectionId": "xZRmLcW4AF",
+          "source": "architecture/wSwn4EnNhp.md"
+        },
+        {
+          "key": "ZgzDm1WoZn",
+          "targetId": "ZgzDm1WoZn",
+          "sectionId": "WM2m0zbkfm",
+          "source": "architecture/ZgzDm1WoZn.md"
+        },
+        {
+          "key": "EQUszOg1KB",
+          "targetId": "EQUszOg1KB",
+          "sectionId": "WM2m0zbkfm",
+          "source": "architecture/EQUszOg1KB.md"
+        },
+        {
+          "key": "oItkt9G1q1",
+          "targetId": "oItkt9G1q1",
+          "sectionId": "b7kymbFM6B",
+          "source": "architecture/oItkt9G1q1.md"
+        }
+      ],
+      "baselineVersion": 157
+    },
+    {
+      "key": "development",
+      "targetId": "CdJ85AUD13",
+      "title": "BIT 개발 매뉴얼",
+      "sections": [
+        {
+          "id": "sL9cwf8XbK",
+          "title": "시작하기"
+        },
+        {
+          "id": "rK97m8LJ7g",
+          "title": "서버 변경 작업"
+        },
+        {
+          "id": "Vb3wsvJ2eF",
+          "title": "화면 변경 작업"
+        },
+        {
+          "id": "ekDeFPBxZX",
+          "title": "협업과 검증"
+        },
+        {
+          "id": "JOp9FXnJMe",
+          "title": "릴리스와 운영"
+        }
+      ],
+      "pages": [
+        {
+          "key": "zAhysBXYMY",
+          "targetId": "zAhysBXYMY",
+          "sectionId": "sL9cwf8XbK",
+          "source": "development/zAhysBXYMY.md"
+        },
+        {
+          "key": "ujTBLAqlgj",
+          "targetId": "ujTBLAqlgj",
+          "sectionId": "sL9cwf8XbK",
+          "source": "development/ujTBLAqlgj.md"
+        },
+        {
+          "key": "YrHTVBFxOY",
+          "targetId": "YrHTVBFxOY",
+          "sectionId": "rK97m8LJ7g",
+          "source": "development/YrHTVBFxOY.md"
+        },
+        {
+          "key": "r9H9JoBuz4",
+          "targetId": "r9H9JoBuz4",
+          "sectionId": "rK97m8LJ7g",
+          "source": "development/r9H9JoBuz4.md"
+        },
+        {
+          "key": "oSyVeWhOlE",
+          "targetId": "oSyVeWhOlE",
+          "sectionId": "rK97m8LJ7g",
+          "source": "development/oSyVeWhOlE.md"
+        },
+        {
+          "key": "eMIBcD18ZX",
+          "targetId": "eMIBcD18ZX",
+          "sectionId": "rK97m8LJ7g",
+          "source": "development/eMIBcD18ZX.md"
+        },
+        {
+          "key": "xlXKn4GNiy",
+          "targetId": "xlXKn4GNiy",
+          "sectionId": "rK97m8LJ7g",
+          "source": "development/xlXKn4GNiy.md"
+        },
+        {
+          "key": "ArYXJ23IQQ",
+          "targetId": "ArYXJ23IQQ",
+          "sectionId": "rK97m8LJ7g",
+          "source": "development/ArYXJ23IQQ.md"
+        },
+        {
+          "key": "hBPou6i68E",
+          "targetId": "hBPou6i68E",
+          "sectionId": "rK97m8LJ7g",
+          "source": "development/hBPou6i68E.md"
+        },
+        {
+          "key": "MJ3kcUrbmX",
+          "targetId": "MJ3kcUrbmX",
+          "sectionId": "rK97m8LJ7g",
+          "source": "development/MJ3kcUrbmX.md"
+        },
+        {
+          "key": "fRHDxTp1C8",
+          "targetId": "fRHDxTp1C8",
+          "sectionId": "rK97m8LJ7g",
+          "source": "development/fRHDxTp1C8.md"
+        },
+        {
+          "key": "bXuMEwplXk",
+          "targetId": "bXuMEwplXk",
+          "sectionId": "rK97m8LJ7g",
+          "source": "development/bXuMEwplXk.md"
+        },
+        {
+          "key": "V4r21gaIls",
+          "targetId": "V4r21gaIls",
+          "sectionId": "rK97m8LJ7g",
+          "source": "development/V4r21gaIls.md"
+        },
+        {
+          "key": "i75mcSXKgO",
+          "targetId": "i75mcSXKgO",
+          "sectionId": "Vb3wsvJ2eF",
+          "source": "development/i75mcSXKgO.md"
+        },
+        {
+          "key": "F8ID8dxSdL",
+          "targetId": "F8ID8dxSdL",
+          "sectionId": "Vb3wsvJ2eF",
+          "source": "development/F8ID8dxSdL.md"
+        },
+        {
+          "key": "Mz8JeOVDcL",
+          "targetId": "Mz8JeOVDcL",
+          "sectionId": "Vb3wsvJ2eF",
+          "source": "development/Mz8JeOVDcL.md"
+        },
+        {
+          "key": "YjCqoSHJBo",
+          "targetId": "YjCqoSHJBo",
+          "sectionId": "Vb3wsvJ2eF",
+          "source": "development/YjCqoSHJBo.md"
+        },
+        {
+          "key": "jRJDZcpEJV",
+          "targetId": "jRJDZcpEJV",
+          "sectionId": "Vb3wsvJ2eF",
+          "source": "development/jRJDZcpEJV.md"
+        },
+        {
+          "key": "aTEd5efrEQ",
+          "targetId": "aTEd5efrEQ",
+          "sectionId": "ekDeFPBxZX",
+          "source": "development/aTEd5efrEQ.md"
+        },
+        {
+          "key": "AQygip0Rv4",
+          "targetId": "AQygip0Rv4",
+          "sectionId": "ekDeFPBxZX",
+          "source": "development/AQygip0Rv4.md"
+        },
+        {
+          "key": "RqGTB7dtd6",
+          "targetId": "RqGTB7dtd6",
+          "sectionId": "ekDeFPBxZX",
+          "source": "development/RqGTB7dtd6.md"
+        },
+        {
+          "key": "pNDA17FCoQ",
+          "targetId": "pNDA17FCoQ",
+          "sectionId": "ekDeFPBxZX",
+          "source": "development/pNDA17FCoQ.md"
+        },
+        {
+          "key": "U0JhDpQURF",
+          "targetId": "U0JhDpQURF",
+          "sectionId": "JOp9FXnJMe",
+          "source": "development/U0JhDpQURF.md"
+        },
+        {
+          "key": "tpKZ6UIr31",
+          "targetId": "tpKZ6UIr31",
+          "sectionId": "JOp9FXnJMe",
+          "source": "development/tpKZ6UIr31.md"
+        },
+        {
+          "key": "zMxDaRLgq2",
+          "targetId": "zMxDaRLgq2",
+          "sectionId": "JOp9FXnJMe",
+          "source": "development/zMxDaRLgq2.md"
+        }
+      ],
+      "baselineVersion": 116
+    },
+    {
+      "key": "user",
+      "targetId": "qwohgB4f9d",
+      "title": "BIT 사용자 매뉴얼",
+      "sections": [
+        {
+          "id": "td7BAaE3K4",
+          "title": "처음 사용하기"
+        },
+        {
+          "id": "TbtUPISbnL",
+          "title": "프로젝트"
+        },
+        {
+          "id": "mf8i5Hwd1z",
+          "title": "이슈"
+        },
+        {
+          "id": "mV8OYzSSnQ",
+          "title": "스케줄"
+        },
+        {
+          "id": "mb8FCjJf0s",
+          "title": "매뉴얼"
+        },
+        {
+          "id": "mCsArC8yaK",
+          "title": "리소스"
+        },
+        {
+          "id": "mtXhzz1YfI",
+          "title": "관리"
+        },
+        {
+          "id": "mFCTCE5X0x",
+          "title": "내 계정"
+        },
+        {
+          "id": "mlniutMBlK",
+          "title": "문제 해결"
+        }
+      ],
+      "pages": [
+        {
+          "key": "mo7LjPy5LN",
+          "targetId": "mo7LjPy5LN",
+          "sectionId": "td7BAaE3K4",
+          "source": "user/mo7LjPy5LN.md"
+        },
+        {
+          "key": "m7V2CXMoi9",
+          "targetId": "m7V2CXMoi9",
+          "sectionId": "td7BAaE3K4",
+          "source": "user/m7V2CXMoi9.md"
+        },
+        {
+          "key": "mhHCnOqWpf",
+          "targetId": "mhHCnOqWpf",
+          "sectionId": "td7BAaE3K4",
+          "source": "user/mhHCnOqWpf.md"
+        },
+        {
+          "key": "mr0ViclaWh",
+          "targetId": "mr0ViclaWh",
+          "sectionId": "td7BAaE3K4",
+          "source": "user/mr0ViclaWh.md"
+        },
+        {
+          "key": "yl8U8QA59h",
+          "targetId": "yl8U8QA59h",
+          "sectionId": "TbtUPISbnL",
+          "source": "user/yl8U8QA59h.md"
+        },
+        {
+          "key": "mrEWbtEzLw",
+          "targetId": "mrEWbtEzLw",
+          "sectionId": "TbtUPISbnL",
+          "source": "user/mrEWbtEzLw.md"
+        },
+        {
+          "key": "mc93iqoYkA",
+          "targetId": "mc93iqoYkA",
+          "sectionId": "TbtUPISbnL",
+          "source": "user/mc93iqoYkA.md"
+        },
+        {
+          "key": "mTRw2hqQ7G",
+          "targetId": "mTRw2hqQ7G",
+          "sectionId": "mf8i5Hwd1z",
+          "source": "user/mTRw2hqQ7G.md"
+        },
+        {
+          "key": "mZMhRhMpGo",
+          "targetId": "mZMhRhMpGo",
+          "sectionId": "mf8i5Hwd1z",
+          "source": "user/mZMhRhMpGo.md"
+        },
+        {
+          "key": "mBgnqDN58D",
+          "targetId": "mBgnqDN58D",
+          "sectionId": "mf8i5Hwd1z",
+          "source": "user/mBgnqDN58D.md"
+        },
+        {
+          "key": "m0WfmbZrWI",
+          "targetId": "m0WfmbZrWI",
+          "sectionId": "mf8i5Hwd1z",
+          "source": "user/m0WfmbZrWI.md"
+        },
+        {
+          "key": "muK8iczaY7",
+          "targetId": "muK8iczaY7",
+          "sectionId": "mf8i5Hwd1z",
+          "source": "user/muK8iczaY7.md"
+        },
+        {
+          "key": "mYCfWjOekJ",
+          "targetId": "mYCfWjOekJ",
+          "sectionId": "mV8OYzSSnQ",
+          "source": "user/mYCfWjOekJ.md"
+        },
+        {
+          "key": "m1gthcnUYP",
+          "targetId": "m1gthcnUYP",
+          "sectionId": "mV8OYzSSnQ",
+          "source": "user/m1gthcnUYP.md"
+        },
+        {
+          "key": "mEcNtBR18Q",
+          "targetId": "mEcNtBR18Q",
+          "sectionId": "mb8FCjJf0s",
+          "source": "user/mEcNtBR18Q.md"
+        },
+        {
+          "key": "mOxUVmY0BB",
+          "targetId": "mOxUVmY0BB",
+          "sectionId": "mb8FCjJf0s",
+          "source": "user/mOxUVmY0BB.md"
+        },
+        {
+          "key": "miIlSHW2kk",
+          "targetId": "miIlSHW2kk",
+          "sectionId": "mb8FCjJf0s",
+          "source": "user/miIlSHW2kk.md"
+        },
+        {
+          "key": "m2QKpSPG1S",
+          "targetId": "m2QKpSPG1S",
+          "sectionId": "mb8FCjJf0s",
+          "source": "user/m2QKpSPG1S.md"
+        },
+        {
+          "key": "m1WJ1ML0uY",
+          "targetId": "m1WJ1ML0uY",
+          "sectionId": "mCsArC8yaK",
+          "source": "user/m1WJ1ML0uY.md"
+        },
+        {
+          "key": "mnhj88J8Sp",
+          "targetId": "mnhj88J8Sp",
+          "sectionId": "mCsArC8yaK",
+          "source": "user/mnhj88J8Sp.md"
+        },
+        {
+          "key": "mIsWmIWzmE",
+          "targetId": "mIsWmIWzmE",
+          "sectionId": "mtXhzz1YfI",
+          "source": "user/mIsWmIWzmE.md"
+        },
+        {
+          "key": "msE39hqhPF",
+          "targetId": "msE39hqhPF",
+          "sectionId": "mtXhzz1YfI",
+          "source": "user/msE39hqhPF.md"
+        },
+        {
+          "key": "mzCU7nvWNK",
+          "targetId": "mzCU7nvWNK",
+          "sectionId": "mtXhzz1YfI",
+          "source": "user/mzCU7nvWNK.md"
+        },
+        {
+          "key": "mWg7tkeQeh",
+          "targetId": "mWg7tkeQeh",
+          "sectionId": "mtXhzz1YfI",
+          "source": "user/mWg7tkeQeh.md"
+        },
+        {
+          "key": "mksVegdF88",
+          "targetId": "mksVegdF88",
+          "sectionId": "mFCTCE5X0x",
+          "source": "user/mksVegdF88.md"
+        },
+        {
+          "key": "m3euOjrMnn",
+          "targetId": "m3euOjrMnn",
+          "sectionId": "mFCTCE5X0x",
+          "source": "user/m3euOjrMnn.md"
+        },
+        {
+          "key": "mJBFi2AUze",
+          "targetId": "mJBFi2AUze",
+          "sectionId": "mFCTCE5X0x",
+          "source": "user/mJBFi2AUze.md"
+        },
+        {
+          "key": "mqgVqfia1F",
+          "targetId": "mqgVqfia1F",
+          "sectionId": "mlniutMBlK",
+          "source": "user/mqgVqfia1F.md"
+        }
+      ],
+      "baselineVersion": 6
+    }
+  ]
+}

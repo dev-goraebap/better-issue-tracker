@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Checks BIT's own skills against this repository, so they cannot drift: the skill BIT ships
-// (skills/better-issue-tracker) and the one this repository works under (.agents/skills/bit-repository-skills).
+// (skills/better-issue-tracker) and the one this repository works under (.agents/skills/bit-development).
 // Every relative link resolves, every playbook and reference is reachable, the frontmatter names the folder and its
 // description fits, no change-log file creeps back (history lives in git and BIT work items), the shipped skill never
 // brings back separate decision records (D-114), and its references/tools.md names exactly the MCP tools the server
@@ -13,12 +13,35 @@ const ROOT = resolve(import.meta.dirname, '..');
 const SERVER = join(ROOT, 'server', 'src', 'main', 'java');
 const SKILLS = [
   { dir: join(ROOT, 'skills', 'better-issue-tracker'), numberedSections: true },
-  { dir: join(ROOT, '.agents', 'skills', 'bit-repository-skills'), numberedSections: false },
+  { dir: join(ROOT, '.agents', 'skills', 'bit-development'), numberedSections: false },
 ];
 const RETIRED = /\b(bit-(architecture|backend|frontend|database|api-contract|release)|verify-bit)\b/g;
 const CHANGE_LOGS = /^(notes|changelog)\.md$/i;
 const DECISION_RECORD = '결정기록';
 const problems = [];
+
+// Publication maps must refer to existing in-repository sources with stable unique keys.
+const manualRoot = join(ROOT, 'docs', 'manuals');
+const publication = JSON.parse(readFileSync(join(manualRoot, 'publication.json'), 'utf8'));
+const bookKeys = new Set();
+for (const book of publication.books) {
+  if (bookKeys.has(book.key)) problems.push(`duplicate manual book key: ${book.key}`);
+  bookKeys.add(book.key);
+  const pageKeys = new Set();
+  for (const page of book.pages) {
+    const source = resolve(manualRoot, page.source);
+    if (pageKeys.has(page.key)) problems.push(`duplicate manual page key: ${book.key}/${page.key}`);
+    pageKeys.add(page.key);
+    if (relative(manualRoot, source).startsWith('..') || !existsSync(source)) {
+      problems.push(`invalid manual source: ${page.source}`);
+    }
+  }
+}
+
+// A renamed entry must not coexist with an obsolete installed source.
+if (existsSync(join(ROOT, '.agents', 'skills', 'bit-repository-skills'))) {
+  problems.push('obsolete bit-repository-skills source remains after rename');
+}
 
 const walk = (dir, keep) => readdirSync(dir).flatMap(name => {
   const path = join(dir, name);
@@ -40,7 +63,7 @@ for (const { dir, numberedSections } of SKILLS) {
     if (numberedSections) {
       for (const [found] of text.matchAll(/\d절/g)) problems.push(`${show(file)}: "${found}" points at a numbered section; link the file instead`);
     }
-    for (const [found] of text.matchAll(RETIRED)) problems.push(`${show(file)}: ${found} is now a playbook of bit-repository-skills; link it`);
+    for (const [found] of text.matchAll(RETIRED)) problems.push(`${show(file)}: ${found} is now a playbook of bit-development; link it`);
   }
   for (const file of docs.filter(path => /[\\/](playbooks|references)[\\/]/.test(path))) {
     if (!linked.has(file)) problems.push(`${show(file)}: no file links to it`);

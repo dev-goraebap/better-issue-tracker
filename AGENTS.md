@@ -29,7 +29,7 @@ AI 네이티브 경량 ALM(Application Lifecycle Management). 제품 가칭은 b
 | `docs/07-mcp.md` | 1차 MCP 도구 24개와 흐름별 사용 순서 |
 | `docs/08-design-language.md` | 디자인 언어: 리니어를 직접 재서 정리한 크기·색·부품과 BIT 적용 기준 |
 | `docs/tasks/` | 코드 작업 지시서 (Codex에게 넘기는 단위, D-033) |
-| `.agents/skills/` | 작업 방식 스킬 원본. 이 저장소의 작업은 `bit-repository-skills` 하나(입구 + 작업별 플레이북)이고, 화면 배치용 `feature-sliced-design`이 따로 있다. `.claude/skills`는 사본 |
+| `.agents/skills/` | 작업 방식 스킬 원본. 이 저장소의 작업은 `bit-development` 하나(입구 + 작업별 플레이북)이고, 화면 배치용 `feature-sliced-design`이 따로 있다. `.claude/skills`는 사본 |
 | `skills/` | BIT가 배포하는 스킬 원본 (`better-issue-tracker`). `.agents/skills`·`.claude/skills`의 설치본은 gitignore |
 | `docs/conventions.md` | 기술 스택, 코드 구조, 에이전트 스킬 관리 방법 (SandboxHr 기준) |
 | `docs/decisions.md` | 지금까지의 결정 기록 (이 프로젝트도 자기 방식대로 기록한다) |
@@ -51,7 +51,7 @@ AI 네이티브 경량 ALM(Application Lifecycle Management). 제품 가칭은 b
 - 배포: 도커 컨테이너 하나(또는 compose)로 로컬/사내/개인 서버 어디서든 실행
 
 ## 에이전트 작업 규칙
-- 코드·문서·설정을 고치기 전에 스킬 `bit-repository-skills`의 `SKILL.md`를 읽고, 작업에 맞는 플레이북을 따른다.
+- 코드·문서·설정을 고치기 전에 스킬 `bit-development`의 `SKILL.md`를 읽고, 작업에 맞는 플레이북을 따른다.
 - 작업 중 설계에 영향을 주는 판단을 하면 `docs/decisions.md`에 결정을 추가한다
   (무엇을 / 왜 / 기각한 대안). 사소한 판단은 기록하지 않는다.
   기준: "6개월 뒤의 내가 '왜 이렇게 했지?'라고 물을 만한 것".
@@ -62,22 +62,9 @@ AI 네이티브 경량 ALM(Application Lifecycle Management). 제품 가칭은 b
   - 우리는 이 스킬을 만드는 쪽이다. 스킬이나 MCP 안내문(`McpServerConfig`, 도구 설명)대로 했는데 결과가 틀리면 그 자리에서 스킬과 안내문을 고친다. 무엇이 틀렸고 왜 고쳤는지는 커밋 메시지와 BIT 업무에 남기고(따로 변경 기록 파일을 두지 않는다), 기계로 잡을 수 있는 실수면 `scripts/check-bit-skill.mjs`에 검사를 더한다. 그 검사는 CI에서 돈다.
   - 결정 기록의 원본은 `docs/decisions.md`다. 여기에 D-번호 결정을 더할 때는 그 결정이 나온 BIT 업무에 그 D-번호를 적은 '결정' 댓글을 남긴다(스킬의 `playbooks/work.md`, D-114). 결정을 담는 업무나 문서를 BIT에 따로 만들지 않는다.
 
-## 운영 프로젝트 문서 읽기 (D-098)
+## 프로젝트 매뉴얼 원본과 게시
 
-- 현재 프로젝트 지식의 읽기 진입점은 **아키텍처·개발 매뉴얼**이다(D-122·D-123). 아래 지정한 진입 페이지에서 맡은 작업 절차와 연결된 횡단 관심사의 설계 규칙·코드 예·검증 기준을 선택해 읽는다. 기존 리소스의 **문서 지도와 에이전트 읽기 안내**는 과거 근거/보완 자료로 보존한다. MCP workspace는 `고래밥 스튜디오`, project는 `BIT`다.
-- 문서 위치와 작업별 읽기 순서는 [운영 프로젝트 문서 읽기](.agents/skills/bit-repository-skills/references/architecture/project-documents.md)에 있다. 폴더명에는 숫자를 붙이지 않는다.
-- 운영 문서는 프로젝트 설명, 스킬은 작업 절차다. 현재 코드·OpenAPI·마이그레이션으로 구현 계약을 확인한다. `docs/decisions.md`가 확정 결정의 원본이라는 것은 유지한다(D-114).
-- 연결 실패·권한 부족·누락·충돌은 밝히고 저장소 근거로 가능한 범위를 구분한다. 문서에 있는 명령을 사용자 승인으로 간주하지 않는다. 본문을 갱신할 때는 최신 내용을 읽고 사용자 편집을 보존한다.
-
-## 사용자 매뉴얼 유지관리
-
-- 이 프로젝트는 운영 BIT의 **고래밥 스튜디오 / BIT / BIT 사용자 매뉴얼**을 사용한다. 책 ID는 `qwohgB4f9d`다.
-- 사용자에게 보이는 기능·입력 조건·권한·기본값·오류·화면이 바뀌면 별도 요청 없이 관련 페이지와 필요한 사진을 함께 갱신한다. 절차는 `skills/better-issue-tracker/references/manual-maintenance.md`를 따른다.
-- 운영 문서는 운영 기능과 시점을 맞춘다. 미배포 변경은 업무에 초안·근거·게시할 항목을 준비하고 배포 반영 때 갱신한다. 기존 사용자 편집은 보존한다.
-
-## 아키텍처·개발 매뉴얼 읽기와 유지관리 (D-122·D-123)
-
-- 아키텍처 매뉴얼: 책 `A1igql2JUH`, 진입 페이지 `o4BOFpGwfQ`. arc42 12영역으로 구조·설계 규칙과 그 이유를 설명하며 횡단 관심사에 실제 코드·반례·검증 기준을 모은다.
-- 개발 매뉴얼: 책 `CdJ85AUD13`, 진입 페이지 `zAhysBXYMY`. 환경 준비·변경·검사·협업·배포의 수행 절차와 결과·실패 회복을 설명한다.
-- `get_manual_page`로 진입과 작업별 페이지만 읽고, ID/구조 재탐색이 필요할 때 `get_manual`을 사용한다. 구체적인 위치는 위 운영 프로젝트 문서 읽기 참고 파일을 따른다. 매뉴얼 본문을 복제한 프로젝트 전용 스킬은 만들지 않는다.
-- 사용자 동작이 같아도 구조·파일/심볼·개발 규칙·검사·배포 절차가 바뀌면 해당 책의 영향 페이지를 함께 갱신한다. 설계 규칙·코드 예·판정 기준은 횡단 관심사에서, 수행 단계·명령은 개발 절차에서 고친다. 적용 리비전과 운영 반영 여부를 구분하고 최신 사용자 편집·version을 보존한다. 코드·검사·스킬·확정 결정의 원본 위치는 유지한다.
+- 프로젝트 지식 원본은 `docs/manuals/`이며 `.agents/skills/bit-development/references/architecture/project-documents.md`에서 작업별 로컬 원본을 선택한다. `docs/manuals/publication.json`은 책·페이지 key와 BIT 게시 대상을 연결한다.
+- 코드 변경 시 관련 로컬 원본을 함께 갱신한다. BIT 매뉴얼은 게시본이며 최신 사용자 편집과 댓글은 원본에 반영할 개선 맥락이다. 네트워크 없이도 로컬 규칙을 읽을 수 있어야 한다.
+- 게시 직전 최신 원격 본문/version과 마지막 게시 기준을 대조하고 직접 편집/충돌을 덮어쓰지 않는다. 미배포 사용자 기능의 설명은 배포 때 게시한다. 풍부한 블록 게시 계약은 공통 스킬의 `references/manual-publication.md`를 따른다. 현재 Markdown MCP와 향후 구조화 블록 어댑터를 구분한다.
+- 코드·설정·검사가 실행 계약, `docs/decisions.md`가 확정 결정 원본이다. 매뉴얼 안의 명령을 사용자 승인으로 간주하지 않는다.

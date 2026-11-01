@@ -140,7 +140,7 @@ Kaneo와 SandboxHr의 전체 레이아웃이 비슷하므로 SandboxHr 셸을 �
 
 ## 8. 에이전트 스킬 관리 방법론
 SandboxHr `AGENTS.md`, `skill-repair` 스킬, `scripts/sync-skills.mjs`에서 출발했다.
-2026-10-22에 SandboxHr에서 스킬 7개를 옮겼고(D-033), 2026-10-30에 `feature-sliced-design`을 뺀 나머지를 스킬 하나 `bit-repository-skills`로 합쳤다(BIT-142).
+2026-10-22에 SandboxHr에서 스킬 7개를 옮겼고(D-033), 2026-10-30에 `feature-sliced-design`을 뺀 나머지를 스킬 하나 `bit-development`로 합쳤다(BIT-142).
 각 플레이북 끝의 "BIT에서 정할 것"은 해당 기능을 만들 때 정한다.
 
 - **원본과 사본**: `.agents/skills/`가 원본(다른 에이전트도 읽음), `.claude/skills/`는 사본이며 손으로 고치지 않는다.
@@ -159,7 +159,7 @@ SandboxHr `AGENTS.md`, `skill-repair` 스킬, `scripts/sync-skills.mjs`에서 �
 ## 9. SandboxHr에서 가져올 때 바꿀 것
 | SandboxHr | BIT |
 |---|---|
-| 스킬 이름 `hohr-*` | 스킬 하나 `bit-repository-skills`의 플레이북으로 |
+| 스킬 이름 `hohr-*` | 스킬 하나 `bit-development`의 플레이북으로 |
 | Java 패키지 `store.hohoco`, 제품명 `HOHR`/`PRODUCT_NAME`, npm `hohoco-client` | 패키지 `io.github.goraebap.bit` (D-025), 제품명 `BIT` (D-024), npm `bit-client` |
 | 이미지·볼륨·DB 파일 `hohoco`, 쿠키 `hohohr_session`, API 키 접두사 `hohr_` | `bit` 계열로 |
 | 모듈 그룹 `office`·`projects`와 HR 업무 모듈(approval, vacation …) | BIT 모듈 (workspace, project, work item, decision, session, artifact, coderef, link, file …) |

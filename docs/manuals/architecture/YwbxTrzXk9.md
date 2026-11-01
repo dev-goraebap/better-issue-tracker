@@ -1,0 +1,215 @@
+# 권한·소속·감사 주체 확인
+
+목록·상세·쓰기·하위 파일 URL을 추가하거나 범위 처리를 바꿀 때 적용합니다.
+
+## 규칙과 이유
+
+서비스에서 현재 주체의 공간 역할과 실제 대상 소속을 확인합니다. 입력 URL의 프로젝트를 신뢰해 대상의 소속을 덮어쓰지 않습니다. 화면 숨김은 편의이고 보안 판정은 서버 책임입니다. 사용자의 API 키는 키 주인과 agent 이름을 전달하며 별도 무제한 권한이 아닙니다.
+
+## BIT 실제 코드
+
+현재 코드 발췌: `server/src/main/java/io/github/goraebap/bit/module/manual/application/ManualService.java` · 260행부터. 주변 선언·호출부는 원본에서 확인합니다.
+
+```java
+    private void access(CurrentUser actor, String workspaceId, String projectId, boolean writing) {
+        workspaceFacade.requireAccess(
+                actor, workspaceId, writing ? WorkspaceFacade.Action.WRITE_DOCUMENTS : WorkspaceFacade.Action.READ);
+        if (projectId != null) projectFacade.requireAccess(actor, workspaceId, projectId, false);
+    }
+```
+
+쓰기에는 WRITE_DOCUMENTS, 읽기에는 READ를 사용하고 프로젝트가 있으면 그 접근을 추가 확인합니다. `require`는 실제 저장된 manual.projectId로 접근합니다. 프로젝트 참여자 여부와 읽기 ACL은 같은 개념이 아닙니다.
+
+## 피해야 할 예
+
+아래는 실패 이유를 보여 주는 설명용 반례이며 현재 BIT 구현의 발췌가 아닙니다. 생략된 선언이 있어 그대로 실행하는 완성 코드가 아닙니다.
+
+```java
+// 대상 실체와 공간·권한을 확인하지 않는 반례
+if (request.canEdit()) repository.save(body);
+return storage.openUrl(request.assetId());
+```
+
+## 예외와 적용 한계
+
+사전 HTTP 필터가 있어도 쓰기 시점 검사를 생략하지 않습니다. 관리자·owner의 특별 동작도 현재 역할 계약으로 판단하며 프로젝트 구성원 목록만으로 권한을 계산하지 않습니다. 다른 공간의 ID를 섞은 요청은 존재 정보 노출 정책까지 확인합니다.
+
+## 검증 기준
+
+자동: `server`에서 `.\gradlew.bat integrationTest --tests "*ManualIntegrationTest"`는 viewer 쓰기 거절·외부 사용자·다른 공간·provenance를 확인합니다.
+
+수동/사용 경로: owner·작성 가능 역할·viewer·비멤버로 조회/쓰기/첨부를 각각 확인하고 REST/MCP 양쪽에 같은 결과인지 봅니다. Service 통합 테스트만으로 HTTP 필터·CSRF 전체를 통과했다고 하지 않습니다.
+
+## 적용 절차
+
+실제 변경은 [개발 매뉴얼의 작업 절차](../development/ArYXJ23IQQ.md)로 이어 갑니다.
+
+## 근거와 적용 기준
+
+앱 버전은 server/build.gradle과 client/package.json 기준 0.22.0입니다. 개발 커밋은 출시 버전과 구분합니다. 근거 링크는 현재 체크아웃의 원본이며, 실제 코드 발췌는 공백을 정규화해 대조했습니다. 실행 검사 이력은 BIT-148을 따르며 이 정적 검수는 새 실행/화면 검증을 뜻하지 않습니다.
+
+- [server/src/main/java/io/github/goraebap/bit/module/manual/application/ManualService.java](../../../server/src/main/java/io/github/goraebap/bit/module/manual/application/ManualService.java)
+- [server/src/test/java/io/github/goraebap/bit/ManualIntegrationTest.java](../../../server/src/test/java/io/github/goraebap/bit/ManualIntegrationTest.java)
+- [server/src/main/java/io/github/goraebap/bit/module/project/application/ProjectService.java](../../../server/src/main/java/io/github/goraebap/bit/module/project/application/ProjectService.java)
+
+## 상세 적용 기준: 공통 03. 인증과 권한
+
+
+이 문서는 시스템의 사용자 인증 방식(이메일 + 비밀번호, 선택적 이메일 OTP), 세션 토큰 관리 및 영속화, 에이전트용 API 키, 쿠키 보안과 CSRF 방어 대책, 서버 중심의 인가(Authorization) 제어 표준을 정의한다. 테이블은 `docs/06-schema.md` 1·2절, 결정은 D-021·D-022·D-027이다.
+
+---
+
+## 1. 로그인 방식
+
+사람의 인증은 이메일 + 비밀번호가 기본이다. 메일 서버(SMTP)를 설정했을 때만 이메일 OTP 로그인과 비밀번호 재설정 메일이 켜진다(D-027). 어느 방식이든 본인 확인 후 동일 출처의 `HttpOnly` 세션 쿠키 `bit_session`을 발급한다.
+
+| 상황 | 쓰는 방식 |
+| :--- | :--- |
+| **기본 (메일 서버 없음)** | 이메일 + 비밀번호. 비밀번호를 잊으면 인스턴스 관리자가 임시 비밀번호를 발급한다 |
+| **메일 서버 있음** | 위에 더해 이메일 OTP 로그인과 OTP로 하는 비밀번호 재설정 |
+| **에이전트·MCP** | 사람의 API 키(5절). 별도 계정을 만들지 않는다 |
+
+- **첫 관리자**: 첫 가입자가 인스턴스 관리자(`iam_user.is_instance_admin = 1`)가 된다. 사용자 행이 하나도 없을 때만 가입 트랜잭션에서 허용한다. 소프트 삭제된 행도 포함하며 다시 가입을 열지 않는다(D-036).
+- **계정 정책**: 소셜 로그인(GitHub OAuth 등)은 1차에 넣지 않는다. 이후 가입은 초대만 받는다. 초대 링크는 후속 워크스페이스 작업에서 구현한다(D-036).
+
+### 비밀번호 정책
+| 항목 | 설정 기준 | 설명 및 목적 |
+| :--- | :--- | :--- |
+| **해시** | Spring Security `DelegatingPasswordEncoder` 기본(bcrypt) | `iam_password.password_hash`에 저장. 원문은 저장하지 않는다 |
+| **잠금** | 연속 5회 실패 시 15분 | `failed_count`, `locked_until`. 무차별 대입 방어 |
+| **임시 비밀번호** | 인스턴스 관리자가 발급 | `must_change = 1`로 두어 다음 로그인 때 바꾸게 한다 |
+
+### OTP 운영 정책 기준 (메일 서버가 있을 때만)
+`iam_email_otp`에 두며 용도(`purpose`)는 `sign_in`, `password_reset`이다.
+
+| 항목 | 설정 기준 | 설명 및 목적 |
+| :--- | :--- | :--- |
+| **발송 채널** | 계정의 이메일 | `iam_user.email`로 발송 |
+| **코드 형식** | 6자리 숫자 | 암호학적 난수 생성. DB에는 `code_hash`만 저장 |
+| **유효 시간** | 5분 | 발급 후 5분 초과 시 자동 폐기 |
+| **검증 제한** | 최대 5회 실패 | 5회 불일치 시 해당 OTP 즉시 무효화 (무차별 대입 방어) |
+| **재발송 간격** | 최소 60초 대기 | 메일 발송 남용 및 서버 부하 방지 |
+
+메일 서버가 없으면 OTP 경로는 꺼지고(D-030) 화면은 OTP 버튼을 숨긴다.
+
+---
+
+## 2. 세션 관리 및 토큰 보안
+
+세션 정보는 메모리가 아닌 영속성 데이터베이스(`iam_session`)에 보관하여 재기동 후에도 유효 세션을 유지한다.
+
+### 세션 토큰 발급 및 암호화
+- **토큰 생성**: 암호학적으로 안전한 난수 생성기(CSPRNG)를 사용하여 세션 식별자를 발급한다.
+- **HMAC 해시 보관**: 데이터베이스에는 토큰 원문을 저장하지 않으며, 용도 문자열로 분리된 HMAC 해시값(`token_hash`)을 저장한다. 해시 서명에 사용되는 비밀키는 애플리케이션 환경 변수를 통해 주입한다(로컬 실행은 첫 실행 때 자동 생성).
+- **서버 무중단 유지**: 세션 데이터를 DB에 영속화함으로써 API 서버의 재배포나 재기동 시에도 사용자의 로그인 세션이 유실되지 않도록 보장한다.
+- **현재 워크스페이스**: 세션은 사용자가 보고 있는 워크스페이스를 `active_workspace_id`로 기억한다.
+
+### 세션 수명 및 슬라이딩 만료
+- 사용자의 활동에 따라 세션 유효 기간(`expires_at`)을 연장하는 슬라이딩 갱신(Sliding Session)을 지원한다.
+- 단, 잦은 DB 업데이트를 방지하기 위해 **갱신 최소 간격**(`last_seen_at` 기준)을 두고 동작하며, 보안을 위해 최초 로그인 시점을 기준으로 한 **절대 만료 상한(Absolute Expiration, `absolute_expires_at`)**을 반드시 적용한다.
+
+---
+
+## 3. 쿠키 보안 및 CSRF 방어 대책
+
+### 세션 쿠키 보안 속성
+브라우저에 전달되는 세션 쿠키 `bit_session`은 다음 보안 속성을 필수적으로 만족해야 한다.
+- `HttpOnly`: 자바스크립트(`document.cookie`)를 통한 쿠키 접근을 원천 차단하여 XSS 공격 방어.
+- `Path=/`: 사이트 전체 범위에서 유효하도록 설정.
+- `SameSite=Lax`: 타 사이트로부터의 크로스 사이트 요청 시 쿠키 전송을 제한.
+- `Secure`: 프로덕션 및 스테이징 환경의 모든 HTTPS 통신에서만 전송되도록 강제.
+
+### CSRF(Cross-Site Request Forgery) 방어
+- 브라우저의 `SameSite=Lax` 설정만으로 모든 CSRF 공격이 차단된다고 가정하지 않는다.
+- 세션 쿠키로 인증되어 데이터의 상태를 변경하는 모든 요청(`POST`, `PUT`, `PATCH`, `DELETE`)에 대해 HTTP `Origin` 및 `Referer` 헤더 검증과 전용 CSRF 방어 체계를 적용한다. 허용 출처(Origin) 목록은 운영 설정으로 관리한다.
+- CSRF 토큰이 없거나 쿠키와 맞지 않는 요청은 403 `AUTH_CSRF_INVALID`로, 허용하지 않은 출처는 403 `AUTH_FORBIDDEN`으로 답한다. 화면 HTTP 계층은 함께 시작한 명령에 토큰 조회 하나를 나눠 쓰고, `AUTH_CSRF_INVALID`를 받은 명령만 토큰을 새로 받아 한 번 다시 보낸다.
+- 유효한 Bearer로 인증된 요청만 CSRF에서 제외한다. 잘못된 Bearer는 정상 쿠키가 함께 있어도 401이며, 유효한 Bearer가 있으면 세션 전용 제한을 우회할 수 없다(D-038).
+
+### 보안 응답 헤더
+API와 화면의 모든 응답에 Spring Security 기본 헤더(`X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, HTTPS의 HSTS)와 함께 다음을 붙인다(`AuthSecurityConfig`).
+- `Referrer-Policy: strict-origin-when-cross-origin`: 다른 사이트로 나가는 링크에는 출처만 보내고 업무·결정 ID가 든 경로는 보내지 않는다.
+- `Permissions-Policy`: 화면이 쓰지 않는 기기 기능(카메라, 마이크, 위치, 결제, USB, 시리얼, 블루투스)을 끈다. 화면이 이 기능을 쓰게 되면 목록에서 뺀다.
+- Content-Security-Policy는 아직 두지 않는다. 빌드된 화면이 읽는 스크립트·스타일 출처를 정리한 뒤 따로 적용한다.
+
+---
+
+## 4. 인가(Authorization) 및 접근 제어 원칙
+
+### 기본 거부(Deny-by-default) 정책
+- 모든 백엔드 API 엔드포인트와 MCP 엔드포인트(`/api/mcp`)는 기본적으로 인증을 요구한다.
+- 인증이 면제되는 경로는 로그인, 메일 서버가 켜졌을 때의 OTP 발송/검증, 시스템 헬스 체크(`/api/v1/health`) 등 공개가 필수적인 최소한의 엔드포인트로 제한하고 명시적으로 화이트리스트에 등록한다. 공개 GET 경로는 HEAD도 같이 공개한다.
+
+### 권한 모델
+권한은 두 층이다(`docs/06-schema.md` 1·2절).
+
+| 층 | 값 | 범위 |
+| :--- | :--- | :--- |
+| **인스턴스 관리자** | `iam_user.is_instance_admin` | 설치 전체(임시 비밀번호 발급 등) |
+| **워크스페이스 역할** | 기본 역할 `owner`, `admin`, `member`, `viewer` 및 권한 집합을 가진 사용자 정의 역할 | 그 워크스페이스와 그 안의 프로젝트·산출물 |
+
+- WorkspaceRole은 기본 역할 enum이며 사용자 정의 역할은 WorkspaceService와 저장소의 별도 권한 집합 및 역할 설정 화면에서 제공한다. 권한은 WorkspaceFacade.Action별로 판정한다. 프로젝트 참여 지정만으로 별도 읽기 ACL을 부여하거나 제한하지 않는다.
+
+### 서버 중심의 권한 검증
+- 인스턴스 관리자 여부, 워크스페이스 멤버십과 역할, 데이터 소유권에 대한 모든 유효성 검증은 반드시 **백엔드 서버에서 수행**한다.
+- 인증 수단·세션 전용 경로·CSRF는 AuthSecurityConfig/AuthenticationFilter에서 확인하고 공간별 Action과 대상 소속은 서비스에서 검사한다. 모든 권한 판정이 요청 바인딩보다 먼저 실행된다고 가정하지 않는다. 입력 오류와 인가 거절의 순서는 실제 경로별 테스트로 확인한다.
+- 프론트엔드의 라우트 가드나 권한별 메뉴 숨김 처리는 사용자 경험(UX) 향상을 위한 인터페이스 제어일 뿐이며, 보안 경계를 절대 대신할 수 없다.
+
+---
+
+## 5. 에이전트용 API 키 (D-021, D-022)
+
+에이전트는 별도 계정이 아니라 사람의 API 키로 움직인다. MCP 서버(`/api/mcp`)와 REST를 부르는 에이전트가 쓴다.
+
+- **발급**: 구성원은 내 계정에서 자기 에이전트용 API 키(`bit_` 접두어, 만료 1·7·30·90일 또는 없음)를 만든다. 키에 이름(`name`)과 에이전트 이름(`agent_name`, 예: `codex`, `claude-code`)을 적는다.
+- **저장**: 서버는 키의 HMAC(`key_hash`)과 화면 표시용 접두부(`prefix`)만 저장하고 키 글자는 만들 때 한 번만 돌려준다. `last_used_at`을 남기고, 폐기는 `revoked_at`으로 한다.
+- **전송**: `Authorization: Bearer <API 키>`로 보낸다.
+- **권한**: 키는 **키 주인의 워크스페이스 역할을 그대로** 쓴다. 조회 전용으로 제한하지 않으며, 주인이 할 수 있는 쓰기도 할 수 있다. 계정 보안 경로는 세션 전용으로 제한한다(D-038). 키별 scope는 이후로 둔다.
+- **기록**: 키로 만든 기록은 키 주인을 `created_by`·`actor_id`로, 키의 `agent_name`을 `*_agent` 열(`created_by_agent`, `actor_agent`, `author_agent`)로 남긴다. 화면에는 "홍길동 (codex)"처럼 보인다.
+- CLI 도구용 별도 인증 체계는 두지 않는다.
+
+---
+
+## 6. 세션 수명주기 및 환경별 운영 제약
+
+### 세션 종료 및 권한 즉시 반영
+- **로그아웃**: 현재 기기 로그아웃 및 전 기기 일괄 세션 만료(Sign out from all devices) 기능을 제공한다.
+- **권한 박탈 즉시 반영**: 워크스페이스에서 빠지거나 역할이 바뀌거나 인스턴스 관리자에서 해제되는 등 상태 변경이 발생하면 서버는 세션을 즉시 무효화하거나 권한을 재평가한다. API 키도 같은 기준으로 다시 평가된다. 클라이언트는 세션 만료 감지 즉시 로컬 캐시와 개인정보를 완전히 파기한다.
+
+### 개발 환경 격리
+- **사용자 선택 로그인은 제공하지 않는다.** 개발에서도 실제 가입·로그인을 사용하고 테스트는 별도 SQLite 파일과 fixture를 쓴다(T-002).
+
+## 7. T-002 확정 계약 (D-036~D-039)
+
+- 비밀번호는 15~64 Unicode 코드 포인트, UTF-8 최대 72바이트다. 자르거나 정규화하지 않는다. 이메일만 양끝 공백 제거·소문자 처리한다.
+- bcrypt 계산·비교는 SQLite 쓰기 트랜잭션 밖에서 하고, 실제 저장에서는 비밀번호 해시와 현재 주체의 유효성을 재확인한다. 로그인·재인증 실패 횟수는 예외로 롤백되지 않게 먼저 커밋한다. 잠금 중 시도는 잠금 기한을 연장하지 않는다.
+- 세션은 유휴 7일·절대 30일, 최소 5분 간격으로 갱신한다. API 키 기본 만료는 30일, 사용 시각 저장은 최소 1분 간격이다. 토큰은 32바이트 난수, HMAC 용도는 session/api-key/csrf로 구분한다.
+- 키 발급과 관리자 임시 비밀번호 발급은 현재 비밀번호를 재확인한다. 관리자 임시 비밀번호는 대상의 모든 세션·키를 폐기하고 강제 변경 상태로 둔다. 본인 변경도 모두 폐기한 뒤 현재 기기에 새 세션·CSRF를 발급한다. 전체 로그아웃은 세션만 폐기한다.
+- 로그인·초기 가입은 IP당 분당 10회로 제한한다. bounded TTL 메모리를 사용하고 임의 X-Forwarded-For는 신뢰하지 않는다.
+- CSRF는 Spring CsrfTokenRepository의 서명·세션 결합 double-submit이다. `/auth/csrf`는 token/headerName을 no-store로 반환한다. 익명 토큰은 로그인 후 재사용할 수 없다. DB 세션 복원마다 Spring의 CSRF 인증 전략이 쿠키를 지우지 않게 하고, 실제 로그인·비밀번호 변경에서 명시적으로 회전한다.
+- 쿠키는 HttpOnly, Path=/, SameSite=Lax다. Secure 기본 true, dev/local HTTP만 명시적으로 false다. 쓰기는 정확한 Origin 허용 목록 또는 Referer 출처를 요구하며 둘 다 없거나 null이면 거부한다. 인증 Bearer는 Origin 부재를 허용한다.
+- API 키는 신원·업무 읽기/쓰기만 허용한다. 키·비밀번호·세션·인스턴스 관리자·초대/멤버/소유권 변경·외부 연동 비밀값은 세션 전용이다. 새 경로는 명시 등록 전 거부한다. T-002의 Bearer 허용 업무 경로는 신원 조회뿐이다. MCP는 후속 Bearer 전용이다.
+- must_change 세션은 신원·현재 세션·비밀번호 변경·로그아웃·CSRF만 허용한다. 키는 거부한다.
+- 키 생성 요청의 expiresInDays는 생략=30, 1/7/30/90 또는 명시적 0=무기한이다. 목록은 createdAt DESC, id DESC 커서이며 사용자·정렬에 결합한다. 원문은 로컬 화면 메모리에만 두고 이탈 시 버린다.
+
+### 워크스페이스 권한 표 (후속 구현 기준)
+
+| 동작 | owner | admin | member | viewer |
+|---|---|---|---|---|
+| 소속 업무 조회 | 허용 | 허용 | 허용 | 허용 |
+| 업무 생성·수정·보관, 링크·댓글, 자기 댓글 수정/삭제 | 허용 | 허용 | 허용 | 거부 |
+| 다른 사람 댓글 삭제, 업무 삭제/복원 | 허용 | 허용 | 거부 | 거부 |
+| 프로젝트·보드·라벨·일반 설정 | 허용 | 허용 | 거부 | 거부 |
+| member/viewer 초대·역할 변경·제거 | 허용 | 허용 | 거부 | 거부 |
+| admin 지정·해제·제거 | 허용 | 거부 | 거부 | 거부 |
+| 소유권 이전·워크스페이스 삭제 | 허용 | 거부 | 거부 | 거부 |
+
+인스턴스 관리자에게 자동 업무 접근권은 없다. 마지막 owner 제거 금지, 소유권 이전은 원자적이다. 비멤버는 404, 멤버의 역할 부족은 403이다. 키는 현재 멤버십·역할을 매번 재평가한다. 첫 업무 API/MCP에서는 세션/Bearer 역할 판정 일치·쓰기 성공을 검증한다.
+
+
+## 8. T-003 워크스페이스 인증 (D-040~D-043)
+
+- 활성 공간마다 owner 한 명, 일반 역할 변경으로 owner를 만들지 않는다. 이전은 현재 owner의 비밀번호를 재확인하고 기존 활성 멤버에게 원자적으로 넘긴다.
+- Bearer는 소속 공간·멤버 조회와 owner/admin의 공간 이름 변경을 허용한다. 생성·선택·멤버·초대·소유권·삭제는 세션 전용이다. URL의 ID와 현재 멤버십으로 판정하며 선택 포인터나 인스턴스 관리자 여부로 우회하지 않는다.
+- 초대는 7일·일회용, 목적별 HMAC `workspace-invitation`만 저장한다. 원문은 생성 응답 한 번과 참여 화면 메모리에만 둔다. 링크 fragment를 라우터 구성 전에 제거하며 Query/Mutation/Router 캐시·영구 저장소·로그에 넣지 않는다.
+- 익명 미리보기·초대 가입 POST도 CSRF·Origin·IP 분당 제한을 적용한다. 기존 계정은 초대 이메일의 세션으로 수락하며 링크로 인증하거나 기존 비밀번호를 덮어쓰지 않는다. 신규 가입은 원자적으로 처리한 뒤 일반 로그인한다.
+- 초대자의 현재 권한도 수락 시 검사한다. 같은 수락자의 재전송은 멤버십이 남아 있을 때만 204이며 현재 역할을 덮어쓰지 않는다. 제거된 사람을 사용한 초대로 다시 참여시키지 않는다.

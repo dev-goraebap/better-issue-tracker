@@ -1,6 +1,6 @@
 ---
 name: better-issue-tracker
-description: BIT(better-issue-tracker)를 업무 트래커로 쓰는 프로젝트에서 MCP 도구로 업무를 남기며 일하고 사용자·아키텍처·개발 매뉴얼을 작성하고 필요한 부분을 읽는 방법. 연결된 MCP 서버에 get_work_item_context·create_work_item·add_comment 같은 도구가 있고, 코드나 문서를 바꾸는 요청을 받았을 때, 작업 중 버그나 다른 문제를 찾았을 때, 앞으로 따를 방식을 정했을 때, "업무 만들어줘", "BIT에 남겨줘", "결정 남겨줘", "ORM-14 처리해줘", "하위 업무로 나눠줘", "에픽 만들어줘", "업무 정리해줘", "개발 매뉴얼 만들어줘", "아키텍처 매뉴얼 만들어줘"라고 할 때, BIT 자체의 버그를 만났거나 "BIT에 제보해줘", "BIT 개선 제안 올려줘"라고 할 때 쓴다.
+description: BIT(better-issue-tracker)를 업무 트래커로 쓰는 프로젝트에서 MCP 도구로 업무를 남기며 일하고 사용자·아키텍처·개발 매뉴얼을 작성하고 필요한 부분을 읽는 방법. 연결된 MCP 서버에 get_work_item_context·create_work_item·add_comment 같은 도구가 있고, 코드나 문서를 바꾸는 요청을 받았을 때, 작업 중 버그나 다른 문제를 찾았을 때, 앞으로 따를 방식을 정했을 때, "업무 만들어줘", "BIT에 남겨줘", "결정 남겨줘", "ORM-14 처리해줘", "하위 업무로 나눠줘", "에픽 만들어줘", "업무 정리해줘", "프로젝트 스킬 만들어줘", "모노레포·멀티레포 스킬 정리", "개발 매뉴얼 만들어줘", "아키텍처 매뉴얼 만들어줘"라고 할 때, BIT 자체의 버그를 만났거나 "BIT에 제보해줘", "BIT 개선 제안 올려줘"라고 할 때 쓴다.
 ---
 
 # BIT로 일하기
@@ -21,7 +21,9 @@ BIT는 업무와 문서를 한곳에 두는 셀프호스팅 업무 트래커다.
 | 작업 중 이번 요청과 다른 문제를 찾음 | 이번에 고치면 이 업무 댓글에 쓰고, 지금 고치지 않을 것만 백로그 업무로 만든다 | [playbooks/create.md](playbooks/create.md) |
 | 한 기능이 여러 PR이나 여러 날에 걸침, 에픽·스토리·하위 업무 | 에픽 하나 아래 PR 크기의 하위 업무로 나누고 유형 규칙을 따른다 | [playbooks/split.md](playbooks/split.md) |
 | 업무를 시작·진행·마무리함 | 진행 중으로 옮기고, 댓글로 진행과 결과(커밋·검증)를 남기고, 맞는 칸으로 닫는다 | [playbooks/work.md](playbooks/work.md) |
-| 매뉴얼을 사용하는 프로젝트의 기능·구조·개발 규칙이 바뀜 | 별도 요청 없이 영향받는 매뉴얼을 함께 갱신한다. 미사용·비활성 프로젝트에는 생성이나 갱신을 요구하지 않는다 | [references/manual-maintenance.md](references/manual-maintenance.md) |
+| 매뉴얼을 사용하는 프로젝트의 기능·구조·개발 규칙이 바뀜 | 별도 요청 없이 영향받는 원본을 함께 갱신하고 원본 방식에 맞춰 게시한다. 미사용·비활성 프로젝트에는 생성이나 갱신을 요구하지 않는다 | [references/manual-maintenance.md](references/manual-maintenance.md) |
+| 프로젝트 전용 스킬 생성·정리·이름 변경을 요청함 | 저장소 구성과 기존 지침을 확인하고 매뉴얼에 연결한 진입 스킬을 구성한다 | [playbooks/project-skill.md](playbooks/project-skill.md) |
+| 저장소 원본을 BIT 매뉴얼로 게시하거나 풍부한 블록 호환성을 설계함 | 원본·대상 매핑과 충돌/자산/지원 능력을 확인한다 | [references/manual-publication.md](references/manual-publication.md) |
 | 앞으로 따를 선택을 하거나 전에 정한 것을 바꿈 | 그 업무에 '결정' 댓글을 하나 남긴다. 따로 업무나 문서를 만들지 않는다 | [playbooks/work.md](playbooks/work.md) |
 | 저장소와 연결된 프로젝트에서 브랜치·커밋·PR을 만들거나 배포함 | 이름에 업무 키를 넣고, PR로 가는 작업은 병합에 맡긴다. 배포는 업무로 만들지 않는다 | [playbooks/repository.md](playbooks/repository.md) |
 | 오래 두고 고칠 글(요구사항, 설계, 회의록, 사용자 가이드, 개발 매뉴얼, 인수인계)을 쓰거나 고침 | 독자와 팩트 시트를 정하고, 사용자 가이드는 실제 화면, 아키텍처는 구조·설계 규칙·코드 예·검증 기준, 개발 매뉴얼은 작업 순서·명령·회복 절차와 대조한다 | [playbooks/document.md](playbooks/document.md) |
