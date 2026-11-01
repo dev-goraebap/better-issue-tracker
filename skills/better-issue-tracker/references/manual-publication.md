@@ -4,11 +4,32 @@
 
 저장소의 Markdown/자산이 원본이며 BIT는 독자용 게시본이다. SKILL.md는 작업을 고르는 입구이고 references 또는 docs의 원본을 선택해 읽는다. 현재 BIT MCP의 페이지 body는 Markdown이다. 아래 풍부한 블록 계약은 향후 게시 어댑터 설계이며 Tiptap JSON 게시·자동 동기화·3방향 병합을 구현했다고 말하지 않는다. 별도 에디터 코드를 이 작업에서 변경하지 않는다.
 
+## BIT 저장소의 Markdown 게시 도구
+
+BIT 저장소에는 `scripts/publish-manuals.mjs`가 있다. 다른 프로젝트에 이 파일이 설치됐다고 가정하지 않는다. 기존 페이지를 대상으로 제목·본문·소속만 갱신하며 책/페이지 생성·삭제·섹션 재정렬·신규 파일 업로드는 지원하지 않는다. 원본의 기존 attachment 참조를 유지하고 신규 로컬 이미지는 매핑 미지원 오류로 멈춘다.
+
+환경 변수 BIT_MCP_URL과 BIT_API_KEY로 연결한다. 토큰은 인자/manifest/게시 상태에 저장하지 않는다. 인증된 HTTPS 또는 격리 localhost만 사용하고 리다이렉트는 거절한다. 서버는 JSON MCP 응답을 제공해야 한다.
+
+```sh
+# 기본 명령은 읽기 전용 계획. before/after와 digest를 검토한다.
+node scripts/publish-manuals.mjs plan docs/manuals/publication.json .local/manual-publication.json
+# 최초 원격 상태를 기준으로 채택한다. 서버에는 쓰지 않는다.
+node scripts/publish-manuals.mjs baseline docs/manuals/publication.json .local/manual-publication.json <검토한-plan-digest>
+# baseline 저장 후 다시 plan을 만들고 새 digest로 게시한다.
+node scripts/publish-manuals.mjs publish docs/manuals/publication.json .local/manual-publication.json <새-plan-digest>
+```
+
+페이지 key/대상 ID별 원본 해시와 마지막 게시 본문의 제목·본문·소속 해시를 상태 파일에 저장한다. 동일 원본은 조회/쓰기 없이 건너뛰고, 변경 원본은 원격 최신 내용과 기준을 비교한다. 댓글만 바뀌면 본문 충돌로 보지 않고 최신 책 version으로 수정하므로 댓글을 보존한다. 원격 제목·본문·소속이 기준과 다르면 충돌로 중단한다. 사용자 편집을 원본에 반영하거나 별도 검토한 기준 채택이 필요하며 force 덮어쓰기는 제공하지 않는다. 승인 뒤 변경에도 재계획/직전 조회/version으로 중단한다.
+
+성공한 페이지마다 원자적으로 상태를 기록한다. 쓰기 결과를 모르는 오류는 즉시 재전송하지 않는다. 재계획에서 원격이 목표와 이미 일치하면 읽기 확인만 하고 상태를 복구한다. .lock 디렉터리는 동시 실행을 막으며 강제 종료 후 남으면 실행 중인 게시자가 없는지 확인하고 해당 lock만 정리한다. 상태를 삭제하면 최초 기준 검토가 다시 필요하다. 상태는 특정 endpoint/repository/workspace/project와 결합되며 다른 대상에 재사용할 수 없다.
+
+게시 출력은 문서 before/after를 포함하므로 공개 로그에 자동 업로드하지 않는다. 코드/문서 상대 링크는 원본 파일의 마지막 커밋 링크로, 책 사이 링크는 대상 BIT 페이지로 변환하며 fenced code 예시는 보존한다. 미커밋 원본은 상태의 sourceRevision에 working-tree를 표시하고 sourceHash로 식별한다. 섹션 이름/순서 변경, 누락 페이지 삭제와 풍부한 블록은 계획 외 작업이다.
+
 ## 원본 구성과 소유권
 
 프로젝트별 게시 manifest에는 formatVersion, 저장소 식별자, 책 key/대상 ID, 섹션 순서, 페이지 key/경로/대상 ID/소속, 자산 참조를 둔다. key는 제목·배열 위치와 독립적이며 이름 변경에도 유지한다. 비밀값과 개인 절대경로를 넣지 않는다. 코드 예의 근거는 저장소·경로·리비전으로 표시한다. 멀티레포의 공통 계약은 소유 저장소 하나를 지정하고 소비자는 참조한다. 책의 개수로 스킬 수를 정하지 않는다.
 
-게시 상태는 편집 원본과 별개로 sourceRevision, sourceHash, adapterVersion, targetVersion, lastPublishedBodyHash 및 원본 블록 key와 대상 ID 매핑을 저장하도록 설계한다. Git 커밋 전 해시와 커밋 이후 리비전을 혼동하지 않는다. 현재 서버가 이 메타데이터를 저장한다고 가정하지 않는다. 원격 본문/자산은 최초 이관 때 최신 값을 읽어 보존하고 이관 이후의 직접 편집을 무시하지 않는다.
+Markdown 게시 상태는 sourceRevision, sourceHash, adapterVersion, targetVersion, remoteHash와 페이지 key/대상 ID를 로컬 파일에 저장한다. 풍부한 블록별 key/대상 ID 매핑은 향후 설계다. Git 커밋 전 해시와 커밋 이후 리비전을 혼동하지 않는다. 현재 서버가 이 메타데이터를 저장한다고 가정하지 않는다. 원격 본문/자산은 최초 이관 때 최신 값을 읽어 보존하고 이관 이후의 직접 편집을 무시하지 않는다.
 
 ## 게시 절차
 

@@ -14,4 +14,8 @@ AGENTS.md는 진입 지침, .agents/skills/bit-development는 저장소 작업 �
 
 ## 게시 범위
 
-현재 MCP는 Markdown body를 지원합니다. 중간 표현·Tiptap 어댑터·게시 hash 저장·자동 충돌 병합은 설계이며 구현 완료가 아닙니다. 에디터 프로젝트는 별도 범위입니다. 게시 직전 원격 최신 본문과 version을 확인하고 사용자 편집을 덮어쓰지 않습니다. 미배포 사용자 사용법은 운영에 먼저 게시하지 않습니다.
+현재 MCP는 Markdown body를 지원합니다. Markdown 게시 도구는 scripts/publish-manuals.mjs이며 변경 페이지·로컬 해시/대상 상태·최신 원격 충돌 검사를 구현합니다. 중간 표현·Tiptap 어댑터·자동 충돌 병합은 아직 설계입니다. 에디터 프로젝트는 별도 범위입니다. 게시 직전 원격 최신 본문과 version을 확인하고 사용자 편집을 덮어쓰지 않습니다. 미배포 사용자 사용법은 운영에 먼저 게시하지 않습니다.
+
+## Markdown 게시 검사
+
+저장소 루트에서 `node --test scripts/tests/manual-publication.test.mjs`를 실행합니다. CLI의 plan → 검토 digest로 baseline → 새 plan → digest로 publish 순서를 따릅니다. baseline은 최초 원격 기준만 로컬에 저장합니다. 댓글·기존 ID를 포함한 실제 보존은 격리 BIT/MCP로 확인합니다. 동작 상세와 제한은 [공통 게시 계약](../../../skills/better-issue-tracker/references/manual-publication.md)을 따릅니다.

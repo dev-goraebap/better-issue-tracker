@@ -31,3 +31,4 @@ jobs:
       - run: npm ci
       - run: npm run check
       - run: node ../scripts/check-bit-skill.mjs
+      - run: node --test ../scripts/tests/manual-publication.test.mjs
