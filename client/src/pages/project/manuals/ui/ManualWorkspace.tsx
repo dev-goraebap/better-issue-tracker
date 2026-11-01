@@ -53,7 +53,7 @@ export function ManualWorkspace({ workspaceId, projectId }: { workspaceId: strin
         cache.setQueryData([...root, 'detail', saved.id], saved);
         await cache.invalidateQueries({ queryKey: [...root, 'list'] }, { throwOnError: true });
       });
-      if (outcome === 'saved') setError('저장은 완료됐지만 최신 내용을 불러오지 못했습니다. 다시 저장하지 말고 최신 내용을 불러와 주세요.');
+      if (outcome === 'saved-with-refresh-error') setError('저장은 완료됐지만 최신 내용을 불러오지 못했습니다. 다시 저장하지 말고 최신 내용을 불러와 주세요.');
       return true;
     } catch (failure) {
       setError(failure instanceof ApiError && failure.status === 409 ? '다른 사용자가 매뉴얼을 수정했습니다. 초안은 유지됩니다. 본문을 복사한 뒤 취소하고 최신 내용을 확인해 주세요.' : failure instanceof ApiError ? authError(failure) : '저장하지 못했습니다. 입력은 유지됩니다.'); return false;

@@ -4,7 +4,7 @@ import { readManual, storeManual } from './manuals';
 
 /** A confirmed write and its later reads have different outcomes; neither replays the write. */
 export async function saveManualAndRefresh(workspaceId: string, projectId: string | undefined, item: Manual,
-  publish: (saved: Manual) => Promise<void>): Promise<'refreshed' | 'saved'> {
+  publish: (saved: Manual) => Promise<void>): Promise<'refreshed' | 'saved-with-refresh-error'> {
   let complete = item;
   if (item.pageCount !== undefined) {
     const latest = await readManual(workspaceId, item.id);
@@ -17,6 +17,6 @@ export async function saveManualAndRefresh(workspaceId: string, projectId: strin
     await publish(saved);
     return 'refreshed';
   } catch {
-    return 'saved';
+    return 'saved-with-refresh-error';
   }
 }

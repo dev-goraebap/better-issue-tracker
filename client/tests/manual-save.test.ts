@@ -30,7 +30,7 @@ for (const mode of ['success', 'detail-failure', 'list-failure', 'write-conflict
         assert.equal(writes, mode === 'summary-conflict' ? 0 : 1); assert.equal(stored, undefined); assert.equal(publishes, 0);
       } else {
         const outcome = await saveManualAndRefresh('w123456789', undefined, item, publish);
-        assert.equal(outcome, mode === 'success' ? 'refreshed' : 'saved');
+        assert.equal(outcome, mode === 'success' ? 'refreshed' : 'saved-with-refresh-error');
         assert.equal(writes, 1); assert.deepEqual((stored as { content: unknown }).content, detail.content);
         assert.equal(publishes, mode === 'detail-failure' ? 0 : 1);
       }
